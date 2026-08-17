@@ -1,0 +1,29 @@
+{
+  "name": "mcp-atlas",
+  "version": "1.0.0",
+  "description": "Harbor adapter for the MCP-Atlas benchmark (ScaleAI/MCP-Atlas). Evaluates AI tool-use competency across 36 real MCP servers and 307 tools.",
+  "source": {
+    "dataset": "ScaleAI/MCP-Atlas",
+    "split": "train",
+    "n_tasks": 500,
+    "paper": "https://arxiv.org/abs/2602.00933",
+    "leaderboard": "https://scale.com/leaderboard/mcp_atlas"
+  },
+  "environment": {
+    "image": "ghcr.io/scaleapi/mcp-atlas:1.2.7",
+    "n_mcp_servers": 36,
+    "n_tools": 307,
+    "port": 1984,
+    "startup_seconds": 180,
+    "recommended_memory_gb": 10
+  },
+  "verification": {
+    "strategy": "llm-judge",
+    "judge_model": "claude-sonnet-4-6",
+    "metric": "gtfa_claims_coverage",
+    "thresholds": [0.5, 0.75]
+  },
+  "requires_api_keys": true,
+  "keyless_servers": 20,
+  "keyed_servers": 16
+}

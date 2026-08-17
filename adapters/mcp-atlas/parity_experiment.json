@@ -1,0 +1,13 @@
+{
+  "experiment": "mcp-atlas-parity",
+  "agent_import_path": "adapters/mcp-atlas/mcp_atlas_parity_agent.py:MCPAtlasParityAgent",
+  "model": "claude-sonnet-4-6",
+  "n_tasks": 100,
+  "split": "parity",
+  "max_turns": 50,
+  "concurrency": 5,
+  "timeout_sec": 1800,
+  "judge_model": "claude-sonnet-4-6",
+  "pass_threshold": 0.5,
+  "notes": "Parity subset: first 100 tasks from the full 500-task MCP-Atlas train split. Run with --limit 100 in run_adapter.py."
+}

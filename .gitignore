@@ -4,15 +4,21 @@ __pycache__/
 build/
 dist/
 wheels/
+input/
+tasks/
 *.egg-info
 
 # Virtual environments
 .venv
+.serena
+.sisyphus
+
 
 # Ruff
 .ruff_cache
 
 .DS_Store
+https:/
 
 .env
 
