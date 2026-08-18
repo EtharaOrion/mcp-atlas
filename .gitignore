@@ -32,3 +32,15 @@ logs/
 
 # Eval run outputs (per-run dirs: outputs, logs, scoring)
 results/
+
+/input
+
+/.tokensave
+
+/.scoring-venv312
+
+/model-training-ckpt-codec-recovery
+
+/output
+
+/vendor
