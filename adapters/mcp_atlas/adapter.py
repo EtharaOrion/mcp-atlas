@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import csv
 import json
 import re
@@ -20,9 +21,14 @@ DEFAULT_JUDGE_MODEL = "claude-sonnet-4-6"
 DEFAULT_AGENT_TIMEOUT = 1800
 
 DOCKERFILE_TEMPLATE = """\
-FROM {image}
-COPY tests/ /tests/
-COPY solution/ /solution/
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+"""
+
+DOCKER_COMPOSE_TEMPLATE = """\
+services:
+  mcp-server:
+    image: {image}
 """
 
 # {{VAR}} → ${VAR} after .format(); Harbor expands ${VAR:-} at runtime.
@@ -43,7 +49,7 @@ memory_mb = 10240
 storage_mb = 10240
 
 [environment.healthcheck]
-command = "curl -sf http://localhost:1984/health"
+command = "curl -sf http://mcp-server:1984/health"
 interval_sec = 5
 timeout_sec = 10
 start_period_sec = 180
@@ -55,8 +61,6 @@ timeout_sec = 900.0
 [verifier.env]
 ANTHROPIC_API_KEY = "${{ANTHROPIC_API_KEY:-}}"
 ANTHROPIC_BASE_URL = "${{ANTHROPIC_BASE_URL:-}}"
-LITELLM_API_KEY = "${{LITELLM_API_KEY:-}}"
-LITELLM_BASE_URL = "${{LITELLM_BASE_URL:-}}"
 JUDGE_MODEL = "{judge_model}"
 """
 
@@ -93,6 +97,12 @@ def _parse_claims(raw) -> list[str]:
             if isinstance(parsed, list):
                 return [str(c).strip() for c in parsed if str(c).strip()]
         except json.JSONDecodeError:
+            pass
+        try:
+            parsed = ast.literal_eval(raw)
+            if isinstance(parsed, list):
+                return [str(c).strip() for c in parsed if str(c).strip()]
+        except (ValueError, SyntaxError):
             pass
     return [line.strip() for line in raw.splitlines() if line.strip()]
 
@@ -242,7 +252,11 @@ class MCPAtlasToHarbor:
             encoding="utf-8",
         )
         (task_dir / "environment" / "Dockerfile").write_text(
-            DOCKERFILE_TEMPLATE.format(image=self.image),
+            DOCKERFILE_TEMPLATE,
+            encoding="utf-8",
+        )
+        (task_dir / "environment" / "docker-compose.yaml").write_text(
+            DOCKER_COMPOSE_TEMPLATE.format(image=self.image),
             encoding="utf-8",
         )
         test_sh = task_dir / "tests" / "test.sh"

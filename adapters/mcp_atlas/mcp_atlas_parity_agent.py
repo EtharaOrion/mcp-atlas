@@ -11,7 +11,7 @@ from harbor.agents.base import BaseAgent
 from harbor.environments.base import BaseEnvironment
 from harbor.models.agent.context import AgentContext
 
-SANDBOX_URL = "http://localhost:1984"
+SANDBOX_URL = "http://mcp-server:1984"
 MAX_TURNS = 50
 DEFAULT_MODEL = "claude-sonnet-4-6"
 

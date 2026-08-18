@@ -236,7 +236,7 @@ def extract_result(messages):
     for msg in reversed(messages):
         if hasattr(msg, "structured_output") and msg.structured_output is not None:
             return msg.structured_output if isinstance(msg.structured_output, str) else json.dumps(msg.structured_output)
-        if hasattr(msg, "result") and msg.result:
+        if hasattr(msg, "result") and msg.result and msg.result.strip():
             return msg.result
     return ""
 
