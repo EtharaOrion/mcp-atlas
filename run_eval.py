@@ -9,6 +9,16 @@ to a CSV in the format expected by services/scoring/score_claims.py
 raw_conversation_history column is the full OpenAI-format message list and is
 consumed as-is by services/diagnostics/single_model_diagnostic.py.
 
+A fourth column, run_trajectory_json, carries the harness's richer
+`{type:'trajectory', data}` event verbatim (schema_version
+"mcp-atlas-trajectory-v1" — see services/agent-harness/src/mcp-agent/schema.ts)
+when the harness emits one. It's additive: existing consumers that only read
+raw_conversation_history/response are unaffected. services/scoring/traj_asserts.py
+accepts either shape, so services/scoring/score_weighted.py prefers this
+column when present and falls back to reconstructing from
+raw_conversation_history when it's blank (e.g. resumed runs against an older
+harness build).
+
 The default dataset source is HuggingFace (ScaleAI/MCP-Atlas, 500 public
 tasks). A local CSV can be supplied via --input.
 
@@ -166,6 +176,7 @@ async def run_one_task(
                         "task_id": task_id,
                         "raw_conversation_history": "",
                         "response": f"ERROR: HTTP {resp.status}: {text}",
+                        "run_trajectory_json": "",
                     }
                 data = await resp.json()
         except asyncio.TimeoutError:
@@ -173,12 +184,14 @@ async def run_one_task(
                 "task_id": task_id,
                 "raw_conversation_history": "",
                 "response": f"ERROR: timeout after {args.timeout}s",
+                "run_trajectory_json": "",
             }
         except Exception as exc:
             return {
                 "task_id": task_id,
                 "raw_conversation_history": "",
                 "response": f"ERROR: {exc.__class__.__name__}: {exc}",
+                "run_trajectory_json": "",
             }
 
         # data is a list of {type, data} items. Pull out the trajectory and
@@ -190,10 +203,17 @@ async def run_one_task(
                 final = msg["content"]
                 break
 
+        # Richer additive event (schema_version "mcp-atlas-trajectory-v1"),
+        # only present on harness builds that emit it. Last one wins if the
+        # harness ever emitted more than one (it shouldn't).
+        trajectory_events = [item["data"] for item in data if item.get("type") == "trajectory"]
+        run_trajectory_json = json.dumps(trajectory_events[-1]) if trajectory_events else ""
+
         return {
             "task_id": task_id,
             "raw_conversation_history": json.dumps(trajectory_msgs),
             "response": final,
+            "run_trajectory_json": run_trajectory_json,
         }
 
 
@@ -278,13 +298,24 @@ async def run_all(args: argparse.Namespace) -> None:
         return
 
     sem = asyncio.Semaphore(args.concurrency)
-    fieldnames = ["task_id", "raw_conversation_history", "response"]
+    default_fieldnames = ["task_id", "raw_conversation_history", "response", "run_trajectory_json"]
     write_header = not os.path.exists(args.output)
+    if write_header:
+        fieldnames = default_fieldnames
+    else:
+        # Resuming an existing CSV: reuse its own header verbatim so a file
+        # written before run_trajectory_json existed keeps its original
+        # 3-column shape instead of desyncing header vs. row width.
+        with open(args.output, newline="") as f:
+            fieldnames = next(csv.reader(f), None) or default_fieldnames
     out_lock = asyncio.Lock()
 
     async with aiohttp.ClientSession() as session:
         with open(args.output, "a", newline="") as fout:
-            writer = csv.DictWriter(fout, fieldnames=fieldnames)
+            # extrasaction="ignore": a resumed old-shape CSV won't have
+            # run_trajectory_json in its header — drop that key rather than
+            # erroring, instead of forcing a fresh output file.
+            writer = csv.DictWriter(fout, fieldnames=fieldnames, extrasaction="ignore")
             if write_header:
                 writer.writeheader()
                 fout.flush()

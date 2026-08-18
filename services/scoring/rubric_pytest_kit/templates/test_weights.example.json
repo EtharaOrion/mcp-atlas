@@ -1,0 +1,16 @@
+{
+  "threshold": 1.0,
+  "components": {
+    "traj_tests": {
+      "weight": 0,
+      "tests": {
+        "test_touched_target_tool": 1,
+        "test_called_distractor_tool": -2,
+        "test_called_target_tool_with_expected_argument": 1
+      }
+    },
+    "rubric": {
+      "weight": 0
+    }
+  }
+}

@@ -27,6 +27,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--image", default=DEFAULT_IMAGE)
     p.add_argument("--judge-model", default=DEFAULT_JUDGE_MODEL)
     p.add_argument("--agent-timeout", type=int, default=DEFAULT_AGENT_TIMEOUT)
+    p.add_argument("--weighted", action="store_true",
+                   help="Also scaffold weighted-grading files (tests/test_weights.json, "
+                        "test_outputs.py, rubric.json, weighted_judge*.py). Inert by default "
+                        "-- see MCPAtlasToHarbor's docstring.")
     return p.parse_args(argv)
 
 
@@ -43,6 +47,7 @@ def main(argv: list[str] | None = None) -> int:
         image=args.image,
         judge_model=args.judge_model,
         agent_timeout=args.agent_timeout,
+        weighted=args.weighted,
     )
 
     ids = set(args.task_ids) if args.task_ids else None

@@ -9,3 +9,4 @@ tqdm>=4.64
 matplotlib>=3.6
 nest-asyncio>=1.5
 httpx>=0.28
+pytest>=7.0

@@ -60,6 +60,51 @@ export const MessageSchema = z.union([
 ]);
 
 // ============================================================================
+// Trajectory Schemas
+//
+// Additive, agent-agnostic run record emitted alongside the existing flat
+// `{type:'message', data}` event stream (as one more `{type:'trajectory',
+// data}` entry) — old consumers (run_eval.py's `type == "message"` filter)
+// are unaffected; new consumers can read the richer per-step/token/cost view.
+// ============================================================================
+
+export const TrajectoryStepMetricsSchema = z.object({
+  prompt_tokens: z.number(),
+  completion_tokens: z.number(),
+  total_tokens: z.number().optional(),
+  // Best-effort — only populated when the endpoint reports spend (e.g. a
+  // LiteLLM proxy). Plain OpenAI-compatible endpoints leave this undefined.
+  cost_usd: z.number().nullable().optional(),
+});
+
+export const TrajectoryStepSchema = z.object({
+  step_id: z.number(),
+  timestamp: z.string(),
+  // Carries reasoning_content automatically when the model/provider returns
+  // it — no separate field needed, it's already on AssistantMessageSchema.
+  message: AssistantMessageSchema,
+  tool_results: z.array(ToolCallOutputMessageSchema).optional(),
+  metrics: TrajectoryStepMetricsSchema.optional(),
+});
+
+export const RunTrajectorySchema = z.object({
+  schema_version: z.literal('mcp-atlas-trajectory-v1'),
+  session_id: z.string(),
+  task_id: z.string(),
+  agent: z.object({
+    name: z.literal('litellm'),
+    model_name: z.string(),
+  }),
+  final_metrics: z.object({
+    total_prompt_tokens: z.number(),
+    total_completion_tokens: z.number(),
+    total_cost_usd: z.number().nullable(),
+    total_steps: z.number(),
+  }),
+  steps: z.array(TrajectoryStepSchema),
+});
+
+// ============================================================================
 // Request / Response Schemas
 // ============================================================================
 

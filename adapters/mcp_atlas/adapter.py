@@ -11,7 +11,16 @@ from typing import Iterator
 
 _MEVAL = Path(__file__).parent.parent.parent / "services" / "mcp_eval"
 sys.path.insert(0, str(_MEVAL))
-from convert_tasks_to_harbor import AGENT_JUDGE_TEMPLATE, SOLVE_SH, TEST_SH  # noqa: E402
+from convert_tasks_to_harbor import (  # noqa: E402
+    AGENT_JUDGE_TEMPLATE,
+    SOLVE_SH,
+    TEST_OUTPUTS_PY_STUB,
+    TEST_SH,
+    TEST_WEIGHTS_JSON_STUB,
+    WEIGHTED_JUDGE_ENTRY_TEMPLATE,
+    WEIGHTED_TEST_SH,
+    _read_scoring_module_source,
+)
 
 csv.field_size_limit(sys.maxsize)
 
@@ -110,6 +119,18 @@ def _parse_claims(raw) -> list[str]:
 def _claims_to_rubrics(claims: list[str]) -> list[dict]:
     return [
         {"id": f"claim_{i:03d}", "title": c, "description": c}
+        for i, c in enumerate(claims)
+    ]
+
+
+def _claims_to_weighted_rubric(claims: list[str]) -> list[dict]:
+    """rubric_weighted.parse_rubric()-compatible shape for tests/rubric.json:
+    every existing GTFA claim carried over as a goal criterion (weight=1,
+    is_positive=True) -- same claims agent_judge.py already grades, so a
+    task's Channel B behaves the same whether graded by agent_judge.py alone
+    or (once opted in) folded into the weighted ledger."""
+    return [
+        {"id": f"claim_{i:03d}", "text": c, "weight": 1, "is_positive": True}
         for i, c in enumerate(claims)
     ]
 
@@ -227,12 +248,17 @@ class MCPAtlasToHarbor:
         category: str = DEFAULT_CATEGORY,
         judge_model: str = DEFAULT_JUDGE_MODEL,
         agent_timeout: int = DEFAULT_AGENT_TIMEOUT,
+        weighted: bool = False,
     ) -> None:
         self.out_root = out_root
         self.image = image
         self.category = category
         self.judge_model = judge_model
         self.agent_timeout = agent_timeout
+        # See WEIGHTED_TEST_SH's docstring: ships inert (both component
+        # weights 0) until a task author opts a component in, so turning
+        # this on doesn't change any existing task's score by default.
+        self.weighted = weighted
 
     def generate_task(self, record: MCPAtlasRecord, *, overwrite: bool = False) -> Path:
         task_dir = self.out_root / record.task_id
@@ -260,7 +286,24 @@ class MCPAtlasToHarbor:
             encoding="utf-8",
         )
         test_sh = task_dir / "tests" / "test.sh"
-        test_sh.write_text(TEST_SH, encoding="utf-8")
+        if self.weighted:
+            test_sh.write_text(WEIGHTED_TEST_SH, encoding="utf-8")
+            (task_dir / "tests" / "test_weights.json").write_text(TEST_WEIGHTS_JSON_STUB, encoding="utf-8")
+            (task_dir / "tests" / "test_outputs.py").write_text(TEST_OUTPUTS_PY_STUB, encoding="utf-8")
+            (task_dir / "tests" / "rubric.json").write_text(
+                json.dumps(_claims_to_weighted_rubric(record.gtfa_claims), indent=2), encoding="utf-8"
+            )
+            (task_dir / "tests" / "traj_asserts.py").write_text(
+                _read_scoring_module_source("traj_asserts.py"), encoding="utf-8"
+            )
+            (task_dir / "tests" / "weighted_judge.py").write_text(
+                _read_scoring_module_source("weighted_judge.py"), encoding="utf-8"
+            )
+            (task_dir / "tests" / "weighted_judge_entry.py").write_text(
+                WEIGHTED_JUDGE_ENTRY_TEMPLATE, encoding="utf-8"
+            )
+        else:
+            test_sh.write_text(TEST_SH, encoding="utf-8")
         test_sh.chmod(0o755)
         rubrics = _claims_to_rubrics(record.gtfa_claims)
         (task_dir / "tests" / "agent_judge.py").write_text(

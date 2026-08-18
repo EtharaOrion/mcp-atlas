@@ -11,6 +11,15 @@ export interface BaseCompletionRequest {
 
 export interface BaseCompletionResult {
   message: Message;
+  // Optional — populated when the endpoint's response includes usage/cost.
+  // Absent (not zeroed) when the provider doesn't report it, so callers can
+  // tell "no data" apart from "zero tokens".
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens?: number;
+    cost_usd?: number | null;
+  };
 }
 
 export interface AgentCompletionStrategy<

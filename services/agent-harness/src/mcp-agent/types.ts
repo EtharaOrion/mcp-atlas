@@ -100,6 +100,45 @@ export const MessageSchema = z.union([
 export type Message = z.infer<typeof MessageSchema>;
 
 // ============================================================================
+// Trajectory Schemas — see schema.ts for the source of truth / doc comment.
+// ============================================================================
+
+export const TrajectoryStepMetricsSchema = z.object({
+  prompt_tokens: z.number(),
+  completion_tokens: z.number(),
+  total_tokens: z.number().optional(),
+  cost_usd: z.number().nullable().optional(),
+});
+export type TrajectoryStepMetrics = z.infer<typeof TrajectoryStepMetricsSchema>;
+
+export const TrajectoryStepSchema = z.object({
+  step_id: z.number(),
+  timestamp: z.string(),
+  message: AssistantMessageSchema,
+  tool_results: z.array(ToolCallOutputMessageSchema).optional(),
+  metrics: TrajectoryStepMetricsSchema.optional(),
+});
+export type TrajectoryStep = z.infer<typeof TrajectoryStepSchema>;
+
+export const RunTrajectorySchema = z.object({
+  schema_version: z.literal('mcp-atlas-trajectory-v1'),
+  session_id: z.string(),
+  task_id: z.string(),
+  agent: z.object({
+    name: z.literal('litellm'),
+    model_name: z.string(),
+  }),
+  final_metrics: z.object({
+    total_prompt_tokens: z.number(),
+    total_completion_tokens: z.number(),
+    total_cost_usd: z.number().nullable(),
+    total_steps: z.number(),
+  }),
+  steps: z.array(TrajectoryStepSchema),
+});
+export type RunTrajectory = z.infer<typeof RunTrajectorySchema>;
+
+// ============================================================================
 // Tool Definition Schema (MCP)
 // ============================================================================
 

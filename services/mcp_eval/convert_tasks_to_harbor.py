@@ -53,6 +53,16 @@ from pathlib import Path
 
 csv.field_size_limit(sys.maxsize)
 
+# --weighted bundles embed a verbatim copy of these two modules into each
+# task's tests/ dir (the container has no access to the host repo path, so
+# they can't just be imported off disk the way this script itself can).
+_SCORING_SRC_DIR = Path(__file__).resolve().parents[1] / "scoring"
+
+
+def _read_scoring_module_source(name: str) -> str:
+    return (_SCORING_SRC_DIR / name).read_text(encoding="utf-8")
+
+
 # ── Harbor bundle templates ──────────────────────────────────────────────────
 
 # The environment image is the MCP server image plus this task's tool allowlist:
@@ -72,6 +82,168 @@ export LITELLM_API_KEY="${LITELLM_API_KEY:-}"
 export LITELLM_BASE_URL="${LITELLM_BASE_URL:-}"
 uv run /tests/agent_judge.py
 """
+
+# --weighted bundles run agent_judge.py first (unchanged), then layer the
+# weighted judge (Channel A traj_tests + Channel B rubric, combined) on top.
+# agent_judge.py's own exit status is ignored (no `set -e`) so a judge
+# failure still lets weighted_judge_entry.py run and decide what to do —
+# see that script's docstring for why it only overwrites reward.json when a
+# component is actually opted in.
+WEIGHTED_TEST_SH = """#!/bin/bash
+export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
+export ANTHROPIC_BASE_URL="${ANTHROPIC_BASE_URL:-}"
+export LITELLM_API_KEY="${LITELLM_API_KEY:-}"
+export LITELLM_BASE_URL="${LITELLM_BASE_URL:-}"
+uv run /tests/agent_judge.py
+uv run /tests/weighted_judge_entry.py
+"""
+
+# Inert by default (both components weight 0) — a --weighted bundle behaves
+# exactly like a plain bundle (scored by agent_judge.py alone) until a task
+# author edits this file to opt a component in. See
+# services/scoring/rubric_pytest_kit/README.md for the polarity convention.
+TEST_WEIGHTS_JSON_STUB = """{
+  "threshold": 1.0,
+  "components": {
+    "traj_tests": {"weight": 0, "tests": {}},
+    "rubric": {"weight": 0}
+  }
+}
+"""
+
+TEST_OUTPUTS_PY_STUB = '''"""Channel A trajectory assertions for this task.
+
+Ships empty by default — tests/test_weights.json's traj_tests.weight is 0,
+so an empty file changes nothing. Add test_* functions here (see
+services/scoring/traj_asserts.py for the assertion API) and give them
+non-zero signed weights in test_weights.json to opt in: positive weight for
+a goal test, negative for a guard test. Every assertion should be phrased
+positively ("X happened") — the sign of the weight decides whether that's
+good or bad. See services/scoring/rubric_pytest_kit/README.md.
+"""
+from traj_asserts import called_with, called_any, never_called  # noqa: F401
+'''
+
+# Self-contained verifier entry point for --weighted bundles. Reads the same
+# trajectory file agent_judge.py itself reads, plus the rubric_breakdown.json
+# agent_judge.py already wrote (reused as-is for the rubric component's
+# value rather than re-judging), runs Channel A's pytest suite, and combines
+# both into the final reward.json/reward.txt/ctrf.json/detail.json. No
+# .format() substitution here — every path is fixed (/logs/agent,
+# /logs/verifier, /tests) so this is a plain literal, unlike AGENT_JUDGE_TEMPLATE.
+WEIGHTED_JUDGE_ENTRY_TEMPLATE = '''# /// script
+# dependencies = [
+#   "pytest>=7.0",
+# ]
+# ///
+
+"""Weighted judge entry point for --weighted Harbor bundles.
+
+Combines Channel A (tests/test_outputs.py + tests/test_weights.json, via the
+tests/traj_asserts.py + tests/weighted_judge.py copies sitting next to this
+file) with Channel B (the rubric score agent_judge.py already computed, read
+back from the rubric_breakdown.json it wrote to /logs/verifier/). Only
+overwrites reward.json/reward.txt when at least one component is actually
+opted in (non-zero weight) — otherwise agent_judge.py's own reward.json is
+left exactly as it wrote it, so a --weighted bundle with an untouched
+test_weights.json scores identically to a plain bundle.
+"""
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, "/tests")
+import weighted_judge as wj  # noqa: E402
+
+
+def find_agent_trajectory_filepath(agent_dir: Path = Path("/logs/agent")) -> str:
+    if not agent_dir.exists():
+        raise RuntimeError(f"{agent_dir}/ directory not found")
+    txt_files = [f for f in agent_dir.iterdir() if f.is_file() and f.suffix == ".txt"]
+    if not txt_files:
+        raise RuntimeError(f"No trajectory .txt files found in {agent_dir}/")
+    return str(max(txt_files, key=lambda f: f.stat().st_size))
+
+
+def load_flat_messages_and_response(trajectory_path: str):
+    """Parse the {"type": "message"/"result", ...} line-JSON trajectory file
+    (the same shape agent_judge.py's own find_agent_trajectory_filepath() /
+    extract_agent_response() read) into (flat OpenAI-message list, final
+    response) — traj_asserts.py accepts the flat-message-list shape directly."""
+    messages = []
+    response = ""
+    for line in Path(trajectory_path).read_text().splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            event = json.loads(line)
+        except (json.JSONDecodeError, TypeError):
+            continue
+        if event.get("type") == "message" and event.get("message"):
+            messages.append(event["message"])
+        elif event.get("type") == "result" and event.get("result"):
+            response = event["result"]
+    return messages, response
+
+
+def main(
+    agent_dir: Path = Path("/logs/agent"),
+    out_dir: Path = Path("/logs/verifier"),
+    tests_dir: Path = Path("/tests"),
+) -> None:
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        trajectory_path = find_agent_trajectory_filepath(agent_dir)
+        messages, _response = load_flat_messages_and_response(trajectory_path)
+
+        weights_file = tests_dir / "test_weights.json"
+        test_file = tests_dir / "test_outputs.py"
+        weights = wj.load_weights(weights_file)
+
+        traj_results = None
+        if weights.traj_tests.weight and test_file.exists():
+            traj_results = wj._run_traj_pytest(messages, test_file)
+
+        rubric_value = None
+        rubric_rows = []
+        breakdown_path = out_dir / "rubric_breakdown.json"
+        if weights.rubric.weight and breakdown_path.exists():
+            breakdown = json.loads(breakdown_path.read_text())
+            # agent_judge.py's own all_pass aggregate score (already in
+            # [0, 1]) — reused directly as this task's Channel B value.
+            rubric_value = breakdown.get("score")
+            rubric_rows = breakdown.get("results", [])
+
+        result = wj.judge_weighted(
+            test_weights_file=weights_file,
+            traj_results=traj_results,
+            rubric_value=rubric_value,
+            rubric_weight=weights.rubric.weight,
+            rubric_rows=rubric_rows,
+        )
+
+        if result["reward"] is None:
+            print("No weighted-grading component active for this task "
+                  "(test_weights.json inert) -- leaving agent_judge.py's "
+                  "reward.json unchanged.")
+            (out_dir / "detail.json").write_text(json.dumps(result, indent=2))
+            return
+
+        wj.write_verifier_artifacts(out_dir, result)
+        print(f"Weighted reward: {result['reward']}")
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+        print(f"weighted_judge_entry.py failed ({e}); leaving reward.json "
+              f"as agent_judge.py wrote it.", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()
+'''
 
 # Tool-use tasks have no canonical reference solution; this placeholder keeps
 # Harbor's optional solution/ contract satisfied.
@@ -458,6 +630,7 @@ def render_task(
     mcp_port: int = DEFAULT_MCP_PORT,
     judge_model: str = DEFAULT_JUDGE_MODEL,
     agent_timeout: int = DEFAULT_AGENT_TIMEOUT,
+    weighted: bool = False,
 ) -> tuple[str, str]:
     """Render one task bundle. Returns (task_id, image_used)."""
     task_id = row["task_id"]
@@ -520,7 +693,23 @@ def render_task(
     # tests/ + solution/ — the shell scripts have shebangs and may be executed
     # directly, so make them executable (0o755) rather than the default 0o644.
     test_sh = task_dir / "tests" / "test.sh"
-    test_sh.write_text(TEST_SH, encoding="utf-8")
+    if weighted:
+        # Opt-in weighted-grading scaffolding, inert until a task author
+        # fills in tests/test_weights.json — see WEIGHTED_TEST_SH's docstring.
+        test_sh.write_text(WEIGHTED_TEST_SH, encoding="utf-8")
+        (task_dir / "tests" / "test_weights.json").write_text(TEST_WEIGHTS_JSON_STUB, encoding="utf-8")
+        (task_dir / "tests" / "test_outputs.py").write_text(TEST_OUTPUTS_PY_STUB, encoding="utf-8")
+        (task_dir / "tests" / "traj_asserts.py").write_text(
+            _read_scoring_module_source("traj_asserts.py"), encoding="utf-8"
+        )
+        (task_dir / "tests" / "weighted_judge.py").write_text(
+            _read_scoring_module_source("weighted_judge.py"), encoding="utf-8"
+        )
+        (task_dir / "tests" / "weighted_judge_entry.py").write_text(
+            WEIGHTED_JUDGE_ENTRY_TEMPLATE, encoding="utf-8"
+        )
+    else:
+        test_sh.write_text(TEST_SH, encoding="utf-8")
     test_sh.chmod(0o755)
     solve_sh = task_dir / "solution" / "solve.sh"
     solve_sh.write_text(SOLVE_SH, encoding="utf-8")
@@ -591,6 +780,12 @@ def main() -> int:
     p.add_argument("--agent-timeout", type=int, default=DEFAULT_AGENT_TIMEOUT,
                    help=f"Agent timeout seconds (default {DEFAULT_AGENT_TIMEOUT})")
     p.add_argument("--limit", type=int, default=0, help="Only render the first N tasks (0 = all)")
+    p.add_argument("--weighted", action="store_true",
+                   help="Also scaffold tests/{test_weights.json,test_outputs.py,traj_asserts.py,"
+                        "weighted_judge.py,weighted_judge_entry.py} and run the weighted judge after "
+                        "agent_judge.py. Ships inert (both component weights 0) -- a bundle rendered "
+                        "with --weighted scores identically to one rendered without it until a task "
+                        "author edits test_weights.json to opt a component in.")
     args = p.parse_args()
 
     args.out.mkdir(parents=True, exist_ok=True)
@@ -613,6 +808,7 @@ def main() -> int:
                 mcp_port=args.mcp_port,
                 judge_model=args.judge_model,
                 agent_timeout=args.agent_timeout,
+                weighted=args.weighted,
             )
             by_image[image_used] = by_image.get(image_used, 0) + 1
             n += 1

@@ -1,8 +1,12 @@
+import { randomUUID } from 'node:crypto';
 import type {
   ToolCallDefinition,
   ToolCall,
   Message,
   ToolDefinition,
+  ToolCallOutputMessage,
+  TrajectoryStep,
+  RunTrajectory,
 } from '../types';
 import {
   AssistantMessageSchema,
@@ -10,7 +14,7 @@ import {
   RunAgentAPIRequestBodySchema,
   CallToolAPIRequestBodySchema,
 } from '../schema';
-import { getAgentCompletionStrategy } from './completion-strategy';
+import { getAgentCompletionStrategy, type BaseCompletionResult } from './completion-strategy';
 import { MCPClient, createMCPClient } from '../helpers/mcp-client';
 import { SandboxMCPClient } from '../helpers/mcp-client/sandbox-client';
 import { logger } from '../../logger';
@@ -19,7 +23,10 @@ import { z } from 'zod';
 const DEFAULT_MAX_TURNS = 256;
 const DEFAULT_MAX_TOOL_CALLS = 100;
 
-type AgentOutput = { type: 'message'; data: Message } | { type: 'error'; data: any };
+type AgentOutput =
+  | { type: 'message'; data: Message }
+  | { type: 'trajectory'; data: RunTrajectory }
+  | { type: 'error'; data: any };
 
 interface RunAgentAPIOptions {
   mcpClient: MCPClient;
@@ -168,6 +175,18 @@ async function* runMcpAgent({
   let totalToolCalls = 0;
   let reachedMaxToolCalls = false;
 
+  // Trajectory bookkeeping — one TrajectoryStep per turn (assistant message +
+  // the tool results it produced), assembled alongside the existing
+  // 'message' event stream and emitted as a single 'trajectory' event at the
+  // end. See schema.ts's Trajectory* schemas for field docs.
+  const sessionId = randomUUID();
+  const trajectorySteps: TrajectoryStep[] = [];
+  let stepCounter = 0;
+  let totalPromptTokens = 0;
+  let totalCompletionTokens = 0;
+  let totalCostUsd: number | null = null;
+  let costTracked = false;
+
   for (let i = 0; i < maxTurns; i++) {
     // Check tool call limit before next LLM call
     if (maxToolCalls && totalToolCalls >= maxToolCalls) {
@@ -176,7 +195,9 @@ async function* runMcpAgent({
       break;
     }
     logger.info(`[${taskId}] Turn ${i + 1}/${maxTurns}`, { messageCount: allMessages.length, totalToolCalls });
+    const turnTimestamp = new Date().toISOString();
     let assistantMessage;
+    let turnUsage: BaseCompletionResult['usage'];
     try {
       // Get the appropriate strategy based on model and strategy parameter
       const completionStrategy = getAgentCompletionStrategy(model, strategy, llmBaseUrl);
@@ -226,9 +247,10 @@ async function* runMcpAgent({
         }
       }
 
-      const { message } = result!;
+      const { message, usage } = result!;
 
       assistantMessage = AssistantMessageSchema.parse(message);
+      turnUsage = usage;
     } catch (error) {
       // LLM completion or parsing failed, break the loop
       reachedMaxTurns = false;
@@ -240,6 +262,8 @@ async function* runMcpAgent({
     yield { type: 'message', data: assistantMessage };
 
     const toolCalls = assistantMessage.tool_calls ?? [];
+    const turnToolResults: ToolCallOutputMessage[] = [];
+    let naturalCompletion = false;
 
     if (toolCalls.length > 0) {
       for (const rawToolCall of toolCalls) {
@@ -267,6 +291,7 @@ async function* runMcpAgent({
           };
           allMessages.push(toolCallMessage);
           yield { type: 'message', data: toolCallMessage };
+          turnToolResults.push(toolCallMessage);
         } catch (error) {
           // Tool call failed — feed error back to model so it can recover
           const errorMsg = ((error as any).message || String(error)).split('\n')[0];
@@ -282,15 +307,45 @@ async function* runMcpAgent({
           };
           allMessages.push(errorToolMessage);
           yield { type: 'message', data: errorToolMessage };
+          turnToolResults.push(errorToolMessage);
         }
       }
-      // Break outer loop if tool call limit reached mid-turn
-      if (reachedMaxToolCalls) break;
     } else {
       // Model returned no tool calls — natural completion
       reachedMaxTurns = false;
-      break;
+      naturalCompletion = true;
     }
+
+    // Record this turn as one trajectory step, regardless of which path
+    // above it took — a single point so no exit (max-tool-calls, natural
+    // completion, or looping again) skips it.
+    stepCounter++;
+    if (turnUsage) {
+      totalPromptTokens += turnUsage.prompt_tokens;
+      totalCompletionTokens += turnUsage.completion_tokens;
+      if (turnUsage.cost_usd != null) {
+        totalCostUsd = (totalCostUsd ?? 0) + turnUsage.cost_usd;
+        costTracked = true;
+      }
+    }
+    trajectorySteps.push({
+      step_id: stepCounter,
+      timestamp: turnTimestamp,
+      message: assistantMessage,
+      tool_results: turnToolResults.length > 0 ? turnToolResults : undefined,
+      metrics: turnUsage
+        ? {
+            prompt_tokens: turnUsage.prompt_tokens,
+            completion_tokens: turnUsage.completion_tokens,
+            total_tokens: turnUsage.total_tokens,
+            cost_usd: turnUsage.cost_usd,
+          }
+        : undefined,
+    });
+
+    // Break outer loop if tool call limit reached mid-turn or the model
+    // naturally completed (no tool calls returned).
+    if (reachedMaxToolCalls || naturalCompletion) break;
   }
 
   if (reachedMaxToolCalls) {
@@ -306,6 +361,26 @@ async function* runMcpAgent({
       data: { reason: 'max_turns_reached', maxTurns },
     };
   }
+
+  // Emitted last, as one more entry in the flat event array. Old consumers
+  // (e.g. run_eval.py's `type == "message"` filter) ignore it by construction;
+  // new consumers read this one event for the full structured run record.
+  yield {
+    type: 'trajectory',
+    data: {
+      schema_version: 'mcp-atlas-trajectory-v1',
+      session_id: sessionId,
+      task_id: taskId || 'unknown',
+      agent: { name: 'litellm', model_name: model },
+      final_metrics: {
+        total_prompt_tokens: totalPromptTokens,
+        total_completion_tokens: totalCompletionTokens,
+        total_cost_usd: costTracked ? totalCostUsd : null,
+        total_steps: stepCounter,
+      },
+      steps: trajectorySteps,
+    },
+  };
 }
 
 

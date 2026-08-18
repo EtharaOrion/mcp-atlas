@@ -86,8 +86,27 @@ export class LiteLLMAgentCompletionStrategy
 
         const message = AssistantMessageSchema.parse(response.data.choices[0].message);
 
+        // Usage is best-effort: plain OpenAI-compatible endpoints always send
+        // prompt/completion tokens; cost (response_cost / x-litellm fields) is
+        // only present behind a LiteLLM proxy, so leave it undefined otherwise
+        // rather than fabricating a 0.
+        const rawUsage = response.data.usage;
+        const usage = rawUsage
+          ? {
+              prompt_tokens: rawUsage.prompt_tokens ?? 0,
+              completion_tokens: rawUsage.completion_tokens ?? 0,
+              total_tokens: rawUsage.total_tokens,
+              cost_usd:
+                rawUsage.cost ??
+                rawUsage.response_cost ??
+                response.data._hidden_params?.response_cost ??
+                null,
+            }
+          : undefined;
+
         return {
           message,
+          usage,
         };
       } catch (error: any) {
         if (error.response?.status === 429 && attempt < MAX_429_RETRIES) {
