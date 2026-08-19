@@ -40,4 +40,6 @@ results/
 /.scoring-venv312
 
 /model-training-ckpt-codec-recovery
-/vendor
+/vendor/ccbridge/.venv
+
+/vendor/ccbridge/.litellm-venv
