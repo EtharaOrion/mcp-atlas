@@ -40,7 +40,4 @@ results/
 /.scoring-venv312
 
 /model-training-ckpt-codec-recovery
-
-/output
-
 /vendor

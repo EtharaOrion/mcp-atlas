@@ -1,0 +1,63 @@
+{
+  "id": "8ff65fee-dd9b-4acd-bdb5-8034066a88bb",
+  "task_name": "mcp-atlas/688a441c1a0d2e5c93853e76",
+  "trial_name": "688a441c1a0d2e5c9385__1ffa2a9",
+  "trial_uri": "file:///Users/apple/Desktop/mcp-atlas/output/harbor/688a441c1a0d2e5c93853e76/output/trajectory/Run 1",
+  "task_id": {
+    "path": "output/harbor/688a441c1a0d2e5c93853e76"
+  },
+  "source": "MCP-Atlas.parquet",
+  "config": {
+    "task": {
+      "path": "output/harbor/688a441c1a0d2e5c93853e76"
+    },
+    "trial_name": "688a441c1a0d2e5c9385__1ffa2a9",
+    "trials_dir": "output/harbor/688a441c1a0d2e5c93853e76/output",
+    "agent_setup_timeout_multiplier": 6.0,
+    "agent": {
+      "name": "run_eval.py",
+      "model_name": "claude-opus-4-8"
+    },
+    "job_id": "09a3d269-76a1-477b-ba6f-4aed6ac6250e"
+  },
+  "agent_info": {
+    "name": "run_eval.py",
+    "version": null,
+    "model_info": {
+      "name": "claude-opus-4-8",
+      "provider": "anthropic"
+    }
+  },
+  "agent_result": {
+    "n_input_tokens": 2688,
+    "n_cache_tokens": null,
+    "n_output_tokens": 572,
+    "cost_usd": null,
+    "rollout_details": null,
+    "metadata": {
+      "raw_conversation_history_chars": 44978
+    }
+  },
+  "verifier_result": {
+    "rewards": {
+      "reward": 0.0
+    }
+  },
+  "exception_info": null,
+  "started_at": "2026-08-17T13:32:12Z",
+  "finished_at": "2026-08-17T13:35:34Z",
+  "environment_setup": {
+    "started_at": "2026-08-17T13:32:12Z",
+    "finished_at": "2026-08-17T13:34:56Z"
+  },
+  "agent_setup": null,
+  "agent_execution": {
+    "started_at": "2026-08-17T13:34:56Z",
+    "finished_at": "2026-08-17T13:35:34Z"
+  },
+  "verifier": {
+    "started_at": "2026-08-17T13:35:34Z",
+    "finished_at": "2026-08-17T13:35:34Z"
+  },
+  "step_results": null
+}

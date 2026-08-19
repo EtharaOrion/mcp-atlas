@@ -1,0 +1,64 @@
+version = "1.0"
+
+[metadata]
+category = "mcp-tool-use"
+tags = ["mcp"]
+task_id = "688a441c1a0d2e5c93853e76"
+image = "ghcr.io/scaleapi/mcp-atlas:1.2.7"
+"source" = "MCP-Atlas.parquet"
+
+[agent]
+timeout = 1800
+
+[environment]
+cpus = 4
+memory_mb = 8192
+storage_mb = 10240
+
+[[environment.mcp_servers]]
+name = "mcp-server"
+transport = "streamable-http"
+url = "http://localhost:18765/mcp"
+enabled_tools = [
+  "notion_API-get-user",
+  "notion_API-get-users",
+  "notion_API-get-self",
+  "notion_API-retrieve-a-page",
+  "arxiv_search_papers",
+  "lara-translate_translate",
+  "lara-translate_list_languages",
+  "whois_whois_domain",
+  "whois_whois_tld",
+  "whois_whois_ip",
+  "clinicaltrialsgov-mcp-server_clinicaltrials_get_study",
+  "clinicaltrialsgov-mcp-server_clinicaltrials_list_studies",
+  "fetch_fetch",
+  "exa_web_search_exa",
+  "ddg-search_search",
+  "ddg-search_fetch_content",
+]
+
+# Gate the agent launch until the MCP server has finished starting and has
+# registered its tools. Without this, the agent can connect before any tools
+# are available and run with zero tools. The check performs the MCP startup
+# handshake against :18765/mcp and only passes once tools/list is non-empty:
+#   1. initialize             -> response carries an Mcp-Session-Id header
+#   2. notifications/initialized
+#   3. tools/list             -> must contain at least one tool name
+# Harbor runs this via `bash -c <command>` inside the container.
+[environment.healthcheck]
+command = '''set -e; URL=http://localhost:18765/mcp; H1='Content-Type: application/json'; H2='Accept: application/json, text/event-stream'; INIT='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"hc","version":"1"}}}'; SID=$(curl -sD - -X POST $URL -H "$H1" -H "$H2" --data-raw "$INIT" 2>/dev/null | tr -d '\r' | awk 'tolower($1)=="mcp-session-id:"{print $2}'); [ -n "$SID" ] || exit 1; curl -sf -X POST $URL -H "Mcp-Session-Id: $SID" -H "$H1" -H "$H2" --data-raw '{"jsonrpc":"2.0","method":"notifications/initialized"}' -o /dev/null; curl -sf -X POST $URL -H "Mcp-Session-Id: $SID" -H "$H1" -H "$H2" --data-raw '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' | grep -q '"name"' '''
+interval_sec = 5
+timeout_sec = 15
+start_period_sec = 30
+retries = 36
+
+[verifier]
+timeout_sec = 900.0
+
+[verifier.env]
+ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}"
+ANTHROPIC_BASE_URL = "${ANTHROPIC_BASE_URL:-}"
+LITELLM_API_KEY = "${LITELLM_API_KEY:-}"
+LITELLM_BASE_URL = "${LITELLM_BASE_URL:-}"
+JUDGE_MODEL = "claude-sonnet-4-6"

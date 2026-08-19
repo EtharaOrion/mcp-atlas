@@ -1,0 +1,99 @@
+{
+    "id": "e544d886-11cb-442b-9c9d-2385b92ced34",
+    "task_name": "688a441c1a0d2e5c93853e76",
+    "trial_name": "688a441c1a0d2e5c93853e76__qmy3Ujs",
+    "trial_uri": "file:///Users/apple/Desktop/mcp-atlas/output/harbor_jobs/2026-08-17__19-14-16/688a441c1a0d2e5c93853e76__qmy3Ujs",
+    "task_id": {
+        "path": "output/harbor/688a441c1a0d2e5c93853e76"
+    },
+    "source": null,
+    "task_checksum": "a12df662241e73fee8d826acfeac0f0e2a24bcf89f7b30dffeef70c628d87261",
+    "config": {
+        "task": {
+            "path": "output/harbor/688a441c1a0d2e5c93853e76",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": null
+        },
+        "trial_name": "688a441c1a0d2e5c93853e76__qmy3Ujs",
+        "trials_dir": "output/harbor_jobs/2026-08-17__19-14-16",
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": "claude-code",
+            "import_path": null,
+            "model_name": "claude-opus-4-8",
+            "skills": [],
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "extra_allowed_hosts": [],
+            "kwargs": {},
+            "env": {
+                "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
+                "ANTHROPIC_BASE_URL": "http://host.docker.internal:8765"
+            },
+            "mcp_servers": []
+        },
+        "environment": {
+            "type": "docker",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "cpu_enforcement_policy": "auto",
+            "memory_enforcement_policy": "auto",
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "override_tpu": null,
+            "mounts": null,
+            "extra_docker_compose": [],
+            "env": {},
+            "kwargs": {},
+            "extra_allowed_hosts": []
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "env": {},
+            "disable": false
+        },
+        "artifacts": [],
+        "extra_instruction_paths": [],
+        "job_id": "21504680-159f-4db6-a935-12374f0c684c"
+    },
+    "agent_info": {
+        "name": "claude-code",
+        "version": "unknown",
+        "model_info": {
+            "name": "claude-opus-4-8",
+            "provider": null
+        }
+    },
+    "agent_result": null,
+    "verifier_result": null,
+    "exception_info": {
+        "exception_type": "HealthcheckError",
+        "exception_message": "Healthcheck failed after 36 consecutive retries: set -e; URL=http://localhost:18765/mcp; H1='Content-Type: application/json'; H2='Accept: application/json, text/event-stream'; INIT='{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2024-11-05\",\"capabilities\":{},\"clientInfo\":{\"name\":\"hc\",\"version\":\"1\"}}}'; SID=$(curl -sD - -X POST $URL -H \"$H1\" -H \"$H2\" --data-raw \"$INIT\" 2>/dev/null | tr -d '\\r' | awk 'tolower($1)==\"mcp-session-id:\"{print $2}'); [ -n \"$SID\" ] || exit 1; curl -sf -X POST $URL -H \"Mcp-Session-Id: $SID\" -H \"$H1\" -H \"$H2\" --data-raw '{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}' -o /dev/null; curl -sf -X POST $URL -H \"Mcp-Session-Id: $SID\" -H \"$H1\" -H \"$H2\" --data-raw '{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\",\"params\":{}}' | grep -q '\"name\"' ",
+        "exception_traceback": "Traceback (most recent call last):\n  File \"/Users/apple/.local/share/uv/tools/harbor/lib/python3.13/site-packages/harbor/trial/trial.py\", line 295, in run\n    await self._prepare()\n  File \"/Users/apple/.local/share/uv/tools/harbor/lib/python3.13/site-packages/harbor/trial/trial.py\", line 323, in _prepare\n    await self.agent_environment.run_healthcheck()\n  File \"/Users/apple/.local/share/uv/tools/harbor/lib/python3.13/site-packages/harbor/environments/base.py\", line 1202, in run_healthcheck\n    raise HealthcheckError(\n    ...<2 lines>...\n    )\nharbor.environments.base.HealthcheckError: Healthcheck failed after 36 consecutive retries: set -e; URL=http://localhost:18765/mcp; H1='Content-Type: application/json'; H2='Accept: application/json, text/event-stream'; INIT='{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2024-11-05\",\"capabilities\":{},\"clientInfo\":{\"name\":\"hc\",\"version\":\"1\"}}}'; SID=$(curl -sD - -X POST $URL -H \"$H1\" -H \"$H2\" --data-raw \"$INIT\" 2>/dev/null | tr -d '\\r' | awk 'tolower($1)==\"mcp-session-id:\"{print $2}'); [ -n \"$SID\" ] || exit 1; curl -sf -X POST $URL -H \"Mcp-Session-Id: $SID\" -H \"$H1\" -H \"$H2\" --data-raw '{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}' -o /dev/null; curl -sf -X POST $URL -H \"Mcp-Session-Id: $SID\" -H \"$H1\" -H \"$H2\" --data-raw '{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\",\"params\":{}}' | grep -q '\"name\"' \n",
+        "occurred_at": "2026-08-17T19:17:52.750451"
+    },
+    "started_at": "2026-08-17T13:44:17.060281Z",
+    "finished_at": "2026-08-17T13:48:04.094660Z",
+    "environment_setup": {
+        "started_at": "2026-08-17T13:44:17.100960Z",
+        "finished_at": "2026-08-17T13:44:20.499144Z"
+    },
+    "agent_setup": null,
+    "agent_execution": null,
+    "verifier": null,
+    "step_results": null
+}

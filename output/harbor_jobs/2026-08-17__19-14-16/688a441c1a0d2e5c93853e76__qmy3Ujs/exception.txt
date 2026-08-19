@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/Users/apple/.local/share/uv/tools/harbor/lib/python3.13/site-packages/harbor/trial/trial.py", line 295, in run
+    await self._prepare()
+  File "/Users/apple/.local/share/uv/tools/harbor/lib/python3.13/site-packages/harbor/trial/trial.py", line 323, in _prepare
+    await self.agent_environment.run_healthcheck()
+  File "/Users/apple/.local/share/uv/tools/harbor/lib/python3.13/site-packages/harbor/environments/base.py", line 1202, in run_healthcheck
+    raise HealthcheckError(
+    ...<2 lines>...
+    )
+harbor.environments.base.HealthcheckError: Healthcheck failed after 36 consecutive retries: set -e; URL=http://localhost:18765/mcp; H1='Content-Type: application/json'; H2='Accept: application/json, text/event-stream'; INIT='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"hc","version":"1"}}}'; SID=$(curl -sD - -X POST $URL -H "$H1" -H "$H2" --data-raw "$INIT" 2>/dev/null | tr -d '\r' | awk 'tolower($1)=="mcp-session-id:"{print $2}'); [ -n "$SID" ] || exit 1; curl -sf -X POST $URL -H "Mcp-Session-Id: $SID" -H "$H1" -H "$H2" --data-raw '{"jsonrpc":"2.0","method":"notifications/initialized"}' -o /dev/null; curl -sf -X POST $URL -H "Mcp-Session-Id: $SID" -H "$H1" -H "$H2" --data-raw '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' | grep -q '"name"' 

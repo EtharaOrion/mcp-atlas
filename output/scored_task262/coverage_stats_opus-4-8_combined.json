@@ -1,0 +1,23 @@
+{
+  "all": {
+    "model_name": "opus-4-8",
+    "evaluator_model": "anthropic/claude-sonnet-5",
+    "total_tasks": 1,
+    "valid_responses": 1,
+    "empty_or_error": 0,
+    "tasks_with_scraping_errors": 0,
+    "clean_runs": 1,
+    "mean_coverage": 1.0,
+    "pass_rate_0.50": 100.0,
+    "pass_rate_0.75": 100.0,
+    "run_config": {
+      "strategy": null,
+      "max_turns": null,
+      "max_tool_calls": null,
+      "tool_output_cap": null,
+      "context_window_management": null,
+      "reasoning_effort": null,
+      "extra_llm_params": null
+    }
+  }
+}

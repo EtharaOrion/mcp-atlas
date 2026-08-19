@@ -1,0 +1,13 @@
+{
+  "model": "anthropic/claude-opus-4-8",
+  "strategy": null,
+  "max_turns": null,
+  "max_tool_calls": null,
+  "tool_output_cap": null,
+  "context_window_management": null,
+  "reasoning_effort": null,
+  "extra_llm_params": null,
+  "concurrency": 5,
+  "num_tasks": null,
+  "image": "ghcr.io/scaleapi/mcp-atlas:1.2.7"
+}

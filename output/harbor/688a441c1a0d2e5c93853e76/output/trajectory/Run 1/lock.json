@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "task": {
+    "name": "688a441c1a0d2e5c93853e76",
+    "type": "local",
+    "path": "output/harbor/688a441c1a0d2e5c93853e76"
+  },
+  "install_only": false,
+  "timeout_multiplier": 1.0,
+  "agent_setup_timeout_multiplier": 6.0,
+  "agent": {
+    "name": "run_eval.py",
+    "model_name": "claude-opus-4-8",
+    "skills": [],
+    "resume_trajectory": false,
+    "extra_allowed_hosts": [],
+    "kwargs": {},
+    "mcp_servers": []
+  },
+  "environment": {
+    "type": "docker-compose (mcp-atlas run_all.sh)",
+    "force_build": false
+  },
+  "verifier": {
+    "disable": false
+  }
+}
