@@ -26,20 +26,31 @@ def _make_task_bundle(tasks_dir: Path, task_id: str, weights: dict) -> None:
     )
 
 
+
+async def _score_row(row, **kwargs):
+    """Call sw.score_row with a semaphore built inside the running loop.
+
+    asyncio.Semaphore() binds to the current event loop at construction time
+    on Python <= 3.9, so constructing one at call-argument position (outside
+    asyncio.run) raises "There is no current event loop".
+    """
+    return await sw.score_row(row, semaphore=asyncio.Semaphore(4), **kwargs)
+
+
 def test_score_row_task_never_opted_in(tmp_path):
     tasks_dir = tmp_path / "tasks"
     tasks_dir.mkdir()
     row = {"task_id": "t1", "run_trajectory_json": json.dumps(TRAJECTORY), "response": "final answer"}
-    result = asyncio.run(sw.score_row(
-        row, tasks_dir=tasks_dir, model_name="m", rubric_evaluator=None, semaphore=asyncio.Semaphore(4),
+    result = asyncio.run(_score_row(
+        row, tasks_dir=tasks_dir, model_name="m", rubric_evaluator=None,
     ))
     assert result["weighted_reward"] == ""
 
 
 def test_score_row_no_tasks_dir(tmp_path):
     row = {"task_id": "t1", "run_trajectory_json": json.dumps(TRAJECTORY), "response": "final answer"}
-    result = asyncio.run(sw.score_row(
-        row, tasks_dir=None, model_name="m", rubric_evaluator=None, semaphore=asyncio.Semaphore(4),
+    result = asyncio.run(_score_row(
+        row, tasks_dir=None, model_name="m", rubric_evaluator=None,
     ))
     assert result["weighted_reward"] == ""
 
@@ -50,8 +61,8 @@ def test_score_row_traj_only(tmp_path):
         "components": {"traj_tests": {"weight": 1, "tests": {"test_goal": 1}}}
     })
     row = {"task_id": "t1", "run_trajectory_json": json.dumps(TRAJECTORY), "response": "final answer"}
-    result = asyncio.run(sw.score_row(
-        row, tasks_dir=tasks_dir, model_name="m", rubric_evaluator=None, semaphore=asyncio.Semaphore(4),
+    result = asyncio.run(_score_row(
+        row, tasks_dir=tasks_dir, model_name="m", rubric_evaluator=None,
     ))
     assert result["weighted_reward"] == 1.0
     assert result["traj_tests_value"] == 1.0
@@ -66,8 +77,8 @@ def test_score_row_falls_back_to_raw_conversation_history(tmp_path):
         "components": {"traj_tests": {"weight": 1, "tests": {"test_goal": 1}}}
     })
     row = {"task_id": "t1", "run_trajectory_json": "", "raw_conversation_history": json.dumps(TRAJECTORY), "response": "final answer"}
-    result = asyncio.run(sw.score_row(
-        row, tasks_dir=tasks_dir, model_name="m", rubric_evaluator=None, semaphore=asyncio.Semaphore(4),
+    result = asyncio.run(_score_row(
+        row, tasks_dir=tasks_dir, model_name="m", rubric_evaluator=None,
     ))
     assert result["weighted_reward"] == 1.0
 
@@ -81,8 +92,8 @@ def test_score_row_rubric_weight_without_evaluator_skips_channel_b(tmp_path):
         }
     })
     row = {"task_id": "t1", "run_trajectory_json": json.dumps(TRAJECTORY), "response": "final answer"}
-    result = asyncio.run(sw.score_row(
-        row, tasks_dir=tasks_dir, model_name="m", rubric_evaluator=None, semaphore=asyncio.Semaphore(4),
+    result = asyncio.run(_score_row(
+        row, tasks_dir=tasks_dir, model_name="m", rubric_evaluator=None,
     ))
     # rubric_evaluator=None -> Channel B skipped, only traj_tests counts
     assert result["weighted_reward"] == 1.0

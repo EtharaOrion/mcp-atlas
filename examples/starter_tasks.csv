@@ -1,0 +1,11 @@
+TASK,ENABLED_TOOLS,PROMPT,GTFA_CLAIMS
+calc-smoke,"[""calculator_calculate""]","Using the calculator tool available to you, compute (1447 * 89) - 2024.
+Do not compute it yourself -- use the tool.
+Report the final numeric result on its own line.","[""The response reports 126759 as the result of (1447 * 89) - 2024."", ""The agent's trajectory shows at least one call to the calculator_calculate tool.""]"
+arxiv-openlibrary-cross,"[""arxiv_search_papers"", ""open-library_get_book_by_title"", ""calculator_calculate""]","Use the tools available to you to answer all three parts. Do not answer from memory.
+
+1. Search arXiv for the paper titled ""Attention Is All You Need"" and report its arXiv identifier.
+2. Look up the book ""The Hitchhiker's Guide to the Galaxy"" on Open Library and report its author.
+3. The arXiv paper was published in 2017 and the book was first published in 1979. Use the calculator tool to compute the number of years between them.
+
+Give your final answer as three labelled lines.","[""The response identifies the arXiv identifier of \""Attention Is All You Need\"" as 1706.03762."", ""The response identifies Douglas Adams as the author of \""The Hitchhiker's Guide to the Galaxy\""."", ""The response reports 38 as the number of years between 1979 and 2017."", ""The agent's trajectory shows a call to arxiv_search_papers."", ""The agent's trajectory shows a call to open-library_get_book_by_title."", ""The agent's trajectory shows a call to calculator_calculate.""]"

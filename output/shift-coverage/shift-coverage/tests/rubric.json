@@ -1,0 +1,38 @@
+[
+  {
+    "id": "claim_000",
+    "text": "The response states that 4 night shifts were staffed by personnel without the 'night' certification.",
+    "weight": 2,
+    "is_positive": true
+  },
+  {
+    "id": "claim_001",
+    "text": "The response lists the non-compliant shift ids as SH-1003, SH-1006, SH-1010 and SH-1014.",
+    "weight": 3,
+    "is_positive": true
+  },
+  {
+    "id": "claim_002",
+    "text": "The response reports the total uncovered hours as 38.",
+    "weight": 3,
+    "is_positive": true
+  },
+  {
+    "id": "claim_003",
+    "text": "The response identifies S-02 (Tomas Okafor), S-04 (Dara Whitfield) and S-06 (Jonah Behrends) as the uncertified staff involved.",
+    "weight": 2,
+    "is_positive": true
+  },
+  {
+    "id": "claim_004",
+    "text": "The response does not flag any day shift as non-compliant.",
+    "weight": 1,
+    "is_positive": true
+  },
+  {
+    "id": "claim_005",
+    "text": "The response does not flag any shift staffed by S-01, S-03 or S-05, all of whom hold the night certification.",
+    "weight": 2,
+    "is_positive": true
+  }
+]

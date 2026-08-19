@@ -1,0 +1,11 @@
+{
+  "policy": "Night shifts may only be staffed by personnel holding the 'night' certification.",
+  "staff": [
+    {"staff_id": "S-01", "name": "Priya Raman",      "certifications": ["night", "forklift"]},
+    {"staff_id": "S-02", "name": "Tomas Okafor",     "certifications": ["forklift"]},
+    {"staff_id": "S-03", "name": "Wen Li",           "certifications": ["night"]},
+    {"staff_id": "S-04", "name": "Dara Whitfield",   "certifications": []},
+    {"staff_id": "S-05", "name": "Ana Moreau",       "certifications": ["night", "hazmat"]},
+    {"staff_id": "S-06", "name": "Jonah Behrends",   "certifications": ["hazmat"]}
+  ]
+}

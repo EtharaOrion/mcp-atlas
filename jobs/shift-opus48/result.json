@@ -1,0 +1,20 @@
+{
+    "id": "e52868a3-e257-4fcc-af0d-6856f6b27266",
+    "started_at": "2026-08-19T14:48:46.249344",
+    "updated_at": "2026-08-19T09:18:46.388447Z",
+    "finished_at": null,
+    "n_total_trials": 2,
+    "stats": {
+        "n_completed_trials": 0,
+        "n_errored_trials": 0,
+        "n_running_trials": 2,
+        "n_pending_trials": 0,
+        "n_cancelled_trials": 0,
+        "n_retries": 0,
+        "evals": {},
+        "n_input_tokens": null,
+        "n_cache_tokens": null,
+        "n_output_tokens": null,
+        "cost_usd": null
+    }
+}

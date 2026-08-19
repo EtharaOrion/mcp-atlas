@@ -5,7 +5,16 @@ import json
 import sys
 from pathlib import Path
 
-from adapter import MCPAtlasLoader, MCPAtlasToHarbor, DEFAULT_IMAGE, DEFAULT_JUDGE_MODEL, DEFAULT_AGENT_TIMEOUT
+from adapter import (
+    MCPAtlasLoader,
+    MCPAtlasToHarbor,
+    DEFAULT_AGENT_TIMEOUT,
+    DEFAULT_IMAGE,
+    DEFAULT_JUDGE_MODEL,
+    DEFAULT_NETWORK_MODE,
+    DEFAULT_ORG,
+    DEFAULT_SANDBOX_PORT,
+)
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -27,6 +36,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--image", default=DEFAULT_IMAGE)
     p.add_argument("--judge-model", default=DEFAULT_JUDGE_MODEL)
     p.add_argument("--agent-timeout", type=int, default=DEFAULT_AGENT_TIMEOUT)
+    p.add_argument("--org", default=DEFAULT_ORG, metavar="NAME",
+                   help="Package org for [task].name (org/task_id). Harbor's registry "
+                        "requires it; also what `harbor task update --org` would set.")
+    p.add_argument("--network-mode", default=DEFAULT_NETWORK_MODE, metavar="MODE",
+                   help="Harbor [environment].network_mode. MCP-Atlas tasks reach live "
+                        "third-party APIs, so this defaults to 'public'.")
+    p.add_argument("--sandbox-port", type=int, default=DEFAULT_SANDBOX_PORT, metavar="PORT",
+                   help="Port the mcp-atlas sidecar serves its REST API on.")
     p.add_argument("--weighted", action="store_true",
                    help="Also scaffold weighted-grading files (tests/test_weights.json, "
                         "test_outputs.py, rubric.json, weighted_judge*.py). Inert by default "
@@ -48,6 +65,9 @@ def main(argv: list[str] | None = None) -> int:
         judge_model=args.judge_model,
         agent_timeout=args.agent_timeout,
         weighted=args.weighted,
+        org=args.org,
+        network_mode=args.network_mode,
+        sandbox_port=args.sandbox_port,
     )
 
     ids = set(args.task_ids) if args.task_ids else None

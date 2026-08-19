@@ -1,0 +1,5 @@
+filesystem_list_directory
+filesystem_read_text_file
+filesystem_write_file
+filesystem_create_directory
+mcp-code-executor_execute_code

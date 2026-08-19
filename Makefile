@@ -52,8 +52,20 @@ run-eval: # run the full HuggingFace eval (usage: make run-eval MODEL=... OUTPUT
 	python run_eval.py --model "$(MODEL)" --output "$(OUTPUT)"
 
 # ---------------------------------------------------------------------------
-# Tests (agent-environment unit tests; run by CI)
+# Tests (run by CI)
 # ---------------------------------------------------------------------------
+# PYTHON must be >= 3.11: the adapter tests parse generated task.toml with
+# tomllib. Older interpreters skip those assertions rather than fail, which
+# would quietly stop guarding the Harbor bundle shape.
+PYTEST_PYTHON ?= python3
 
-test: # verify mcp_server_template.json and install_mcp_packages.sh stay in sync
+test: test-env test-python # run every test suite
+
+test-env: # verify mcp_server_template.json and install_mcp_packages.sh stay in sync
 	cd services/agent-environment && uv sync && uv run pytest
+
+test-python: # adapter + scoring + mcp_eval unit tests (no Docker, no network)
+	$(PYTEST_PYTHON) -m pytest adapters services/scoring/tests services/mcp_eval/tests -q
+
+smoke: # end-to-end bundle generation + Harbor validation (no Docker, no network)
+	$(PYTEST_PYTHON) scripts/smoke_test.py

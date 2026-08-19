@@ -1,0 +1,16 @@
+{
+    "job_name": "shift-opus48",
+    "n_attempts": 2,
+    "environment_build_timeout_multiplier": 3.0,
+    "agents": [
+        {
+            "name": "claude-code",
+            "model_name": "claude-opus-4-8"
+        }
+    ],
+    "tasks": [
+        {
+            "path": "output/shift-coverage/shift-coverage"
+        }
+    ]
+}

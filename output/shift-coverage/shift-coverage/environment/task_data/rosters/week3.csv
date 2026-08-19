@@ -1,0 +1,6 @@
+shift_id,date,shift_type,staff_id,hours
+SH-1011,2026-04-20,night,S-03,10
+SH-1012,2026-04-21,day,S-02,8
+SH-1013,2026-04-22,night,S-01,11
+SH-1014,2026-04-23,night,S-04,7
+SH-1015,2026-04-24,day,S-05,8

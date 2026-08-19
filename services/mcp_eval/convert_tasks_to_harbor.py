@@ -1,6 +1,28 @@
 #!/usr/bin/env python3
 """Convert MCP tool-use tasks (CSV or JSONL) into Harbor task bundles.
 
+DEPRECATED for MCP-Atlas bundles -- use ``adapters/mcp_atlas/run_adapter.py``.
+--------------------------------------------------------------------------
+This script targets a *generic* MCP image that already serves the MCP
+protocol over streamable-http (see the requirements below), and it emits the
+Harbor 1.0 task schema. ``ghcr.io/scaleapi/mcp-atlas`` does not meet that
+contract: it serves a bespoke REST API on :1984 and no MCP endpoint at all,
+so bundles rendered here never pass Harbor's environment healthcheck and the
+agent never starts (this is why services/mcp_eval/harborize_trajectory.py
+exists). Harbor 0.20's schema is 1.3, and the 1.0 ``[agent] timeout`` key it
+writes is dropped during migration.
+
+adapters/mcp_atlas/adapter.py is the canonical generator for this repo: it
+emits schema 1.3, declares a stdio MCP server backed by
+adapters/mcp_atlas/mcp_rest_bridge.py (which translates MCP to the sandbox's
+REST API), and ships a compose file with the ``main`` service Harbor runs the
+agent in.
+
+This module is retained because it still owns the shared templates the
+adapter imports (TEST_SH, AGENT_JUDGE_TEMPLATE, the weighted-grading kit) and
+because its generic-MCP-image path may suit other images. Do not use its
+bundle output for MCP-Atlas.
+
 Each input row becomes one Harbor (https://github.com/harbor-framework/harbor)
 task bundle under ``OUT/<task_id>/``:
 
@@ -209,12 +231,28 @@ def main(
         rubric_value = None
         rubric_rows = []
         breakdown_path = out_dir / "rubric_breakdown.json"
+        rubric_file = tests_dir / "rubric.json"
         if weights.rubric.weight and breakdown_path.exists():
             breakdown = json.loads(breakdown_path.read_text())
-            # agent_judge.py's own all_pass aggregate score (already in
-            # [0, 1]) — reused directly as this task's Channel B value.
-            rubric_value = breakdown.get("score")
-            rubric_rows = breakdown.get("results", [])
+            per_criterion = breakdown.get("results", [])
+            if rubric_file.exists() and per_criterion:
+                # Weighted Channel B: agent_judge.py already judged every
+                # criterion, so reuse its per-criterion verdicts and apply
+                # this task's own weights and polarity. No extra LLM calls.
+                # Without a rubric.json we fall back to agent_judge.py's
+                # all_pass aggregate, which is all-or-nothing across every
+                # criterion.
+                import rubric_weighted as rw
+
+                criteria = rw.parse_rubric(json.loads(rubric_file.read_text()))
+                by_id = {str(r.get("id")): r for r in per_criterion}
+                verdicts = [by_id.get(c.id, {"score": 0.0}) for c in criteria]
+                scored = rw.score_verdicts(criteria, verdicts)
+                rubric_value = scored["value"]
+                rubric_rows = scored["rows"]
+            else:
+                rubric_value = breakdown.get("score")
+                rubric_rows = per_criterion
 
         result = wj.judge_weighted(
             test_weights_file=weights_file,
@@ -816,6 +854,20 @@ def main() -> int:
                 print(f"  rendered {n} tasks...")
         except Exception as e:
             skipped.append((row.get("task_id", "<missing>"), f"{type(e).__name__}: {e}"))
+
+    if "mcp-atlas" in args.image:
+        # Loud, not fatal: rendering still succeeds, but the operator needs to
+        # know these bundles cannot pass a Harbor healthcheck. Silent drift
+        # between this script and adapters/mcp_atlas/adapter.py is what let
+        # broken bundles ship unnoticed.
+        print(
+            "\nWARNING: --image looks like an mcp-atlas image, but this script emits\n"
+            "         the Harbor 1.0 schema and expects a streamable-http MCP endpoint\n"
+            f"         on :{args.mcp_port}, which that image does not serve. The bundles\n"
+            "         will fail Harbor's environment healthcheck before the agent starts.\n"
+            "         Use: python3 adapters/mcp_atlas/run_adapter.py --output-dir ...\n",
+            file=sys.stderr,
+        )
 
     print(f"\nDone. Rendered {n} task bundles into {args.out}")
     if by_image:
