@@ -6,7 +6,7 @@ agent:
   timeout_sec: 1800
 
 parity:
-  agent_import_path: "adapters/mcp-atlas/mcp_atlas_parity_agent.py:MCPAtlasParityAgent"
+  agent_import_path: "adapters.mcp_atlas.mcp_atlas_parity_agent:MCPAtlasParityAgent"
   model: claude-sonnet-4-6
   max_turns: 50
   concurrency: 5

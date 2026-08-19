@@ -1,6 +1,6 @@
 {
   "experiment": "mcp-atlas-parity",
-  "agent_import_path": "adapters/mcp-atlas/mcp_atlas_parity_agent.py:MCPAtlasParityAgent",
+  "agent_import_path": "adapters.mcp_atlas.mcp_atlas_parity_agent:MCPAtlasParityAgent",
   "model": "claude-sonnet-4-6",
   "n_tasks": 100,
   "split": "parity",
