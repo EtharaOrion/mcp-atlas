@@ -143,3 +143,77 @@ def test_opted_in_rubric_reuses_agent_judge_breakdown(tmp_path):
     assert result == {"reward": 0.5}
     detail = json.loads((out_dir / "detail.json").read_text())
     assert detail["ledger"]["rubric"] == {"weight": 1.0, "value": 0.5}
+
+
+def _write_claude_code_trajectory(agent_dir: Path) -> None:
+    """The stream-json dialect Harbor's claude-code agent writes to
+    /logs/agent/claude-code.txt: tool calls are `tool_use` content blocks on
+    `type: assistant` events, results are `tool_result` blocks on `type: user`
+    events, and MCP tools are namespaced `mcp__<server>__<tool>`."""
+    agent_dir.mkdir(parents=True, exist_ok=True)
+    lines = [
+        json.dumps({"type": "system", "subtype": "init", "tools": ["mcp__mcp-atlas__search"]}),
+        json.dumps({"type": "assistant", "message": {"role": "assistant", "content": [
+            {"type": "text", "text": "Looking it up."},
+            {"type": "tool_use", "id": "toolu_1", "name": "mcp__mcp-atlas__search",
+             "input": {"query": "xenon"}},
+        ]}}),
+        json.dumps({"type": "user", "message": {"role": "user", "content": [
+            {"type": "tool_result", "tool_use_id": "toolu_1",
+             "content": [{"type": "text", "text": "Xenon, 54"}]},
+        ]}}),
+        json.dumps({"type": "assistant", "message": {"role": "assistant", "content": [
+            {"type": "tool_use", "id": "toolu_2", "name": "Bash", "input": {"command": "echo hi"}},
+        ]}}),
+        json.dumps({"type": "result", "subtype": "success", "result": "54"}),
+    ]
+    (agent_dir / "claude-code.txt").write_text("\n".join(lines), encoding="utf-8")
+
+
+def test_parses_claude_code_stream_json_and_strips_mcp_prefix(tmp_path):
+    """Regression: with Harbor's claude-code agent, Channel A used to see zero
+    tool calls (wrong event shape + `mcp__<server>__` prefix) and every task
+    scored 0 on traj_tests regardless of what the agent did."""
+    tests_dir = tmp_path / "tests"
+    tests_dir.mkdir()
+    agent_dir = tmp_path / "logs" / "agent"
+    out_dir = tmp_path / "logs" / "verifier"
+    out_dir.mkdir(parents=True)
+
+    (tests_dir / "test_weights.json").write_text(json.dumps({
+        "components": {"traj_tests": {"weight": 1, "tests": {
+            "test_used_search": 1, "test_search_args": 1, "test_saw_bash": 1}},
+            "rubric": {"weight": 0}}
+    }), encoding="utf-8")
+    (tests_dir / "test_outputs.py").write_text(
+        'from traj_asserts import called_any, calls\n'
+        'def test_used_search():\n'
+        '    assert called_any("search")\n'
+        'def test_search_args():\n'
+        '    assert any(c.name == "search" and c.arguments.get("query") == "xenon" for c in calls())\n'
+        'def test_saw_bash():\n'
+        '    assert called_any("Bash")\n',
+        encoding="utf-8",
+    )
+    _write_claude_code_trajectory(agent_dir)
+
+    module = _load_entry_module(tests_dir)
+
+    messages, response = module.load_flat_messages_and_response(str(agent_dir / "claude-code.txt"))
+    assert response == "54"
+    names = [tc["function"]["name"] for m in messages for tc in (m.get("tool_calls") or [])]
+    assert names == ["search", "Bash"]
+    assert any(m.get("role") == "tool" and m.get("tool_call_id") == "toolu_1" for m in messages)
+
+    module.main(agent_dir=agent_dir, out_dir=out_dir, tests_dir=tests_dir)
+    assert json.loads((out_dir / "reward.json").read_text()) == {"reward": 1.0}
+
+
+def test_openai_dialect_also_strips_mcp_prefix(tmp_path):
+    tests_dir = tmp_path / "tests"
+    tests_dir.mkdir()
+    agent_dir = tmp_path / "logs" / "agent"
+    _write_trajectory(agent_dir, tool_name="mcp__mcp-atlas__search")
+    module = _load_entry_module(tests_dir)
+    messages, _ = module.load_flat_messages_and_response(str(agent_dir / "trajectory.txt"))
+    assert messages[0]["tool_calls"][0]["function"]["name"] == "search"

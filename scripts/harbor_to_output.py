@@ -1,0 +1,782 @@
+#!/usr/bin/env python3
+"""Reshape a Harbor job directory (jobs/<job>/) into the per-task ``output/``
+layout complex-mcp's ``--layout harbor`` writer emits, so mcp-atlas task runs
+and complex-mcp task runs land in one consistent shape:
+
+    output/<task-slug>/
+    ├── config.json  lock.json  result.json          (Harbor job files, verbatim)
+    ├── summary.json  pass_summary.json  passk_summary.json  report.md
+    ├── trajectory/Run_N/                            (one per trial, Harbor-shaped)
+    │   ├── agent/{claude-code.txt, trajectory.json}
+    │   ├── logs/{agent-stream.txt, verifier-ctrf.json, verifier-reward.txt, verifier-stdout.txt}
+    │   ├── verifier/{ctrf.json, reward.txt, test-stdout.txt, reward.json, detail.json, rubric_breakdown.json}
+    │   ├── config.json  lock.json  result.json  report.json
+    └── .raw/trials_<slug>/                          (flat analysis tree)
+        ├── summary.json  pairs.jsonl  failure_analysis.json
+        ├── ground_truth/{rubric.json, gold_plan.json, efs.json, test_weights.json}   (whatever the task ships)
+        └── trajectories/<model>/run_N/{agent/trajectory.json, agent/trajectory.messages.json,
+              agent.log, ctrf.json, detail.json, diagnosis.json, report.json, reward.json,
+              reward.txt, rubric.json, trace.jsonl, verifier/...}
+
+mcp-atlas tasks grade two channels (traj_tests = Channel A pytest over tool
+calls, rubric = Channel B LLM-judged claims). The complex-mcp-only channels
+(state_completion / state_misbehave / graph_plan) have no data here and are
+emitted as absent (weight 0, value null) rather than fabricated.
+
+Usage:
+    python scripts/harbor_to_output.py jobs/xenon-opus-2 [--output-dir output] [--copy-to DIR]
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import shutil
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO / "services" / "mcp_eval"))
+
+PASS_THRESHOLD_DEFAULT = 0.5
+MCP_PREFIX = "mcp__"
+
+# Claude Code built-ins -- not MCP tools, so they don't count as "valid" task
+# tool calls but are not "invalid" either (they're always callable).
+BUILTIN_TOOLS = {
+    "Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "WebSearch",
+    "ToolSearch", "Task", "Agent", "TodoWrite", "NotebookEdit", "Skill",
+    "AskUserQuestion", "KillShell", "BashOutput", "ExitPlanMode", "EnterPlanMode",
+}
+
+
+# ---------------------------------------------------------------------------
+# helpers
+# ---------------------------------------------------------------------------
+
+def _load(p: Path, default=None):
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return default
+
+
+def _dump(p: Path, obj) -> None:
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def _copy(src: Path, dst: Path) -> bool:
+    if not src.exists():
+        return False
+    if dst.exists() and src.resolve() == dst.resolve():
+        return True  # in-place mode: already where it belongs
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    if src.is_dir():
+        shutil.copytree(src, dst, dirs_exist_ok=True)
+    else:
+        shutil.copy2(src, dst)
+    return True
+
+
+def _r4(x):
+    return None if x is None else round(float(x), 4)
+
+
+def _pct(x):
+    return None if x is None else round(float(x) * 100, 2)
+
+
+def _strip_mcp(name: str) -> str:
+    if isinstance(name, str) and name.startswith(MCP_PREFIX):
+        rest = name[len(MCP_PREFIX):]
+        if "__" in rest:
+            return rest.split("__", 1)[1]
+    return name
+
+
+def _slug(task_name: str) -> str:
+    return task_name.rsplit("/", 1)[-1]
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+
+
+# ---------------------------------------------------------------------------
+# trajectory parsing (Claude Code stream-json)
+# ---------------------------------------------------------------------------
+
+def parse_stream(path: Path) -> dict:
+    """Walk claude-code.txt once and pull out everything the reports need."""
+    out = {
+        "messages": [],        # flat OpenAI-shaped messages
+        "trace": [],           # per tool call: step, tool, args, result, is_error
+        "instruction": None,
+        "final_answer": "",
+        "valid": 0, "invalid": 0, "error": 0,
+        "tool_cnt": {},
+        "usage": None,
+        "termination_reason": None,
+    }
+    if not path.exists():
+        return out
+    pending: dict[str, dict] = {}
+    step = 0
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            ev = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(ev, dict):
+            continue
+        et = ev.get("type")
+        msg = ev.get("message") or {}
+        content = msg.get("content")
+        if et == "assistant" and isinstance(content, list):
+            texts, tcs = [], []
+            for b in content:
+                if not isinstance(b, dict):
+                    continue
+                if b.get("type") == "text" and b.get("text"):
+                    texts.append(b["text"])
+                elif b.get("type") == "tool_use":
+                    step += 1
+                    raw = b.get("name", "")
+                    name = _strip_mcp(raw)
+                    is_mcp = raw.startswith(MCP_PREFIX)
+                    rec = {"step": step, "tool": name, "raw_tool": raw, "mcp": is_mcp,
+                           "arguments": b.get("input") or {}, "result": None, "is_error": False}
+                    pending[b.get("id")] = rec
+                    out["trace"].append(rec)
+                    tcs.append({"id": b.get("id"), "type": "function",
+                                "function": {"name": name, "arguments": json.dumps(b.get("input") or {})}})
+            am = {"role": "assistant", "content": "\n".join(texts)}
+            if tcs:
+                am["tool_calls"] = tcs
+            out["messages"].append(am)
+        elif et == "user" and isinstance(content, list):
+            for b in content:
+                if not isinstance(b, dict) or b.get("type") != "tool_result":
+                    continue
+                rc = b.get("content")
+                if isinstance(rc, list):
+                    rc = "\n".join(x.get("text", "") for x in rc if isinstance(x, dict) and x.get("type") == "text")
+                rc = rc if isinstance(rc, str) else json.dumps(rc)
+                err = bool(b.get("is_error"))
+                rec = pending.get(b.get("tool_use_id"))
+                if rec is not None:
+                    rec["result"] = rc[:2000]
+                    rec["is_error"] = err
+                out["messages"].append({"role": "tool", "tool_call_id": b.get("tool_use_id"), "content": rc,
+                                        **({"is_error": True} if err else {})})
+        elif et == "message" and isinstance(msg, dict) and msg.get("role"):
+            # OpenAI-shaped dialect (oracle / parity agent)
+            role = msg.get("role")
+            if role == "assistant":
+                tcs = []
+                for tc in msg.get("tool_calls") or []:
+                    fn = tc.get("function") or {}
+                    step += 1
+                    raw = fn.get("name", "")
+                    name = _strip_mcp(raw)
+                    try:
+                        args = json.loads(fn.get("arguments") or "{}") if isinstance(fn.get("arguments"), str) else (fn.get("arguments") or {})
+                    except json.JSONDecodeError:
+                        args = {"_raw": fn.get("arguments")}
+                    rec = {"step": step, "tool": name, "raw_tool": raw, "mcp": True,
+                           "arguments": args, "result": None, "is_error": False}
+                    pending[tc.get("id")] = rec
+                    out["trace"].append(rec)
+                    tcs.append({"id": tc.get("id"), "type": "function",
+                                "function": {"name": name, "arguments": json.dumps(args)}})
+                am = {"role": "assistant", "content": msg.get("content") or ""}
+                if tcs:
+                    am["tool_calls"] = tcs
+                out["messages"].append(am)
+            elif role == "tool":
+                rc = msg.get("content")
+                rc = rc if isinstance(rc, str) else json.dumps(rc)
+                rec = pending.get(msg.get("tool_call_id"))
+                if rec is not None:
+                    rec["result"] = rc[:2000]
+                    rec["is_error"] = bool(msg.get("is_error"))
+                out["messages"].append({"role": "tool", "tool_call_id": msg.get("tool_call_id"), "content": rc})
+            elif role == "user":
+                if out["instruction"] is None and isinstance(msg.get("content"), str):
+                    out["instruction"] = msg["content"]
+                out["messages"].append({"role": "user", "content": msg.get("content")})
+        elif et == "user" and isinstance(content, str) and out["instruction"] is None:
+            out["instruction"] = content
+            out["messages"].append({"role": "user", "content": content})
+        elif et == "result":
+            out["final_answer"] = ev.get("result") or ""
+            out["termination_reason"] = ev.get("subtype") or ("error" if ev.get("is_error") else "end")
+            u = ev.get("usage") or {}
+            if u:
+                out["usage"] = {
+                    "input_tokens": u.get("input_tokens"),
+                    "output_tokens": u.get("output_tokens"),
+                    "cache_read_tokens": u.get("cache_read_input_tokens"),
+                    "cache_creation_tokens": u.get("cache_creation_input_tokens"),
+                    "reasoning_tokens": None,
+                    "cost_usd": ev.get("total_cost_usd"),
+                }
+    # classify calls
+    for rec in out["trace"]:
+        key = rec["tool"]
+        bucket = out["tool_cnt"].setdefault(key, {})
+        if rec["is_error"]:
+            out["error"] += 1
+            bucket["error"] = bucket.get("error", 0) + 1
+        elif rec["mcp"]:
+            out["valid"] += 1
+            bucket["ok"] = bucket.get("ok", 0) + 1
+        elif rec["raw_tool"] in BUILTIN_TOOLS:
+            bucket["builtin"] = bucket.get("builtin", 0) + 1
+        else:
+            out["invalid"] += 1
+            bucket["invalid"] = bucket.get("invalid", 0) + 1
+    return out
+
+
+def _enabled_tools(task_dir: Path | None) -> list[str]:
+    if not task_dir:
+        return []
+    p = task_dir / "environment" / "enabled_tools.txt"
+    if p.exists():
+        return [l.strip() for l in p.read_text().splitlines() if l.strip()]
+    return []
+
+
+# ---------------------------------------------------------------------------
+# per-trial reshaping
+# ---------------------------------------------------------------------------
+
+def classify_failure(passed: bool, traj_rows: list[dict], rubric_rows: list[dict],
+                     stream: dict, exception: dict | None) -> tuple[str, str]:
+    if exception:
+        return "infrastructure", f"{exception.get('exception_type')}: {str(exception.get('exception_message'))[:160]}"
+    if passed:
+        return "passed", "reward met the task threshold"
+    if stream["valid"] == 0 and stream["trace"]:
+        return "no_mcp_tool_use", "agent never called an MCP tool (only built-ins)"
+    if not stream["trace"]:
+        return "no_tool_use", "agent made no tool calls at all"
+    missed = [r["name"] for r in traj_rows if r.get("outcome") == "missed"]
+    penal = [r["name"] for r in traj_rows if r.get("outcome") == "penalized"]
+    rub_miss = [r.get("id") for r in rubric_rows if r.get("outcome") != "credited"]
+    if penal:
+        return "guard_violation", f"guard test(s) fired: {', '.join(penal)}"
+    if missed and not rub_miss:
+        return "tool_discipline", f"answer correct but required tool step(s) missing: {', '.join(missed)}"
+    if rub_miss and not missed:
+        return "wrong_answer", f"tool use fine but rubric claims missed: {', '.join(map(str, rub_miss))}"
+    if rub_miss and missed:
+        return "partial", f"missed tools {', '.join(missed)}; missed claims {', '.join(map(str, rub_miss))}"
+    return "unknown", "no rule matched; inspect trajectory manually"
+
+
+def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: Path,
+                  model: str, task_name: str, task_dir: Path | None, job_id: str) -> dict:
+    slug = _slug(task_name)
+    tres = _load(trial_dir / "result.json", {}) or {}
+    tcfg = _load(trial_dir / "config.json", {}) or {}
+    tlock = _load(trial_dir / "lock.json", {}) or {}
+    ver = trial_dir / "verifier"
+    ag = trial_dir / "agent"
+    detail = _load(ver / "detail.json", {}) or {}
+    ctrf = _load(ver / "ctrf.json")
+    breakdown = _load(ver / "rubric_breakdown.json", {}) or {}
+    weights = _load(task_dir / "tests" / "test_weights.json", {}) if task_dir else {}
+    threshold = (weights or {}).get("threshold", PASS_THRESHOLD_DEFAULT)
+    rubric_src = _load(task_dir / "tests" / "rubric.json", []) if task_dir else []
+
+    reward = (tres.get("verifier_result") or {}).get("rewards", {}).get("reward")
+    if reward is None:
+        reward = _load(ver / "reward.json", {}).get("reward") if (ver / "reward.json").exists() else None
+    exception = tres.get("exception_info")
+    passed = reward is not None and reward >= threshold
+
+    stream_path = ag / "claude-code.txt"
+    if not stream_path.exists():
+        txts = sorted(ag.glob("*.txt"), key=lambda f: f.stat().st_size, reverse=True) if ag.exists() else []
+        stream_path = txts[0] if txts else stream_path
+    stream = parse_stream(stream_path)
+
+    ledger = detail.get("ledger") or {}
+    traj_rows = detail.get("traj_test_rows") or []
+    rubric_rows = detail.get("rubric_rows") or []
+    traj_val = (ledger.get("traj_tests") or {}).get("value")
+    rubric_val = (ledger.get("rubric") or {}).get("value")
+    if rubric_val is None and breakdown.get("score") is not None:
+        rubric_val = breakdown["score"]
+    traj_w = (ledger.get("traj_tests") or {}).get("weight", 0)
+    rubric_w = (ledger.get("rubric") or {}).get("weight", 0)
+
+    # ---- tokens / usage ---------------------------------------------------
+    ar = tres.get("agent_result") or {}
+    usage = stream["usage"] or {
+        "input_tokens": ar.get("n_input_tokens"), "output_tokens": ar.get("n_output_tokens"),
+        "cache_read_tokens": ar.get("n_cache_tokens"), "cache_creation_tokens": None,
+        "reasoning_tokens": None, "cost_usd": ar.get("cost_usd"),
+    }
+    if usage.get("input_tokens") is None:
+        usage["input_tokens"] = ar.get("n_input_tokens")
+    if usage.get("output_tokens") is None:
+        usage["output_tokens"] = ar.get("n_output_tokens")
+    tool_tokens = sum(len(r["result"] or "") for r in stream["trace"]) // 4
+    # Claude Code's `usage.input_tokens` excludes cache reads/creation, so the
+    # headline prompt count comes from Harbor's agent_result (total input) with
+    # the stream's components summed as a fallback.
+    prompt_total = ar.get("n_input_tokens")
+    if prompt_total is None:
+        prompt_total = sum(int(usage.get(k) or 0) for k in ("input_tokens", "cache_read_tokens", "cache_creation_tokens"))
+    tokens = {"prompt": prompt_total or 0, "llm": usage.get("output_tokens") or ar.get("n_output_tokens") or 0, "tool": tool_tokens}
+
+    # ---- pytest / rubric views --------------------------------------------
+    test_entries = [{"name": r["name"], "weight": r.get("weight"), "passed": bool(r.get("raw_passed"))}
+                    for r in traj_rows]
+    n_pass = sum(1 for t in test_entries if t["passed"])
+    n_fail = len(test_entries) - n_pass
+    rubric_by_id = {str(r.get("id")): r for r in rubric_rows}
+    bd_by_id = {str(r.get("id")): r for r in (breakdown.get("results") or [])}
+    rubric_entries = []
+    for i, c in enumerate(rubric_src, 1):
+        cid = str(c.get("id", i))
+        row = rubric_by_id.get(cid, {})
+        bd = bd_by_id.get(cid, {})
+        ok = row.get("outcome") == "credited" if row else bool(bd.get("result"))
+        rubric_entries.append({
+            "number": str(i), "id": cid, "criterion": c.get("text", ""),
+            "type": "claim_coverage", "evaluation_target": "final_answer",
+            "importance": "critical" if c.get("weight", 1) >= 1 else "minor",
+            "score": c.get("weight", 1), "is_positive": c.get("is_positive", True),
+            "passed": ok, "satisfied": ok, "justification": bd.get("justification", ""),
+        })
+    test_pct = _pct(traj_val)
+    rubric_pct = _pct(rubric_val)
+    parts = [p for p in (test_pct, rubric_pct) if p is not None]
+    final_reward = round(sum(parts) / len(parts), 2) if parts else None
+
+    failure_class, failure_reason = classify_failure(passed, traj_rows, rubric_rows, stream, exception)
+
+    # ---- trajectory/Run_N (Harbor-shaped) ---------------------------------
+    run_dir = out_task / "trajectory" / f"Run_{run_no}"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    _copy(ag / "claude-code.txt", run_dir / "agent" / "claude-code.txt")
+    _copy(ag / "oracle.txt", run_dir / "agent" / "oracle.txt")
+    _copy(ag / "trajectory.json", run_dir / "agent" / "trajectory.json")
+    for f in ("config.json", "lock.json", "result.json"):
+        _copy(trial_dir / f, run_dir / f)
+    _copy(stream_path, run_dir / "logs" / "agent-stream.txt")
+    _copy(ver / "ctrf.json", run_dir / "logs" / "verifier-ctrf.json")
+    _copy(ver / "reward.txt", run_dir / "logs" / "verifier-reward.txt")
+    _copy(ver / "test-stdout.txt", run_dir / "logs" / "verifier-stdout.txt")
+    _copy(trial_dir / "trial.log", run_dir / "logs" / "trial.log")
+    for f in ("ctrf.json", "reward.txt", "reward.json", "test-stdout.txt", "detail.json", "rubric_breakdown.json"):
+        _copy(ver / f, run_dir / "verifier" / f)
+    report = {
+        "model": model, "run_index": run_no, "include_multimodal": False,
+        "pytest": {"passed": n_pass, "failed": n_fail, "exit_code": 0 if n_fail == 0 else 1,
+                   "reward": _r4(traj_val), "tests": test_entries},
+        "rubric": rubric_entries,
+        "final_reward": final_reward,
+        "test_weights_percentage": test_pct,
+        "rubric_weights_percentage": rubric_pct,
+    }
+    _dump(run_dir / "report.json", report)
+
+    # ---- .raw/trials_<slug>/trajectories/<model>/run_N --------------------
+    raw_run = raw_trials / "trajectories" / model / f"run_{run_no}"
+    raw_run.mkdir(parents=True, exist_ok=True)
+    _copy(ag / "trajectory.json", raw_run / "agent" / "trajectory.json")
+    _dump(raw_run / "agent" / "trajectory.messages.json", {
+        "session_id": tres.get("id"), "timestamp": tres.get("finished_at"),
+        "meta_info": {"platform": "linux", "task": task_name, "model": model},
+        "messages": stream["messages"],
+    })
+    _copy(stream_path, raw_run / "agent.log")
+    for f in ("ctrf.json", "detail.json", "reward.json", "reward.txt"):
+        _copy(ver / f, raw_run / f)
+    _copy(ver, raw_run / "verifier")
+    _dump(raw_run / "rubric.json", {"format": "criteria", "rubric_score": _r4(rubric_val), "per_criterion": rubric_entries})
+    with (raw_run / "trace.jsonl").open("w", encoding="utf-8") as fh:
+        for r in stream["trace"]:
+            fh.write(json.dumps({"step": r["step"], "tool": r["tool"], "arguments": r["arguments"],
+                                 "result": r["result"], "is_error": r["is_error"]}, ensure_ascii=False) + "\n")
+    diagnosis = {
+        "failure_class": failure_class, "reason": failure_reason,
+        "evidence": {"valid_calls": stream["valid"], "invalid_calls": stream["invalid"],
+                     "error_calls": stream["error"],
+                     "recall": sum(1 for r in traj_rows if r.get("outcome") == "credited" and (r.get("weight") or 0) > 0),
+                     "total": sum(1 for r in traj_rows if (r.get("weight") or 0) > 0),
+                     "misbehave": sum(1 for r in traj_rows if r.get("outcome") == "penalized"),
+                     "rubric_credited": sum(1 for r in rubric_entries if r["passed"]),
+                     "rubric_total": len(rubric_entries),
+                     "enabled_tools": _enabled_tools(task_dir)},
+    }
+    _dump(raw_run / "diagnosis.json", diagnosis)
+    raw_report = {
+        "task": task_name, "model": model, "seed": None, "attempt": run_no,
+        "passed": passed, "reward": reward, "final_score": reward,
+        "final_score_basis": "weighted(traj_tests+rubric)" if (traj_w or rubric_w) else "rubric",
+        "completion_rate": _r4(rubric_val), "misbehaving_rate": None,
+        "channel_a_present": bool(traj_rows),
+        "test_weights_percentage": test_pct, "rubric_weights_percentage": rubric_pct,
+        "rubric_rc": _r4(rubric_val), "rubric_rb": None,
+        "rubric_per_criterion": rubric_entries,
+        "tokens": tokens, "usage": usage,
+        "tool_summary": {"tool_cnt": stream["tool_cnt"], "valid_tool_calls": stream["valid"],
+                         "invalid_tool_calls": stream["invalid"], "error_tool_calls": stream["error"]},
+        "termination_reason": stream["termination_reason"],
+        "threshold": threshold,
+    }
+    _dump(raw_run / "report.json", raw_report)
+
+    # ---- episode record for summary.json ----------------------------------
+    goal_rows = [r for r in traj_rows if (r.get("weight") or 0) > 0]
+    judge = {
+        "reward": reward, "passed": passed,
+        "quadrant": "PASSED" if passed else "FAILED", "threshold": threshold,
+        "components": {
+            "traj_tests": {"weight": traj_w, "value": _r4(traj_val),
+                           "earned": _r4((traj_val or 0) * traj_w) if traj_val is not None else None},
+            "rubric": {"weight": rubric_w, "value": _r4(rubric_val),
+                       "earned": _r4((rubric_val or 0) * rubric_w) if rubric_val is not None else None},
+            "state_completion": {"weight": 0, "value": None, "earned": None},
+            "state_misbehave": {"weight": 0, "severity": None, "penalty": None},
+            "graph_plan": {"weight": 0, "value": None, "earned": None},
+        },
+        "basis": [k for k, w in (("traj_tests", traj_w), ("rubric", rubric_w)) if w],
+        "recall": sum(1 for r in goal_rows if r.get("outcome") == "credited"),
+        "total": len(goal_rows),
+        "misbehave": sum(1 for r in traj_rows if r.get("outcome") == "penalized"),
+        "state": None, "plan": None,
+        "traj_tests": {"recall": sum(1 for r in goal_rows if r.get("outcome") == "credited"),
+                       "total": len(goal_rows),
+                       "misbehave": sum(1 for r in traj_rows if r.get("outcome") == "penalized"),
+                       "passed_tests": {r["name"]: bool(r.get("raw_passed")) for r in traj_rows}},
+        "rubric_score": _r4(rubric_val),
+        "rubric_per_criterion": rubric_entries,
+        "grader": "weighted(" + "+".join(k for k, w in (("traj_tests", traj_w), ("rubric", rubric_w)) if w) + ")",
+    }
+    episode = {
+        "index": run_no, "name": task_name, "passed": passed, "gradeable": reward is not None,
+        "judge": judge,
+        "valid_tool_calls": stream["valid"], "invalid_tool_calls": stream["invalid"],
+        "error_tool_calls": stream["error"],
+        "tokens": tokens, "usage": usage,
+        "dir": str(Path(slug) / ".raw" / f"trials_{slug}" / "trajectories" / model / f"run_{run_no}"),
+        "trial_name": tres.get("trial_name") or trial_dir.name,
+        "failure_class": failure_class, "failure_reason": failure_reason,
+        "exception": exception,
+    }
+    pair = {"task": task_name, "seed": None, "attempt": run_no,
+            "instruction": stream["instruction"] or ((task_dir / "instruction.md").read_text() if task_dir and (task_dir / "instruction.md").exists() else None),
+            "final_answer": stream["final_answer"], "reward": reward, "passed": passed}
+    per_run = {"run_index": run_no, "include_multimodal": False,
+               "test_weights_percentage": test_pct, "rubric_weights_percentage": rubric_pct,
+               "combined_score": final_reward}
+    return {"episode": episode, "pair": pair, "per_run": per_run, "report": report,
+            "failure": {"attempt": run_no, "failure_class": failure_class, "reason": failure_reason}}
+
+
+# ---------------------------------------------------------------------------
+# pass@k
+# ---------------------------------------------------------------------------
+
+def _comb(n, k):
+    from math import comb
+    return comb(n, k)
+
+
+def pass_at_k(n: int, c: int, k: int) -> float:
+    if n == 0 or k > n:
+        return 0.0
+    if n - c < k:
+        return 1.0
+    return 1.0 - _comb(n - c, k) / _comb(n, k)
+
+
+def pass_hat_k(n: int, c: int, k: int) -> float:
+    if n == 0 or k > n:
+        return 0.0
+    return _comb(c, k) / _comb(n, k) if c >= k else 0.0
+
+
+def wilson_ci(c: int, n: int, z: float = 1.96):
+    if n == 0:
+        return [0.0, 0.0]
+    p = c / n
+    d = 1 + z * z / n
+    centre = (p + z * z / (2 * n)) / d
+    half = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / d
+    return [round(max(0.0, centre - half), 6), round(min(1.0, centre + half), 6)]
+
+
+# ---------------------------------------------------------------------------
+# job-level
+# ---------------------------------------------------------------------------
+
+def _mean(vals):
+    vals = [v for v in vals if v is not None]
+    return round(sum(vals) / len(vals), 6) if vals else 0.0
+
+
+def convert_job(job_dir: Path, output_root: Path, *, ks: list[int]) -> list[Path]:
+    job_cfg = _load(job_dir / "config.json", {}) or {}
+    job_res = _load(job_dir / "result.json", {}) or {}
+    job_lock = _load(job_dir / "lock.json", {}) or {}
+    agents = job_cfg.get("agents") or [{}]
+    model = agents[0].get("model_name") or "unknown-model"
+    agent_name = agents[0].get("name") or "agent"
+    job_id = job_res.get("id") or job_dir.name
+
+    # group trial dirs by task
+    trials = sorted(p for p in job_dir.iterdir()
+                    if p.is_dir() and p.name not in ("trajectory", ".raw") and (p / "config.json").exists())
+    traj_root = job_dir / "trajectory"
+    if traj_root.is_dir():
+        trials += sorted((p for p in traj_root.iterdir() if p.is_dir() and (p / "config.json").exists()),
+                         key=lambda p: int(p.name.split("_")[-1]) if p.name.split("_")[-1].isdigit() else 0)
+    by_task: dict[str, list[Path]] = {}
+    for t in trials:
+        cfg = _load(t / "config.json", {}) or {}
+        tpath = (cfg.get("task") or {}).get("path")
+        tname = (cfg.get("task") or {}).get("name")
+        tdir = Path(tpath) if tpath else None
+        if tdir and not tdir.is_absolute():
+            tdir = (REPO / tdir)
+        if not tname:
+            toml = _load_task_name(tdir) if tdir else None
+            tname = toml or (tdir.name if tdir else t.name.split("__")[0])
+        by_task.setdefault(tname, []).append(t)
+
+    written = []
+    for task_name, tdirs in by_task.items():
+        slug = _slug(task_name)
+        cfg0 = _load(tdirs[0] / "config.json", {}) or {}
+        tpath = (cfg0.get("task") or {}).get("path")
+        task_dir = Path(tpath) if tpath else None
+        if task_dir and not task_dir.is_absolute():
+            task_dir = REPO / task_dir
+        if task_dir and not task_dir.exists():
+            task_dir = None
+
+        out_task = output_root / slug
+        in_place = out_task.exists() and out_task.resolve() == job_dir.resolve()
+        if in_place:
+            # Harbor wrote the job straight into output/<slug>/ (the shim passes
+            # --jobs-dir output --job-name <slug>). Reshape it where it stands:
+            # each trial dir becomes trajectory/Run_N, nothing is copied twice.
+            moved = []
+            for i, t in enumerate(tdirs):
+                dst = out_task / "trajectory" / f"Run_{i + 1}"
+                if t.resolve() != dst.resolve():
+                    dst.parent.mkdir(parents=True, exist_ok=True)
+                    if dst.exists():
+                        shutil.rmtree(dst)
+                    shutil.move(str(t), str(dst))
+                moved.append(dst)
+            tdirs = moved
+        else:
+            if out_task.exists():
+                shutil.rmtree(out_task)
+            out_task.mkdir(parents=True)
+        raw_trials = out_task / ".raw" / f"trials_{slug}"
+        if raw_trials.exists():
+            shutil.rmtree(raw_trials)
+        raw_trials.mkdir(parents=True)
+
+        for f in ("config.json", "lock.json", "result.json"):
+            _copy(job_dir / f, out_task / f)
+        # ground truth the task ships
+        if task_dir:
+            for f in ("rubric.json", "gold_plan.json", "efs.json", "test_weights.json", "test_outputs.py"):
+                _copy(task_dir / "tests" / f, raw_trials / "ground_truth" / f)
+            _copy(task_dir / "instruction.md", raw_trials / "ground_truth" / "instruction.md")
+            _copy(task_dir / "environment" / "enabled_tools.txt", raw_trials / "ground_truth" / "enabled_tools.txt")
+
+        recs = [reshape_trial(t, i + 1, out_task=out_task, raw_trials=raw_trials, model=model,
+                              task_name=task_name, task_dir=task_dir, job_id=job_id)
+                for i, t in enumerate(tdirs)]
+        eps = [r["episode"] for r in recs]
+        n = len(eps)
+        c = sum(1 for e in eps if e["passed"])
+        rewards = [e["judge"]["reward"] for e in eps]
+        hist: dict[str, int] = {}
+        for e in eps:
+            hist[e["failure_class"]] = hist.get(e["failure_class"], 0) + 1
+        stamp = _now()
+
+        # summary.json
+        summary = {
+            "run_id": job_dir.name, "timestamp": stamp,
+            "config": {"model": model, "agent": agent_name, "method": "harbor", "benchmark": "mcp-atlas",
+                       "task_dir": str(task_dir) if task_dir else None,
+                       "image": _load_image(task_dir), "episodes": n,
+                       "harbor_job": str(job_dir)},
+            "metrics": {
+                "accuracy": _mean([1.0 if e["passed"] else 0.0 for e in eps]),
+                "avg_reward": _mean(rewards),
+                "avg_completion_rate": _mean([e["judge"]["rubric_score"] for e in eps]),
+                "avg_traj_tests": _mean([e["judge"]["components"]["traj_tests"]["value"] for e in eps]),
+                "avg_misbehave_rate": _mean([
+                    (e["judge"]["misbehave"] / max(1, len(e["judge"]["traj_tests"]["passed_tests"]))) for e in eps]),
+                "avg_valid_tool_calls": _mean([e["valid_tool_calls"] for e in eps]),
+                "avg_invalid_tool_calls": _mean([e["invalid_tool_calls"] for e in eps]),
+                "avg_error_tool_calls": _mean([e["error_tool_calls"] for e in eps]),
+                "avg_prompt_tokens": _mean([e["tokens"]["prompt"] for e in eps]),
+                "avg_llm_tokens": _mean([e["tokens"]["llm"] for e in eps]),
+                "avg_tool_tokens": _mean([e["tokens"]["tool"] for e in eps]),
+            },
+            "episodes": eps,
+        }
+        _dump(out_task / "summary.json", summary)
+
+        # pass_summary.json
+        per_run = [r["per_run"] for r in recs]
+        pass_summary = {
+            "model": model, "runs": n,
+            "average_combined_score": _mean([p["combined_score"] for p in per_run]),
+            "average_test_weights_percentage": _mean([p["test_weights_percentage"] for p in per_run]),
+            "average_rubric_weights_percentage": _mean([p["rubric_weights_percentage"] for p in per_run]),
+            "per_run": per_run,
+        }
+        _dump(out_task / "pass_summary.json", pass_summary)
+
+        # passk_summary.json
+        ks_eff = [k for k in ks if k <= n] or [1]
+        per_task = [{
+            "task": task_name, "n": n, "c": c,
+            "pass@1": round(pass_at_k(n, c, 1), 6),
+            "pass@k": {str(k): round(pass_at_k(n, c, k), 6) for k in ks_eff},
+            "pass^k": {str(k): round(pass_hat_k(n, c, k), 6) for k in ks_eff},
+            "mean_reward_per_trial": _mean(rewards),
+            "failure_breakdown": hist,
+        }]
+        passk = {
+            "model": model, "tasks": 1, "passed": c, "accuracy": round(c / n, 6) if n else 0.0,
+            "mean_reward_per_trial": _mean(rewards),
+            "mean_pass@k": per_task[0]["pass@k"], "mean_pass^k": per_task[0]["pass^k"],
+            "failure_mode_histogram": hist, "per_task": per_task,
+            "attempts_per_task": n, "at": ks_eff,
+        }
+        _dump(out_task / "passk_summary.json", passk)
+        _dump(raw_trials / "passk_summary.json", passk)
+
+        # .raw summary / pairs / failure_analysis
+        _dump(raw_trials / "summary.json", {
+            "task": task_name, "model": model, "agent": agent_name, "seed": None,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "metrics": {"n": n, "c": c, "pass@1": round(pass_at_k(n, c, 1), 6),
+                        "p_hat": round(c / n, 6) if n else 0.0, "ci95": wilson_ci(c, n),
+                        "pass@k": per_task[0]["pass@k"], "pass^k": per_task[0]["pass^k"],
+                        "failure_breakdown": hist},
+            "attempts": [{"attempt": e["index"], "passed": e["passed"], "reward": e["judge"]["reward"],
+                          "completion_rate": e["judge"]["rubric_score"],
+                          "traj_tests": e["judge"]["components"]["traj_tests"]["value"],
+                          "failure_class": e["failure_class"]} for e in eps],
+        })
+        with (raw_trials / "pairs.jsonl").open("w", encoding="utf-8") as fh:
+            for r in recs:
+                fh.write(json.dumps(r["pair"], ensure_ascii=False) + "\n")
+        _dump(raw_trials / "failure_analysis.json", [r["failure"] for r in recs])
+
+        # report.md
+        m = summary["metrics"]
+        lines = [
+            f"# Benchmark Report — {slug}", "",
+            f"- Timestamp: {stamp}", f"- Model: `{model}`", f"- Agent: `{agent_name}`",
+            f"- Method: `harbor`", f"- Benchmark: `mcp-atlas`", f"- Harbor job: `{job_dir}`",
+            f"- Episodes: {n}", "",
+            "## Aggregate metrics", "", "| Metric | Value |", "|---|---|",
+            f"| Accuracy (reward ≥ threshold) | {m['accuracy']:.4f} |",
+            f"| Avg reward | {m['avg_reward']:.4f} |",
+            f"| Avg rubric (Channel B) | {m['avg_completion_rate']:.4f} |",
+            f"| Avg traj_tests (Channel A) | {m['avg_traj_tests']:.4f} |",
+            f"| Avg misbehave rate | {m['avg_misbehave_rate']:.4f} |",
+            f"| Avg valid tool calls / episode | {m['avg_valid_tool_calls']:.4f} |",
+            f"| Avg invalid tool calls / episode | {m['avg_invalid_tool_calls']:.4f} |",
+            f"| Avg error tool calls / episode | {m['avg_error_tool_calls']:.4f} |",
+            f"| Avg prompt tokens | {m['avg_prompt_tokens']:.2f} |",
+            f"| Avg llm tokens | {m['avg_llm_tokens']:.2f} |",
+            f"| Avg tool tokens | {m['avg_tool_tokens']:.2f} |", "",
+            "## Per-episode", "",
+            "| # | Passed | Reward | Traj recall / total | Misbehave | Rubric | Valid TC | Invalid TC | Failure | Dir |",
+            "|---|---|---|---|---|---|---|---|---|---|",
+        ]
+        for e in eps:
+            j = e["judge"]
+            lines.append(
+                f"| {e['index']} | {'✓' if e['passed'] else '✗'} | {j['reward']} | {j['recall']} / {j['total']} | "
+                f"{j['misbehave']} | {sum(1 for r in j['rubric_per_criterion'] if r['passed'])} / {len(j['rubric_per_criterion'])} | "
+                f"{e['valid_tool_calls']} | {e['invalid_tool_calls']} | `{e['failure_class']}` | `{e['dir']}` |")
+        lines += ["", "## Channel A — trajectory tests (per run)", ""]
+        for r in recs:
+            lines.append(f"### Run {r['report']['run_index']}")
+            lines.append("")
+            lines.append("| Test | Weight | Passed |")
+            lines.append("|---|---|---|")
+            for t in r["report"]["pytest"]["tests"]:
+                lines.append(f"| {t['name']} | {t['weight']} | {'✓' if t['passed'] else '✗'} |")
+            lines.append("")
+        lines += ["## Channel B — rubric claims (run 1)", "", "| # | Claim | Passed |", "|---|---|---|"]
+        for c_ in recs[0]["report"]["rubric"]:
+            lines.append(f"| {c_['number']} | {c_['criterion']} | {'✓' if c_['passed'] else '✗'} |")
+        (out_task / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        written.append(out_task)
+        print(f"[output] {task_name}: {n} run(s), passed {c}/{n}, mean reward {_mean(rewards)} → {out_task}")
+    return written
+
+
+def _load_task_name(task_dir: Path | None):
+    if not task_dir:
+        return None
+    p = task_dir / "task.toml"
+    if not p.exists():
+        return None
+    m = re.search(r'^\s*name\s*=\s*"([^"]+)"', p.read_text(), re.M)
+    return m.group(1) if m else None
+
+
+def _load_image(task_dir: Path | None):
+    if not task_dir:
+        return None
+    p = task_dir / "task.toml"
+    if not p.exists():
+        return None
+    m = re.search(r'^\s*image\s*=\s*"([^"]+)"', p.read_text(), re.M)
+    return m.group(1) if m else None
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    ap.add_argument("job_dir", type=Path, help="Harbor job directory, e.g. jobs/xenon-opus-2")
+    ap.add_argument("--output-dir", type=Path, default=REPO / "output")
+    ap.add_argument("--copy-to", type=Path, default=None,
+                    help="Also mirror each output/<task>/ dir into this directory.")
+    ap.add_argument("--at", default="1", help="comma-separated k values for pass@k (default 1)")
+    a = ap.parse_args(argv)
+    ks = [int(x) for x in a.at.split(",") if x.strip()]
+    if not a.job_dir.exists():
+        print(f"job dir not found: {a.job_dir}", file=sys.stderr)
+        return 2
+    written = convert_job(a.job_dir, a.output_dir, ks=ks)
+    if a.copy_to:
+        for w in written:
+            dst = a.copy_to / w.name
+            if dst.exists():
+                shutil.rmtree(dst)
+            shutil.copytree(w, dst)
+            print(f"[output] mirrored → {dst}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

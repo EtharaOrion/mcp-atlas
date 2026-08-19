@@ -239,7 +239,10 @@ print(json.dumps({{"type": "message", "message": {{"role": "assistant", "content
 print(json.dumps({{"type": "result", "result": answer}}))
 PYEOF
 
-echo "oracle trajectory written to /logs/agent/oracle.txt"
+# Deliberately silent. Harbor's oracle agent runs this script with BOTH stdout
+# and stderr redirected into the very same /logs/agent/oracle.txt, through a
+# separate fd positioned at offset 0 -- so any status line printed here would
+# overwrite the head of the trajectory written above (see G21).
 """
 
 

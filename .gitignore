@@ -6,6 +6,7 @@ dist/
 wheels/
 input/
 tasks/
+output/
 *.egg-info
 
 # Virtual environments

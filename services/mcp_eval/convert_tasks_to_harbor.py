@@ -187,11 +187,88 @@ def find_agent_trajectory_filepath(agent_dir: Path = Path("/logs/agent")) -> str
     return str(max(txt_files, key=lambda f: f.stat().st_size))
 
 
+_MCP_PREFIX = "mcp__"
+
+
+def _strip_mcp_prefix(name: str) -> str:
+    """Harbor-hosted agents (claude-code, codex, ...) see MCP tools namespaced
+    as ``mcp__<server>__<tool>``; the task's test_outputs.py and enabled
+    tools list use the bare ``<tool>`` name. Normalise so Channel A matches."""
+    if isinstance(name, str) and name.startswith(_MCP_PREFIX):
+        rest = name[len(_MCP_PREFIX):]
+        if "__" in rest:
+            return rest.split("__", 1)[1]
+    return name
+
+
+def _normalise_openai_message(message: dict) -> dict:
+    for tc in message.get("tool_calls") or []:
+        fn = tc.get("function")
+        if isinstance(fn, dict) and "name" in fn:
+            fn["name"] = _strip_mcp_prefix(fn["name"])
+    return message
+
+
+def _claude_blocks_to_messages(event: dict) -> list:
+    """Convert one Claude Code stream-json event (``type`` assistant/user with
+    a ``content`` block list) into OpenAI-shaped messages: ``tool_use`` blocks
+    become assistant ``tool_calls``; ``tool_result`` blocks become ``tool``
+    messages. Anything else in the block list is folded into text content."""
+    msg = event.get("message") or {}
+    content = msg.get("content")
+    if not isinstance(content, list):
+        return []
+    out = []
+    texts, tool_calls = [], []
+    for block in content:
+        if not isinstance(block, dict):
+            continue
+        btype = block.get("type")
+        if btype == "text" and block.get("text"):
+            texts.append(block["text"])
+        elif btype == "tool_use":
+            tool_calls.append({
+                "id": block.get("id"),
+                "type": "function",
+                "function": {
+                    "name": _strip_mcp_prefix(block.get("name", "")),
+                    "arguments": json.dumps(block.get("input") or {}),
+                },
+            })
+        elif btype == "tool_result":
+            rc = block.get("content")
+            if isinstance(rc, list):
+                rc = "\\n".join(
+                    b.get("text", "") for b in rc
+                    if isinstance(b, dict) and b.get("type") == "text"
+                )
+            out.append({
+                "role": "tool",
+                "tool_call_id": block.get("tool_use_id"),
+                "content": rc if isinstance(rc, str) else json.dumps(rc),
+                **({"is_error": True} if block.get("is_error") else {}),
+            })
+    if texts or tool_calls:
+        am = {"role": "assistant", "content": "\\n".join(texts)}
+        if tool_calls:
+            am["tool_calls"] = tool_calls
+        out.insert(0, am)
+    return out
+
+
 def load_flat_messages_and_response(trajectory_path: str):
-    """Parse the {"type": "message"/"result", ...} line-JSON trajectory file
-    (the same shape agent_judge.py's own find_agent_trajectory_filepath() /
-    extract_agent_response() read) into (flat OpenAI-message list, final
-    response) — traj_asserts.py accepts the flat-message-list shape directly."""
+    """Parse a line-JSON trajectory file into (flat OpenAI-message list, final
+    response) -- the shape traj_asserts.py accepts directly.
+
+    Two on-disk dialects are understood:
+      * ``{"type": "message", "message": {...}}`` / ``{"type": "result", ...}``
+        -- what the mcp-atlas parity agent and the oracle write.
+      * Claude Code stream-json (``{"type": "assistant"|"user", "message":
+        {"content": [blocks]}}`` / ``{"type": "result", "result": ...}``) --
+        what Harbor's ``claude-code`` agent writes. ``tool_use`` blocks become
+        ``tool_calls`` and MCP tool names are de-namespaced from
+        ``mcp__<server>__<tool>`` to ``<tool>``.
+    """
     messages = []
     response = ""
     for line in Path(trajectory_path).read_text().splitlines():
@@ -202,9 +279,14 @@ def load_flat_messages_and_response(trajectory_path: str):
             event = json.loads(line)
         except (json.JSONDecodeError, TypeError):
             continue
-        if event.get("type") == "message" and event.get("message"):
-            messages.append(event["message"])
-        elif event.get("type") == "result" and event.get("result"):
+        if not isinstance(event, dict):
+            continue
+        etype = event.get("type")
+        if etype == "message" and event.get("message"):
+            messages.append(_normalise_openai_message(event["message"]))
+        elif etype in ("assistant", "user") and event.get("message"):
+            messages.extend(_claude_blocks_to_messages(event))
+        elif etype == "result" and event.get("result"):
             response = event["result"]
     return messages, response
 

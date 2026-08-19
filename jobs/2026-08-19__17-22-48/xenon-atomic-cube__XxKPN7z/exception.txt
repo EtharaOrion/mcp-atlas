@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/Users/macbookpro/.local/pipx/venvs/harbor/lib/python3.14/site-packages/harbor/trial/trial.py", line 351, in run
+    await self._prepare()
+  File "/Users/macbookpro/.local/pipx/venvs/harbor/lib/python3.14/site-packages/harbor/trial/trial.py", line 386, in _prepare
+    await self.agent_environment.run_healthcheck()
+  File "/Users/macbookpro/.local/pipx/venvs/harbor/lib/python3.14/site-packages/harbor/environments/base.py", line 1377, in run_healthcheck
+    raise HealthcheckError(
+    ...<2 lines>...
+    )
+harbor.environments.base.HealthcheckError: Healthcheck failed after 36 consecutive retries: curl -sf --max-time 10 http://mcp-server:1984/health | grep -q health_and_client_connection_ok

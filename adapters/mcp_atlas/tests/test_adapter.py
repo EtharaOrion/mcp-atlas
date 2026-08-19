@@ -529,3 +529,30 @@ def test_verifier_env_forwards_subscription_and_api_credentials(bundle):
             f"{key} must be a Harbor-expanded passthrough, not a literal"
         )
     assert env["JUDGE_MODEL"] == adapter.DEFAULT_JUDGE_MODEL
+
+
+# --- G21: solve.sh must be silent (Harbor captures stdout+stderr into oracle.txt)
+def test_oracle_solve_sh_is_silent_and_trajectory_intact(tmp_path):
+    """Harbor's oracle agent runs solve.sh with stdout AND stderr redirected to
+    /logs/agent/oracle.txt -- the same file the script writes the trajectory
+    into -- through a second fd positioned at offset 0. Any status line the
+    script prints overwrites the head of the first JSON event (in the xenon
+    task that was the wikipedia call), so Channel A silently loses a credited
+    test and the oracle can never reach 1.0. The script must print nothing,
+    and every line of the trajectory it writes must be valid JSON."""
+    rec = adapter.MCPAtlasRecord(
+        task_id="t", prompt="p", gtfa_claims=["c1"], enabled_tools=["search"],
+        oracle_tool_calls=[{"name": "search", "arguments": {"q": "x"}, "result": "r"}],
+    )
+    out = adapter.MCPAtlasToHarbor(out_root=tmp_path).generate_task(rec)
+    logs = tmp_path / "logs" / "agent"
+    logs.mkdir(parents=True)
+    script = (out / "solution" / "solve.sh").read_text().replace("/logs/agent", str(logs))
+    proc = subprocess.run(["bash", "-c", script], check=True, capture_output=True, text=True)
+    assert proc.stdout == "" and proc.stderr == "", (proc.stdout, proc.stderr)
+    lines = (logs / "oracle.txt").read_text().splitlines()
+    assert lines, "oracle wrote no trajectory"
+    events = [json.loads(l) for l in lines if l.strip()]
+    names = [tc["function"]["name"]
+             for e in events for tc in ((e.get("message") or {}).get("tool_calls") or [])]
+    assert names == ["search"]

@@ -1,0 +1,12 @@
+{
+    "task": {
+        "path": "tasks/xenon-atomic-cube"
+    },
+    "trial_name": "xenon-atomic-cube__XxKPN7z",
+    "trials_dir": "jobs/2026-08-19__17-22-48",
+    "agent": {
+        "name": "claude-code",
+        "model_name": "claude-opus-4-8"
+    },
+    "job_id": "2dc06f98-9f26-4498-953a-abddbf44526c"
+}

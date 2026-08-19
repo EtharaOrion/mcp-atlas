@@ -69,3 +69,16 @@ test-python: # adapter + scoring + mcp_eval unit tests (no Docker, no network)
 
 smoke: # end-to-end bundle generation + Harbor validation (no Docker, no network)
 	$(PYTEST_PYTHON) scripts/smoke_test.py
+
+# ---------------------------------------------------------------------------
+# Harbor task runs → output/<task>/ (complex-mcp "harbor" layout)
+# ---------------------------------------------------------------------------
+# make run-task TASK=tasks/xenon-atomic-cube [MODEL=claude-opus-4-8] [AGENT=claude-code] [N=1]
+run-task: # run one task via Harbor and emit output/<task>/ (summary, pass_summary, passk_summary, report.md, trajectory/, .raw/)
+	@test -n "$(TASK)" || { echo "usage: make run-task TASK=tasks/<task-dir>"; exit 2; }
+	AGENT=$(AGENT) MODEL=$(MODEL) N=$(N) COPY_TO=$(COPY_TO) scripts/run_task.sh $(TASK)
+
+# make harbor-output JOB=jobs/<job>
+harbor-output: # reshape an existing Harbor job into output/<task>/ without re-running it
+	@test -n "$(JOB)" || { echo "usage: make harbor-output JOB=jobs/<job>"; exit 2; }
+	python3 scripts/harbor_to_output.py $(JOB) --output-dir output $(if $(COPY_TO),--copy-to $(COPY_TO),)
