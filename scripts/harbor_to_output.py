@@ -244,6 +244,30 @@ def parse_stream(path: Path) -> dict:
     return out
 
 
+def _synth_trajectory(stream: dict, *, model: str, agent_name: str, session_id, usage: dict | None) -> dict:
+    """Minimal ATIF-shaped trajectory from a parsed stream (one step per
+    assistant/tool/user message), for agents that don't write their own."""
+    steps = []
+    for i, m in enumerate(stream["messages"], 1):
+        role = m.get("role")
+        step = {"step_id": i, "source": "agent" if role == "assistant" else ("user" if role == "user" else "tool"),
+                "message": m.get("content") or ""}
+        if role == "assistant" and m.get("tool_calls"):
+            step["tool_calls"] = [{"tool_call_id": tc.get("id"), "function_name": tc["function"]["name"],
+                                   "arguments": json.loads(tc["function"].get("arguments") or "{}")}
+                                  for tc in m["tool_calls"]]
+        if role == "tool":
+            step["observation"] = {"tool_call_id": m.get("tool_call_id"), "content": m.get("content")}
+        steps.append(step)
+    u = usage or {}
+    return {"schema_version": "ATIF-v1.7-synth", "session_id": session_id, "trajectory_id": agent_name,
+            "agent": {"name": agent_name, "version": None, "model_name": model, "extra": {"synthesized_from_stream": True}},
+            "steps": steps,
+            "final_metrics": {"total_prompt_tokens": u.get("input_tokens"), "total_completion_tokens": u.get("output_tokens"),
+                              "total_cached_tokens": u.get("cache_read_tokens"), "total_cost_usd": u.get("cost_usd"),
+                              "total_steps": len(steps), "usage": u}}
+
+
 def _enabled_tools(task_dir: Path | None) -> list[str]:
     if not task_dir:
         return []
@@ -282,7 +306,8 @@ def classify_failure(passed: bool, traj_rows: list[dict], rubric_rows: list[dict
 
 
 def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: Path,
-                  model: str, task_name: str, task_dir: Path | None, job_id: str) -> dict:
+                  model: str, task_name: str, task_dir: Path | None, job_id: str,
+                  agent_name: str = "agent") -> dict:
     slug = _slug(task_name)
     tres = _load(trial_dir / "result.json", {}) or {}
     tcfg = _load(trial_dir / "config.json", {}) or {}
@@ -346,7 +371,18 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     rubric_by_id = {str(r.get("id")): r for r in rubric_rows}
     bd_by_id = {str(r.get("id")): r for r in (breakdown.get("results") or [])}
     rubric_entries = []
+    if not rubric_src and breakdown.get("results"):
+        # Plain (non --weighted) bundles ship no tests/rubric.json; the judge's
+        # own breakdown is then the only record of the claims it graded.
+        rubric_src = [{"id": r.get("id", str(i)), "text": r.get("title") or r.get("description") or "",
+                       "weight": r.get("score", 1) if isinstance(r.get("score"), (int, float)) and r.get("score") not in (0, 1) else 1,
+                       "is_positive": True}
+                      for i, r in enumerate(breakdown["results"], 1)]
     for i, c in enumerate(rubric_src, 1):
+        if isinstance(c, str):
+            c = {"text": c}
+        elif not isinstance(c, dict):
+            c = {}
         cid = str(c.get("id", i))
         row = rubric_by_id.get(cid, {})
         bd = bd_by_id.get(cid, {})
@@ -364,6 +400,13 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     final_reward = round(sum(parts) / len(parts), 2) if parts else None
 
     failure_class, failure_reason = classify_failure(passed, traj_rows, rubric_rows, stream, exception)
+
+    if not (ag / "trajectory.json").exists() and stream["messages"]:
+        # Harbor's oracle agent (and any agent that only streams a .txt) writes
+        # no ATIF trajectory.json; synthesize one from the parsed stream so the
+        # trajectory view is never empty.
+        _dump(ag / "trajectory.json", _synth_trajectory(stream, model=model, agent_name=agent_name,
+                                                         session_id=tres.get("id"), usage=usage))
 
     # ---- trajectory/Run_N (Harbor-shaped) ---------------------------------
     run_dir = out_task / "trajectory" / f"Run_{run_no}"
@@ -533,10 +576,22 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int]) -> list[Path
     job_res = _load(job_dir / "result.json", {}) or {}
     job_lock = _load(job_dir / "lock.json", {}) or {}
     agents = job_cfg.get("agents") or [{}]
-    model = agents[0].get("model_name") or "unknown-model"
     agent_name = agents[0].get("name") or "agent"
+    model = agents[0].get("model_name") or agent_name   # oracle runs have no model
     job_id = job_res.get("id") or job_dir.name
 
+    if not agents[0].get("name"):
+        # `harbor run --agent oracle` leaves job config.json without an agents
+        # block; the trial's own config/result carry it.
+        cands = [p for p in job_dir.iterdir() if p.is_dir()]
+        if (job_dir / "trajectory").is_dir():
+            cands += [p for p in (job_dir / "trajectory").iterdir() if p.is_dir()]
+        for p in cands:
+            a = ((_load(p / "config.json", {}) or {}).get("agent")
+                 or ((_load(p / "result.json", {}) or {}).get("config") or {}).get("agent") or {})
+            if a.get("name"):
+                agent_name = a["name"]; model = a.get("model_name") or agent_name
+                break
     # group trial dirs by task
     trials = sorted(p for p in job_dir.iterdir()
                     if p.is_dir() and p.name not in ("trajectory", ".raw") and (p / "config.json").exists())
@@ -603,7 +658,7 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int]) -> list[Path
             _copy(task_dir / "environment" / "enabled_tools.txt", raw_trials / "ground_truth" / "enabled_tools.txt")
 
         recs = [reshape_trial(t, i + 1, out_task=out_task, raw_trials=raw_trials, model=model,
-                              task_name=task_name, task_dir=task_dir, job_id=job_id)
+                              task_name=task_name, task_dir=task_dir, job_id=job_id, agent_name=agent_name)
                 for i, t in enumerate(tdirs)]
         eps = [r["episode"] for r in recs]
         n = len(eps)
