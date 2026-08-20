@@ -4,7 +4,6 @@ __pycache__/
 build/
 dist/
 wheels/
-input/
 tasks/
 output/
 *.egg-info
@@ -33,8 +32,6 @@ logs/
 
 # Eval run outputs (per-run dirs: outputs, logs, scoring)
 results/
-
-/input
 
 /.tokensave
 

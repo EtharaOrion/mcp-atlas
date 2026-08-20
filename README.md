@@ -140,6 +140,30 @@ Classifies each failing task into one of 11 failure modes (4 tool-call + 7 cogni
 
 Change `LLM_API_KEY` / `LLM_BASE_URL` in `.env`, restart the harness, and rerun with a different `--model`. See [LiteLLM providers](https://docs.litellm.ai/docs/providers) for model names.
 
+## Run via Harbor
+
+Convert the 500-task dataset into Harbor bundles:
+
+```bash
+python adapters/mcp_atlas/run_adapter.py \
+  --input input/MCP-Atlas.parquet \
+  --output-dir tasks \
+  --judge-model claude-sonnet-4-6 \
+  --overwrite
+```
+
+Run a single task (output lands in `output/<task-id>/`):
+
+```bash
+harbor run -y --path tasks/<task-id> --agent claude-code --model claude-opus-4-8 --jobs-dir output
+```
+
+Example:
+
+```bash
+harbor run -y --path tasks/6863f438a500a4b36aab0f24 --agent claude-code --model claude-opus-4-8 --jobs-dir output
+```
+
 ## Scaling throughput
 
 A single sandbox handles concurrent tasks comfortably, and **you can run several evals in parallel against it.** The agent loop is I/O-bound — most of each task's time is spent waiting on the model, not calling tools — so one sandbox stays well under capacity at typical concurrency. Raise `--concurrency` or launch multiple runs as needed; reach for the scale-out options below only when the sandbox itself becomes the bottleneck (very high concurrency, or tool-heavy workloads where some MCP servers degrade under load):
