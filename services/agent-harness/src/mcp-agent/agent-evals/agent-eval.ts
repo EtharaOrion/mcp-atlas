@@ -24,7 +24,7 @@ const DEFAULT_MAX_TURNS = 256;
 const DEFAULT_MAX_TOOL_CALLS = 100;
 
 type AgentOutput =
-  | { type: 'message'; data: Message }
+  | { type: 'message'; data: Message; usage?: Record<string, any>; finish_reason?: string; extra?: Record<string, any>; timestamp?: string }
   | { type: 'trajectory'; data: RunTrajectory }
   | { type: 'error'; data: any };
 
@@ -198,6 +198,8 @@ async function* runMcpAgent({
     const turnTimestamp = new Date().toISOString();
     let assistantMessage;
     let turnUsage: BaseCompletionResult['usage'];
+    let lastFinishReason: string | undefined;
+    let lastExtra: Record<string, any> | undefined;
     try {
       // Get the appropriate strategy based on model and strategy parameter
       const completionStrategy = getAgentCompletionStrategy(model, strategy, llmBaseUrl);
@@ -251,6 +253,8 @@ async function* runMcpAgent({
 
       assistantMessage = AssistantMessageSchema.parse(message);
       turnUsage = usage;
+      lastFinishReason = (result as any).finish_reason as string | undefined;
+      lastExtra = (result as any).extra as Record<string, any> | undefined;
     } catch (error) {
       // LLM completion or parsing failed, break the loop
       reachedMaxTurns = false;
@@ -259,7 +263,14 @@ async function* runMcpAgent({
     }
 
     allMessages.push(assistantMessage);
-    yield { type: 'message', data: assistantMessage };
+    yield {
+      type: 'message',
+      data: assistantMessage,
+      usage: turnUsage as Record<string, any> | undefined,
+      finish_reason: lastFinishReason,
+      extra: lastExtra,
+      timestamp: new Date().toISOString(),
+    };
 
     const toolCalls = assistantMessage.tool_calls ?? [];
     const turnToolResults: ToolCallOutputMessage[] = [];
@@ -431,7 +442,10 @@ export async function handleRunMCPAgentEval(body: z.infer<typeof RunAgentAPIRequ
 
   // Extract prompt from user message
   const userMessage = body.messages.find(m => m.role === 'user');
-  const prompt = userMessage?.content || 'No user message found';
+  const promptContent = userMessage?.content;
+  const prompt = Array.isArray(promptContent)
+    ? promptContent.map((p: any) => p.text || '[media]').join(' ')
+    : promptContent || 'No user message found';
 
   logger.info('=== NEW MCP EVAL REQUEST ===', {
     taskId,

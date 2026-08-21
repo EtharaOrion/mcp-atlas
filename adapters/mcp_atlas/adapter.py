@@ -327,6 +327,19 @@ def _parse_oracle_calls(raw) -> list[dict]:
     return [c for c in raw if isinstance(c, dict) and c.get("name")]
 
 
+def _parse_multimodal(raw) -> list[dict]:
+    if not raw:
+        return []
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except json.JSONDecodeError:
+            return []
+    if not isinstance(raw, list):
+        return []
+    return [item for item in raw if isinstance(item, dict)]
+
+
 def _read_bridge_source() -> str:
     """Source of the REST->MCP bridge staged into each bundle.
 
@@ -377,6 +390,10 @@ class MCPAtlasRecord:
     # [{"name", "arguments", "result", "rationale"}]. Without it the oracle
     # makes no tool calls and scores zero on Channel A.
     oracle_tool_calls: list[dict] = field(default_factory=list)
+    # Optional multimodal attachments: [{type, path}] where type is "image" or
+    # "audio" and path is relative to the task data directory. Written to
+    # environment/multimodal.json so harnesses can inject them as content parts.
+    multimodal: list[dict] = field(default_factory=list)
 
 
 class MCPAtlasLoader:
@@ -412,6 +429,7 @@ class MCPAtlasLoader:
         data_dir_raw=None,
         tests_dir_raw=None,
         oracle_tool_calls_raw=None,
+        multimodal_raw=None,
     ) -> MCPAtlasRecord:
         safe_id = _sanitize_id(raw_id)
         claims = _parse_claims(claims_raw)
@@ -439,6 +457,7 @@ class MCPAtlasLoader:
             data_dir=data_dir,
             tests_dir=tests_dir,
             oracle_tool_calls=_parse_oracle_calls(oracle_tool_calls_raw),
+            multimodal=_parse_multimodal(multimodal_raw),
         )
 
     def _load_hf(self) -> Iterator[MCPAtlasRecord]:
@@ -459,11 +478,13 @@ class MCPAtlasLoader:
                 data_dir = row.get("DATA_DIR") or row.get("data_dir") or None
                 tests_dir = row.get("TESTS_DIR") or row.get("tests_dir") or None
                 oracle_calls = row.get("ORACLE_TOOL_CALLS") or row.get("oracle_tool_calls") or None
+                multimodal = row.get("MULTIMODAL") or row.get("multimodal") or None
                 if raw_id and prompt:
                     yield self._make_record(
                         raw_id, prompt, claims, tools_raw=tools_raw,
                         data_dir_raw=data_dir, tests_dir_raw=tests_dir,
                         oracle_tool_calls_raw=oracle_calls,
+                        multimodal_raw=multimodal,
                     )
 
     def _load_parquet(self, path: Path) -> Iterator[MCPAtlasRecord]:
@@ -499,11 +520,13 @@ class MCPAtlasLoader:
                 data_dir = row.get("DATA_DIR") or row.get("data_dir") or None
                 tests_dir = row.get("TESTS_DIR") or row.get("tests_dir") or None
                 oracle_calls = row.get("ORACLE_TOOL_CALLS") or row.get("oracle_tool_calls") or None
+                multimodal = row.get("MULTIMODAL") or row.get("multimodal") or None
                 if raw_id and prompt:
                     yield self._make_record(
                         raw_id, prompt, claims, tools_raw=tools_raw,
                         data_dir_raw=data_dir, tests_dir_raw=tests_dir,
                         oracle_tool_calls_raw=oracle_calls,
+                        multimodal_raw=multimodal,
                     )
 
 
@@ -597,6 +620,10 @@ class MCPAtlasToHarbor:
             "".join(f"{t}\n" for t in record.enabled_tools),
             encoding="utf-8",
         )
+        if record.multimodal:
+            (task_dir / "environment" / "multimodal.json").write_text(
+                json.dumps(record.multimodal, indent=2), encoding="utf-8"
+            )
         # Staged into the image by the Dockerfile above; the agent runs it as
         # a stdio MCP server.
         (task_dir / "environment" / BRIDGE_FILENAME).write_text(

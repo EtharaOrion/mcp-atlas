@@ -4,14 +4,28 @@ import { z } from 'zod';
 // Message Schemas
 // ============================================================================
 
+const TextPartSchema = z.object({ type: z.literal('text'), text: z.string() });
+const ImageUrlPartSchema = z.object({
+  type: z.literal('image_url'),
+  image_url: z.object({ url: z.string(), detail: z.string().optional() }),
+});
+const InputAudioPartSchema = z.object({
+  type: z.literal('input_audio'),
+  input_audio: z.object({ data: z.string(), format: z.string() }),
+});
+const ContentPartSchema = z.discriminatedUnion('type', [
+  TextPartSchema, ImageUrlPartSchema, InputAudioPartSchema,
+]);
+export const MessageContentSchema = z.union([z.string(), z.array(ContentPartSchema)]);
+
 export const SystemMessageSchema = z.object({
   role: z.literal('system'),
-  content: z.string(),
+  content: MessageContentSchema,
 });
 
 const UserMessageSchema = z.object({
   role: z.literal('user'),
-  content: z.string(),
+  content: MessageContentSchema,
 });
 
 export const AssistantMessageSchema = z.object({
