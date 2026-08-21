@@ -214,12 +214,17 @@ async def get_enabled_servers() -> dict[str, Any]:
     async with client:
         try:
             tools = await client.list_tools()
-            # Extract unique server prefixes from tool names (format: servername_toolname)
+            # Extract unique server prefixes from tool names (format: servername_toolname).
+            # With a single configured server, fastmcp does not prefix tool
+            # names, so any tool at all means that server is live.
             live_servers = set()
-            for tool in tools:
-                if "_" in tool.name:
-                    server_name = tool.name.split("_", 1)[0]
-                    live_servers.add(server_name)
+            if len(configured) == 1 and tools:
+                live_servers = set(configured)
+            else:
+                for tool in tools:
+                    if "_" in tool.name:
+                        server_name = tool.name.split("_", 1)[0]
+                        live_servers.add(server_name)
 
             # Build status list for each configured server
             servers = [

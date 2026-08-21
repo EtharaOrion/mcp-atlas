@@ -1,0 +1,220 @@
+{
+  "events": [
+    {
+      "event_id": "evt-0001",
+      "event": "member_portal_login",
+      "distinct_id": "user-aria",
+      "time": "2025-05-01T08:12:00Z",
+      "properties": {
+        "country": "US",
+        "plan": "free",
+        "platform": "web",
+        "utm_source": "google"
+      }
+    },
+    {
+      "event_id": "evt-0002",
+      "event": "tour_ticket_purchase",
+      "distinct_id": "user-bode",
+      "time": "2025-05-01T09:40:00Z",
+      "properties": {
+        "country": "DE",
+        "plan": "free",
+        "platform": "ios",
+        "utm_source": "organic"
+      }
+    },
+    {
+      "event_id": "evt-0003",
+      "event": "donation_completed",
+      "distinct_id": "user-aria",
+      "time": "2025-05-01T10:05:00Z",
+      "properties": {
+        "country": "US",
+        "plan": "free",
+        "platform": "web",
+        "utm_source": "google"
+      }
+    },
+    {
+      "event_id": "evt-0004",
+      "event": "newsletter_signup",
+      "distinct_id": "user-aria",
+      "time": "2025-05-01T10:08:00Z",
+      "properties": {
+        "country": "US",
+        "plan": "free",
+        "platform": "web",
+        "utm_source": "google"
+      }
+    },
+    {
+      "event_id": "evt-0005",
+      "event": "resource_download",
+      "distinct_id": "user-aria",
+      "time": "2025-05-01T10:12:00Z",
+      "properties": {
+        "country": "US",
+        "plan": "free",
+        "platform": "web",
+        "utm_source": "google"
+      }
+    },
+    {
+      "event_id": "evt-0006",
+      "event": "member_portal_login",
+      "distinct_id": "user-aria",
+      "time": "2025-05-01T10:18:00Z",
+      "properties": {
+        "country": "US",
+        "plan": "paid",
+        "platform": "web",
+        "utm_source": "google"
+      }
+    },
+    {
+      "event_id": "evt-0007",
+      "event": "tour_ticket_purchase",
+      "distinct_id": "user-cleo",
+      "time": "2025-05-02T07:55:00Z",
+      "properties": {
+        "country": "GB",
+        "plan": "free",
+        "platform": "android",
+        "utm_source": "facebook"
+      }
+    },
+    {
+      "event_id": "evt-0008",
+      "event": "donation_completed",
+      "distinct_id": "user-bode",
+      "time": "2025-05-02T11:30:00Z",
+      "properties": {
+        "country": "DE",
+        "plan": "free",
+        "platform": "ios",
+        "utm_source": "organic"
+      }
+    },
+    {
+      "event_id": "evt-0009",
+      "event": "newsletter_signup",
+      "distinct_id": "user-bode",
+      "time": "2025-05-02T11:33:00Z",
+      "properties": {
+        "country": "DE",
+        "plan": "free",
+        "platform": "ios",
+        "utm_source": "organic"
+      }
+    },
+    {
+      "event_id": "evt-0010",
+      "event": "resource_download",
+      "distinct_id": "user-bode",
+      "time": "2025-05-02T11:40:00Z",
+      "properties": {
+        "country": "DE",
+        "plan": "free",
+        "platform": "ios",
+        "utm_source": "organic"
+      }
+    },
+    {
+      "event_id": "evt-0011",
+      "event": "member_portal_login",
+      "distinct_id": "user-cleo",
+      "time": "2025-05-02T13:20:00Z",
+      "properties": {
+        "country": "GB",
+        "plan": "free",
+        "platform": "android",
+        "utm_source": "facebook"
+      }
+    },
+    {
+      "event_id": "evt-0012",
+      "event": "tour_ticket_purchase",
+      "distinct_id": "user-cleo",
+      "time": "2025-05-02T13:24:00Z",
+      "properties": {
+        "country": "GB",
+        "plan": "free",
+        "platform": "android",
+        "utm_source": "facebook"
+      }
+    },
+    {
+      "event_id": "evt-0013",
+      "event": "donation_completed",
+      "distinct_id": "user-bode",
+      "time": "2025-05-03T09:10:00Z",
+      "properties": {
+        "country": "DE",
+        "plan": "paid",
+        "platform": "ios",
+        "utm_source": "organic"
+      }
+    },
+    {
+      "event_id": "evt-0014",
+      "event": "newsletter_signup",
+      "distinct_id": "user-aria",
+      "time": "2025-05-03T18:02:00Z",
+      "properties": {
+        "country": "US",
+        "plan": "paid",
+        "platform": "web",
+        "utm_source": "google"
+      }
+    },
+    {
+      "event_id": "evt-0015",
+      "event": "resource_download",
+      "distinct_id": "user-cleo",
+      "time": "2025-05-03T19:45:00Z",
+      "properties": {
+        "country": "GB",
+        "plan": "free",
+        "platform": "android",
+        "utm_source": "facebook"
+      }
+    },
+    {
+      "event_id": "evt-0016",
+      "event": "member_portal_login",
+      "distinct_id": "user-cleo",
+      "time": "2025-05-03T19:50:00Z",
+      "properties": {
+        "country": "GB",
+        "plan": "free",
+        "platform": "android",
+        "utm_source": "facebook"
+      }
+    },
+    {
+      "event_id": "evt-0017",
+      "event": "tour_ticket_purchase",
+      "distinct_id": "user-dane",
+      "time": "2025-05-03T20:11:00Z",
+      "properties": {
+        "country": "US",
+        "plan": "free",
+        "platform": "web",
+        "utm_source": "google"
+      }
+    },
+    {
+      "event_id": "evt-0018",
+      "event": "donation_completed",
+      "distinct_id": "user-dane",
+      "time": "2025-05-04T08:30:00Z",
+      "properties": {
+        "country": "US",
+        "plan": "free",
+        "platform": "web",
+        "utm_source": "google"
+      }
+    }
+  ]
+}

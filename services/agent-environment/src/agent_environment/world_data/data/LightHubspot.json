@@ -1,0 +1,316 @@
+{
+  "contacts": [
+    {
+      "id": "201",
+      "properties": {
+        "firstname": "Josephine",
+        "lastname": "Halloway",
+        "email": "josephine.halloway@shpa-savannah.org",
+        "phone": "(555) 912-4412",
+        "jobtitle": "Alliance staff/board",
+        "company": "Savannah Historic Preservation Alliance",
+        "lifecyclestage": "customer",
+        "createdate": "2025-11-02T10:00:00Z",
+        "lastmodifieddate": "2026-05-20T12:00:00Z"
+      },
+      "createdAt": "2025-11-02T10:00:00Z",
+      "updatedAt": "2026-05-20T12:00:00Z",
+      "archived": false
+    },
+    {
+      "id": "202",
+      "properties": {
+        "firstname": "Daniel",
+        "lastname": "Cho",
+        "email": "renardwhitcomb.residence@Finthesiss.ai",
+        "phone": "(555) 912-4412",
+        "jobtitle": "VP Operations",
+        "company": "Helix Robotics Inc",
+        "lifecyclestage": "customer",
+        "createdate": "2025-09-15T09:30:00Z",
+        "lastmodifieddate": "2026-05-18T08:00:00Z"
+      },
+      "createdAt": "2025-09-15T09:30:00Z",
+      "updatedAt": "2026-05-18T08:00:00Z",
+      "archived": false
+    },
+    {
+      "id": "203",
+      "properties": {
+        "firstname": "Delilah",
+        "lastname": "Hargrove",
+        "email": "delilah.hargrove@shpa-savannah.org",
+        "phone": "(555) 912-6634",
+        "jobtitle": "Alliance staff/board",
+        "company": "Savannah Historic Preservation Alliance",
+        "lifecyclestage": "opportunity",
+        "createdate": "2026-01-10T14:00:00Z",
+        "lastmodifieddate": "2026-05-22T11:00:00Z"
+      },
+      "createdAt": "2026-01-10T14:00:00Z",
+      "updatedAt": "2026-05-22T11:00:00Z",
+      "archived": false
+    },
+    {
+      "id": "204",
+      "properties": {
+        "firstname": "Malcolm",
+        "lastname": "Kingsley",
+        "email": "malcolm.kingsley@shpa-savannah.org",
+        "phone": "(555) 912-3320",
+        "jobtitle": "Alliance staff/board",
+        "company": "Savannah Historic Preservation Alliance",
+        "lifecyclestage": "lead",
+        "createdate": "2026-02-20T16:00:00Z",
+        "lastmodifieddate": "2026-05-10T09:00:00Z"
+      },
+      "createdAt": "2026-02-20T16:00:00Z",
+      "updatedAt": "2026-05-10T09:00:00Z",
+      "archived": false
+    },
+    {
+      "id": "205",
+      "properties": {
+        "firstname": "Cordelia",
+        "lastname": "Ashmore-Vance",
+        "email": "cordelia.ashmore.vance@shpa-savannah.org",
+        "phone": "(555) 912-4400",
+        "jobtitle": "Alliance staff/board",
+        "company": "Savannah Historic Preservation Alliance",
+        "lifecyclestage": "marketingqualifiedlead",
+        "createdate": "2026-03-05T11:30:00Z",
+        "lastmodifieddate": "2026-05-12T15:00:00Z"
+      },
+      "createdAt": "2026-03-05T11:30:00Z",
+      "updatedAt": "2026-05-12T15:00:00Z",
+      "archived": false
+    },
+    {
+      "id": "206",
+      "properties": {
+        "firstname": "Yvonne",
+        "lastname": "Cabrera",
+        "email": "yvonne.cabrera@shpa-savannah.org",
+        "phone": "(555) 912-4400",
+        "jobtitle": "Alliance staff/board",
+        "company": "Savannah Historic Preservation Alliance",
+        "lifecyclestage": "customer",
+        "createdate": "2025-12-01T08:00:00Z",
+        "lastmodifieddate": "2026-05-25T10:00:00Z"
+      },
+      "createdAt": "2025-12-01T08:00:00Z",
+      "updatedAt": "2026-05-25T10:00:00Z",
+      "archived": false
+    },
+    {
+      "id": "207",
+      "properties": {
+        "firstname": "Malcolm",
+        "lastname": "Kingsley",
+        "email": "malcolm.kingsley@shpa-savannah.org",
+        "phone": "(555) 404-3318",
+        "jobtitle": "Alliance staff/board",
+        "company": "Savannah Historic Preservation Alliance",
+        "lifecyclestage": "lead",
+        "createdate": "2026-04-12T13:00:00Z",
+        "lastmodifieddate": "2026-05-26T09:00:00Z"
+      },
+      "createdAt": "2026-04-12T13:00:00Z",
+      "updatedAt": "2026-05-26T09:00:00Z",
+      "archived": false
+    },
+    {
+      "id": "208",
+      "properties": {
+        "firstname": "Miriam",
+        "lastname": "Aldridge",
+        "email": "miriam.aldridge@savannahga.gov",
+        "phone": "(555) 912-1150",
+        "jobtitle": "Procurement Manager",
+        "company": "Driftwood Co",
+        "lifecyclestage": "salesqualifiedlead",
+        "createdate": "2026-04-25T10:15:00Z",
+        "lastmodifieddate": "2026-05-24T14:00:00Z"
+      },
+      "createdAt": "2026-04-25T10:15:00Z",
+      "updatedAt": "2026-05-24T14:00:00Z",
+      "archived": false
+    }
+  ],
+  "companies": [
+    {
+      "id": "301",
+      "properties": {
+        "name": "Coastal Georgia Community Foundation",
+        "domain": "helixrobotics.io",
+        "industry": "Philanthropy",
+        "city": "Savannah",
+        "state": "GA",
+        "numberofemployees": "240",
+        "annualrevenue": "42000000",
+        "createdate": "2025-09-15T09:30:00Z"
+      },
+      "createdAt": "2025-09-15T09:30:00Z",
+      "updatedAt": "2025-09-15T09:30:00Z",
+      "archived": false
+    },
+    {
+      "id": "302",
+      "properties": {
+        "name": "Bull Street Merchants Association",
+        "domain": "lumendesign.co",
+        "industry": "Philanthropy",
+        "city": "Savannah",
+        "state": "GA",
+        "numberofemployees": "28",
+        "annualrevenue": "3200000",
+        "createdate": "2026-01-10T14:00:00Z"
+      },
+      "createdAt": "2026-01-10T14:00:00Z",
+      "updatedAt": "2026-01-10T14:00:00Z",
+      "archived": false
+    },
+    {
+      "id": "303",
+      "properties": {
+        "name": "Savannah Rotary Club",
+        "domain": "pelagicfreight.com",
+        "industry": "Philanthropy",
+        "city": "Savannah",
+        "state": "GA",
+        "numberofemployees": "510",
+        "annualrevenue": "88000000",
+        "createdate": "2026-02-20T16:00:00Z"
+      },
+      "createdAt": "2026-02-20T16:00:00Z",
+      "updatedAt": "2026-02-20T16:00:00Z",
+      "archived": false
+    },
+    {
+      "id": "304",
+      "properties": {
+        "name": "Telfair Neighbors Trust",
+        "domain": "quanta.ai",
+        "industry": "Philanthropy",
+        "city": "Savannah",
+        "state": "GA",
+        "numberofemployees": "75",
+        "annualrevenue": "11000000",
+        "createdate": "2025-12-01T08:00:00Z"
+      },
+      "createdAt": "2025-12-01T08:00:00Z",
+      "updatedAt": "2025-12-01T08:00:00Z",
+      "archived": false
+    }
+  ],
+  "deals": [
+    {
+      "id": "401",
+      "properties": {
+        "dealname": "Annual membership drive",
+        "pipeline": "default",
+        "dealstage": "closedwon",
+        "amount": "358800",
+        "closedate": "2026-04-30T00:00:00Z",
+        "dealtype": "existingbusiness",
+        "createdate": "2026-02-01T10:00:00Z",
+        "lastmodifieddate": "2026-04-30T12:00:00Z"
+      },
+      "createdAt": "2026-02-01T10:00:00Z",
+      "updatedAt": "2026-04-30T12:00:00Z",
+      "archived": false,
+      "_company": "301",
+      "_contact": "202"
+    },
+    {
+      "id": "402",
+      "properties": {
+        "dealname": "Tour sponsorship",
+        "pipeline": "default",
+        "dealstage": "decisionmakerboughtin",
+        "amount": "11760",
+        "closedate": "2026-06-15T00:00:00Z",
+        "dealtype": "existingbusiness",
+        "createdate": "2026-03-10T14:00:00Z",
+        "lastmodifieddate": "2026-05-22T11:00:00Z"
+      },
+      "createdAt": "2026-03-10T14:00:00Z",
+      "updatedAt": "2026-05-22T11:00:00Z",
+      "archived": false,
+      "_company": "302",
+      "_contact": "203"
+    },
+    {
+      "id": "403",
+      "properties": {
+        "dealname": "Facade fund pledge",
+        "pipeline": "default",
+        "dealstage": "qualifiedtobuy",
+        "amount": "45000",
+        "closedate": "2026-07-01T00:00:00Z",
+        "dealtype": "newbusiness",
+        "createdate": "2026-02-25T16:00:00Z",
+        "lastmodifieddate": "2026-05-10T09:00:00Z"
+      },
+      "createdAt": "2026-02-25T16:00:00Z",
+      "updatedAt": "2026-05-10T09:00:00Z",
+      "archived": false,
+      "_company": "303",
+      "_contact": "204"
+    },
+    {
+      "id": "404",
+      "properties": {
+        "dealname": "Lecture underwriting",
+        "pipeline": "default",
+        "dealstage": "presentationscheduled",
+        "amount": "98000",
+        "closedate": "2026-06-30T00:00:00Z",
+        "dealtype": "existingbusiness",
+        "createdate": "2026-04-01T08:00:00Z",
+        "lastmodifieddate": "2026-05-25T10:00:00Z"
+      },
+      "createdAt": "2026-04-01T08:00:00Z",
+      "updatedAt": "2026-05-25T10:00:00Z",
+      "archived": false,
+      "_company": "304",
+      "_contact": "206"
+    },
+    {
+      "id": "405",
+      "properties": {
+        "dealname": "Grant renewal",
+        "pipeline": "default",
+        "dealstage": "appointmentscheduled",
+        "amount": "9900",
+        "closedate": "2026-08-01T00:00:00Z",
+        "dealtype": "newbusiness",
+        "createdate": "2026-04-15T13:00:00Z",
+        "lastmodifieddate": "2026-05-26T09:00:00Z"
+      },
+      "createdAt": "2026-04-15T13:00:00Z",
+      "updatedAt": "2026-05-26T09:00:00Z",
+      "archived": false,
+      "_company": null,
+      "_contact": "207"
+    },
+    {
+      "id": "406",
+      "properties": {
+        "dealname": "Member upgrade",
+        "pipeline": "default",
+        "dealstage": "closedlost",
+        "amount": "15000",
+        "closedate": "2026-05-01T00:00:00Z",
+        "dealtype": "newbusiness",
+        "createdate": "2026-04-25T10:15:00Z",
+        "lastmodifieddate": "2026-05-24T14:00:00Z"
+      },
+      "createdAt": "2026-04-25T10:15:00Z",
+      "updatedAt": "2026-05-24T14:00:00Z",
+      "archived": false,
+      "_company": null,
+      "_contact": "208"
+    }
+  ]
+}

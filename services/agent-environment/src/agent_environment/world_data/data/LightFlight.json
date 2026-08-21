@@ -1,0 +1,60 @@
+{
+  "my_balance": 33951,
+  "bookings": [
+    {
+      "bid": "book_tXvxkYUeqHydnu8Tzei6Qp",
+      "fid": "flight_SXwbHtZ6ZNPGjitNVQ5exa",
+      "seat_class": "economy",
+      "total_price": 10000.0,
+      "passenger_info": {
+        "name": "Denise Whitfield-Carter",
+        "light_talk_uid": "user_oDzFzPm3bMNNMiV3E88jXx"
+      },
+      "paid": true
+    },
+    {
+      "bid": "book_GNSYF5RKsT7DfujMEicCiU",
+      "fid": "flight_eajQpVxysFDzXhppCKTnuF",
+      "seat_class": "economy",
+      "total_price": 1340.0,
+      "passenger_info": {
+        "name": "Terrence Carter",
+        "light_talk_uid": "user_Z9d4FYTEngV6my3JPT3GBj"
+      },
+      "paid": false
+    },
+    {
+      "bid": "book_HnJi7P3xeGe7jaFzFXBczz",
+      "fid": "flight_pRbpkS8wxWyLBksXKuJE4B",
+      "seat_class": "economy",
+      "total_price": 1850.0,
+      "passenger_info": {
+        "name": "Amos Jeremiah Whitfield",
+        "light_talk_uid": "user_bU6qzNJdSZV93PTE6x5oTU"
+      },
+      "paid": true
+    }
+  ],
+  "passengers": [
+    {
+      "name": "Amos Jeremiah Whitfield",
+      "light_talk_uid": "user_bU6qzNJdSZV93PTE6x5oTU"
+    },
+    {
+      "name": "Denise Whitfield-Carter",
+      "light_talk_uid": "user_oDzFzPm3bMNNMiV3E88jXx"
+    },
+    {
+      "name": "Terrence Carter",
+      "light_talk_uid": "user_Z9d4FYTEngV6my3JPT3GBj"
+    },
+    {
+      "name": "Miles Carter",
+      "light_talk_uid": "user_2a99TiDfBLipK56g6g2Tob"
+    },
+    {
+      "name": "Patricia Odom",
+      "light_talk_uid": "user_agXUaoRB83q4opMxWQWqaw"
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "users": [
+    {
+      "id": "00u1lorraine",
+      "first_name": "Delbert",
+      "last_name": "Yancey",
+      "email": "delbert.yancey@yanceyballard-cpa.com",
+      "login": "delbert.yancey@yanceyballard-cpa.com",
+      "status": "ACTIVE",
+      "created": "2024-01-10T10:00:00.000Z",
+      "activated": "2024-01-10T10:05:00.000Z",
+      "last_login": "2026-05-26T08:00:00.000Z"
+    },
+    {
+      "id": "00u2marcus",
+      "first_name": "Ellis",
+      "last_name": "Marchand",
+      "email": "ellis.marchand@ashcrofthardwoods.com",
+      "login": "ellis.marchand@ashcrofthardwoods.com",
+      "status": "ACTIVE",
+      "created": "2024-02-04T11:30:00.000Z",
+      "activated": "2024-02-04T11:35:00.000Z",
+      "last_login": "2026-05-25T17:00:00.000Z"
+    },
+    {
+      "id": "00u3josephine",
+      "first_name": "Wesley",
+      "last_name": "Farraday",
+      "email": "wesley.farraday@Finthesiss.ai",
+      "login": "wesley.farraday@Finthesiss.ai",
+      "status": "ACTIVE",
+      "created": "2024-03-12T14:20:00.000Z",
+      "activated": "2024-03-12T14:25:00.000Z",
+      "last_login": "2026-05-26T07:30:00.000Z"
+    },
+    {
+      "id": "00u4rohit",
+      "first_name": "Cordelia",
+      "last_name": "Ashmore-Vance",
+      "email": "cordelia.ashmore.vance@shpa-savannah.org",
+      "login": "cordelia.ashmore.vance@shpa-savannah.org",
+      "status": "SUSPENDED",
+      "created": "2024-05-02T09:10:00.000Z",
+      "activated": "2024-05-02T09:15:00.000Z",
+      "last_login": "2026-04-30T12:00:00.000Z"
+    },
+    {
+      "id": "00u5noor",
+      "first_name": "Terrence",
+      "last_name": "Carter",
+      "email": "terrence.carter@Finthesiss.ai",
+      "login": "terrence.carter@Finthesiss.ai",
+      "status": "PROVISIONED",
+      "created": "2026-05-20T16:45:00.000Z",
+      "activated": null,
+      "last_login": null
+    },
+    {
+      "id": "00u6priya",
+      "first_name": "Loretta",
+      "last_name": "Simms",
+      "email": "loretta.simms@Finthesiss.ai",
+      "login": "loretta.simms@Finthesiss.ai",
+      "status": "ACTIVE",
+      "created": "2024-08-15T10:00:00.000Z",
+      "activated": "2024-08-15T10:05:00.000Z",
+      "last_login": "2026-05-24T09:00:00.000Z"
+    }
+  ]
+}

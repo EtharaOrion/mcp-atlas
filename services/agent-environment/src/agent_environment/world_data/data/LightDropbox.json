@@ -1,0 +1,114 @@
+{
+  "files": [
+    {
+      "id": "id:a4ayc_80000000000000000000001",
+      "name": "barrington-sideboard-drawings.pdf",
+      "path_lower": "/woodworks/barrington-sideboard-drawings.pdf",
+      "path_display": "/Woodworks/barrington-sideboard-drawings.pdf",
+      "is_folder": true,
+      "size": 0,
+      "client_modified": "2026-05-02T09:14:00Z",
+      "rev": ""
+    },
+    {
+      "id": "id:a4ayc_80000000000000000000002",
+      "name": "renard-chairs-cutlist.xlsx",
+      "path_lower": "/woodworks/renard-chairs-cutlist.xlsx",
+      "path_display": "/Woodworks/renard-chairs-cutlist.xlsx",
+      "is_folder": true,
+      "size": 0,
+      "client_modified": "2026-05-03T11:20:00Z",
+      "rev": ""
+    },
+    {
+      "id": "id:a4ayc_80000000000000000000003",
+      "name": "eleanor-memorial-photos",
+      "path_lower": "/family/eleanor-memorial-photos",
+      "path_display": "/Family/eleanor-memorial-photos",
+      "is_folder": true,
+      "size": 0,
+      "client_modified": "2026-05-04T08:05:00Z",
+      "rev": ""
+    },
+    {
+      "id": "id:a4ayc_80000000000000000000004",
+      "name": "deacon-schedule.pdf",
+      "path_lower": "/church/deacon-schedule.pdf",
+      "path_display": "/Church/deacon-schedule.pdf",
+      "is_folder": false,
+      "size": 284517,
+      "client_modified": "2026-05-10T14:32:00Z",
+      "rev": "0123456789abcdef01000001"
+    },
+    {
+      "id": "id:a4ayc_80000000000000000000005",
+      "name": "finishing-recipes.md",
+      "path_lower": "/woodworks/finishing-recipes.md",
+      "path_display": "/Woodworks/finishing-recipes.md",
+      "is_folder": false,
+      "size": 51230,
+      "client_modified": "2026-05-12T16:48:00Z",
+      "rev": "0123456789abcdef01000002"
+    },
+    {
+      "id": "id:a4ayc_80000000000000000000006",
+      "name": "990-workpapers.xlsx",
+      "path_lower": "/shpa/990-workpapers.xlsx",
+      "path_display": "/SHPA/990-workpapers.xlsx",
+      "is_folder": false,
+      "size": 38912,
+      "client_modified": "2026-05-14T10:11:00Z",
+      "rev": "0123456789abcdef01000003"
+    },
+    {
+      "id": "id:a4ayc_80000000000000000000007",
+      "name": "miles-birthday-plans.docx",
+      "path_lower": "/family/miles-birthday-plans.docx",
+      "path_display": "/Family/miles-birthday-plans.docx",
+      "is_folder": false,
+      "size": 1048576,
+      "client_modified": "2026-05-15T18:22:00Z",
+      "rev": "0123456789abcdef01000004"
+    },
+    {
+      "id": "id:a4ayc_80000000000000000000008",
+      "name": "lumber-receipts",
+      "path_lower": "/woodworks/lumber-receipts",
+      "path_display": "/Woodworks/lumber-receipts",
+      "is_folder": false,
+      "size": 2097152,
+      "client_modified": "2026-05-16T12:40:00Z",
+      "rev": "0123456789abcdef01000005"
+    },
+    {
+      "id": "id:a4ayc_80000000000000000000009",
+      "name": "tour-route-map.pdf",
+      "path_lower": "/shpa/tour-route-map.pdf",
+      "path_display": "/SHPA/tour-route-map.pdf",
+      "is_folder": false,
+      "size": 156789,
+      "client_modified": "2026-05-18T09:55:00Z",
+      "rev": "0123456789abcdef01000006"
+    },
+    {
+      "id": "id:a4ayc_80000000000000000000010",
+      "name": "nc-mountains-trip.md",
+      "path_lower": "/personal/nc-mountains-trip.md",
+      "path_display": "/Personal/nc-mountains-trip.md",
+      "is_folder": false,
+      "size": 4096,
+      "client_modified": "2026-05-20T13:07:00Z",
+      "rev": "0123456789abcdef01000007"
+    },
+    {
+      "id": "id:a4ayc_80000000000000000000011",
+      "name": "clients",
+      "path_lower": "/woodworks/clients",
+      "path_display": "/Woodworks/clients",
+      "is_folder": false,
+      "size": 256,
+      "client_modified": "2026-05-20T09:00:00Z",
+      "rev": "0123456789abcdef01000011"
+    }
+  ]
+}

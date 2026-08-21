@@ -1,0 +1,290 @@
+{
+  "orders": [
+    {
+      "id": "ORDER-5O190127TN364715T",
+      "intent": "CAPTURE",
+      "status": "COMPLETED",
+      "purchase_units": [
+        {
+          "amount": {
+            "currency_code": "USD",
+            "value": "49.99"
+          },
+          "payee": {
+            "email_address": "malcolm.kingsley@shpa-savannah.org"
+          },
+          "description": "Pro plan annual"
+        }
+      ],
+      "create_time": "2026-05-10T09:00:00Z"
+    },
+    {
+      "id": "ORDER-8AB54321CD987654E",
+      "intent": "CAPTURE",
+      "status": "APPROVED",
+      "purchase_units": [
+        {
+          "amount": {
+            "currency_code": "USD",
+            "value": "19.00"
+          },
+          "payee": {
+            "email_address": "malcolm.kingsley@shpa-savannah.org"
+          },
+          "description": "Starter plan monthly"
+        }
+      ],
+      "create_time": "2026-05-18T11:15:00Z"
+    },
+    {
+      "id": "ORDER-2KL98765MN123456F",
+      "intent": "CAPTURE",
+      "status": "CREATED",
+      "purchase_units": [
+        {
+          "amount": {
+            "currency_code": "USD",
+            "value": "129.00"
+          },
+          "payee": {
+            "email_address": "malcolm.kingsley@shpa-savannah.org"
+          },
+          "description": "Team seats add-on"
+        }
+      ],
+      "create_time": "2026-05-22T14:30:00Z"
+    },
+    {
+      "id": "ORDER-9PQ11223RS445566G",
+      "intent": "CAPTURE",
+      "status": "COMPLETED",
+      "purchase_units": [
+        {
+          "amount": {
+            "currency_code": "USD",
+            "value": "7.50"
+          },
+          "payee": {
+            "email_address": "malcolm.kingsley@shpa-savannah.org"
+          },
+          "description": "Usage overage"
+        }
+      ],
+      "create_time": "2026-05-23T08:45:00Z"
+    },
+    {
+      "id": "ORDER-4UV77889WX001122H",
+      "intent": "CAPTURE",
+      "status": "VOIDED",
+      "purchase_units": [
+        {
+          "amount": {
+            "currency_code": "USD",
+            "value": "250.00"
+          },
+          "payee": {
+            "email_address": "malcolm.kingsley@shpa-savannah.org"
+          },
+          "description": "Cancelled bulk order"
+        }
+      ],
+      "create_time": "2026-05-24T16:00:00Z"
+    },
+    {
+      "id": "ORDER-6YZ33445AB667788I",
+      "intent": "CAPTURE",
+      "status": "CREATED",
+      "purchase_units": [
+        {
+          "amount": {
+            "currency_code": "USD",
+            "value": "84.25"
+          },
+          "payee": {
+            "email_address": "malcolm.kingsley@shpa-savannah.org"
+          },
+          "description": "Hardware accessory"
+        }
+      ],
+      "create_time": "2026-05-25T10:20:00Z"
+    }
+  ],
+  "captures": [
+    {
+      "id": "CAP_3C679384HN8401234",
+      "order_id": "ORDER-5O190127TN364715T",
+      "status": "COMPLETED",
+      "amount": {
+        "currency_code": "USD",
+        "value": "49.99"
+      },
+      "final_capture": true,
+      "create_time": "2026-05-10T09:01:00Z"
+    },
+    {
+      "id": "CAP_5E891276JP9512345",
+      "order_id": "ORDER-9PQ11223RS445566G",
+      "status": "COMPLETED",
+      "amount": {
+        "currency_code": "USD",
+        "value": "7.50"
+      },
+      "final_capture": true,
+      "create_time": "2026-05-23T08:46:00Z"
+    }
+  ],
+  "invoices": [
+    {
+      "id": "INV2-AB12-CD34-EF56-GH78",
+      "detail": {
+        "invoice_number": "INV-0001",
+        "currency_code": "USD",
+        "note": "Thank you for your business"
+      },
+      "status": "PAID",
+      "primary_recipients": [
+        {
+          "billing_info": {
+            "email_address": "malcolm.kingsley@shpa-savannah.org"
+          }
+        }
+      ],
+      "amount": {
+        "currency_code": "USD",
+        "value": "49.99"
+      },
+      "due_date": "2026-05-15"
+    },
+    {
+      "id": "INV2-IJ90-KL12-MN34-OP56",
+      "detail": {
+        "invoice_number": "INV-0002",
+        "currency_code": "USD",
+        "note": "Net 15 terms"
+      },
+      "status": "SENT",
+      "primary_recipients": [
+        {
+          "billing_info": {
+            "email_address": "delilah.hargrove@shpa-savannah.org"
+          }
+        }
+      ],
+      "amount": {
+        "currency_code": "USD",
+        "value": "129.00"
+      },
+      "due_date": "2026-06-01"
+    },
+    {
+      "id": "INV2-QR78-ST90-UV12-WX34",
+      "detail": {
+        "invoice_number": "INV-0003",
+        "currency_code": "USD",
+        "note": "Monthly subscription"
+      },
+      "status": "DRAFT",
+      "primary_recipients": [
+        {
+          "billing_info": {
+            "email_address": "ruthann.greer@Finthesiss.ai"
+          }
+        }
+      ],
+      "amount": {
+        "currency_code": "USD",
+        "value": "19.00"
+      },
+      "due_date": "2026-06-05"
+    },
+    {
+      "id": "INV2-YZ56-AB78-CD90-EF12",
+      "detail": {
+        "invoice_number": "INV-0004",
+        "currency_code": "USD",
+        "note": "Usage overage"
+      },
+      "status": "PAID",
+      "primary_recipients": [
+        {
+          "billing_info": {
+            "email_address": "cordelia.ashmore.vance@shpa-savannah.org"
+          }
+        }
+      ],
+      "amount": {
+        "currency_code": "USD",
+        "value": "7.50"
+      },
+      "due_date": "2026-05-20"
+    },
+    {
+      "id": "INV2-GH34-IJ56-KL78-MN90",
+      "detail": {
+        "invoice_number": "INV-0005",
+        "currency_code": "USD",
+        "note": "Hardware accessory"
+      },
+      "status": "SENT",
+      "primary_recipients": [
+        {
+          "billing_info": {
+            "email_address": "wesley.farraday@Finthesiss.ai"
+          }
+        }
+      ],
+      "amount": {
+        "currency_code": "USD",
+        "value": "84.25"
+      },
+      "due_date": "2026-06-10"
+    }
+  ],
+  "payouts": [
+    {
+      "batch_header": {
+        "payout_batch_id": "PAYOUT-BATCH-001",
+        "batch_status": "SUCCESS",
+        "sender_batch_header": {
+          "sender_batch_id": "Payouts_2026_05_01"
+        },
+        "amount": {
+          "currency_code": "USD",
+          "value": "500.00"
+        }
+      },
+      "recipient_email": "grady.colton@savingplaces.org",
+      "create_time": "2026-05-01T12:00:00Z",
+      "payout_batch_id": "PAYOUT-BATCH-001"
+    },
+    {
+      "batch_header": {
+        "payout_batch_id": "PAYOUT-BATCH-002",
+        "batch_status": "PENDING",
+        "sender_batch_header": {
+          "sender_batch_id": "Payouts_2026_05_15"
+        },
+        "amount": {
+          "currency_code": "USD",
+          "value": "275.50"
+        }
+      },
+      "recipient_email": "terrence.carter@Finthesiss.ai",
+      "create_time": "2026-05-15T12:00:00Z",
+      "payout_batch_id": "PAYOUT-BATCH-002"
+    }
+  ],
+  "refunds": [
+    {
+      "id": "REF_1A234567BC890123",
+      "capture_id": "CAP_3C679384HN8401234",
+      "status": "COMPLETED",
+      "amount": {
+        "currency_code": "USD",
+        "value": "10.00"
+      },
+      "note_to_payer": "Partial refund for late delivery",
+      "create_time": "2026-05-12T10:00:00Z"
+    }
+  ]
+}

@@ -4,43 +4,21 @@ from .logger import create_logger
 import json
 import random
 import os
-import re
+import sys
 from pathlib import Path
 
 logger = create_logger(__name__)
-
-# Load template to check for API key requirements
-template_path = Path(__file__).parent / "mcp_server_template.json"
-with open(template_path) as f:
-    template_config = json.load(f)
 
 # Load actual config (after envsubst) for server execution
 config_path = Path(__file__).parent / "mcp_server_config.json"
 with open(config_path) as f:
     config = json.load(f)
 
-# Default servers that don't require API keys (used when ENABLED_SERVERS is empty)
+# Default servers (used when ENABLED_SERVERS is empty). External-API servers
+# are intentionally excluded — data comes from the local world-data server.
+# Re-enable external servers explicitly via the ENABLED_SERVERS env var.
 DEFAULT_SERVERS = [
-    "arxiv",
-    "calculator",
-    "cli-mcp-server",
-    "clinicaltrialsgov-mcp-server",
-    "context7",
-    "ddg-search",
-    "desktop-commander",
-    "fetch",
-    "filesystem",
-    "git",
-    "mcp-code-executor",
-    "mcp-server-code-runner",
-    "memory",
-    "met-museum",
-    "open-library",
-    "osm-mcp-server",
-    "pubmed",
-    "weather",
-    "whois",
-    "wikipedia",
+    "world-data",
 ]
 
 # Filter servers based on ENABLED_SERVERS environment variable
@@ -53,56 +31,14 @@ if "mcpServers" in config:
         enabled_set = set(enabled_list)
         logger.info(f"Using explicit ENABLED_SERVERS: {', '.join(sorted(enabled_set))}")
     else:
-        # Auto mode: use DEFAULT_SERVERS + auto-detect servers with API keys
+        # Auto mode: local-only defaults. External-API servers are never
+        # auto-enabled (even if their API keys are set) — use ENABLED_SERVERS
+        # to opt back in explicitly.
         enabled_set = set(DEFAULT_SERVERS)
-        logger.info(f"Using {len(DEFAULT_SERVERS)} default servers")
-
-        # Auto-detect servers with all required API keys configured
-        api_key_enabled = []
-        for name in template_config.get("mcpServers", {}).keys():
-            if name in enabled_set:
-                continue  # Already in default list
-
-            server_template = template_config["mcpServers"][name]
-            required_vars = set()
-
-            # Check env section for ${VAR} patterns
-            if "env" in server_template and server_template["env"]:
-                env_config = server_template["env"]
-                if isinstance(env_config, list):
-                    env_config = env_config[0] if env_config else {}
-
-                for env_key, env_value in env_config.items():
-                    if isinstance(env_value, str) and "${" in env_value:
-                        # Extract all ${VAR} patterns from the string
-                        var_names = re.findall(r"\$\{([^}]+)\}", env_value)
-                        required_vars.update(var_names)
-
-            # Check args array for ${VAR} patterns
-            if "args" in server_template:
-                args_list = server_template["args"]
-                for arg in args_list:
-                    if isinstance(arg, str) and "${" in arg:
-                        # Extract all ${VAR} patterns from the arg
-                        var_names = re.findall(r"\$\{([^}]+)\}", arg)
-                        required_vars.update(var_names)
-
-            # Check if all required variables are set
-            if required_vars:
-                all_keys_present = True
-                for var_name in required_vars:
-                    if not os.getenv(var_name, "").strip():
-                        all_keys_present = False
-                        break
-
-                if all_keys_present:
-                    enabled_set.add(name)
-                    api_key_enabled.append(name)
-
-        if api_key_enabled:
-            logger.info(
-                f"Auto-detected {len(api_key_enabled)} servers with API keys: {', '.join(sorted(api_key_enabled))}"
-            )
+        logger.info(
+            f"Using {len(DEFAULT_SERVERS)} default local servers: "
+            f"{', '.join(sorted(enabled_set))}"
+        )
 
     # Filter config to only enabled servers
     config["mcpServers"] = {
@@ -123,6 +59,13 @@ if "mcpServers" in config:
             logger.info(
                 f"Randomized env for server '{server_name}': selected from {len(env_list)} options"
             )
+
+# Local python-module servers (e.g. world-data) must run under the same
+# interpreter as this app so the agent_environment package is importable.
+if "mcpServers" in config:
+    for server_name, server_config in config["mcpServers"].items():
+        if server_config.get("command") in ("python", "python3"):
+            server_config["command"] = sys.executable
 
 
 async def log_handler(message: LogMessage) -> None:

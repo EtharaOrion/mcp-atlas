@@ -1,0 +1,200 @@
+{
+  "posts": [
+    {
+      "id": "t3_p001",
+      "subreddit": "woodworking",
+      "title": "Hand-cut dovetails: my jig-free layout method",
+      "author": "Ruth Ann Greer",
+      "url": "https://example.com/grpc-post",
+      "selftext": "Sharing the layout sequence I learned restoring period casework.",
+      "score": 1820,
+      "ups": 1820,
+      "num_comments": 3,
+      "created_utc": 1716800000.0,
+      "is_self": false,
+      "_likes": null
+    },
+    {
+      "id": "t3_p002",
+      "subreddit": "savannah",
+      "title": "Best quiet squares for a morning walk?",
+      "author": "Malcolm Kingsley",
+      "url": null,
+      "selftext": "I walk 6:30 to 7:30 most mornings and want new routes.",
+      "score": 640,
+      "ups": 640,
+      "num_comments": 2,
+      "created_utc": 1716810000.0,
+      "is_self": true,
+      "_likes": null
+    },
+    {
+      "id": "t3_p003",
+      "subreddit": "BBQ",
+      "title": "Brisket rest time \u2014 how long is too long?",
+      "author": "Odetta Sinclair",
+      "url": "https://example.com/nas-build",
+      "selftext": "Low and slow, then a long rest in the cooler.",
+      "score": 2310,
+      "ups": 2310,
+      "num_comments": 2,
+      "created_utc": 1716700000.0,
+      "is_self": false,
+      "_likes": null
+    },
+    {
+      "id": "t3_p004",
+      "subreddit": "preservation",
+      "title": "Facade easements: what homeowners should know",
+      "author": "Calvin Burke",
+      "url": null,
+      "selftext": "An easement is a promise to the future, not a burden.",
+      "score": 990,
+      "ups": 990,
+      "num_comments": 1,
+      "created_utc": 1716720000.0,
+      "is_self": true,
+      "_likes": null
+    },
+    {
+      "id": "t3_p005",
+      "subreddit": "woodworking",
+      "title": "Finished a walnut blanket chest for my grandson",
+      "author": "Barrett Whitehall",
+      "url": "https://example.com/tomatoes",
+      "selftext": "Cut the pins first. Always the pins first.",
+      "score": 1450,
+      "ups": 1450,
+      "num_comments": 2,
+      "created_utc": 1716650000.0,
+      "is_self": false,
+      "_likes": null
+    },
+    {
+      "id": "t3_p006",
+      "subreddit": "savannah",
+      "title": "Savannah gallery night recommendations?",
+      "author": "Ruth Ann Greer",
+      "url": null,
+      "selftext": "Looking for shows near the Historic District.",
+      "score": 210,
+      "ups": 210,
+      "num_comments": 1,
+      "created_utc": 1716660000.0,
+      "is_self": true,
+      "_likes": null
+    }
+  ],
+  "comments": [
+    {
+      "id": "t1_c001",
+      "post_id": "t3_p001",
+      "parent_id": "t3_p001",
+      "author": "Ruth Ann Greer",
+      "body": "Pins first gang checking in.",
+      "score": 140,
+      "ups": 140,
+      "created_utc": 1716801000.0
+    },
+    {
+      "id": "t1_c002",
+      "post_id": "t3_p001",
+      "parent_id": "t1_c001",
+      "author": "Renard-Whitcomb residence",
+      "body": "Try Pulaski Square at dawn \u2014 empty and lovely.",
+      "score": 38,
+      "ups": 38,
+      "created_utc": 1716801500.0
+    },
+    {
+      "id": "t1_c003",
+      "post_id": "t3_p001",
+      "parent_id": "t3_p001",
+      "author": "Reginald Thackery",
+      "body": "Two hours wrapped, minimum.",
+      "score": 72,
+      "ups": 72,
+      "created_utc": 1716802000.0
+    },
+    {
+      "id": "t1_c004",
+      "post_id": "t3_p002",
+      "parent_id": "t3_p002",
+      "author": "Denise Whitfield-Carter",
+      "body": "Our block did this and the street looks wonderful.",
+      "score": 55,
+      "ups": 55,
+      "created_utc": 1716811000.0
+    },
+    {
+      "id": "t1_c005",
+      "post_id": "t3_p002",
+      "parent_id": "t1_c004",
+      "author": "Priscilla Everton",
+      "body": "That chest will be an heirloom.",
+      "score": 21,
+      "ups": 21,
+      "created_utc": 1716811800.0
+    },
+    {
+      "id": "t1_c006",
+      "post_id": "t3_p003",
+      "parent_id": "t3_p003",
+      "author": "Grady Colton",
+      "body": "The Telfair stays open late on gallery night.",
+      "score": 44,
+      "ups": 44,
+      "created_utc": 1716701000.0
+    },
+    {
+      "id": "t1_c007",
+      "post_id": "t3_p003",
+      "parent_id": "t1_c006",
+      "author": "Odetta Sinclair",
+      "body": "Pins first gang checking in.",
+      "score": 30,
+      "ups": 30,
+      "created_utc": 1716701600.0
+    },
+    {
+      "id": "t1_c008",
+      "post_id": "t3_p004",
+      "parent_id": "t3_p004",
+      "author": "Priscilla Everton",
+      "body": "Try Pulaski Square at dawn \u2014 empty and lovely.",
+      "score": 18,
+      "ups": 18,
+      "created_utc": 1716721000.0
+    },
+    {
+      "id": "t1_c009",
+      "post_id": "t3_p005",
+      "parent_id": "t3_p005",
+      "author": "Terrence Carter",
+      "body": "Two hours wrapped, minimum.",
+      "score": 25,
+      "ups": 25,
+      "created_utc": 1716651000.0
+    },
+    {
+      "id": "t1_c010",
+      "post_id": "t3_p005",
+      "parent_id": "t1_c009",
+      "author": "Barrett Whitehall",
+      "body": "Our block did this and the street looks wonderful.",
+      "score": 12,
+      "ups": 12,
+      "created_utc": 1716651500.0
+    },
+    {
+      "id": "t1_c011",
+      "post_id": "t3_p006",
+      "parent_id": "t3_p006",
+      "author": "Yvonne Cabrera",
+      "body": "That chest will be an heirloom.",
+      "score": 9,
+      "ups": 9,
+      "created_utc": 1716661000.0
+    }
+  ]
+}

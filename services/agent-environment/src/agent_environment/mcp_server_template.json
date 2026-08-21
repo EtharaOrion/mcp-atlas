@@ -299,6 +299,16 @@
         "wikipedia-mcp==2.0.1",
         "wikipedia-mcp"
       ]
+    },
+    "world-data": {
+      "command": "python3",
+      "args": [
+        "-m",
+        "agent_environment.world_data"
+      ],
+      "env": {
+        "WORLD_DATA_DIR": "${WORLD_DATA_DIR}"
+      }
     }
   }
 }

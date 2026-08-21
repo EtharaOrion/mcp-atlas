@@ -1,0 +1,144 @@
+{
+  "messages": [
+    {
+      "ts": "1767606600.000100",
+      "channel_id": "C01GENERAL",
+      "user_id": "U01AMOS",
+      "text": "Welcome back, everyone. Staff sync moves to 9:30 Mondays starting this week.",
+      "thread_ts": null,
+      "reply_count": 1,
+      "reactions": []
+    },
+    {
+      "ts": "1767607200.000200",
+      "channel_id": "C01GENERAL",
+      "user_id": "U02LORRAINE",
+      "text": "Noted - I will update the shared calendar invite.",
+      "thread_ts": "1767606600.000100",
+      "reply_count": 0,
+      "reactions": []
+    },
+    {
+      "ts": "1767693000.000300",
+      "channel_id": "C03EVENTS",
+      "user_id": "U04JOSEPHINE",
+      "text": "Anniversary lecture series: three speakers confirmed for spring. Holding the hall for the second Thursdays.",
+      "thread_ts": null,
+      "reply_count": 1,
+      "reactions": []
+    },
+    {
+      "ts": "1767693600.000400",
+      "channel_id": "C03EVENTS",
+      "user_id": "U05NATHANIEL",
+      "text": "I will draft the member announcement once the third date locks.",
+      "thread_ts": "1767693000.000300",
+      "reply_count": 0,
+      "reactions": []
+    },
+    {
+      "ts": "1767779400.000500",
+      "channel_id": "C04PRESERVATION",
+      "user_id": "U02LORRAINE",
+      "text": "Roof assessment for the Bull Street property is back - repairs scoped under the restoration grant. Summary in the drive.",
+      "thread_ts": null,
+      "reply_count": 2,
+      "reactions": []
+    },
+    {
+      "ts": "1767780000.000600",
+      "channel_id": "C04PRESERVATION",
+      "user_id": "U06PRISCILLA",
+      "text": "Actuals are tracking within the grant line. I flagged the January drawdown for the finance review.",
+      "thread_ts": "1767779400.000500",
+      "reply_count": 0,
+      "reactions": []
+    },
+    {
+      "ts": "1767865800.000700",
+      "channel_id": "C05VOLUNTEERS",
+      "user_id": "U04JOSEPHINE",
+      "text": "Docent orientation is Saturday at 9. Amos is leading the Friday walking tour this month.",
+      "thread_ts": null,
+      "reply_count": 0,
+      "reactions": []
+    },
+    {
+      "ts": "1767866400.000800",
+      "channel_id": "C06FINANCE",
+      "user_id": "U06PRISCILLA",
+      "text": "December close is done - statement of activities posted for Thursday's review with Reginald.",
+      "thread_ts": null,
+      "reply_count": 0,
+      "reactions": []
+    }
+  ],
+  "channels": [
+    {
+      "id": "C01GENERAL",
+      "name": "general",
+      "is_private": false,
+      "is_archived": false,
+      "topic": "Alliance-wide announcements",
+      "purpose": "Default channel for all SHPA staff",
+      "creator": "U01AMOS",
+      "created": 1735689600,
+      "num_members": 6
+    },
+    {
+      "id": "C02BOARD",
+      "name": "board",
+      "is_private": false,
+      "is_archived": false,
+      "topic": "Board meeting logistics",
+      "purpose": "Packets, agendas, and prep for trustees",
+      "creator": "U01AMOS",
+      "created": 1735689600,
+      "num_members": 3
+    },
+    {
+      "id": "C03EVENTS",
+      "name": "events",
+      "is_private": false,
+      "is_archived": false,
+      "topic": "Anniversary lecture series",
+      "purpose": "Planning for tours, lectures, and member events",
+      "creator": "U01AMOS",
+      "created": 1735689600,
+      "num_members": 5
+    },
+    {
+      "id": "C04PRESERVATION",
+      "name": "preservation-projects",
+      "is_private": false,
+      "is_archived": false,
+      "topic": "Bull Street repair",
+      "purpose": "Active preservation project coordination",
+      "creator": "U01AMOS",
+      "created": 1735689600,
+      "num_members": 4
+    },
+    {
+      "id": "C05VOLUNTEERS",
+      "name": "volunteers",
+      "is_private": false,
+      "is_archived": false,
+      "topic": "Docent scheduling",
+      "purpose": "Volunteer and docent coordination",
+      "creator": "U01AMOS",
+      "created": 1735689600,
+      "num_members": 4
+    },
+    {
+      "id": "C06FINANCE",
+      "name": "finance",
+      "is_private": false,
+      "is_archived": false,
+      "topic": "FY2027 budget",
+      "purpose": "Finance and admin threads",
+      "creator": "U01AMOS",
+      "created": 1735689600,
+      "num_members": 3
+    }
+  ]
+}

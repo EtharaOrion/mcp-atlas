@@ -1,0 +1,192 @@
+{
+  "events": [
+    {
+      "id": "evt-1001",
+      "name": "Blue Note Collective Evening",
+      "classification_id": "cls-music-rock",
+      "venue_id": "ven-001",
+      "attraction_id": "att-001",
+      "start_datetime": "2026-07-12T20:00:00Z",
+      "status": "onsale",
+      "price_min": 55.0,
+      "price_max": 180.0,
+      "currency": "USD"
+    },
+    {
+      "id": "evt-1002",
+      "name": "Gospel Heritage Night",
+      "classification_id": "cls-music-pop",
+      "venue_id": "ven-002",
+      "attraction_id": "att-002",
+      "start_datetime": "2026-08-03T19:30:00Z",
+      "status": "onsale",
+      "price_min": 75.0,
+      "price_max": 250.0,
+      "currency": "USD"
+    },
+    {
+      "id": "evt-1003",
+      "name": "Classic Soul Revue",
+      "classification_id": "cls-music-jazz",
+      "venue_id": "ven-006",
+      "attraction_id": "att-003",
+      "start_datetime": "2026-06-21T21:00:00Z",
+      "status": "onsale",
+      "price_min": 40.0,
+      "price_max": 95.0,
+      "currency": "USD"
+    },
+    {
+      "id": "evt-1004",
+      "name": "Savannah Jazz Orchestra Spring Concert",
+      "classification_id": "cls-sports-basketball",
+      "venue_id": "ven-001",
+      "attraction_id": "att-004",
+      "start_datetime": "2026-06-15T18:00:00Z",
+      "status": "onsale",
+      "price_min": 30.0,
+      "price_max": 400.0,
+      "currency": "USD"
+    },
+    {
+      "id": "evt-1005",
+      "name": "Low Country R&B Showcase",
+      "classification_id": "cls-sports-soccer",
+      "venue_id": "ven-002",
+      "attraction_id": "att-005",
+      "start_datetime": "2026-07-05T16:00:00Z",
+      "status": "onsale",
+      "price_min": 25.0,
+      "price_max": 150.0,
+      "currency": "USD"
+    },
+    {
+      "id": "evt-1006",
+      "name": "Sunday Gospel Jubilee",
+      "classification_id": "cls-arts-theatre",
+      "venue_id": "ven-003",
+      "attraction_id": "att-006",
+      "start_datetime": "2026-09-10T19:00:00Z",
+      "status": "onsale",
+      "price_min": 60.0,
+      "price_max": 200.0,
+      "currency": "USD"
+    },
+    {
+      "id": "evt-1007",
+      "name": "Riverfront Jazz Festival",
+      "classification_id": "cls-arts-comedy",
+      "venue_id": "ven-005",
+      "attraction_id": "att-007",
+      "start_datetime": "2026-06-28T20:30:00Z",
+      "status": "onsale",
+      "price_min": 45.0,
+      "price_max": 120.0,
+      "currency": "USD"
+    },
+    {
+      "id": "evt-1008",
+      "name": "Motown Tribute Night",
+      "classification_id": "cls-music-rock",
+      "venue_id": "ven-005",
+      "attraction_id": "att-001",
+      "start_datetime": "2026-10-02T20:00:00Z",
+      "status": "onsale",
+      "price_min": 50.0,
+      "price_max": 140.0,
+      "currency": "USD"
+    },
+    {
+      "id": "evt-1009",
+      "name": "Bluesmen of the Coastal Empire",
+      "classification_id": "cls-sports-basketball",
+      "venue_id": "ven-004",
+      "attraction_id": "att-004",
+      "start_datetime": "2026-06-22T19:00:00Z",
+      "status": "onsale",
+      "price_min": 80.0,
+      "price_max": 650.0,
+      "currency": "USD"
+    },
+    {
+      "id": "evt-1010",
+      "name": "Sacred Harp Singing Convention",
+      "classification_id": "cls-music-pop",
+      "venue_id": "ven-006",
+      "attraction_id": "att-002",
+      "start_datetime": "2026-11-14T20:00:00Z",
+      "status": "offsale",
+      "price_min": 90.0,
+      "price_max": 300.0,
+      "currency": "USD"
+    }
+  ],
+  "venues": [
+    {
+      "id": "ven-001",
+      "name": "Johnny Mercer Theatre",
+      "city": "Savannah",
+      "state": "GA",
+      "country": "US",
+      "postal_code": "31401",
+      "address": "301 West Oglethorpe Avenue",
+      "latitude": 32.076,
+      "longitude": -81.091
+    },
+    {
+      "id": "ven-002",
+      "name": "Lucas Theatre for the Arts",
+      "city": "Savannah",
+      "state": "GA",
+      "country": "US",
+      "postal_code": "31401",
+      "address": "32 Abercorn Street",
+      "latitude": 32.078,
+      "longitude": -81.093
+    },
+    {
+      "id": "ven-003",
+      "name": "District Live",
+      "city": "Savannah",
+      "state": "GA",
+      "country": "US",
+      "postal_code": "31401",
+      "address": "400 West River Street",
+      "latitude": 32.08,
+      "longitude": -81.095
+    },
+    {
+      "id": "ven-004",
+      "name": "Trustees Theater",
+      "city": "Savannah",
+      "state": "GA",
+      "country": "US",
+      "postal_code": "31401",
+      "address": "216 East Broughton Street",
+      "latitude": 32.082,
+      "longitude": -81.097
+    },
+    {
+      "id": "ven-005",
+      "name": "Savannah Civic Center",
+      "city": "Savannah",
+      "state": "GA",
+      "country": "US",
+      "postal_code": "31401",
+      "address": "301 West Oglethorpe Avenue",
+      "latitude": 32.084,
+      "longitude": -81.099
+    },
+    {
+      "id": "ven-006",
+      "name": "Harbor Jazz Club",
+      "city": "Savannah",
+      "state": "GA",
+      "country": "US",
+      "postal_code": "31401",
+      "address": "412 East River Street",
+      "latitude": 32.086,
+      "longitude": -81.101
+    }
+  ]
+}

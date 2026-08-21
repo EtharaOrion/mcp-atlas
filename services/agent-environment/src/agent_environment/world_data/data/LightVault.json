@@ -1,0 +1,158 @@
+{
+  "folders": {
+    "fd_personal": {
+      "fdid": "fd_personal",
+      "name": "Personal",
+      "color": "#4285F4"
+    },
+    "fd_work": {
+      "fdid": "fd_work",
+      "name": "Work",
+      "color": "#DB4437"
+    },
+    "fd_social": {
+      "fdid": "fd_social",
+      "name": "Social",
+      "color": "#0F9D58"
+    }
+  },
+  "entries": {
+    "Dur4Bi3nTVBt6APFzugvQi": {
+      "entid": "Dur4Bi3nTVBt6APFzugvQi",
+      "title": "Primary Email",
+      "username": "amos.whitfield@Finthesiss.ai",
+      "password_masked": "S********2",
+      "url": "https://mail.Finthesiss.ai",
+      "notes": "personal inbox",
+      "tags": [
+        "email"
+      ],
+      "folder_id": "fd_personal",
+      "created_at": "2026-01-02T15:30",
+      "updated_at": "2026-01-02T15:30",
+      "last_used_at": "2026-01-02T16:31",
+      "strength": "strong"
+    },
+    "Qi9NtcPsHTgydmgTp5Ws4n": {
+      "entid": "Qi9NtcPsHTgydmgTp5Ws4n",
+      "title": "Bank Portal",
+      "username": "amos.whitfield@Finthesiss.ai",
+      "password_masked": "B********9",
+      "url": "https://portal.coastalbank.example.com",
+      "notes": "checking account",
+      "tags": [
+        "finance"
+      ],
+      "folder_id": "fd_personal",
+      "created_at": "2026-01-03T03:23",
+      "updated_at": "2026-01-03T03:23",
+      "last_used_at": "2026-01-03T06:43",
+      "strength": "strong"
+    },
+    "HNB7HzEf2fGDKxfngoccPJ": {
+      "entid": "HNB7HzEf2fGDKxfngoccPJ",
+      "title": "Streaming Service",
+      "username": "amos.whitfield@Finthesiss.ai",
+      "password_masked": "M******7",
+      "url": "https://tv.streamhouse.example.com",
+      "notes": "family plan",
+      "tags": [
+        "media"
+      ],
+      "folder_id": "fd_personal",
+      "created_at": "2026-01-03T17:24",
+      "updated_at": "2026-01-03T17:24",
+      "last_used_at": "2026-01-03T19:25",
+      "strength": "medium"
+    },
+    "edUjN7nQEKY8cCWySuVCtW": {
+      "entid": "edUjN7nQEKY8cCWySuVCtW",
+      "title": "Org Workspace",
+      "username": "amos.whitfield@Finthesiss.ai",
+      "password_masked": "W********4",
+      "url": "https://workspace.orgtools.example.com",
+      "notes": "team sign-in",
+      "tags": [
+        "work"
+      ],
+      "folder_id": "fd_work",
+      "created_at": "2026-01-04T05:13",
+      "updated_at": "2026-01-04T05:13",
+      "last_used_at": "2026-01-04T06:28",
+      "strength": "strong"
+    },
+    "25pYDma3GTdscUPSSMpU9c": {
+      "entid": "25pYDma3GTdscUPSSMpU9c",
+      "title": "Payroll Portal",
+      "username": "amos.whitfield@Finthesiss.ai",
+      "password_masked": "P******1",
+      "url": "https://pay.orgtools.example.com",
+      "notes": "quarterly statements",
+      "tags": [
+        "work"
+      ],
+      "folder_id": "fd_work",
+      "created_at": "2026-01-04T17:37",
+      "updated_at": "2026-01-04T17:37",
+      "last_used_at": "2026-01-04T20:45",
+      "strength": "medium"
+    },
+    "DfNSjjU7cEzckHatyaBEwp": {
+      "entid": "DfNSjjU7cEzckHatyaBEwp",
+      "title": "Community Forum",
+      "username": "amos.whitfield@Finthesiss.ai",
+      "password_masked": "c****5",
+      "url": "https://forum.neighborly.example.com",
+      "notes": "member account",
+      "tags": [
+        "social"
+      ],
+      "folder_id": "fd_social",
+      "created_at": "2026-01-05T04:20",
+      "updated_at": "2026-01-05T04:20",
+      "last_used_at": "2026-01-05T07:00",
+      "strength": "weak"
+    }
+  },
+  "shares": {
+    "BRzHLzebqfDnwLCdXdPJ7j": {
+      "shid": "BRzHLzebqfDnwLCdXdPJ7j",
+      "entry_id": "edUjN7nQEKY8cCWySuVCtW",
+      "shared_with": "Cordelia Ashmore-Vance",
+      "shared_at": "2026-01-05T08:51",
+      "expires_at": "2026-01-06T05:46",
+      "can_edit": true
+    },
+    "7CrLzPfHKix9hocSrun5zB": {
+      "shid": "7CrLzPfHKix9hocSrun5zB",
+      "entry_id": "DfNSjjU7cEzckHatyaBEwp",
+      "shared_with": "Reginald Thackery",
+      "shared_at": "2026-01-06T06:48",
+      "expires_at": "2026-01-07T16:01",
+      "can_edit": false
+    }
+  },
+  "audit_logs": {
+    "4YsVq3KVATnu6a9N2myYBa": {
+      "audit_id": "4YsVq3KVATnu6a9N2myYBa",
+      "action": "viewed",
+      "entry_id": "Dur4Bi3nTVBt6APFzugvQi",
+      "actor": "Amos Jeremiah Whitfield",
+      "timestamp": "2026-01-07T19:10"
+    },
+    "P7kGnrzAiAjCzFXJ9ZrDir": {
+      "audit_id": "P7kGnrzAiAjCzFXJ9ZrDir",
+      "action": "updated",
+      "entry_id": "Qi9NtcPsHTgydmgTp5Ws4n",
+      "actor": "Amos Jeremiah Whitfield",
+      "timestamp": "2026-01-07T21:32"
+    },
+    "N6EQoWcoSrJv6JUGqVYNv2": {
+      "audit_id": "N6EQoWcoSrJv6JUGqVYNv2",
+      "action": "shared",
+      "entry_id": "HNB7HzEf2fGDKxfngoccPJ",
+      "actor": "Amos Jeremiah Whitfield",
+      "timestamp": "2026-01-07T23:09"
+    }
+  }
+}

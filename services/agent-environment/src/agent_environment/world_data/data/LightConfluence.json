@@ -1,0 +1,100 @@
+{
+  "pages": [
+    {
+      "id": "100101",
+      "type": "page",
+      "status": "current",
+      "title": "Operations Home",
+      "space_key": "ENG",
+      "parent_id": null,
+      "version": 3,
+      "body": "Working procedures for the Alliance office at 45 Bull Street.",
+      "created_by": "Amos Jeremiah Whitfield",
+      "created_at": "2025-09-02T10:00:00Z"
+    },
+    {
+      "id": "100102",
+      "type": "page",
+      "status": "current",
+      "title": "Procedure Runbooks",
+      "space_key": "ENG",
+      "parent_id": "100101",
+      "version": 5,
+      "body": "Index of standing procedures for programs and operations.",
+      "created_by": "Lorraine Deveraux",
+      "created_at": "2025-09-10T11:00:00Z"
+    },
+    {
+      "id": "100103",
+      "type": "page",
+      "status": "current",
+      "title": "Docent Training Curriculum",
+      "space_key": "ENG",
+      "parent_id": "100102",
+      "version": 8,
+      "body": "Six-week curriculum: architecture periods, tour safety, storytelling, and the Historic District map.",
+      "created_by": "Josephine Halloway",
+      "created_at": "2025-09-12T09:30:00Z"
+    },
+    {
+      "id": "100104",
+      "type": "page",
+      "status": "current",
+      "title": "Easement Monitoring Procedure",
+      "space_key": "ENG",
+      "parent_id": "100102",
+      "version": 4,
+      "body": "Annual inspection checklist for facade easements, photo log requirements, and covenant follow-up steps.",
+      "created_by": "Amos Jeremiah Whitfield",
+      "created_at": "2025-10-01T14:20:00Z"
+    },
+    {
+      "id": "100105",
+      "type": "page",
+      "status": "current",
+      "title": "Architecture Survey Notes",
+      "space_key": "ENG",
+      "parent_id": "100101",
+      "version": 2,
+      "body": "Field notes from the Victorian District survey, block by block.",
+      "created_by": "Lorraine Deveraux",
+      "created_at": "2025-10-05T16:00:00Z"
+    },
+    {
+      "id": "100201",
+      "type": "page",
+      "status": "current",
+      "title": "Program Home",
+      "space_key": "PROD",
+      "parent_id": null,
+      "version": 2,
+      "body": "Landing page for education and outreach programs.",
+      "created_by": "Josephine Halloway",
+      "created_at": "2025-09-03T10:00:00Z"
+    },
+    {
+      "id": "100202",
+      "type": "page",
+      "status": "current",
+      "title": "Q3 Events Roadmap",
+      "space_key": "PROD",
+      "parent_id": "100201",
+      "version": 6,
+      "body": "Historic Homes Tour, lecture series, and member appreciation evening planning.",
+      "created_by": "Amos Jeremiah Whitfield",
+      "created_at": "2025-09-15T13:00:00Z"
+    },
+    {
+      "id": "100203",
+      "type": "page",
+      "status": "current",
+      "title": "HDBR Liaison Protocol",
+      "space_key": "PROD",
+      "parent_id": "100202",
+      "version": 3,
+      "body": "How staff coordinate with the Historic District Board of Review on cases.",
+      "created_by": "Lorraine Deveraux",
+      "created_at": "2025-10-12T10:45:00Z"
+    }
+  ]
+}

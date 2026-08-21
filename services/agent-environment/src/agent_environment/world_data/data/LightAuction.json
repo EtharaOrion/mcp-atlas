@@ -1,0 +1,96 @@
+{
+  "listings": {
+    "TYUEu2WFhyB4ftPjMoAqMw": {
+      "lid": "TYUEu2WFhyB4ftPjMoAqMw",
+      "title": "First-pressing jazz record",
+      "description": "Original pressing in strong playable condition.",
+      "seller": "Denise Whitfield-Carter",
+      "starting_price": 45.0,
+      "current_price": 56.25,
+      "end_time": "2026-01-03T03:06",
+      "status": "active",
+      "category": "collectibles"
+    },
+    "NEU7QiACCLDw7bQALNeSpi": {
+      "lid": "NEU7QiACCLDw7bQALNeSpi",
+      "title": "Hand-built oak side table",
+      "description": "Small dovetailed table finished in oil.",
+      "seller": "Terrence Carter",
+      "starting_price": 120.0,
+      "current_price": 150.0,
+      "end_time": "2026-01-03T18:32",
+      "status": "active",
+      "category": "general"
+    },
+    "FiuSvE7csa8EzL7h8RCfah": {
+      "lid": "FiuSvE7csa8EzL7h8RCfah",
+      "title": "Vintage field camera",
+      "description": "Working shutter, includes the original case.",
+      "seller": "Terrence Carter",
+      "starting_price": 80.0,
+      "current_price": 100.0,
+      "end_time": "2026-01-04T12:02",
+      "status": "ended",
+      "category": "collectibles"
+    },
+    "6fgjdeTgx7rCGgLpp75arg": {
+      "lid": "6fgjdeTgx7rCGgLpp75arg",
+      "title": "Signed team pennant",
+      "description": "Local team pennant from a playoff season.",
+      "seller": "Pastor James Holloway",
+      "starting_price": 30.0,
+      "current_price": 30.0,
+      "end_time": "2026-01-05T11:02",
+      "status": "active",
+      "category": "art"
+    }
+  },
+  "bids": {
+    "ZGBVQ2jJQydNVkMpAW7n4m": {
+      "bid_id": "ZGBVQ2jJQydNVkMpAW7n4m",
+      "listing_id": "TYUEu2WFhyB4ftPjMoAqMw",
+      "bidder": "Calvin Burke",
+      "amount": 50.4,
+      "ts": "2026-01-05T14:01"
+    },
+    "ccJbBBC63a5cNWiRKudCUr": {
+      "bid_id": "ccJbBBC63a5cNWiRKudCUr",
+      "listing_id": "TYUEu2WFhyB4ftPjMoAqMw",
+      "bidder": "Denise Whitfield-Carter",
+      "amount": 56.25,
+      "ts": "2026-01-05T16:34"
+    },
+    "iDFbf4293J6SVwuhse4dmc": {
+      "bid_id": "iDFbf4293J6SVwuhse4dmc",
+      "listing_id": "NEU7QiACCLDw7bQALNeSpi",
+      "bidder": "Ruth Ann Greer",
+      "amount": 134.4,
+      "ts": "2026-01-05T19:49"
+    },
+    "UUumt9VnXAYwYPce7LGmZK": {
+      "bid_id": "UUumt9VnXAYwYPce7LGmZK",
+      "listing_id": "NEU7QiACCLDw7bQALNeSpi",
+      "bidder": "Terrence Carter",
+      "amount": 150.0,
+      "ts": "2026-01-05T20:44"
+    },
+    "FHy52PTSzDnUGSJ2HN65FR": {
+      "bid_id": "FHy52PTSzDnUGSJ2HN65FR",
+      "listing_id": "FiuSvE7csa8EzL7h8RCfah",
+      "bidder": "Terrence Carter",
+      "amount": 89.6,
+      "ts": "2026-01-05T21:23"
+    },
+    "5ZHe6kk4i4u3anW2RYbAfF": {
+      "bid_id": "5ZHe6kk4i4u3anW2RYbAfF",
+      "listing_id": "FiuSvE7csa8EzL7h8RCfah",
+      "bidder": "Calvin Burke",
+      "amount": 100.0,
+      "ts": "2026-01-05T21:43"
+    }
+  },
+  "watchlist": [
+    "TYUEu2WFhyB4ftPjMoAqMw",
+    "6fgjdeTgx7rCGgLpp75arg"
+  ]
+}

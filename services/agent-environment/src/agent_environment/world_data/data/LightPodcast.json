@@ -1,0 +1,171 @@
+{
+  "podcasts": {
+    "NgYigXFCGnGjjmdUsQr2BL": {
+      "pid": "NgYigXFCGnGjjmdUsQr2BL",
+      "title": "The Inspector's Blotter",
+      "host": "retired inspectors",
+      "description": "Case files and postal fraud stories from retired inspectors.",
+      "category": "true crime",
+      "feed_url": "https://feeds.example.com/VA6RLpALFp.xml"
+    },
+    "mQCdd8ehMzHzAaBexN2ykW": {
+      "pid": "mQCdd8ehMzHzAaBexN2ykW",
+      "title": "Sawdust and Grain",
+      "host": "two furniture makers",
+      "description": "Hand-tool woodworking, finishing, and shop talk.",
+      "category": "crafts",
+      "feed_url": "https://feeds.example.com/JGn2EjP4qE.xml"
+    },
+    "3xPyUZ2ghF4Tqeja52phBL": {
+      "pid": "3xPyUZ2ghF4Tqeja52phBL",
+      "title": "Porch Light Conversations",
+      "host": "Savannah storytellers",
+      "description": "Southern voices on faith, family, and community.",
+      "category": "society",
+      "feed_url": "https://feeds.example.com/2KyBJabxmx.xml"
+    },
+    "rwXT7g6Qnj7iGcjMpKiLwg": {
+      "pid": "rwXT7g6Qnj7iGcjMpKiLwg",
+      "title": "History Unfolded",
+      "host": "Priya Nair",
+      "description": "Deep dives into local and regional history.",
+      "category": "history",
+      "feed_url": "https://feeds.example.com/WaXw5B9fAu.xml"
+    }
+  },
+  "episodes": {
+    "M92qrRBUvndS6MzRHx6DrC": {
+      "eid": "M92qrRBUvndS6MzRHx6DrC",
+      "podcast_id": "NgYigXFCGnGjjmdUsQr2BL",
+      "title": "The Money Order Ring",
+      "description": "An episode with guests and listener mail.",
+      "duration_seconds": 2581,
+      "published_at": "2026-01-02T23:53",
+      "audio_url": "https://audio.example.com/XFutxDhCAQ.mp3"
+    },
+    "MnLt4zjQyNhLUnhz6JLEzj": {
+      "eid": "MnLt4zjQyNhLUnhz6JLEzj",
+      "podcast_id": "mQCdd8ehMzHzAaBexN2ykW",
+      "title": "Choosing rift-sawn stock",
+      "description": "An episode with guests and listener mail.",
+      "duration_seconds": 2745,
+      "published_at": "2026-01-03T14:02",
+      "audio_url": "https://audio.example.com/tzonHxYXMc.mp3"
+    },
+    "YiM4x5mQtSEXTTugzfNFdP": {
+      "eid": "YiM4x5mQtSEXTTugzfNFdP",
+      "podcast_id": "3xPyUZ2ghF4Tqeja52phBL",
+      "title": "A deacon's Sunday",
+      "description": "An episode with guests and listener mail.",
+      "duration_seconds": 3883,
+      "published_at": "2026-01-03T23:03",
+      "audio_url": "https://audio.example.com/BDdxVZSDWp.mp3"
+    },
+    "X8RFWTaYVucfgySzJWhWqt": {
+      "eid": "X8RFWTaYVucfgySzJWhWqt",
+      "podcast_id": "rwXT7g6Qnj7iGcjMpKiLwg",
+      "title": "Savannah's lost depots",
+      "description": "An episode with guests and listener mail.",
+      "duration_seconds": 2083,
+      "published_at": "2026-01-04T04:38",
+      "audio_url": "https://audio.example.com/XgZez4k8tG.mp3"
+    },
+    "kXrhcMHFgze8Us5BzohZHp": {
+      "eid": "kXrhcMHFgze8Us5BzohZHp",
+      "podcast_id": "NgYigXFCGnGjjmdUsQr2BL",
+      "title": "The Peachtree letter scheme",
+      "description": "An episode with guests and listener mail.",
+      "duration_seconds": 1240,
+      "published_at": "2026-01-05T00:04",
+      "audio_url": "https://audio.example.com/heT3eeLJDt.mp3"
+    },
+    "nWEUdyCeWeGzpHAKRQR5Dd": {
+      "eid": "nWEUdyCeWeGzpHAKRQR5Dd",
+      "podcast_id": "mQCdd8ehMzHzAaBexN2ykW",
+      "title": "Hide glue, old and new",
+      "description": "An episode with guests and listener mail.",
+      "duration_seconds": 1982,
+      "published_at": "2026-01-05T11:30",
+      "audio_url": "https://audio.example.com/n8x2KVC6Qc.mp3"
+    },
+    "VmzEBRxZ6nQby2E9VnVPDP": {
+      "eid": "VmzEBRxZ6nQby2E9VnVPDP",
+      "podcast_id": "3xPyUZ2ghF4Tqeja52phBL",
+      "title": "Front porch economics",
+      "description": "An episode with guests and listener mail.",
+      "duration_seconds": 2243,
+      "published_at": "2026-01-06T10:04",
+      "audio_url": "https://audio.example.com/Xjp9nbwmE7.mp3"
+    },
+    "cj9XX8ivmRKi3NXUvNxXPX": {
+      "eid": "cj9XX8ivmRKi3NXUvNxXPX",
+      "podcast_id": "rwXT7g6Qnj7iGcjMpKiLwg",
+      "title": "The squares that shaped a city",
+      "description": "An episode with guests and listener mail.",
+      "duration_seconds": 2290,
+      "published_at": "2026-01-06T21:55",
+      "audio_url": "https://audio.example.com/t5FUCSox5v.mp3"
+    }
+  },
+  "queue": {
+    "vhSDTjVP8Ha6uzGsKmV7x5": {
+      "qid": "vhSDTjVP8Ha6uzGsKmV7x5",
+      "episode_id": "M92qrRBUvndS6MzRHx6DrC",
+      "position": 0,
+      "added_at": "2026-01-07T01:32"
+    },
+    "MnCfPSmWuBWHeFqApdqTNX": {
+      "qid": "MnCfPSmWuBWHeFqApdqTNX",
+      "episode_id": "MnLt4zjQyNhLUnhz6JLEzj",
+      "position": 1,
+      "added_at": "2026-01-07T03:19"
+    },
+    "WWhuzNiHdMCPupLbKYLFHD": {
+      "qid": "WWhuzNiHdMCPupLbKYLFHD",
+      "episode_id": "YiM4x5mQtSEXTTugzfNFdP",
+      "position": 2,
+      "added_at": "2026-01-07T08:11"
+    }
+  },
+  "progress": {
+    "M92qrRBUvndS6MzRHx6DrC": {
+      "episode_id": "M92qrRBUvndS6MzRHx6DrC",
+      "seconds_played": 1341,
+      "completed": false
+    },
+    "MnLt4zjQyNhLUnhz6JLEzj": {
+      "episode_id": "MnLt4zjQyNhLUnhz6JLEzj",
+      "seconds_played": 2000,
+      "completed": false
+    },
+    "YiM4x5mQtSEXTTugzfNFdP": {
+      "episode_id": "YiM4x5mQtSEXTTugzfNFdP",
+      "seconds_played": 1160,
+      "completed": false
+    },
+    "X8RFWTaYVucfgySzJWhWqt": {
+      "episode_id": "X8RFWTaYVucfgySzJWhWqt",
+      "seconds_played": 472,
+      "completed": false
+    }
+  },
+  "downloads": {
+    "dGnfFtTjL5mZajuCP6HXmu": {
+      "did": "dGnfFtTjL5mZajuCP6HXmu",
+      "episode_id": "M92qrRBUvndS6MzRHx6DrC",
+      "downloaded_at": "2026-01-07T11:16",
+      "size_mb": 15.65
+    },
+    "4ruWLMdvVdPSVpypFdZ3Vg": {
+      "did": "4ruWLMdvVdPSVpypFdZ3Vg",
+      "episode_id": "MnLt4zjQyNhLUnhz6JLEzj",
+      "downloaded_at": "2026-01-07T15:56",
+      "size_mb": 63.14
+    }
+  },
+  "subscribed": [
+    "3xPyUZ2ghF4Tqeja52phBL",
+    "NgYigXFCGnGjjmdUsQr2BL",
+    "mQCdd8ehMzHzAaBexN2ykW"
+  ]
+}

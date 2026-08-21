@@ -1,0 +1,58 @@
+{
+  "cities": [
+    {
+      "id": 5128581,
+      "name": "Savannah",
+      "country": "US",
+      "state": "GA",
+      "lat": 32.0809,
+      "lon": -81.0912,
+      "timezone": -18000
+    },
+    {
+      "id": 2643743,
+      "name": "Atlanta",
+      "country": "US",
+      "state": "GA",
+      "lat": 33.749,
+      "lon": -84.388,
+      "timezone": -18000
+    },
+    {
+      "id": 2988507,
+      "name": "Charleston",
+      "country": "US",
+      "state": "SC",
+      "lat": 32.7765,
+      "lon": -79.9311,
+      "timezone": -18000
+    },
+    {
+      "id": 1850147,
+      "name": "Jacksonville",
+      "country": "US",
+      "state": "FL",
+      "lat": 30.3322,
+      "lon": -81.6557,
+      "timezone": -18000
+    },
+    {
+      "id": 2147714,
+      "name": "Charlotte",
+      "country": "US",
+      "state": "NC",
+      "lat": 35.2271,
+      "lon": -80.8431,
+      "timezone": -18000
+    },
+    {
+      "id": 4887398,
+      "name": "Asheville",
+      "country": "US",
+      "state": "NC",
+      "lat": 35.5951,
+      "lon": -82.5515,
+      "timezone": -18000
+    }
+  ]
+}

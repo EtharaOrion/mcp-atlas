@@ -1,0 +1,138 @@
+{
+  "meters": {
+    "grpg4aDb8RL9zzKfrxnTbJ": {
+      "mid": "grpg4aDb8RL9zzKfrxnTbJ",
+      "name": "Home Electric",
+      "kind": "electric",
+      "current_reading": 3796.76,
+      "currency_rate_per_unit": 0.16
+    },
+    "jjE9D6CZ4g9StuxcbHkKMc": {
+      "mid": "jjE9D6CZ4g9StuxcbHkKMc",
+      "name": "Home Gas",
+      "kind": "gas",
+      "current_reading": 5407.42,
+      "currency_rate_per_unit": 0.9
+    },
+    "gwDAmv7Qy96Q5xSSRmjWbD": {
+      "mid": "gwDAmv7Qy96Q5xSSRmjWbD",
+      "name": "Home Water",
+      "kind": "water",
+      "current_reading": 6487.8,
+      "currency_rate_per_unit": 0.04
+    }
+  },
+  "readings": {
+    "iDF2Pt3zgRb3kH9DZXNMsM": {
+      "rdid": "iDF2Pt3zgRb3kH9DZXNMsM",
+      "meter_id": "grpg4aDb8RL9zzKfrxnTbJ",
+      "timestamp": "2026-01-03T19:53",
+      "value": 34.06,
+      "cost": 5.45
+    },
+    "hU3UDQf64mGzDSv8pFq2Tu": {
+      "rdid": "hU3UDQf64mGzDSv8pFq2Tu",
+      "meter_id": "jjE9D6CZ4g9StuxcbHkKMc",
+      "timestamp": "2026-01-04T18:30",
+      "value": 54.24,
+      "cost": 48.82
+    },
+    "rZiW7YW8oETLjzJxQPZejF": {
+      "rdid": "rZiW7YW8oETLjzJxQPZejF",
+      "meter_id": "gwDAmv7Qy96Q5xSSRmjWbD",
+      "timestamp": "2026-01-06T17:41",
+      "value": 30.06,
+      "cost": 1.2
+    },
+    "n4DYkhhTGHbCq2WqoCuwjL": {
+      "rdid": "n4DYkhhTGHbCq2WqoCuwjL",
+      "meter_id": "grpg4aDb8RL9zzKfrxnTbJ",
+      "timestamp": "2026-01-09T10:39",
+      "value": 26.75,
+      "cost": 4.28
+    },
+    "aXmMp9Tr7SjSAwDEdwtraM": {
+      "rdid": "aXmMp9Tr7SjSAwDEdwtraM",
+      "meter_id": "jjE9D6CZ4g9StuxcbHkKMc",
+      "timestamp": "2026-01-10T01:33",
+      "value": 27.28,
+      "cost": 24.55
+    },
+    "79FXusPjBNejktXnZaeSVH": {
+      "rdid": "79FXusPjBNejktXnZaeSVH",
+      "meter_id": "gwDAmv7Qy96Q5xSSRmjWbD",
+      "timestamp": "2026-01-10T17:58",
+      "value": 32.28,
+      "cost": 1.29
+    },
+    "9dzUW3wffzqRneKvaqM4u2": {
+      "rdid": "9dzUW3wffzqRneKvaqM4u2",
+      "meter_id": "grpg4aDb8RL9zzKfrxnTbJ",
+      "timestamp": "2026-01-13T19:53",
+      "value": 21.17,
+      "cost": 3.39
+    },
+    "aPByeZuHvMHe87ncfnrjbc": {
+      "rdid": "aPByeZuHvMHe87ncfnrjbc",
+      "meter_id": "jjE9D6CZ4g9StuxcbHkKMc",
+      "timestamp": "2026-01-14T11:41",
+      "value": 54.44,
+      "cost": 49.0
+    },
+    "339hD5YPC2eiijNCRGdndd": {
+      "rdid": "339hD5YPC2eiijNCRGdndd",
+      "meter_id": "gwDAmv7Qy96Q5xSSRmjWbD",
+      "timestamp": "2026-01-15T18:48",
+      "value": 56.21,
+      "cost": 2.25
+    }
+  },
+  "bills": {
+    "UrhpmMdW4aok2pvsTrAf9J": {
+      "bill_id": "UrhpmMdW4aok2pvsTrAf9J",
+      "meter_id": "grpg4aDb8RL9zzKfrxnTbJ",
+      "period_start": "2026-01-01",
+      "period_end": "2026-01-30",
+      "consumption": 276.75,
+      "amount": 44.28,
+      "currency": "USD",
+      "status": "paid"
+    },
+    "cyse9Zv9hcqurqtzLcuBwQ": {
+      "bill_id": "cyse9Zv9hcqurqtzLcuBwQ",
+      "meter_id": "jjE9D6CZ4g9StuxcbHkKMc",
+      "period_start": "2026-01-31",
+      "period_end": "2026-03-01",
+      "consumption": 145.69,
+      "amount": 131.12,
+      "currency": "USD",
+      "status": "unpaid"
+    },
+    "E2wkjy46YHyVrtNedPCPNx": {
+      "bill_id": "E2wkjy46YHyVrtNedPCPNx",
+      "meter_id": "gwDAmv7Qy96Q5xSSRmjWbD",
+      "period_start": "2026-03-02",
+      "period_end": "2026-03-31",
+      "consumption": 81.59,
+      "amount": 4.08,
+      "currency": "USD",
+      "status": "overdue"
+    }
+  },
+  "alerts": {
+    "uhpuAYebGHYFjSLKv3Cxco": {
+      "aid": "uhpuAYebGHYFjSLKv3Cxco",
+      "meter_id": "grpg4aDb8RL9zzKfrxnTbJ",
+      "threshold": 387.97,
+      "kind": "high_usage",
+      "is_active": true
+    },
+    "EyLR7Xfx5fnirvtzkcWfJC": {
+      "aid": "EyLR7Xfx5fnirvtzkcWfJC",
+      "meter_id": "jjE9D6CZ4g9StuxcbHkKMc",
+      "threshold": 448.1,
+      "kind": "leak",
+      "is_active": true
+    }
+  }
+}

@@ -1,0 +1,486 @@
+{
+  "accounts": [
+    {
+      "account_id": "acc_chk_001",
+      "name": "Coastal Georgia FCU Checking",
+      "official_name": "Coastal Georgia Federal Credit Union Checking",
+      "mask": "0123",
+      "type": "depository",
+      "subtype": "checking",
+      "balances": {
+        "available": 4218.55,
+        "current": 4318.55,
+        "limit": null,
+        "iso_currency_code": "USD",
+        "unofficial_currency_code": null
+      }
+    },
+    {
+      "account_id": "acc_sav_002",
+      "name": "Coastal Georgia FCU Savings",
+      "official_name": "Coastal Georgia Federal Credit Union Savings",
+      "mask": "4455",
+      "type": "depository",
+      "subtype": "savings",
+      "balances": {
+        "available": 15230.1,
+        "current": 15230.1,
+        "limit": null,
+        "iso_currency_code": "USD",
+        "unofficial_currency_code": null
+      }
+    },
+    {
+      "account_id": "acc_crd_003",
+      "name": "Fidelity IRA",
+      "official_name": "Fidelity Traditional IRA",
+      "mask": "7788",
+      "type": "credit",
+      "subtype": "credit card",
+      "balances": {
+        "available": 3100.0,
+        "current": 1900.0,
+        "limit": 5000.0,
+        "iso_currency_code": "USD",
+        "unofficial_currency_code": null
+      }
+    },
+    {
+      "account_id": "acc_lon_004",
+      "name": "Coastal Georgia FCU Money Market",
+      "official_name": "Coastal Georgia Federal Credit Union Money Market",
+      "mask": "9901",
+      "type": "loan",
+      "subtype": "auto",
+      "balances": {
+        "available": null,
+        "current": 18450.0,
+        "limit": null,
+        "iso_currency_code": "USD",
+        "unofficial_currency_code": null
+      }
+    }
+  ],
+  "transactions": [
+    {
+      "transaction_id": "txn_0001",
+      "account_id": "acc_chk_001",
+      "amount": 3200.0,
+      "iso_currency_code": "USD",
+      "date": "2026-04-01",
+      "name": "Publix",
+      "merchant_name": "Publix",
+      "category": [
+        "Groceries"
+      ],
+      "pending": false,
+      "payment_channel": "other"
+    },
+    {
+      "transaction_id": "txn_0002",
+      "account_id": "acc_chk_001",
+      "amount": 1450.0,
+      "iso_currency_code": "USD",
+      "date": "2026-04-02",
+      "name": "Kroger",
+      "merchant_name": "Kroger",
+      "category": [
+        "Groceries"
+      ],
+      "pending": false,
+      "payment_channel": "online"
+    },
+    {
+      "transaction_id": "txn_0003",
+      "account_id": "acc_chk_001",
+      "amount": 86.43,
+      "iso_currency_code": "USD",
+      "date": "2026-04-03",
+      "name": "Savannah Building Supply",
+      "merchant_name": "Savannah Building Supply",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "in store"
+    },
+    {
+      "transaction_id": "txn_0004",
+      "account_id": "acc_chk_001",
+      "amount": 12.5,
+      "iso_currency_code": "USD",
+      "date": "2026-04-04",
+      "name": "Georgia Power",
+      "merchant_name": "Georgia Power",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "in store"
+    },
+    {
+      "transaction_id": "txn_0005",
+      "account_id": "acc_crd_003",
+      "amount": 54.99,
+      "iso_currency_code": "USD",
+      "date": "2026-04-05",
+      "name": "Ashcroft Fine Hardwoods",
+      "merchant_name": "Ashcroft Fine Hardwoods",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "online"
+    },
+    {
+      "transaction_id": "txn_0006",
+      "account_id": "acc_chk_001",
+      "amount": 40.0,
+      "iso_currency_code": "USD",
+      "date": "2026-04-06",
+      "name": "The Indigo Fork",
+      "merchant_name": "The Indigo Fork",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "in store"
+    },
+    {
+      "transaction_id": "txn_0007",
+      "account_id": "acc_crd_003",
+      "amount": 118.2,
+      "iso_currency_code": "USD",
+      "date": "2026-04-07",
+      "name": "Ebenezer Heritage Church",
+      "merchant_name": "Ebenezer Heritage Church",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "in store"
+    },
+    {
+      "transaction_id": "txn_0008",
+      "account_id": "acc_chk_001",
+      "amount": 9.99,
+      "iso_currency_code": "USD",
+      "date": "2026-04-08",
+      "name": "OPM Annuity Deposit",
+      "merchant_name": "OPM Annuity Deposit",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "online"
+    },
+    {
+      "transaction_id": "txn_0009",
+      "account_id": "acc_chk_001",
+      "amount": 25.0,
+      "iso_currency_code": "USD",
+      "date": "2026-04-09",
+      "name": "SHPA Payroll",
+      "merchant_name": "SHPA Payroll",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "online"
+    },
+    {
+      "transaction_id": "txn_0010",
+      "account_id": "acc_crd_003",
+      "amount": 210.75,
+      "iso_currency_code": "USD",
+      "date": "2026-04-10",
+      "name": "Shell",
+      "merchant_name": "Shell",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "in store"
+    },
+    {
+      "transaction_id": "txn_0011",
+      "account_id": "acc_chk_001",
+      "amount": 500.0,
+      "iso_currency_code": "USD",
+      "date": "2026-04-11",
+      "name": "Walgreens",
+      "merchant_name": "Walgreens",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "other"
+    },
+    {
+      "transaction_id": "txn_0012",
+      "account_id": "acc_sav_002",
+      "amount": 500.0,
+      "iso_currency_code": "USD",
+      "date": "2026-04-11",
+      "name": "AT&T",
+      "merchant_name": "AT&T",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "other"
+    },
+    {
+      "transaction_id": "txn_0013",
+      "account_id": "acc_chk_001",
+      "amount": 62.3,
+      "iso_currency_code": "USD",
+      "date": "2026-04-12",
+      "name": "Publix",
+      "merchant_name": "Publix",
+      "category": [
+        "Groceries"
+      ],
+      "pending": false,
+      "payment_channel": "in store"
+    },
+    {
+      "transaction_id": "txn_0014",
+      "account_id": "acc_crd_003",
+      "amount": 15.49,
+      "iso_currency_code": "USD",
+      "date": "2026-04-13",
+      "name": "Kroger",
+      "merchant_name": "Kroger",
+      "category": [
+        "Groceries"
+      ],
+      "pending": false,
+      "payment_channel": "online"
+    },
+    {
+      "transaction_id": "txn_0015",
+      "account_id": "acc_chk_001",
+      "amount": 33.1,
+      "iso_currency_code": "USD",
+      "date": "2026-04-14",
+      "name": "Savannah Building Supply",
+      "merchant_name": "Savannah Building Supply",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "in store"
+    },
+    {
+      "transaction_id": "txn_0016",
+      "account_id": "acc_crd_003",
+      "amount": 89.0,
+      "iso_currency_code": "USD",
+      "date": "2026-04-15",
+      "name": "Georgia Power",
+      "merchant_name": "Georgia Power",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "in store"
+    },
+    {
+      "transaction_id": "txn_0017",
+      "account_id": "acc_chk_001",
+      "amount": 450.0,
+      "iso_currency_code": "USD",
+      "date": "2026-04-16",
+      "name": "Ashcroft Fine Hardwoods",
+      "merchant_name": "Ashcroft Fine Hardwoods",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "online"
+    },
+    {
+      "transaction_id": "txn_0018",
+      "account_id": "acc_chk_001",
+      "amount": 72.84,
+      "iso_currency_code": "USD",
+      "date": "2026-04-17",
+      "name": "The Indigo Fork",
+      "merchant_name": "The Indigo Fork",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "online"
+    },
+    {
+      "transaction_id": "txn_0019",
+      "account_id": "acc_crd_003",
+      "amount": 27.4,
+      "iso_currency_code": "USD",
+      "date": "2026-04-18",
+      "name": "Ebenezer Heritage Church",
+      "merchant_name": "Ebenezer Heritage Church",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "in store"
+    },
+    {
+      "transaction_id": "txn_0020",
+      "account_id": "acc_chk_001",
+      "amount": 18.0,
+      "iso_currency_code": "USD",
+      "date": "2026-04-19",
+      "name": "OPM Annuity Deposit",
+      "merchant_name": "OPM Annuity Deposit",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "online"
+    },
+    {
+      "transaction_id": "txn_0021",
+      "account_id": "acc_chk_001",
+      "amount": 3200.0,
+      "iso_currency_code": "USD",
+      "date": "2026-04-20",
+      "name": "SHPA Payroll",
+      "merchant_name": "SHPA Payroll",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "other"
+    },
+    {
+      "transaction_id": "txn_0022",
+      "account_id": "acc_crd_003",
+      "amount": 64.12,
+      "iso_currency_code": "USD",
+      "date": "2026-04-21",
+      "name": "Shell",
+      "merchant_name": "Shell",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "in store"
+    },
+    {
+      "transaction_id": "txn_0023",
+      "account_id": "acc_chk_001",
+      "amount": 11.25,
+      "iso_currency_code": "USD",
+      "date": "2026-04-22",
+      "name": "Walgreens",
+      "merchant_name": "Walgreens",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "in store"
+    },
+    {
+      "transaction_id": "txn_0024",
+      "account_id": "acc_chk_001",
+      "amount": 95.6,
+      "iso_currency_code": "USD",
+      "date": "2026-04-23",
+      "name": "AT&T",
+      "merchant_name": "AT&T",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "in store"
+    },
+    {
+      "transaction_id": "txn_0025",
+      "account_id": "acc_crd_003",
+      "amount": 320.0,
+      "iso_currency_code": "USD",
+      "date": "2026-04-24",
+      "name": "Publix",
+      "merchant_name": "Publix",
+      "category": [
+        "Groceries"
+      ],
+      "pending": false,
+      "payment_channel": "online"
+    },
+    {
+      "transaction_id": "txn_0026",
+      "account_id": "acc_chk_001",
+      "amount": 14.99,
+      "iso_currency_code": "USD",
+      "date": "2026-04-25",
+      "name": "Kroger",
+      "merchant_name": "Kroger",
+      "category": [
+        "Groceries"
+      ],
+      "pending": false,
+      "payment_channel": "online"
+    },
+    {
+      "transaction_id": "txn_0027",
+      "account_id": "acc_chk_001",
+      "amount": 48.75,
+      "iso_currency_code": "USD",
+      "date": "2026-04-26",
+      "name": "Savannah Building Supply",
+      "merchant_name": "Savannah Building Supply",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "in store"
+    },
+    {
+      "transaction_id": "txn_0028",
+      "account_id": "acc_crd_003",
+      "amount": 72.0,
+      "iso_currency_code": "USD",
+      "date": "2026-04-27",
+      "name": "Georgia Power",
+      "merchant_name": "Georgia Power",
+      "category": [
+        "General"
+      ],
+      "pending": false,
+      "payment_channel": "in store"
+    },
+    {
+      "transaction_id": "txn_0029",
+      "account_id": "acc_chk_001",
+      "amount": 22.4,
+      "iso_currency_code": "USD",
+      "date": "2026-04-28",
+      "name": "Ashcroft Fine Hardwoods",
+      "merchant_name": "Ashcroft Fine Hardwoods",
+      "category": [
+        "General"
+      ],
+      "pending": true,
+      "payment_channel": "online"
+    },
+    {
+      "transaction_id": "txn_0030",
+      "account_id": "acc_chk_001",
+      "amount": 9.99,
+      "iso_currency_code": "USD",
+      "date": "2026-04-29",
+      "name": "The Indigo Fork",
+      "merchant_name": "The Indigo Fork",
+      "category": [
+        "General"
+      ],
+      "pending": true,
+      "payment_channel": "online"
+    }
+  ]
+}

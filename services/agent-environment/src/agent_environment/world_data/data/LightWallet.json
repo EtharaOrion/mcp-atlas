@@ -1,0 +1,51 @@
+{
+  "today": "2026-01-05",
+  "wallets": {
+    "wal_usd": {
+      "wid": "wal_usd",
+      "name": "USD Checking",
+      "currency": "USD",
+      "balance": 10732.64,
+      "kind": "fiat"
+    },
+    "wal_eur": {
+      "wid": "wal_eur",
+      "name": "EUR Savings",
+      "currency": "EUR",
+      "balance": 7095.35,
+      "kind": "fiat"
+    }
+  },
+  "transfers": {
+    "3J2Djsre3vgoa9gmo3KWb3": {
+      "trid": "3J2Djsre3vgoa9gmo3KWb3",
+      "from_wid": "wal_usd",
+      "to_wid": "wal_eur",
+      "amount": 727.86,
+      "fee": 7.28,
+      "timestamp": "2026-01-02T22:03",
+      "status": "completed",
+      "memo": "Weekly groceries"
+    },
+    "GMUg6hfbfcSuo5KR4U9soL": {
+      "trid": "GMUg6hfbfcSuo5KR4U9soL",
+      "from_wid": "wal_usd",
+      "to_wid": "wal_eur",
+      "amount": 322.77,
+      "fee": 3.23,
+      "timestamp": "2026-01-05T07:22",
+      "status": "completed",
+      "memo": "Streaming subscriptions"
+    },
+    "TEWHLazKmASQoeeTJStPFf": {
+      "trid": "TEWHLazKmASQoeeTJStPFf",
+      "from_wid": "wal_usd",
+      "to_wid": "wal_eur",
+      "amount": 114.89,
+      "fee": 1.15,
+      "timestamp": "2026-01-06T23:46",
+      "status": "completed",
+      "memo": "Dinner out"
+    }
+  }
+}

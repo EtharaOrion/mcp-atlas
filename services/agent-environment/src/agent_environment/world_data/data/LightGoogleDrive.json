@@ -1,0 +1,247 @@
+{
+  "files": [
+    {
+      "id": "folder-root",
+      "name": "Amos Jeremiah Whitfield",
+      "mime_type": "application/vnd.google-apps.folder",
+      "parent_id": null,
+      "size": 0,
+      "created_time": "2024-01-01T00:00:00Z",
+      "modified_time": "2024-01-01T00:00:00Z",
+      "owner_email": "amos.whitfield@Finthesiss.ai",
+      "starred": false,
+      "trashed": false,
+      "web_view_link": ""
+    },
+    {
+      "id": "folder-eng",
+      "name": "Amos Jeremiah Whitfield",
+      "mime_type": "application/vnd.google-apps.folder",
+      "parent_id": "folder-root",
+      "size": 0,
+      "created_time": "2025-09-01T10:00:00Z",
+      "modified_time": "2026-05-20T11:00:00Z",
+      "owner_email": "amos.whitfield@Finthesiss.ai",
+      "starred": true,
+      "trashed": false,
+      "web_view_link": "https://drive.google.com/drive/folders/folder-eng"
+    },
+    {
+      "id": "folder-docs",
+      "name": "Amos Jeremiah Whitfield",
+      "mime_type": "application/vnd.google-apps.folder",
+      "parent_id": "folder-eng",
+      "size": 0,
+      "created_time": "2025-09-05T10:00:00Z",
+      "modified_time": "2026-05-22T09:00:00Z",
+      "owner_email": "amos.whitfield@Finthesiss.ai",
+      "starred": false,
+      "trashed": false,
+      "web_view_link": "https://drive.google.com/drive/folders/folder-docs"
+    },
+    {
+      "id": "folder-rfcs",
+      "name": "Amos Jeremiah Whitfield",
+      "mime_type": "application/vnd.google-apps.folder",
+      "parent_id": "folder-docs",
+      "size": 0,
+      "created_time": "2025-09-10T10:00:00Z",
+      "modified_time": "2026-05-22T09:00:00Z",
+      "owner_email": "amos.whitfield@Finthesiss.ai",
+      "starred": false,
+      "trashed": false,
+      "web_view_link": "https://drive.google.com/drive/folders/folder-rfcs"
+    },
+    {
+      "id": "file-rfc-auth",
+      "name": "Amos Jeremiah Whitfield",
+      "mime_type": "application/vnd.google-apps.document",
+      "parent_id": "folder-rfcs",
+      "size": 0,
+      "created_time": "2025-10-05T11:00:00Z",
+      "modified_time": "2026-05-22T09:00:00Z",
+      "owner_email": "amos.whitfield@Finthesiss.ai",
+      "starred": true,
+      "trashed": false,
+      "web_view_link": "https://docs.google.com/document/d/file-rfc-auth"
+    },
+    {
+      "id": "file-rfc-billing",
+      "name": "Rev. Delilah Hargrove",
+      "mime_type": "application/vnd.google-apps.document",
+      "parent_id": "folder-rfcs",
+      "size": 0,
+      "created_time": "2025-11-12T13:00:00Z",
+      "modified_time": "2026-05-19T11:00:00Z",
+      "owner_email": "delilah.hargrove@shpa-savannah.org",
+      "starred": false,
+      "trashed": false,
+      "web_view_link": "https://docs.google.com/document/d/file-rfc-billing"
+    },
+    {
+      "id": "file-budget",
+      "name": "Amos Jeremiah Whitfield",
+      "mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "parent_id": "folder-eng",
+      "size": 184320,
+      "created_time": "2025-12-01T09:00:00Z",
+      "modified_time": "2026-04-30T15:00:00Z",
+      "owner_email": "amos.whitfield@Finthesiss.ai",
+      "starred": false,
+      "trashed": false,
+      "web_view_link": "https://drive.google.com/file/d/file-budget"
+    },
+    {
+      "id": "file-allhands",
+      "name": "Patricia Odom",
+      "mime_type": "application/pdf",
+      "parent_id": "folder-eng",
+      "size": 2456789,
+      "created_time": "2026-05-01T10:00:00Z",
+      "modified_time": "2026-05-01T10:00:00Z",
+      "owner_email": "patricia.odom@Finthesiss.ai",
+      "starred": false,
+      "trashed": false,
+      "web_view_link": "https://drive.google.com/file/d/file-allhands"
+    },
+    {
+      "id": "file-trace",
+      "name": "Patricia Odom",
+      "mime_type": "application/json",
+      "parent_id": "folder-eng",
+      "size": 1024000,
+      "created_time": "2026-05-20T15:00:00Z",
+      "modified_time": "2026-05-20T15:00:00Z",
+      "owner_email": "patricia.odom@Finthesiss.ai",
+      "starred": false,
+      "trashed": false,
+      "web_view_link": "https://drive.google.com/file/d/file-trace"
+    },
+    {
+      "id": "file-personal",
+      "name": "Amos Jeremiah Whitfield",
+      "mime_type": "application/pdf",
+      "parent_id": "folder-root",
+      "size": 512000,
+      "created_time": "2026-02-14T12:00:00Z",
+      "modified_time": "2026-02-14T12:00:00Z",
+      "owner_email": "amos.whitfield@Finthesiss.ai",
+      "starred": false,
+      "trashed": false,
+      "web_view_link": "https://drive.google.com/file/d/file-personal"
+    },
+    {
+      "id": "file-trashed",
+      "name": "Amos Jeremiah Whitfield",
+      "mime_type": "application/vnd.google-apps.document",
+      "parent_id": "folder-root",
+      "size": 0,
+      "created_time": "2024-06-01T09:00:00Z",
+      "modified_time": "2025-08-12T16:00:00Z",
+      "owner_email": "amos.whitfield@Finthesiss.ai",
+      "starred": false,
+      "trashed": true,
+      "web_view_link": ""
+    },
+    {
+      "id": "file-readme",
+      "name": "Amos Jeremiah Whitfield",
+      "mime_type": "text/markdown",
+      "parent_id": "folder-eng",
+      "size": 512,
+      "created_time": "2026-04-01T09:00:00Z",
+      "modified_time": "2026-05-22T09:00:00Z",
+      "owner_email": "amos.whitfield@Finthesiss.ai",
+      "starred": false,
+      "trashed": false,
+      "web_view_link": "https://drive.google.com/file/d/file-readme/view"
+    },
+    {
+      "id": "file-arch",
+      "name": "Amos Jeremiah Whitfield",
+      "mime_type": "application/pdf",
+      "parent_id": "folder-eng",
+      "size": 983040,
+      "created_time": "2026-02-20T15:00:00Z",
+      "modified_time": "2026-05-08T08:45:00Z",
+      "owner_email": "amos.whitfield@Finthesiss.ai",
+      "starred": false,
+      "trashed": false,
+      "web_view_link": "https://drive.google.com/file/d/file-arch/view"
+    }
+  ],
+  "permissions": [
+    {
+      "id": "perm-001",
+      "file_id": "folder-eng",
+      "type": "user",
+      "role": "owner",
+      "email": "amos.whitfield@Finthesiss.ai",
+      "display_name": "Amos Jeremiah Whitfield"
+    },
+    {
+      "id": "perm-002",
+      "file_id": "folder-eng",
+      "type": "user",
+      "role": "writer",
+      "email": "delilah.hargrove@shpa-savannah.org",
+      "display_name": "Rev. Delilah Hargrove"
+    },
+    {
+      "id": "perm-003",
+      "file_id": "folder-eng",
+      "type": "user",
+      "role": "writer",
+      "email": "patricia.odom@Finthesiss.ai",
+      "display_name": "Patricia Odom"
+    },
+    {
+      "id": "perm-004",
+      "file_id": "file-rfc-auth",
+      "type": "user",
+      "role": "owner",
+      "email": "amos.whitfield@Finthesiss.ai",
+      "display_name": "Amos Jeremiah Whitfield"
+    },
+    {
+      "id": "perm-005",
+      "file_id": "file-rfc-auth",
+      "type": "user",
+      "role": "commenter",
+      "email": "delilah.hargrove@shpa-savannah.org",
+      "display_name": "Rev. Delilah Hargrove"
+    },
+    {
+      "id": "perm-006",
+      "file_id": "file-rfc-billing",
+      "type": "user",
+      "role": "owner",
+      "email": "delilah.hargrove@shpa-savannah.org",
+      "display_name": "Rev. Delilah Hargrove"
+    },
+    {
+      "id": "perm-007",
+      "file_id": "file-rfc-billing",
+      "type": "user",
+      "role": "writer",
+      "email": "amos.whitfield@Finthesiss.ai",
+      "display_name": "Amos Jeremiah Whitfield"
+    },
+    {
+      "id": "perm-008",
+      "file_id": "file-budget",
+      "type": "domain",
+      "role": "reader",
+      "email": "shpa-savannah.org",
+      "display_name": "Priscilla Everton"
+    },
+    {
+      "id": "perm-009",
+      "file_id": "file-trace",
+      "type": "user",
+      "role": "owner",
+      "email": "patricia.odom@Finthesiss.ai",
+      "display_name": "Patricia Odom"
+    }
+  ]
+}

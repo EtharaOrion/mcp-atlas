@@ -1,0 +1,446 @@
+{
+  "shops": {
+    "shop_hQNLHVWQTuo4kwbticQJ2o": {
+      "sid": "shop_hQNLHVWQTuo4kwbticQJ2o",
+      "name": "Savannah Corner Market",
+      "category": "fruit",
+      "items": {
+        "item_V623Gx5ziorGTPAyxtUbPT": {
+          "tid": "item_V623Gx5ziorGTPAyxtUbPT",
+          "name": "Honeycrisp Apples",
+          "price": 2.99,
+          "star": false
+        },
+        "item_Bj8KVAgvjacTrXHVTzWV9u": {
+          "tid": "item_Bj8KVAgvjacTrXHVTzWV9u",
+          "name": "Baby Spinach",
+          "price": 3.99,
+          "star": false
+        },
+        "item_3knndzwt3d4kqoDoV8WuKu": {
+          "tid": "item_3knndzwt3d4kqoDoV8WuKu",
+          "name": "Bell Peppers (Rainbow)",
+          "price": 4.99,
+          "star": false
+        },
+        "item_4Gp69MUb43JNHGfCXD4uRT": {
+          "tid": "item_4Gp69MUb43JNHGfCXD4uRT",
+          "name": "Roma Tomatoes",
+          "price": 1.99,
+          "star": false
+        },
+        "item_6sRCSNRjde7jpJLnAsYahD": {
+          "tid": "item_6sRCSNRjde7jpJLnAsYahD",
+          "name": "Strawberries",
+          "price": 4.99,
+          "star": false
+        },
+        "item_GEzUS5ZuUg2WzZ6PfYcsKw": {
+          "tid": "item_GEzUS5ZuUg2WzZ6PfYcsKw",
+          "name": "Bananas (Organic)",
+          "price": 0.79,
+          "star": false
+        },
+        "item_SkM8WbeUhPusRyEo4RJjVu": {
+          "tid": "item_SkM8WbeUhPusRyEo4RJjVu",
+          "name": "Romaine Hearts",
+          "price": 4.49,
+          "star": false
+        },
+        "item_PRkLiKHzp2n56e4o22mds9": {
+          "tid": "item_PRkLiKHzp2n56e4o22mds9",
+          "name": "Blueberries (Organic)",
+          "price": 4.49,
+          "star": false
+        },
+        "item_MnSsHMMaoNcVM6eiFvKLVS": {
+          "tid": "item_MnSsHMMaoNcVM6eiFvKLVS",
+          "name": "Hass Avocados",
+          "price": 4.99,
+          "star": false
+        },
+        "item_aM3woJtg8VvFQBKHw6HUbD": {
+          "tid": "item_aM3woJtg8VvFQBKHw6HUbD",
+          "name": "Persian Cucumbers",
+          "price": 3.49,
+          "star": false
+        }
+      },
+      "count": {
+        "item_V623Gx5ziorGTPAyxtUbPT": 11,
+        "item_Bj8KVAgvjacTrXHVTzWV9u": 56,
+        "item_3knndzwt3d4kqoDoV8WuKu": 57,
+        "item_4Gp69MUb43JNHGfCXD4uRT": 12,
+        "item_6sRCSNRjde7jpJLnAsYahD": 79,
+        "item_GEzUS5ZuUg2WzZ6PfYcsKw": 35,
+        "item_SkM8WbeUhPusRyEo4RJjVu": 21,
+        "item_PRkLiKHzp2n56e4o22mds9": 34,
+        "item_MnSsHMMaoNcVM6eiFvKLVS": 41,
+        "item_aM3woJtg8VvFQBKHw6HUbD": 57
+      },
+      "star": false
+    },
+    "shop_K98UfvwDAiTcEPAJASWAyh": {
+      "sid": "shop_K98UfvwDAiTcEPAJASWAyh",
+      "name": "Midtown Greens",
+      "category": "vegetable",
+      "items": {
+        "item_RV7Hj8qRtMXGe3EdhgqFwZ": {
+          "tid": "item_RV7Hj8qRtMXGe3EdhgqFwZ",
+          "name": "Strawberries",
+          "price": 4.99,
+          "star": false
+        },
+        "item_XUswuTpbzrx8Jrkp4QtvZJ": {
+          "tid": "item_XUswuTpbzrx8Jrkp4QtvZJ",
+          "name": "Blueberries (Organic)",
+          "price": 4.49,
+          "star": false
+        },
+        "item_7Fb4XrVyzW4B3AF2SMUzDd": {
+          "tid": "item_7Fb4XrVyzW4B3AF2SMUzDd",
+          "name": "Honeycrisp Apples",
+          "price": 2.99,
+          "star": true
+        },
+        "item_83kn2TCt5BsAbrVvAzMQVN": {
+          "tid": "item_83kn2TCt5BsAbrVvAzMQVN",
+          "name": "Roma Tomatoes",
+          "price": 1.99,
+          "star": false
+        },
+        "item_UBrUGu5AHujpwMJyqwZYoq": {
+          "tid": "item_UBrUGu5AHujpwMJyqwZYoq",
+          "name": "Romaine Hearts",
+          "price": 4.49,
+          "star": true
+        },
+        "item_TrqMbPygGrRGvBbobTBaBJ": {
+          "tid": "item_TrqMbPygGrRGvBbobTBaBJ",
+          "name": "Persian Cucumbers",
+          "price": 3.49,
+          "star": false
+        },
+        "item_HhWvhKd7AmX5LJJ8CZGCjB": {
+          "tid": "item_HhWvhKd7AmX5LJJ8CZGCjB",
+          "name": "Bell Peppers (Rainbow)",
+          "price": 4.99,
+          "star": false
+        },
+        "item_UrawKzNwLScFwhYBCKJS3m": {
+          "tid": "item_UrawKzNwLScFwhYBCKJS3m",
+          "name": "Bananas (Organic)",
+          "price": 0.79,
+          "star": false
+        },
+        "item_SVH75iiRUuybx6b9et5WCy": {
+          "tid": "item_SVH75iiRUuybx6b9et5WCy",
+          "name": "Hass Avocados",
+          "price": 4.99,
+          "star": false
+        },
+        "item_7QuPQdmPKZdd4hwhh87W3k": {
+          "tid": "item_7QuPQdmPKZdd4hwhh87W3k",
+          "name": "Baby Spinach",
+          "price": 3.99,
+          "star": false
+        }
+      },
+      "count": {
+        "item_RV7Hj8qRtMXGe3EdhgqFwZ": 13,
+        "item_XUswuTpbzrx8Jrkp4QtvZJ": 66,
+        "item_7Fb4XrVyzW4B3AF2SMUzDd": 22,
+        "item_83kn2TCt5BsAbrVvAzMQVN": 29,
+        "item_UBrUGu5AHujpwMJyqwZYoq": 48,
+        "item_TrqMbPygGrRGvBbobTBaBJ": 64,
+        "item_HhWvhKd7AmX5LJJ8CZGCjB": 28,
+        "item_UrawKzNwLScFwhYBCKJS3m": 33,
+        "item_SVH75iiRUuybx6b9et5WCy": 64,
+        "item_7QuPQdmPKZdd4hwhh87W3k": 68
+      },
+      "star": false
+    },
+    "shop_gsa8T3M2SKNxa6QpQLUGrd": {
+      "sid": "shop_gsa8T3M2SKNxa6QpQLUGrd",
+      "name": "Savannah Electronics",
+      "category": "electronics",
+      "items": {
+        "item_fxgjp6grr2xY9iEYm9hrKo": {
+          "tid": "item_fxgjp6grr2xY9iEYm9hrKo",
+          "name": "Logitech MX Master 3S Mouse",
+          "price": 99.99,
+          "star": false
+        },
+        "item_R9E69XnDMhMbPaZcQxtDHA": {
+          "tid": "item_R9E69XnDMhMbPaZcQxtDHA",
+          "name": "Logitech MX Keys Wireless Keyboard",
+          "price": 119.99,
+          "star": false
+        },
+        "item_8YpJHvE59dX6SQgEUCaYYf": {
+          "tid": "item_8YpJHvE59dX6SQgEUCaYYf",
+          "name": "Razer DeathAdder V3 Gaming Mouse",
+          "price": 69.99,
+          "star": false
+        },
+        "item_zfFQLQ4YaUPu5njNXNoyLn": {
+          "tid": "item_zfFQLQ4YaUPu5njNXNoyLn",
+          "name": "Samsung T7 Portable SSD 1TB",
+          "price": 89.99,
+          "star": false
+        },
+        "item_Jr9xooVL9TYRo9KVVVu5nh": {
+          "tid": "item_Jr9xooVL9TYRo9KVVVu5nh",
+          "name": "SanDisk Extreme Portable SSD 1TB",
+          "price": 99.99,
+          "star": false
+        },
+        "item_cHZG5XFAZD4oN7jVxMkhiZ": {
+          "tid": "item_cHZG5XFAZD4oN7jVxMkhiZ",
+          "name": "Crucial MX500 1TB Internal SSD",
+          "price": 79.99,
+          "star": false
+        },
+        "item_5jQDcWbwiN49Gz4CACntAz": {
+          "tid": "item_5jQDcWbwiN49Gz4CACntAz",
+          "name": "Roku Streaming Stick 4K",
+          "price": 49.99,
+          "star": true
+        },
+        "item_HQHt2TT3kGBAvTarqxwcq7": {
+          "tid": "item_HQHt2TT3kGBAvTarqxwcq7",
+          "name": "Amazon Fire TV Stick 4K Max",
+          "price": 54.99,
+          "star": true
+        },
+        "item_EhBy7TZo6cc69wREzANnHk": {
+          "tid": "item_EhBy7TZo6cc69wREzANnHk",
+          "name": "Amazon Echo Dot (5th Gen)",
+          "price": 49.99,
+          "star": false
+        },
+        "item_MyY5GQZjpPPs2LxVUfCzHP": {
+          "tid": "item_MyY5GQZjpPPs2LxVUfCzHP",
+          "name": "Amazon Kindle Paperwhite",
+          "price": 139.99,
+          "star": true
+        }
+      },
+      "count": {
+        "item_fxgjp6grr2xY9iEYm9hrKo": 5,
+        "item_R9E69XnDMhMbPaZcQxtDHA": 78,
+        "item_8YpJHvE59dX6SQgEUCaYYf": 71,
+        "item_zfFQLQ4YaUPu5njNXNoyLn": 77,
+        "item_Jr9xooVL9TYRo9KVVVu5nh": 30,
+        "item_cHZG5XFAZD4oN7jVxMkhiZ": 52,
+        "item_5jQDcWbwiN49Gz4CACntAz": 71,
+        "item_HQHt2TT3kGBAvTarqxwcq7": 30,
+        "item_EhBy7TZo6cc69wREzANnHk": 60,
+        "item_MyY5GQZjpPPs2LxVUfCzHP": 12
+      },
+      "star": false
+    },
+    "shop_uZwC8a9W54Ks57VmSaoRB7": {
+      "sid": "shop_uZwC8a9W54Ks57VmSaoRB7",
+      "name": "Burke's Book Corner",
+      "category": "books",
+      "items": {
+        "item_nWgWKUf2pMXyjBP9qkTSs2": {
+          "tid": "item_nWgWKUf2pMXyjBP9qkTSs2",
+          "name": "Kafka on the Shore",
+          "price": 15.06,
+          "star": false
+        },
+        "item_Ew9tAwCV7Sfh3AscbEpYyY": {
+          "tid": "item_Ew9tAwCV7Sfh3AscbEpYyY",
+          "name": "Norwegian Wood",
+          "price": 23.66,
+          "star": false
+        },
+        "item_hKckgyGpnYScFFSh7wTjLf": {
+          "tid": "item_hKckgyGpnYScFFSh7wTjLf",
+          "name": "The Wind-Up Bird Chronicle",
+          "price": 12.49,
+          "star": false
+        },
+        "item_JTHHU4qZRUqsuVjxqBjt8b": {
+          "tid": "item_JTHHU4qZRUqsuVjxqBjt8b",
+          "name": "The Remains of the Day",
+          "price": 20.93,
+          "star": false
+        },
+        "item_ZwWDjAbWMJqFX6EducaBm9": {
+          "tid": "item_ZwWDjAbWMJqFX6EducaBm9",
+          "name": "Never Let Me Go",
+          "price": 18.48,
+          "star": false
+        },
+        "item_NspybdCPjHSEj77MhEZNcb": {
+          "tid": "item_NspybdCPjHSEj77MhEZNcb",
+          "name": "Klara and the Sun",
+          "price": 27.31,
+          "star": false
+        },
+        "item_GAr5nRpCMokUXejXuR8u2e": {
+          "tid": "item_GAr5nRpCMokUXejXuR8u2e",
+          "name": "White Teeth",
+          "price": 26.11,
+          "star": false
+        },
+        "item_vVpgxrgHCfTPvoJfhPGyUp": {
+          "tid": "item_vVpgxrgHCfTPvoJfhPGyUp",
+          "name": "On Beauty",
+          "price": 21.51,
+          "star": false
+        },
+        "item_5Kf7MQbHi4rthjwBzyja2n": {
+          "tid": "item_5Kf7MQbHi4rthjwBzyja2n",
+          "name": "The Underground Railroad",
+          "price": 15.04,
+          "star": false
+        },
+        "item_6GrnQBbE8JDGKHJxNyyqaf": {
+          "tid": "item_6GrnQBbE8JDGKHJxNyyqaf",
+          "name": "The Nickel Boys",
+          "price": 15.58,
+          "star": false
+        }
+      },
+      "count": {
+        "item_nWgWKUf2pMXyjBP9qkTSs2": 32,
+        "item_Ew9tAwCV7Sfh3AscbEpYyY": 78,
+        "item_hKckgyGpnYScFFSh7wTjLf": 33,
+        "item_JTHHU4qZRUqsuVjxqBjt8b": 46,
+        "item_ZwWDjAbWMJqFX6EducaBm9": 48,
+        "item_NspybdCPjHSEj77MhEZNcb": 80,
+        "item_GAr5nRpCMokUXejXuR8u2e": 68,
+        "item_vVpgxrgHCfTPvoJfhPGyUp": 13,
+        "item_5Kf7MQbHi4rthjwBzyja2n": 41,
+        "item_6GrnQBbE8JDGKHJxNyyqaf": 43
+      },
+      "star": false
+    },
+    "shop_kiCRbRLhquAGJHbWHhYBYY": {
+      "sid": "shop_kiCRbRLhquAGJHbWHhYBYY",
+      "name": "River City Grill Supply",
+      "category": "sports_equipment",
+      "items": {
+        "item_ikS48LXHrS5UYqvyj2sPdT": {
+          "tid": "item_ikS48LXHrS5UYqvyj2sPdT",
+          "name": "Cast Iron Grill Press",
+          "price": 63.14,
+          "star": true
+        },
+        "item_R5RQoee2sMoWp9i28x5HS2": {
+          "tid": "item_R5RQoee2sMoWp9i28x5HS2",
+          "name": "Butcher Paper Roll 18 in",
+          "price": 71.06,
+          "star": false
+        },
+        "item_TENxQug2SCB4pTbG6MQE5R": {
+          "tid": "item_TENxQug2SCB4pTbG6MQE5R",
+          "name": "Charcoal Chimney Starter",
+          "price": 79.1,
+          "star": false
+        },
+        "item_VKM6Dq7p9wrqYaNdt5H6tT": {
+          "tid": "item_VKM6Dq7p9wrqYaNdt5H6tT",
+          "name": "Heat-Resistant BBQ Gloves",
+          "price": 41.07,
+          "star": true
+        },
+        "item_vLCYKBFnB5Ue3ma6fFFqqn": {
+          "tid": "item_vLCYKBFnB5Ue3ma6fFFqqn",
+          "name": "Stainless Basting Mop",
+          "price": 76.36,
+          "star": false
+        },
+        "item_3kT3j5VSUCRCtZoqVpp6Aq": {
+          "tid": "item_3kT3j5VSUCRCtZoqVpp6Aq",
+          "name": "Brisket Trimming Knife",
+          "price": 52.35,
+          "star": true
+        },
+        "item_TfKQ4f5gmjSe5inNxndxTR": {
+          "tid": "item_TfKQ4f5gmjSe5inNxndxTR",
+          "name": "Pellet Grill Cover",
+          "price": 39.35,
+          "star": false
+        },
+        "item_NKk2cgr3vAU77CFEtXwZqD": {
+          "tid": "item_NKk2cgr3vAU77CFEtXwZqD",
+          "name": "Smoker Water Pan",
+          "price": 13.16,
+          "star": false
+        }
+      },
+      "count": {
+        "item_ikS48LXHrS5UYqvyj2sPdT": 15,
+        "item_R5RQoee2sMoWp9i28x5HS2": 14,
+        "item_TENxQug2SCB4pTbG6MQE5R": 74,
+        "item_VKM6Dq7p9wrqYaNdt5H6tT": 32,
+        "item_vLCYKBFnB5Ue3ma6fFFqqn": 64,
+        "item_3kT3j5VSUCRCtZoqVpp6Aq": 13,
+        "item_TfKQ4f5gmjSe5inNxndxTR": 25,
+        "item_NKk2cgr3vAU77CFEtXwZqD": 22
+      },
+      "star": false
+    }
+  },
+  "cart": [
+    {
+      "caid": "cart_8GJSAcDsVqPZuVryUpz6Zy",
+      "sid": "shop_hQNLHVWQTuo4kwbticQJ2o",
+      "tid": "item_6sRCSNRjde7jpJLnAsYahD",
+      "count": 1
+    },
+    {
+      "caid": "cart_KxwkxfXpQbdFN2ysjKNBuZ",
+      "sid": "shop_hQNLHVWQTuo4kwbticQJ2o",
+      "tid": "item_SkM8WbeUhPusRyEo4RJjVu",
+      "count": 3
+    },
+    {
+      "caid": "cart_Z3bDGe5gRfKxzNBifMtCLx",
+      "sid": "shop_hQNLHVWQTuo4kwbticQJ2o",
+      "tid": "item_4Gp69MUb43JNHGfCXD4uRT",
+      "count": 3
+    }
+  ],
+  "trans_history": [
+    {
+      "timestamp": "2026-06-01 16:07:46",
+      "trid": "trans_rC6o7A8fJWemmgm8yGj2wz",
+      "total": 299.97,
+      "info": {
+        "shop_gsa8T3M2SKNxa6QpQLUGrd": {
+          "item_Jr9xooVL9TYRo9KVVVu5nh": 3
+        }
+      }
+    },
+    {
+      "timestamp": "2026-06-01 21:11:42",
+      "trid": "trans_e3epaqwj7JbRP4tLZgUtUt",
+      "total": 52.64,
+      "info": {
+        "shop_kiCRbRLhquAGJHbWHhYBYY": {
+          "item_NKk2cgr3vAU77CFEtXwZqD": 4
+        }
+      }
+    },
+    {
+      "timestamp": "2026-06-02 08:59:37",
+      "trid": "trans_hJfCRuLokcaHsA8zYn7vbJ",
+      "total": 345.4,
+      "info": {
+        "shop_gsa8T3M2SKNxa6QpQLUGrd": {
+          "item_MyY5GQZjpPPs2LxVUfCzHP": 1,
+          "item_5jQDcWbwiN49Gz4CACntAz": 3
+        },
+        "shop_uZwC8a9W54Ks57VmSaoRB7": {
+          "item_ZwWDjAbWMJqFX6EducaBm9": 3
+        }
+      }
+    }
+  ]
+}

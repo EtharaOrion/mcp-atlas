@@ -1,0 +1,79 @@
+{
+  "monitors": [
+    {
+      "id": 1001,
+      "name": "shpa-website uptime",
+      "type": "metric alert",
+      "query": "avg(last_5m):avg:trace.http.request.duration{service:auth-service} > 0.6",
+      "message": "Alert: shpa-website uptime. Notify Coastal IT Services.",
+      "overall_state": "Alert",
+      "priority": 1,
+      "tags": [
+        "service:auth-service",
+        "team:platform"
+      ],
+      "created": "2025-11-01T10:00:00+00:00",
+      "modified": "2026-05-26T09:00:00+00:00"
+    },
+    {
+      "id": 1002,
+      "name": "member-portal response time",
+      "type": "metric alert",
+      "query": "sum(last_5m):sum:trace.http.request.errors{service:web-frontend}.as_count() > 50",
+      "message": "Alert: member-portal response time. Notify Coastal IT Services.",
+      "overall_state": "Warn",
+      "priority": 2,
+      "tags": [
+        "service:web-frontend",
+        "team:frontend"
+      ],
+      "created": "2025-11-05T10:00:00+00:00",
+      "modified": "2026-05-26T07:30:00+00:00"
+    },
+    {
+      "id": 1003,
+      "name": "ticketing db connections",
+      "type": "metric alert",
+      "query": "avg(last_10m):avg:system.cpu.user{host:web-01} > 90",
+      "message": "Alert: ticketing db connections. Notify Coastal IT Services.",
+      "overall_state": "OK",
+      "priority": 3,
+      "tags": [
+        "host:web-01",
+        "team:infra"
+      ],
+      "created": "2025-12-01T10:00:00+00:00",
+      "modified": "2026-05-25T18:00:00+00:00"
+    },
+    {
+      "id": 1004,
+      "name": "newsletter job failures",
+      "type": "metric alert",
+      "query": "avg(last_15m):avg:billing.queue.depth{service:billing-service} > 1000",
+      "message": "Alert: newsletter job failures. Notify Coastal IT Services.",
+      "overall_state": "OK",
+      "priority": 2,
+      "tags": [
+        "service:billing-service",
+        "team:platform"
+      ],
+      "created": "2026-01-10T10:00:00+00:00",
+      "modified": "2026-05-24T12:00:00+00:00"
+    },
+    {
+      "id": 1005,
+      "name": "nightly backup status",
+      "type": "service check",
+      "query": "avg(last_5m):avg:system.disk.in_use{host:db-01} > 0.9",
+      "message": "Alert: nightly backup status. Notify Coastal IT Services.",
+      "overall_state": "Warn",
+      "priority": 1,
+      "tags": [
+        "host:db-01",
+        "team:infra"
+      ],
+      "created": "2026-02-01T10:00:00+00:00",
+      "modified": "2026-05-26T06:00:00+00:00"
+    }
+  ]
+}

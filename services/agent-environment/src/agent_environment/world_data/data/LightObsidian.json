@@ -1,0 +1,104 @@
+{
+  "notes": [
+    {
+      "path": "Daily/2026-05-26.md",
+      "title": "Daily note",
+      "size_bytes": 612,
+      "modified_at": "2026-05-26T19:00:00Z",
+      "tags": [
+        "daily",
+        "journal"
+      ]
+    },
+    {
+      "path": "Daily/2026-05-25.md",
+      "title": "Daily note",
+      "size_bytes": 488,
+      "modified_at": "2026-05-25T20:30:00Z",
+      "tags": [
+        "daily",
+        "journal"
+      ]
+    },
+    {
+      "path": "Projects/Barrington sideboard.md",
+      "title": "Commission log",
+      "size_bytes": 1820,
+      "modified_at": "2026-05-22T14:00:00Z",
+      "tags": [
+        "project",
+        "security"
+      ]
+    },
+    {
+      "path": "Projects/Renard-Whitcomb chairs.md",
+      "title": "Commission log",
+      "size_bytes": 1240,
+      "modified_at": "2026-05-19T11:00:00Z",
+      "tags": [
+        "project",
+        "backend"
+      ]
+    },
+    {
+      "path": "Projects/Historic Homes Tour.md",
+      "title": "SHPA planning",
+      "size_bytes": 910,
+      "modified_at": "2026-05-11T13:00:00Z",
+      "tags": [
+        "project",
+        "infra"
+      ]
+    },
+    {
+      "path": "References/Finishing recipes.md",
+      "title": "Shop reference",
+      "size_bytes": 2110,
+      "modified_at": "2026-04-30T10:00:00Z",
+      "tags": [
+        "reference",
+        "sre"
+      ]
+    },
+    {
+      "path": "References/Docent tour script.md",
+      "title": "SHPA reference",
+      "size_bytes": 3045,
+      "modified_at": "2026-04-22T15:00:00Z",
+      "tags": [
+        "reference",
+        "db"
+      ]
+    },
+    {
+      "path": "Inbox/quick capture.md",
+      "title": "Inbox",
+      "size_bytes": 210,
+      "modified_at": "2026-05-26T08:00:00Z",
+      "tags": [
+        "inbox"
+      ]
+    },
+    {
+      "path": "Daily/2026-05-24.md",
+      "title": "Daily note",
+      "size_bytes": 520,
+      "modified_at": "2026-05-24T19:45:00Z",
+      "tags": [
+        "daily",
+        "journal"
+      ]
+    }
+  ],
+  "contents": {
+    "Daily/2026-05-26.md": "# 2026-05-26\n- Walk: Forsyth loop, 52 minutes.\n- Shop: glued the sideboard carcass; clamps off at 4.\n- SHPA: signed the docent letters.\n- Call Denise about Miles's birthday.",
+    "Daily/2026-05-25.md": "# 2026-05-25\n- Church early service; deacons meeting after.\n- Sharpened the No. 4 and the jointer iron.\n- Read two chapters of the Vance novel.",
+    "Projects/Barrington sideboard.md": "# Barrington sideboard\nWalnut, Sheraton pattern. Due Oct 24.\n- Carcass glued.\n- Veneer stock selected.\n- Hardware ordered from the Charleston supplier.",
+    "Projects/Renard-Whitcomb chairs.md": "# Renard-Whitcomb Windsor chairs\nSix side chairs, due Jan 31.\n- Seat blanks milled.\n- Spindle stock riven and drying.",
+    "Projects/Historic Homes Tour.md": "# Historic Homes Tour\nRoute: Bull to Gaston, six houses.\n- Owners confirmed: 5 of 6.\n- Booklet copy to Nathaniel Friday.",
+    "References/Finishing recipes.md": "# Finishing recipes\n- Garnet shellac: 2 lb cut, two coats, wax after a week.\n- Milk paint over oak: bond coat first.",
+    "References/Docent tour script.md": "# Docent tour script\nOpen at the Charlton Street gate. Regency first, then the Victorian District block.",
+    "Inbox/quick capture.md": "- Order more hide glue.\n- Ruth Ann's porch rail measurement.\n- Pound cake for Sunday.",
+    "Daily/2026-05-24.md": "# 2026-05-24\n- Long walk with Calvin.\n- Sketched the bookcase muntins.\n- Reviewed grant receipts for Priscilla."
+  }
+}

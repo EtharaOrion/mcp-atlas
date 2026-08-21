@@ -1,0 +1,76 @@
+{
+  "incidents": [
+    {
+      "incident_id": "PI001",
+      "incident_number": 1042,
+      "title": "shpa-website down (hosting outage)",
+      "status": "triggered",
+      "urgency": "high",
+      "service_id": "PS001",
+      "escalation_policy_id": "EP001",
+      "assigned_to": "Coastal IT Services",
+      "created_at": "2026-05-27T09:14:00Z",
+      "resolved_at": null
+    },
+    {
+      "incident_id": "PI002",
+      "incident_number": 1043,
+      "title": "member-portal slow responses",
+      "status": "acknowledged",
+      "urgency": "high",
+      "service_id": "PS002",
+      "escalation_policy_id": "EP002",
+      "assigned_to": "Devon Marsh (Coastal IT)",
+      "created_at": "2026-05-27T07:48:00Z",
+      "resolved_at": null
+    },
+    {
+      "incident_id": "PI003",
+      "incident_number": 1041,
+      "title": "ticketing checkout errors",
+      "status": "acknowledged",
+      "urgency": "high",
+      "service_id": "PS001",
+      "escalation_policy_id": "EP001",
+      "assigned_to": "Alicia Grant (Coastal IT)",
+      "created_at": "2026-05-26T22:05:00Z",
+      "resolved_at": null
+    },
+    {
+      "incident_id": "PI004",
+      "incident_number": 1039,
+      "title": "newsletter send failure",
+      "status": "resolved",
+      "urgency": "low",
+      "service_id": "PS003",
+      "escalation_policy_id": "EP001",
+      "assigned_to": "Coastal IT Services",
+      "created_at": "2026-05-25T14:30:00Z",
+      "resolved_at": "2026-05-25T15:12:00Z"
+    },
+    {
+      "incident_id": "PI005",
+      "incident_number": 1038,
+      "title": "SSL certificate expiring",
+      "status": "resolved",
+      "urgency": "low",
+      "service_id": "PS002",
+      "escalation_policy_id": "EP002",
+      "assigned_to": "Devon Marsh (Coastal IT)",
+      "created_at": "2026-05-24T11:20:00Z",
+      "resolved_at": "2026-05-24T12:05:00Z"
+    },
+    {
+      "incident_id": "PI006",
+      "incident_number": 1040,
+      "title": "backup job missed",
+      "status": "triggered",
+      "urgency": "low",
+      "service_id": "PS001",
+      "escalation_policy_id": "EP001",
+      "assigned_to": "Alicia Grant (Coastal IT)",
+      "created_at": "2026-05-26T18:42:00Z",
+      "resolved_at": null
+    }
+  ]
+}

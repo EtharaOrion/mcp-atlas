@@ -1,0 +1,166 @@
+{
+  "today": "2026-01-05",
+  "categories": {
+    "cat_food": {
+      "catid": "cat_food",
+      "name": "Food & Dining",
+      "color": "#E67E22",
+      "monthly_limit": 600.0
+    },
+    "cat_rent": {
+      "catid": "cat_rent",
+      "name": "Household & Utilities",
+      "color": "#2C3E50",
+      "monthly_limit": 1800.0
+    },
+    "cat_transport": {
+      "catid": "cat_transport",
+      "name": "Transport",
+      "color": "#16A085",
+      "monthly_limit": 300.0
+    },
+    "cat_entertainment": {
+      "catid": "cat_entertainment",
+      "name": "Entertainment",
+      "color": "#8E44AD",
+      "monthly_limit": 250.0
+    },
+    "cat_salary": {
+      "catid": "cat_salary",
+      "name": "Salary",
+      "color": "#27AE60",
+      "monthly_limit": 0.0
+    }
+  },
+  "transactions": {
+    "39qGHU9seHYpK4WTXeDTdY": {
+      "txid": "39qGHU9seHYpK4WTXeDTdY",
+      "category_id": "cat_salary",
+      "amount": 14750.0,
+      "currency": "USD",
+      "date": "2026-01-02",
+      "description": "SHPA salary and federal annuity deposit",
+      "kind": "income"
+    },
+    "GTpoK5atNqteXNJBnP6rsJ": {
+      "txid": "GTpoK5atNqteXNJBnP6rsJ",
+      "category_id": "cat_food",
+      "amount": 95.56,
+      "currency": "USD",
+      "date": "2026-01-02",
+      "description": "Groceries",
+      "kind": "expense"
+    },
+    "bojKXgajqjjht9zWzjWa4w": {
+      "txid": "bojKXgajqjjht9zWzjWa4w",
+      "category_id": "cat_food",
+      "amount": 22.69,
+      "currency": "USD",
+      "date": "2026-01-03",
+      "description": "Coffee and lunch",
+      "kind": "expense"
+    },
+    "8BnG9H37iFsscMpVqTRK3V": {
+      "txid": "8BnG9H37iFsscMpVqTRK3V",
+      "category_id": "cat_food",
+      "amount": 65.98,
+      "currency": "USD",
+      "date": "2026-01-04",
+      "description": "Dinner out",
+      "kind": "expense"
+    },
+    "KDiV8G83NCh3A3tvRPbmhu": {
+      "txid": "KDiV8G83NCh3A3tvRPbmhu",
+      "category_id": "cat_rent",
+      "amount": 1735.21,
+      "currency": "USD",
+      "date": "2026-01-04",
+      "description": "Home maintenance and utilities",
+      "kind": "expense"
+    },
+    "dVCZm4Tet85oo3HAMnXTqX": {
+      "txid": "dVCZm4Tet85oo3HAMnXTqX",
+      "category_id": "cat_transport",
+      "amount": 42.91,
+      "currency": "USD",
+      "date": "2026-01-04",
+      "description": "Fuel",
+      "kind": "expense"
+    },
+    "5xTibqxHvUiGe9pUsG8hjR": {
+      "txid": "5xTibqxHvUiGe9pUsG8hjR",
+      "category_id": "cat_transport",
+      "amount": 9.67,
+      "currency": "USD",
+      "date": "2026-01-05",
+      "description": "Parking",
+      "kind": "expense"
+    },
+    "YrKsBmN3BtjnT3ub6o4gWq": {
+      "txid": "YrKsBmN3BtjnT3ub6o4gWq",
+      "category_id": "cat_entertainment",
+      "amount": 13.15,
+      "currency": "USD",
+      "date": "2026-01-05",
+      "description": "Streaming subscription",
+      "kind": "expense"
+    },
+    "W2R38Qvuv7y85Q7JEpKVFd": {
+      "txid": "W2R38Qvuv7y85Q7JEpKVFd",
+      "category_id": "cat_entertainment",
+      "amount": 118.83,
+      "currency": "USD",
+      "date": "2026-01-05",
+      "description": "Concert tickets",
+      "kind": "expense"
+    },
+    "GvHpUQinAxUBtbKy6tAFsr": {
+      "txid": "GvHpUQinAxUBtbKy6tAFsr",
+      "category_id": "cat_food",
+      "amount": 28.28,
+      "currency": "USD",
+      "date": "2026-01-05",
+      "description": "Weekend market run",
+      "kind": "expense"
+    },
+    "wgAEXetriLunrEXdwUNUs4": {
+      "txid": "wgAEXetriLunrEXdwUNUs4",
+      "category_id": "cat_transport",
+      "amount": 16.21,
+      "currency": "USD",
+      "date": "2026-01-06",
+      "description": "Rideshare",
+      "kind": "expense"
+    }
+  },
+  "budgets": {
+    "5iQ624Vfv95jMnDsYdYxNa": {
+      "bid": "5iQ624Vfv95jMnDsYdYxNa",
+      "month": "2026-01",
+      "category_id": "cat_food",
+      "limit": 600.0,
+      "spent": 212.51
+    },
+    "Fg6y4Eb4L4pd22PZWvMcz6": {
+      "bid": "Fg6y4Eb4L4pd22PZWvMcz6",
+      "month": "2026-01",
+      "category_id": "cat_rent",
+      "limit": 1800.0,
+      "spent": 1735.21
+    },
+    "zq5JXNr9WiK2y3wpXuHBhj": {
+      "bid": "zq5JXNr9WiK2y3wpXuHBhj",
+      "month": "2026-01",
+      "category_id": "cat_transport",
+      "limit": 300.0,
+      "spent": 68.79
+    },
+    "LpXMp6u9QLUjWfrUSyj868": {
+      "bid": "LpXMp6u9QLUjWfrUSyj868",
+      "month": "2026-01",
+      "category_id": "cat_entertainment",
+      "limit": 250.0,
+      "spent": 131.98
+    }
+  }
+}

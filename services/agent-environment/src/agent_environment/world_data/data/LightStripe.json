@@ -1,0 +1,102 @@
+{
+  "charges": [
+    {
+      "id": "ch_3Aurora01",
+      "customer": "Everett Petain",
+      "amount": 1900,
+      "currency": "usd",
+      "status": "succeeded",
+      "paid": true,
+      "refunded": false,
+      "amount_refunded": 0,
+      "description": "Starter Monthly",
+      "payment_intent": "pi_3Aurora01",
+      "created": 1717286400,
+      "object": "charge"
+    },
+    {
+      "id": "ch_3Helix01",
+      "customer": "Henry Beaumont",
+      "amount": 29900,
+      "currency": "usd",
+      "status": "succeeded",
+      "paid": true,
+      "refunded": false,
+      "amount_refunded": 0,
+      "description": "Enterprise Monthly",
+      "payment_intent": "pi_3Helix01",
+      "created": 1717372800,
+      "object": "charge"
+    },
+    {
+      "id": "ch_3Lumen01",
+      "customer": "Cordelia Ashmore-Vance",
+      "amount": 4900,
+      "currency": "usd",
+      "status": "succeeded",
+      "paid": true,
+      "refunded": true,
+      "amount_refunded": 4900,
+      "description": "Pro Monthly refunded",
+      "payment_intent": "pi_3Lumen01",
+      "created": 1717459200,
+      "object": "charge"
+    },
+    {
+      "id": "ch_3Pelagic01",
+      "customer": "Reginald Thackery",
+      "amount": 12500,
+      "currency": "usd",
+      "status": "failed",
+      "paid": false,
+      "refunded": false,
+      "amount_refunded": 0,
+      "description": "Net-30 charge attempt",
+      "payment_intent": "pi_3Pelagic01",
+      "created": 1717545600,
+      "object": "charge"
+    },
+    {
+      "id": "ch_3Quanta01",
+      "customer": "Terrence Carter",
+      "amount": 49000,
+      "currency": "usd",
+      "status": "succeeded",
+      "paid": true,
+      "refunded": false,
+      "amount_refunded": 0,
+      "description": "Pro Annual",
+      "payment_intent": "pi_3Quanta01",
+      "created": 1717632000,
+      "object": "charge"
+    },
+    {
+      "id": "ch_3Aurora02",
+      "customer": "Everett Petain",
+      "amount": 9900,
+      "currency": "usd",
+      "status": "succeeded",
+      "paid": true,
+      "refunded": true,
+      "amount_refunded": 2000,
+      "description": "POS Bundle partial refund",
+      "payment_intent": "pi_3Aurora02",
+      "created": 1717718400,
+      "object": "charge"
+    },
+    {
+      "id": "ch_3Verdant01",
+      "customer": "Dr. Vivienne Boudreaux",
+      "amount": 4900,
+      "currency": "usd",
+      "status": "pending",
+      "paid": false,
+      "refunded": false,
+      "amount_refunded": 0,
+      "description": "Pro Monthly pending",
+      "payment_intent": "pi_3Verdant01",
+      "created": 1717804800,
+      "object": "charge"
+    }
+  ]
+}

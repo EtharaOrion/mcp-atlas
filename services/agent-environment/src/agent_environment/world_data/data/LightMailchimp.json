@@ -1,0 +1,168 @@
+{
+  "members": [
+    {
+      "id": "0d05c30f3ef9742e1a0144755a9299b4",
+      "list_id": "list-newsletter",
+      "email_address": "reginald.thackery@shpa-savannah.org",
+      "full_name": "Reginald Thackery",
+      "status": "subscribed",
+      "timestamp_signup": "2025-09-02T08:00:00.000Z",
+      "member_rating": 4,
+      "_pk": "list-newsletter@0d05c30f3ef9742e1a0144755a9299b4"
+    },
+    {
+      "id": "e680f3f5e04d7a7de7e1d2aa788f12b6",
+      "list_id": "list-newsletter",
+      "email_address": "odetta.sinclair@shpa-savannah.org",
+      "full_name": "Odetta Sinclair",
+      "status": "subscribed",
+      "timestamp_signup": "2025-09-05T09:00:00.000Z",
+      "member_rating": 3,
+      "_pk": "list-newsletter@e680f3f5e04d7a7de7e1d2aa788f12b6"
+    },
+    {
+      "id": "ed7c46e4c206d77970d9cd876c7e3bfa",
+      "list_id": "list-newsletter",
+      "email_address": "james.holloway@Finthesiss.ai",
+      "full_name": "Pastor James Holloway",
+      "status": "unsubscribed",
+      "timestamp_signup": "2025-09-10T10:00:00.000Z",
+      "member_rating": 2,
+      "_pk": "list-newsletter@ed7c46e4c206d77970d9cd876c7e3bfa"
+    },
+    {
+      "id": "21daa82ae1d5125486cd37b49cc5bd78",
+      "list_id": "list-newsletter",
+      "email_address": "anselm.trumbull@shpa-savannah.org",
+      "full_name": "Anselm Trumbull",
+      "status": "subscribed",
+      "timestamp_signup": "2025-09-18T11:00:00.000Z",
+      "member_rating": 5,
+      "_pk": "list-newsletter@21daa82ae1d5125486cd37b49cc5bd78"
+    },
+    {
+      "id": "05e2dd11749f3ec5bd3002eedafa4f3e",
+      "list_id": "list-newsletter",
+      "email_address": "lorraine.deveraux@shpa-savannah.org",
+      "full_name": "Lorraine Deveraux",
+      "status": "cleaned",
+      "timestamp_signup": "2025-10-01T12:00:00.000Z",
+      "member_rating": 1,
+      "_pk": "list-newsletter@05e2dd11749f3ec5bd3002eedafa4f3e"
+    },
+    {
+      "id": "f537a7c84cb96314fd693a5ed5861307",
+      "list_id": "list-product",
+      "email_address": "everett.petain@senonprofit.com",
+      "full_name": "Everett Petain",
+      "status": "subscribed",
+      "timestamp_signup": "2025-09-20T08:00:00.000Z",
+      "member_rating": 4,
+      "_pk": "list-product@f537a7c84cb96314fd693a5ed5861307"
+    },
+    {
+      "id": "03b70f82243af1d1695513c4d52f37e0",
+      "list_id": "list-product",
+      "email_address": "odetta.sinclair@shpa-savannah.org",
+      "full_name": "Odetta Sinclair",
+      "status": "subscribed",
+      "timestamp_signup": "2025-09-22T09:00:00.000Z",
+      "member_rating": 3,
+      "_pk": "list-product@03b70f82243af1d1695513c4d52f37e0"
+    },
+    {
+      "id": "f7dac1ddf22604de6b28dcfa0f323857",
+      "list_id": "list-product",
+      "email_address": "henry.beaumont@Finthesiss.ai",
+      "full_name": "Henry Beaumont",
+      "status": "subscribed",
+      "timestamp_signup": "2025-10-05T10:00:00.000Z",
+      "member_rating": 4,
+      "_pk": "list-product@f7dac1ddf22604de6b28dcfa0f323857"
+    },
+    {
+      "id": "10f17c6b3b844733bb266b0dcfdda5b8",
+      "list_id": "list-product",
+      "email_address": "marcus.whitby@shpa-savannah.org",
+      "full_name": "Marcus Whitby",
+      "status": "subscribed",
+      "timestamp_signup": "2025-10-12T11:00:00.000Z",
+      "member_rating": 5,
+      "_pk": "list-product@10f17c6b3b844733bb266b0dcfdda5b8"
+    }
+  ],
+  "campaigns": [
+    {
+      "id": "camp-sep-news",
+      "list_id": "list-newsletter",
+      "type": "regular",
+      "status": "sent",
+      "emails_sent": 5,
+      "send_time": "2025-09-28T15:00:00.000Z",
+      "create_time": "2025-09-25T10:00:00.000Z",
+      "recipients": {
+        "list_id": "list-newsletter"
+      },
+      "settings": {
+        "subject_line": "September Highlights",
+        "from_name": "Savannah Historic Preservation Alliance",
+        "reply_to": "miriam.aldridge@savannahga.gov",
+        "title": "September Newsletter"
+      }
+    },
+    {
+      "id": "camp-oct-news",
+      "list_id": "list-newsletter",
+      "type": "regular",
+      "status": "sent",
+      "emails_sent": 5,
+      "send_time": "2025-10-30T15:00:00.000Z",
+      "create_time": "2025-10-27T10:00:00.000Z",
+      "recipients": {
+        "list_id": "list-newsletter"
+      },
+      "settings": {
+        "subject_line": "October Roundup",
+        "from_name": "Savannah Historic Preservation Alliance",
+        "reply_to": "miriam.aldridge@savannahga.gov",
+        "title": "October Newsletter"
+      }
+    },
+    {
+      "id": "camp-launch",
+      "list_id": "list-product",
+      "type": "regular",
+      "status": "sent",
+      "emails_sent": 4,
+      "send_time": "2025-10-15T16:00:00.000Z",
+      "create_time": "2025-10-12T10:00:00.000Z",
+      "recipients": {
+        "list_id": "list-product"
+      },
+      "settings": {
+        "subject_line": "Introducing the Member Portal",
+        "from_name": "SHPA Newsletter",
+        "reply_to": "ellis.marchand@ashcrofthardwoods.com",
+        "title": "Smart Sync Launch"
+      }
+    },
+    {
+      "id": "camp-nov-draft",
+      "list_id": "list-newsletter",
+      "type": "regular",
+      "status": "save",
+      "emails_sent": 0,
+      "send_time": null,
+      "create_time": "2025-11-01T10:00:00.000Z",
+      "recipients": {
+        "list_id": "list-newsletter"
+      },
+      "settings": {
+        "subject_line": "November Preview",
+        "from_name": "Savannah Historic Preservation Alliance",
+        "reply_to": "miriam.aldridge@savannahga.gov",
+        "title": "November Newsletter"
+      }
+    }
+  ]
+}

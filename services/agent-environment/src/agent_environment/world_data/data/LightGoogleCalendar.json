@@ -1,0 +1,119 @@
+{
+  "events": [
+    {
+      "id": "evt-001",
+      "calendar_id": "amos.whitfield@Finthesiss.ai",
+      "summary": "SHPA staff sync",
+      "description": "Weekly staff meeting with the directors",
+      "location": "45 Bull Street, Savannah, GA",
+      "start": "2026-01-05T09:30:00-05:00",
+      "end": "2026-01-05T10:15:00-05:00",
+      "all_day": false,
+      "status": "confirmed",
+      "creator": "amos.whitfield@Finthesiss.ai",
+      "organizer": "amos.whitfield@Finthesiss.ai",
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=MO"
+      ],
+      "visibility": "default"
+    },
+    {
+      "id": "evt-002",
+      "calendar_id": "amos.whitfield@Finthesiss.ai",
+      "summary": "Board prep with Cordelia",
+      "description": "Walk the January board packet before the meeting",
+      "location": "45 Bull Street, Savannah, GA",
+      "start": "2026-01-07T16:00:00-05:00",
+      "end": "2026-01-07T16:30:00-05:00",
+      "all_day": false,
+      "status": "confirmed",
+      "creator": "amos.whitfield@Finthesiss.ai",
+      "organizer": "amos.whitfield@Finthesiss.ai",
+      "recurrence": [],
+      "visibility": "default"
+    },
+    {
+      "id": "evt-003",
+      "calendar_id": "amos.whitfield@Finthesiss.ai",
+      "summary": "Finance review with Reginald",
+      "description": "December close and Bull Street repair actuals",
+      "location": "45 Bull Street, Savannah, GA",
+      "start": "2026-01-08T11:00:00-05:00",
+      "end": "2026-01-08T11:45:00-05:00",
+      "all_day": false,
+      "status": "confirmed",
+      "creator": "amos.whitfield@Finthesiss.ai",
+      "organizer": "amos.whitfield@Finthesiss.ai",
+      "recurrence": [],
+      "visibility": "default"
+    },
+    {
+      "id": "evt-004",
+      "calendar_id": "amos.whitfield@Finthesiss.ai",
+      "summary": "Docent-led tour",
+      "description": "Historic district walking tour - Amos leading",
+      "location": "Historic District, Savannah, GA",
+      "start": "2026-01-09T10:00:00-05:00",
+      "end": "2026-01-09T11:30:00-05:00",
+      "all_day": false,
+      "status": "confirmed",
+      "creator": "amos.whitfield@Finthesiss.ai",
+      "organizer": "amos.whitfield@Finthesiss.ai",
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=FR"
+      ],
+      "visibility": "default"
+    },
+    {
+      "id": "evt-005",
+      "calendar_id": "amos.whitfield@Finthesiss.ai",
+      "summary": "Workshop time",
+      "description": "Carriage house - Windsor chair templates",
+      "location": "318 East Charlton Street, Savannah, GA",
+      "start": "2026-01-10T08:00:00-05:00",
+      "end": "2026-01-10T10:30:00-05:00",
+      "all_day": false,
+      "status": "confirmed",
+      "creator": "amos.whitfield@Finthesiss.ai",
+      "organizer": "amos.whitfield@Finthesiss.ai",
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=SA"
+      ],
+      "visibility": "default"
+    },
+    {
+      "id": "evt-006",
+      "calendar_id": "amos.whitfield@Finthesiss.ai",
+      "summary": "Church service",
+      "description": "Ebenezer Heritage Church - deacon duty second and fourth Sundays",
+      "location": "Ebenezer Heritage Church, Savannah, GA",
+      "start": "2026-01-11T10:00:00-05:00",
+      "end": "2026-01-11T11:30:00-05:00",
+      "all_day": false,
+      "status": "confirmed",
+      "creator": "amos.whitfield@Finthesiss.ai",
+      "organizer": "amos.whitfield@Finthesiss.ai",
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=SU"
+      ],
+      "visibility": "default"
+    },
+    {
+      "id": "evt-007",
+      "calendar_id": "amos.whitfield@Finthesiss.ai",
+      "summary": "Morning walk",
+      "description": "Squares loop before the office",
+      "location": "Historic District, Savannah, GA",
+      "start": "2026-01-06T06:30:00-05:00",
+      "end": "2026-01-06T07:15:00-05:00",
+      "all_day": false,
+      "status": "confirmed",
+      "creator": "amos.whitfield@Finthesiss.ai",
+      "organizer": "amos.whitfield@Finthesiss.ai",
+      "recurrence": [
+        "RRULE:FREQ=DAILY"
+      ],
+      "visibility": "default"
+    }
+  ]
+}

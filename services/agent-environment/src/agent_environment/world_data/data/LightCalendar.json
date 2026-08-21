@@ -1,0 +1,252 @@
+{
+  "calendars": {
+    "cal_personal": {
+      "cid": "cal_personal",
+      "name": "Personal",
+      "color": "#4285F4"
+    },
+    "cal_work": {
+      "cid": "cal_work",
+      "name": "Work",
+      "color": "#DB4437"
+    },
+    "cal_holidays": {
+      "cid": "cal_holidays",
+      "name": "Holidays",
+      "color": "#0F9D58"
+    }
+  },
+  "events": {
+    "T4zpcFvY88TNxQVP7Ngoqv": {
+      "eid": "T4zpcFvY88TNxQVP7Ngoqv",
+      "title": "Staff meeting",
+      "calendar_id": "cal_work",
+      "start": "2026-01-05T09:30",
+      "end": "2026-01-05T10:30",
+      "location": "",
+      "description": "Weekly staff sync",
+      "attendees": [
+        "Lorraine Deveraux",
+        "Marcus Whitby",
+        "Josephine Halloway"
+      ],
+      "all_day": false
+    },
+    "5tGQuuLMBfaZFL6wR5X94d": {
+      "eid": "5tGQuuLMBfaZFL6wR5X94d",
+      "title": "Finance review",
+      "calendar_id": "cal_work",
+      "start": "2026-01-07T11:30",
+      "end": "2026-01-07T12:30",
+      "location": "",
+      "description": "Monthly finance review with the treasurer",
+      "attendees": [
+        "Priscilla Everton",
+        "Reginald Thackery"
+      ],
+      "all_day": false
+    },
+    "AJ9vCGZNYFdr2HwC6DKLDU": {
+      "eid": "AJ9vCGZNYFdr2HwC6DKLDU",
+      "title": "Board prep session",
+      "calendar_id": "cal_work",
+      "start": "2026-01-09T10:30",
+      "end": "2026-01-09T12:00",
+      "location": "",
+      "description": "Prepare materials for the next board meeting",
+      "attendees": [
+        "Malcolm Kingsley",
+        "Reginald Thackery",
+        "Odetta Sinclair"
+      ],
+      "all_day": false
+    },
+    "tpi899gaXJ7RtfWWtJksu4": {
+      "eid": "tpi899gaXJ7RtfWWtJksu4",
+      "title": "Committee call",
+      "calendar_id": "cal_work",
+      "start": "2026-01-11T14:00",
+      "end": "2026-01-11T14:45",
+      "location": "",
+      "description": "Standing committee call",
+      "attendees": [
+        "Reginald Thackery",
+        "Barrett Whitehall",
+        "Dr. Vivienne Boudreaux"
+      ],
+      "all_day": false
+    },
+    "ZYtgWBkbq7cFHeBHSxGY6p": {
+      "eid": "ZYtgWBkbq7cFHeBHSxGY6p",
+      "title": "Donor lunch",
+      "calendar_id": "cal_work",
+      "start": "2026-01-13T14:30",
+      "end": "2026-01-13T16:00",
+      "location": "",
+      "description": "Lunch with a longtime supporter",
+      "attendees": [
+        "Odetta Sinclair",
+        "Reginald Thackery"
+      ],
+      "all_day": false
+    },
+    "vXdwhuZCJruA6AWBH2h3qA": {
+      "eid": "vXdwhuZCJruA6AWBH2h3qA",
+      "title": "Vendor walkthrough",
+      "calendar_id": "cal_work",
+      "start": "2026-01-15T14:30",
+      "end": "2026-01-15T15:30",
+      "location": "",
+      "description": "Walkthrough with the facilities vendor",
+      "attendees": [
+        "Lorraine Deveraux",
+        "Wesley Farraday"
+      ],
+      "all_day": false
+    },
+    "yZpuk39N4FB47RusrLs9XZ": {
+      "eid": "yZpuk39N4FB47RusrLs9XZ",
+      "title": "Morning walk",
+      "calendar_id": "cal_personal",
+      "start": "2026-01-06T06:30",
+      "end": "2026-01-06T07:15",
+      "location": "",
+      "description": "Neighborhood loop",
+      "attendees": [],
+      "all_day": false
+    },
+    "khtqkaW3MVTwnMEMG4eMQ2": {
+      "eid": "khtqkaW3MVTwnMEMG4eMQ2",
+      "title": "Family dinner",
+      "calendar_id": "cal_personal",
+      "start": "2026-01-08T18:00",
+      "end": "2026-01-08T20:00",
+      "location": "",
+      "description": "Dinner with the family",
+      "attendees": [],
+      "all_day": false
+    },
+    "LhWvo4PGMi7JW2K2ifPh9z": {
+      "eid": "LhWvo4PGMi7JW2K2ifPh9z",
+      "title": "Church service",
+      "calendar_id": "cal_personal",
+      "start": "2026-01-11T10:00",
+      "end": "2026-01-11T11:30",
+      "location": "",
+      "description": "Sunday service",
+      "attendees": [],
+      "all_day": false
+    },
+    "yPGVNyDt5rdQd7jbG7fDiz": {
+      "eid": "yPGVNyDt5rdQd7jbG7fDiz",
+      "title": "Errand block",
+      "calendar_id": "cal_personal",
+      "start": "2026-01-12T12:00",
+      "end": "2026-01-12T13:30",
+      "location": "",
+      "description": "Groceries and pharmacy run",
+      "attendees": [],
+      "all_day": false
+    },
+    "gWMCfdjEDBRq8jNYX4MLDK": {
+      "eid": "gWMCfdjEDBRq8jNYX4MLDK",
+      "title": "Workshop time",
+      "calendar_id": "cal_personal",
+      "start": "2026-01-17T08:00",
+      "end": "2026-01-17T10:30",
+      "location": "",
+      "description": "Blocked time for the hobby workshop",
+      "attendees": [],
+      "all_day": false
+    },
+    "tMDpmjhyJHaPaJMSxmrMNH": {
+      "eid": "tMDpmjhyJHaPaJMSxmrMNH",
+      "title": "Community holiday",
+      "calendar_id": "cal_holidays",
+      "start": "2026-01-19T00:00",
+      "end": "2026-01-20T00:00",
+      "location": "",
+      "description": "Local observance",
+      "attendees": [],
+      "all_day": true
+    },
+    "5bKKso2ac2v9BMfkAyThLK": {
+      "eid": "5bKKso2ac2v9BMfkAyThLK",
+      "title": "1:1 with Lorraine Deveraux",
+      "calendar_id": "cal_work",
+      "start": "2026-01-05T09:00",
+      "end": "2026-01-05T09:30",
+      "location": "",
+      "description": "",
+      "attendees": [
+        "Lorraine Deveraux"
+      ],
+      "all_day": false
+    },
+    "H5ya2Ge6Wz9BtRfsmLrE8o": {
+      "eid": "H5ya2Ge6Wz9BtRfsmLrE8o",
+      "title": "1:1 with Marcus Whitby",
+      "calendar_id": "cal_work",
+      "start": "2026-01-06T09:00",
+      "end": "2026-01-06T09:30",
+      "location": "",
+      "description": "",
+      "attendees": [
+        "Marcus Whitby"
+      ],
+      "all_day": false
+    },
+    "jydXbZFG8Ei9wDSRHTWwwk": {
+      "eid": "jydXbZFG8Ei9wDSRHTWwwk",
+      "title": "1:1 with Josephine Halloway",
+      "calendar_id": "cal_work",
+      "start": "2026-01-07T13:30",
+      "end": "2026-01-07T14:00",
+      "location": "",
+      "description": "",
+      "attendees": [
+        "Josephine Halloway"
+      ],
+      "all_day": false
+    },
+    "YuVVgCBRRFV4U4YpmmxZSf": {
+      "eid": "YuVVgCBRRFV4U4YpmmxZSf",
+      "title": "1:1 with Nathaniel Kessel",
+      "calendar_id": "cal_work",
+      "start": "2026-01-08T13:30",
+      "end": "2026-01-08T14:00",
+      "location": "",
+      "description": "",
+      "attendees": [
+        "Nathaniel Kessel"
+      ],
+      "all_day": false
+    },
+    "ZG7Dk4wyjpJtkCzExJKJKV": {
+      "eid": "ZG7Dk4wyjpJtkCzExJKJKV",
+      "title": "1:1 with Priscilla Everton",
+      "calendar_id": "cal_work",
+      "start": "2026-01-09T09:00",
+      "end": "2026-01-09T09:30",
+      "location": "",
+      "description": "",
+      "attendees": [
+        "Priscilla Everton"
+      ],
+      "all_day": false
+    },
+    "xvZfBfWHRCfG9r53KJDTpq": {
+      "eid": "xvZfBfWHRCfG9r53KJDTpq",
+      "title": "Board Chair check-in with Cordelia",
+      "calendar_id": "cal_work",
+      "start": "2026-01-07T16:00",
+      "end": "2026-01-07T16:30",
+      "location": "",
+      "description": "",
+      "attendees": [
+        "Cordelia Ashmore-Vance"
+      ],
+      "all_day": false
+    }
+  }
+}

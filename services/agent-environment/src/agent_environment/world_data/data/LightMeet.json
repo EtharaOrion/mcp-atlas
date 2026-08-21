@@ -1,0 +1,92 @@
+{
+  "meetings": {
+    "SmJ5NEGhozRDMUF9Vzm9JS": {
+      "mid": "SmJ5NEGhozRDMUF9Vzm9JS",
+      "title": "Weekly staff sync",
+      "description": "Recurring team check-in on active work.",
+      "start": "2026-01-02T15:30",
+      "end": "2026-01-02T16:15",
+      "host": "self",
+      "participants": [
+        "lorraine.deveraux@shpa-savannah.org",
+        "marcus.whitby@shpa-savannah.org",
+        "josephine.halloway@shpa-savannah.org"
+      ],
+      "meeting_link": "https://meet.example.com/room-200",
+      "notes": "Notes recorded in the shared drive.",
+      "recording_url": "",
+      "transcript_text": "",
+      "status": "completed"
+    },
+    "HeE6V4xhUCUBZtaBeX29Nx": {
+      "mid": "HeE6V4xhUCUBZtaBeX29Nx",
+      "title": "Budget review",
+      "description": "Walk through the monthly spend against plan.",
+      "start": "2026-01-03T02:44",
+      "end": "2026-01-03T03:44",
+      "host": "self",
+      "participants": [
+        "priscilla.everton@shpa-savannah.org",
+        "reginald.thackery@shpa-savannah.org"
+      ],
+      "meeting_link": "https://meet.example.com/room-201",
+      "notes": "Notes recorded in the shared drive.",
+      "recording_url": "",
+      "transcript_text": "",
+      "status": "completed"
+    },
+    "6T8TUjtNgnNmH7pDksyQN3": {
+      "mid": "6T8TUjtNgnNmH7pDksyQN3",
+      "title": "Board prep session",
+      "description": "Prepare materials and talking points for the board.",
+      "start": "2026-01-03T11:58",
+      "end": "2026-01-03T12:58",
+      "host": "self",
+      "participants": [
+        "barrett.whitehall@shpa-savannah.org",
+        "malcolm.kingsley@shpa-savannah.org",
+        "delilah.hargrove@shpa-savannah.org"
+      ],
+      "meeting_link": "https://meet.example.com/room-202",
+      "notes": "",
+      "recording_url": "",
+      "transcript_text": "",
+      "status": "scheduled"
+    },
+    "Vq3LoUKEA7yAxGDueZjPWT": {
+      "mid": "Vq3LoUKEA7yAxGDueZjPWT",
+      "title": "Vendor call",
+      "description": "Review the outstanding contract questions.",
+      "start": "2026-01-03T21:37",
+      "end": "2026-01-03T22:07",
+      "host": "self",
+      "participants": [
+        "lorraine.deveraux@shpa-savannah.org",
+        "priscilla.everton@shpa-savannah.org"
+      ],
+      "meeting_link": "https://meet.example.com/room-203",
+      "notes": "",
+      "recording_url": "",
+      "transcript_text": "",
+      "status": "scheduled"
+    },
+    "sxRxw8pinvUjKvo7CZqn8r": {
+      "mid": "sxRxw8pinvUjKvo7CZqn8r",
+      "title": "Community partners intro",
+      "description": "Introductory call with the partner group.",
+      "start": "2026-01-04T12:07",
+      "end": "2026-01-04T12:37",
+      "host": "self",
+      "participants": [
+        "grady.colton@savingplaces.org",
+        "roxanne.ellery@georgiatrust.org",
+        "miriam.aldridge@savannahga.gov"
+      ],
+      "meeting_link": "https://meet.example.com/room-204",
+      "notes": "",
+      "recording_url": "",
+      "transcript_text": "",
+      "status": "cancelled"
+    }
+  }
+}

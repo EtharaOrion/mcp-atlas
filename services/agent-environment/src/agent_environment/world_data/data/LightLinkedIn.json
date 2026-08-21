@@ -1,0 +1,76 @@
+{
+  "posts": [
+    {
+      "id": "6001",
+      "author_id": "urn:li:person:lorraine-ortega",
+      "commentary": "After 30 years as a U.S. Postal Inspector, preservation work taught me a second kind of investigation: reading a building's story.",
+      "visibility": "PUBLIC",
+      "created_at": "2026-05-19T15:00:00.000Z",
+      "socialDetail": {
+        "likeCount": 318,
+        "commentCount": 42,
+        "shareCount": 57
+      }
+    },
+    {
+      "id": "6002",
+      "author_id": "urn:li:person:lorraine-ortega",
+      "commentary": "Our facade grant program funded twelve restorations this year. Proud of the SHPA team.",
+      "visibility": "PUBLIC",
+      "created_at": "2026-05-22T09:30:00.000Z",
+      "socialDetail": {
+        "likeCount": 156,
+        "commentCount": 38,
+        "shareCount": 21
+      }
+    },
+    {
+      "id": "6003",
+      "author_id": "urn:li:organization:shpa-savannah",
+      "commentary": "Hiring soon: Development Associate. Help us protect Savannah's Historic District.",
+      "visibility": "PUBLIC",
+      "created_at": "2026-05-21T17:00:00.000Z",
+      "socialDetail": {
+        "likeCount": 904,
+        "commentCount": 112,
+        "shareCount": 210
+      }
+    },
+    {
+      "id": "6004",
+      "author_id": "urn:li:person:josephine-park",
+      "commentary": "The National Trust recertification packet is in. Grateful to Lorraine Deveraux and the whole staff.",
+      "visibility": "PUBLIC",
+      "created_at": "2026-05-23T12:00:00.000Z",
+      "socialDetail": {
+        "likeCount": 421,
+        "commentCount": 55,
+        "shareCount": 68
+      }
+    },
+    {
+      "id": "6005",
+      "author_id": "urn:li:person:noor-aziz",
+      "commentary": "Heritage woodworking note: build for the grandchildren, not the catalog.",
+      "visibility": "CONNECTIONS",
+      "created_at": "2026-05-24T11:00:00.000Z",
+      "socialDetail": {
+        "likeCount": 87,
+        "commentCount": 12,
+        "shareCount": 9
+      }
+    },
+    {
+      "id": "6006",
+      "author_id": "urn:li:person:lorraine-ortega",
+      "commentary": "Docent orientation filled in two days. Savannah loves its history.",
+      "visibility": "PUBLIC",
+      "created_at": "2026-05-25T08:15:00.000Z",
+      "socialDetail": {
+        "likeCount": 512,
+        "commentCount": 71,
+        "shareCount": 94
+      }
+    }
+  ]
+}

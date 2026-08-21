@@ -41,3 +41,4 @@ results/
 /vendor/ccbridge/.venv
 
 /vendor/ccbridge/.litellm-venv
+/Archive

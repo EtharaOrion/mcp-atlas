@@ -1,0 +1,148 @@
+{
+  "sent_log": [
+    {
+      "message_id": "msg-aa01",
+      "to_email": "delbert.yancey@yanceyballard-cpa.com",
+      "from_email": "roxanne.ellery@georgiatrust.org",
+      "subject": "Welcome to Savannah Historic Preservation Alliance, Amos!",
+      "template_id": "d-1a2b3c4d5e6f7081",
+      "status": "delivered",
+      "opens": 2,
+      "clicks": 1,
+      "sent_at": "2026-05-20T10:01:00Z"
+    },
+    {
+      "message_id": "msg-aa02",
+      "to_email": "ellis.marchand@ashcrofthardwoods.com",
+      "from_email": "roxanne.ellery@georgiatrust.org",
+      "subject": "Reset your Savannah Historic Preservation Alliance password",
+      "template_id": "d-2b3c4d5e6f708192",
+      "status": "delivered",
+      "opens": 1,
+      "clicks": 1,
+      "sent_at": "2026-05-21T09:30:00Z"
+    },
+    {
+      "message_id": "msg-aa03",
+      "to_email": "wesley.farraday@Finthesiss.ai",
+      "from_email": "miriam.aldridge@savannahga.gov",
+      "subject": "Savannah Historic Preservation Alliance \u2014 May highlights",
+      "template_id": "d-3c4d5e6f70819203",
+      "status": "delivered",
+      "opens": 3,
+      "clicks": 0,
+      "sent_at": "2026-05-22T08:00:00Z"
+    },
+    {
+      "message_id": "msg-aa04",
+      "to_email": "cordelia.ashmore.vance@shpa-savannah.org",
+      "from_email": "miriam.aldridge@savannahga.gov",
+      "subject": "Savannah Historic Preservation Alliance \u2014 May highlights",
+      "template_id": "d-3c4d5e6f70819203",
+      "status": "bounced",
+      "opens": 0,
+      "clicks": 0,
+      "sent_at": "2026-05-22T08:00:05Z"
+    },
+    {
+      "message_id": "msg-aa05",
+      "to_email": "terrence.carter@Finthesiss.ai",
+      "from_email": "everett.petain@senonprofit.com",
+      "subject": "Your receipt for invoice INV-9001",
+      "template_id": "d-4d5e6f7081920314",
+      "status": "delivered",
+      "opens": 1,
+      "clicks": 0,
+      "sent_at": "2026-05-23T14:00:00Z"
+    },
+    {
+      "message_id": "msg-aa06",
+      "to_email": "terrence.carter@Finthesiss.ai",
+      "from_email": "roxanne.ellery@georgiatrust.org",
+      "subject": "Welcome to Savannah Historic Preservation Alliance, Amos!",
+      "template_id": "d-1a2b3c4d5e6f7081",
+      "status": "opened",
+      "opens": 4,
+      "clicks": 2,
+      "sent_at": "2026-05-24T10:00:00Z"
+    }
+  ],
+  "contacts": [
+    {
+      "id": "contact-00a1",
+      "email": "delbert.yancey@yanceyballard-cpa.com",
+      "first_name": "Delbert",
+      "last_name": "Yancey",
+      "country": "US",
+      "list_ids": [
+        "list-7788aa11",
+        "list-7788aa22"
+      ],
+      "created_at": "2025-09-02T10:00:00Z",
+      "updated_at": "2026-05-20T10:00:00Z"
+    },
+    {
+      "id": "contact-00a2",
+      "email": "ellis.marchand@ashcrofthardwoods.com",
+      "first_name": "Ellis",
+      "last_name": "Marchand",
+      "country": "US",
+      "list_ids": [
+        "list-7788aa11",
+        "list-7788aa22"
+      ],
+      "created_at": "2025-09-04T11:00:00Z",
+      "updated_at": "2026-05-18T09:00:00Z"
+    },
+    {
+      "id": "contact-00a3",
+      "email": "wesley.farraday@Finthesiss.ai",
+      "first_name": "Wesley",
+      "last_name": "Farraday",
+      "country": "US",
+      "list_ids": [
+        "list-7788aa11"
+      ],
+      "created_at": "2025-09-12T14:00:00Z",
+      "updated_at": "2026-05-15T16:00:00Z"
+    },
+    {
+      "id": "contact-00a4",
+      "email": "cordelia.ashmore.vance@shpa-savannah.org",
+      "first_name": "Cordelia",
+      "last_name": "Ashmore-Vance",
+      "country": "US",
+      "list_ids": [
+        "list-7788aa22",
+        "list-7788aa33"
+      ],
+      "created_at": "2025-10-02T09:00:00Z",
+      "updated_at": "2026-05-22T11:00:00Z"
+    },
+    {
+      "id": "contact-00a5",
+      "email": "terrence.carter@Finthesiss.ai",
+      "first_name": "Terrence",
+      "last_name": "Carter",
+      "country": "US",
+      "list_ids": [
+        "list-7788aa33"
+      ],
+      "created_at": "2025-10-18T16:00:00Z",
+      "updated_at": "2026-05-19T13:00:00Z"
+    },
+    {
+      "id": "contact-00a6",
+      "email": "terrence.carter@Finthesiss.ai",
+      "first_name": "Terrence",
+      "last_name": "Carter",
+      "country": "US",
+      "list_ids": [
+        "list-7788aa11",
+        "list-7788aa44"
+      ],
+      "created_at": "2026-01-15T09:00:00Z",
+      "updated_at": "2026-05-21T08:00:00Z"
+    }
+  ]
+}

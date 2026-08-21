@@ -1,0 +1,99 @@
+{
+  "assets": {
+    "ast_ooNWDhcN": {
+      "aid": "ast_ooNWDhcN",
+      "name": "Compact Sedan 2024",
+      "category": "car",
+      "daily_rate": 62.0,
+      "currency": "USD",
+      "location": "Savannah",
+      "is_available": true,
+      "condition": "excellent"
+    },
+    "ast_tQRLiG8U": {
+      "aid": "ast_tQRLiG8U",
+      "name": "Cargo Van 2022",
+      "category": "car",
+      "daily_rate": 89.0,
+      "currency": "USD",
+      "location": "Savannah",
+      "is_available": true,
+      "condition": "good"
+    },
+    "ast_Cjh8ThK8": {
+      "aid": "ast_Cjh8ThK8",
+      "name": "City Cruiser Bike",
+      "category": "bike",
+      "daily_rate": 18.0,
+      "currency": "USD",
+      "location": "Savannah",
+      "is_available": true,
+      "condition": "good"
+    },
+    "ast_28AGPzWQ": {
+      "aid": "ast_28AGPzWQ",
+      "name": "Orbital Sander",
+      "category": "tool",
+      "daily_rate": 12.0,
+      "currency": "USD",
+      "location": "Savannah",
+      "is_available": true,
+      "condition": "fair"
+    },
+    "ast_vnJfo5ys": {
+      "aid": "ast_vnJfo5ys",
+      "name": "Full-Frame Camera Kit",
+      "category": "camera",
+      "daily_rate": 55.0,
+      "currency": "USD",
+      "location": "Savannah",
+      "is_available": false,
+      "condition": "excellent"
+    }
+  },
+  "bookings": {
+    "bkg_VHU7zP8G": {
+      "bid": "bkg_VHU7zP8G",
+      "asset_id": "ast_ooNWDhcN",
+      "renter": "Amos Jeremiah Whitfield",
+      "start_date": "2025-12-24",
+      "end_date": "2025-12-26",
+      "total_cost": 186.0,
+      "currency": "USD",
+      "status": "returned",
+      "notes": ""
+    },
+    "bkg_UzUP5Wt4": {
+      "bid": "bkg_UzUP5Wt4",
+      "asset_id": "ast_vnJfo5ys",
+      "renter": "Amos Jeremiah Whitfield",
+      "start_date": "2026-01-02",
+      "end_date": "2026-01-05",
+      "total_cost": 220.0,
+      "currency": "USD",
+      "status": "active",
+      "notes": ""
+    },
+    "bkg_ejuW4bf2": {
+      "bid": "bkg_ejuW4bf2",
+      "asset_id": "ast_tQRLiG8U",
+      "renter": "Amos Jeremiah Whitfield",
+      "start_date": "2026-01-11",
+      "end_date": "2026-01-13",
+      "total_cost": 267.0,
+      "currency": "USD",
+      "status": "reserved",
+      "notes": ""
+    }
+  },
+  "damages": {
+    "dmg_gfZZc5Sb": {
+      "dmid": "dmg_gfZZc5Sb",
+      "asset_id": "ast_ooNWDhcN",
+      "booking_id": "bkg_VHU7zP8G",
+      "description": "Scratch on the rear bumper found at return.",
+      "cost": 140.0,
+      "date": "2025-12-26"
+    }
+  }
+}

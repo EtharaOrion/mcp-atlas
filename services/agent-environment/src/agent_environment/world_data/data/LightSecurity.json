@@ -1,0 +1,57 @@
+{
+  "cameras": {
+    "9fKodTWB6iLnfAVRqMpdvQ": {
+      "caid": "9fKodTWB6iLnfAVRqMpdvQ",
+      "name": "Front Door Cam",
+      "room": "Front Door",
+      "is_recording": true,
+      "resolution": "1080p",
+      "night_vision": true
+    },
+    "Z4gkZHf2KArxHoQM8KB84M": {
+      "caid": "Z4gkZHf2KArxHoQM8KB84M",
+      "name": "Workshop Door Cam",
+      "room": "Workshop",
+      "is_recording": false,
+      "resolution": "1080p",
+      "night_vision": false
+    }
+  },
+  "sensors": {},
+  "alarms": {},
+  "events": {
+    "HTJcB7QmWtqfcPp5pGogY2": {
+      "evid": "HTJcB7QmWtqfcPp5pGogY2",
+      "source_kind": "system",
+      "source_id": "",
+      "kind": "armed",
+      "timestamp": "2026-01-04T00:01",
+      "description": "Home armed for the night."
+    },
+    "ZjNJQsAzsxPeEQe8ZY6zJE": {
+      "evid": "ZjNJQsAzsxPeEQe8ZY6zJE",
+      "source_kind": "camera",
+      "source_id": "9fKodTWB6iLnfAVRqMpdvQ",
+      "kind": "recording_started",
+      "timestamp": "2026-01-04T04:25",
+      "description": "Front camera began recording."
+    },
+    "8xoiUv3CYVDVFUC2gJaVaJ": {
+      "evid": "8xoiUv3CYVDVFUC2gJaVaJ",
+      "source_kind": "user",
+      "source_id": "Amos Jeremiah Whitfield",
+      "kind": "access_granted",
+      "timestamp": "2026-01-04T06:54",
+      "description": "Owner opened the front door."
+    },
+    "jdziRxN889fHBxuMawsnbH": {
+      "evid": "jdziRxN889fHBxuMawsnbH",
+      "source_kind": "system",
+      "source_id": "",
+      "kind": "disarmed",
+      "timestamp": "2026-01-04T09:27",
+      "description": "Home disarmed in the morning."
+    }
+  },
+  "access_logs": {}
+}

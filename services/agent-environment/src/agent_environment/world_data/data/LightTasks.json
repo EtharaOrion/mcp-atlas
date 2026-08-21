@@ -1,0 +1,176 @@
+{
+  "projects": {
+    "proj_inbox": {
+      "pid": "proj_inbox",
+      "name": "Inbox",
+      "color": "#9E9E9E",
+      "description": "Uncategorized tasks"
+    },
+    "proj_personal": {
+      "pid": "proj_personal",
+      "name": "Personal",
+      "color": "#4285F4",
+      "description": "Personal to-dos"
+    },
+    "proj_work": {
+      "pid": "proj_work",
+      "name": "Work",
+      "color": "#DB4437",
+      "description": "Work tasks"
+    }
+  },
+  "tasks": {
+    "ARk85yque7uDW3VqnrGPa6": {
+      "tid": "ARk85yque7uDW3VqnrGPa6",
+      "title": "Draft the quarterly report",
+      "description": "Pull last quarter's numbers and draft the summary.",
+      "status": "todo",
+      "priority": "medium",
+      "due_date": "2026-01-06",
+      "project_id": "proj_work",
+      "assignee": "Amos Jeremiah Whitfield",
+      "tags": [
+        "errand",
+        "office"
+      ],
+      "created_at": "2026-01-02T14:12",
+      "updated_at": "2026-01-02T14:12"
+    },
+    "M6mneUBog3gCDUh6hjon8f": {
+      "tid": "M6mneUBog3gCDUh6hjon8f",
+      "title": "Confirm meeting room booking",
+      "description": "Double-check the reservation for next week.",
+      "status": "todo",
+      "priority": "medium",
+      "due_date": "2026-01-07",
+      "project_id": "proj_work",
+      "assignee": "Amos Jeremiah Whitfield",
+      "tags": [
+        "errand",
+        "office"
+      ],
+      "created_at": "2026-01-02T21:11",
+      "updated_at": "2026-01-02T21:11"
+    },
+    "CApBmYzr25SJnEA3tBhTyM": {
+      "tid": "CApBmYzr25SJnEA3tBhTyM",
+      "title": "Review vendor proposals",
+      "description": "Compare the two bids and note questions.",
+      "status": "todo",
+      "priority": "medium",
+      "due_date": "2026-01-08",
+      "project_id": "proj_work",
+      "assignee": "",
+      "tags": [
+        "errand"
+      ],
+      "created_at": "2026-01-03T01:24",
+      "updated_at": "2026-01-03T01:24"
+    },
+    "noGyawjN8PZjr6mdCwoCBZ": {
+      "tid": "noGyawjN8PZjr6mdCwoCBZ",
+      "title": "Send committee follow-ups",
+      "description": "Email action items from the last call.",
+      "status": "todo",
+      "priority": "low",
+      "due_date": "2026-01-09",
+      "project_id": "proj_work",
+      "assignee": "Amos Jeremiah Whitfield",
+      "tags": [
+        "errand",
+        "home"
+      ],
+      "created_at": "2026-01-03T03:19",
+      "updated_at": "2026-01-03T03:19"
+    },
+    "aJa5or3BhbLFegCbJUGiSb": {
+      "tid": "aJa5or3BhbLFegCbJUGiSb",
+      "title": "Update contact roster",
+      "description": "Fold in the new members from this month.",
+      "status": "todo",
+      "priority": "high",
+      "due_date": "2026-01-10",
+      "project_id": "proj_work",
+      "assignee": "Amos Jeremiah Whitfield",
+      "tags": [],
+      "created_at": "2026-01-03T09:12",
+      "updated_at": "2026-01-03T09:12"
+    },
+    "zqK33hrWmm9XbJYoNgihmA": {
+      "tid": "zqK33hrWmm9XbJYoNgihmA",
+      "title": "Schedule annual checkup",
+      "description": "Call the office and pick a morning slot.",
+      "status": "done",
+      "priority": "low",
+      "due_date": "2026-01-11",
+      "project_id": "proj_personal",
+      "assignee": "Amos Jeremiah Whitfield",
+      "tags": [
+        "home"
+      ],
+      "created_at": "2026-01-03T11:37",
+      "updated_at": "2026-01-03T11:37"
+    },
+    "xVJE2kfi5L7B2FXSbFjnCg": {
+      "tid": "xVJE2kfi5L7B2FXSbFjnCg",
+      "title": "Renew vehicle registration",
+      "description": "Renewal window opens this month.",
+      "status": "in_progress",
+      "priority": "medium",
+      "due_date": "2026-01-12",
+      "project_id": "proj_personal",
+      "assignee": "Amos Jeremiah Whitfield",
+      "tags": [],
+      "created_at": "2026-01-03T18:08",
+      "updated_at": "2026-01-03T18:08"
+    },
+    "AfyFRa7MGwGZifbHN5QRoq": {
+      "tid": "AfyFRa7MGwGZifbHN5QRoq",
+      "title": "Fix the back gate latch",
+      "description": "Buy a new latch at the hardware store first.",
+      "status": "todo",
+      "priority": "high",
+      "due_date": "2026-01-13",
+      "project_id": "proj_personal",
+      "assignee": "Amos Jeremiah Whitfield",
+      "tags": [
+        "office",
+        "phone"
+      ],
+      "created_at": "2026-01-03T22:27",
+      "updated_at": "2026-01-03T22:27"
+    },
+    "oYY2yL5TXG2HEp7nLecjWj": {
+      "tid": "oYY2yL5TXG2HEp7nLecjWj",
+      "title": "Plan the weekend menu",
+      "description": "Keep it simple; check the pantry before shopping.",
+      "status": "in_progress",
+      "priority": "medium",
+      "due_date": "2026-01-14",
+      "project_id": "proj_personal",
+      "assignee": "Amos Jeremiah Whitfield",
+      "tags": [
+        "home",
+        "errand"
+      ],
+      "created_at": "2026-01-04T01:05",
+      "updated_at": "2026-01-04T01:05"
+    },
+    "ReTkRWkbuUQyX2my3s6u4F": {
+      "tid": "ReTkRWkbuUQyX2my3s6u4F",
+      "title": "Sort the garage shelves",
+      "description": "One shelf per evening until done.",
+      "status": "done",
+      "priority": "medium",
+      "due_date": "2026-01-15",
+      "project_id": "proj_personal",
+      "assignee": "",
+      "tags": [
+        "phone",
+        "errand"
+      ],
+      "created_at": "2026-01-04T09:20",
+      "updated_at": "2026-01-04T09:20"
+    }
+  }
+}

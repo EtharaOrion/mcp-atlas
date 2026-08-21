@@ -1,0 +1,149 @@
+{
+  "today": "2026-01-05",
+  "filings": {
+    "zCTa3EDsN3LGp2bXmKE8hu": {
+      "fid": "zCTa3EDsN3LGp2bXmKE8hu",
+      "tax_year": 2024,
+      "filing_status": "single",
+      "gross_income": 47074.71,
+      "deductions_total": 9030.62,
+      "tax_owed": 6847.94,
+      "refund": 107.02,
+      "status": "accepted"
+    },
+    "oUCtzwDFcBZTqKCGVbFK5m": {
+      "fid": "oUCtzwDFcBZTqKCGVbFK5m",
+      "tax_year": 2025,
+      "filing_status": "single",
+      "gross_income": 67150.89,
+      "deductions_total": 6447.36,
+      "tax_owed": 10926.64,
+      "refund": 0.0,
+      "status": "draft"
+    }
+  },
+  "deductions": {
+    "7XTf8gj5pGn4ZoWJKx2jBk": {
+      "did": "7XTf8gj5pGn4ZoWJKx2jBk",
+      "filing_id": "zCTa3EDsN3LGp2bXmKE8hu",
+      "category": "charity",
+      "amount": 764.93,
+      "description": "Donation receipts for the year.",
+      "date": "2023-10-28",
+      "receipt_ref": "recpt-2024-001"
+    },
+    "ELWR5e4xWdyZCWD6cyEcgT": {
+      "did": "ELWR5e4xWdyZCWD6cyEcgT",
+      "filing_id": "zCTa3EDsN3LGp2bXmKE8hu",
+      "category": "medical",
+      "amount": 775.75,
+      "description": "Out-of-pocket medical costs.",
+      "date": "2023-09-18",
+      "receipt_ref": "recpt-2024-002"
+    },
+    "BvtePvrpJoeAoVLWupDQc9": {
+      "did": "BvtePvrpJoeAoVLWupDQc9",
+      "filing_id": "zCTa3EDsN3LGp2bXmKE8hu",
+      "category": "mortgage_interest",
+      "amount": 5631.46,
+      "description": "Lender interest statement.",
+      "date": "2023-08-09",
+      "receipt_ref": "recpt-2024-003"
+    },
+    "5VkSjR7rw4Sj5PvNPbfknm": {
+      "did": "5VkSjR7rw4Sj5PvNPbfknm",
+      "filing_id": "zCTa3EDsN3LGp2bXmKE8hu",
+      "category": "business_expense",
+      "amount": 1858.48,
+      "description": "Supplies and mileage for the side work.",
+      "date": "2023-06-30",
+      "receipt_ref": "recpt-2024-004"
+    },
+    "DKvveHP89SJzo5QqC2xAsu": {
+      "did": "DKvveHP89SJzo5QqC2xAsu",
+      "filing_id": "oUCtzwDFcBZTqKCGVbFK5m",
+      "category": "charity",
+      "amount": 222.71,
+      "description": "Donation receipts for the year.",
+      "date": "2024-08-23",
+      "receipt_ref": "recpt-2025-001"
+    },
+    "7rVVDqcUDBopvmTs9FyEz5": {
+      "did": "7rVVDqcUDBopvmTs9FyEz5",
+      "filing_id": "oUCtzwDFcBZTqKCGVbFK5m",
+      "category": "medical",
+      "amount": 819.21,
+      "description": "Out-of-pocket medical costs.",
+      "date": "2024-07-14",
+      "receipt_ref": "recpt-2025-002"
+    },
+    "hJ8dXUYXFgFqwosC2nbjvk": {
+      "did": "hJ8dXUYXFgFqwosC2nbjvk",
+      "filing_id": "oUCtzwDFcBZTqKCGVbFK5m",
+      "category": "mortgage_interest",
+      "amount": 4930.28,
+      "description": "Lender interest statement.",
+      "date": "2024-06-04",
+      "receipt_ref": "recpt-2025-003"
+    },
+    "r6WdRZjoRQERcT5HFJxMH9": {
+      "did": "r6WdRZjoRQERcT5HFJxMH9",
+      "filing_id": "oUCtzwDFcBZTqKCGVbFK5m",
+      "category": "business_expense",
+      "amount": 475.16,
+      "description": "Supplies and mileage for the side work.",
+      "date": "2024-04-25",
+      "receipt_ref": "recpt-2025-004"
+    }
+  },
+  "income_sources": {
+    "FhhwW2A8StaNMA3RpcUzdc": {
+      "isid": "FhhwW2A8StaNMA3RpcUzdc",
+      "filing_id": "zCTa3EDsN3LGp2bXmKE8hu",
+      "source_type": "w2",
+      "employer_or_payer": "United States Postal Inspection Service",
+      "amount": 36172.34,
+      "withheld": 7957.91
+    },
+    "pbsiQVpghjeyWxo62LQbZ3": {
+      "isid": "pbsiQVpghjeyWxo62LQbZ3",
+      "filing_id": "zCTa3EDsN3LGp2bXmKE8hu",
+      "source_type": "other",
+      "employer_or_payer": "Office of Personnel Management (federal annuity)",
+      "amount": 7050.26,
+      "withheld": 0.0
+    },
+    "2sYQQUUwCSFsbZcLJvQeVU": {
+      "isid": "2sYQQUUwCSFsbZcLJvQeVU",
+      "filing_id": "zCTa3EDsN3LGp2bXmKE8hu",
+      "source_type": "dividend",
+      "employer_or_payer": "Fidelity Brokerage",
+      "amount": 3852.11,
+      "withheld": 385.21
+    },
+    "5MtJs5YQuH37KeCYjmQwL4": {
+      "isid": "5MtJs5YQuH37KeCYjmQwL4",
+      "filing_id": "oUCtzwDFcBZTqKCGVbFK5m",
+      "source_type": "other",
+      "employer_or_payer": "Office of Personnel Management (federal annuity)",
+      "amount": 52977.06,
+      "withheld": 11654.95
+    },
+    "PkQeWftKntoi4nAynTbwAx": {
+      "isid": "PkQeWftKntoi4nAynTbwAx",
+      "filing_id": "oUCtzwDFcBZTqKCGVbFK5m",
+      "source_type": "1099",
+      "employer_or_payer": "Whitfield Heritage Woodworks LLC",
+      "amount": 6778.11,
+      "withheld": 0.0
+    },
+    "2nD9bFpUmoJAKBFE3TA4GH": {
+      "isid": "2nD9bFpUmoJAKBFE3TA4GH",
+      "filing_id": "oUCtzwDFcBZTqKCGVbFK5m",
+      "source_type": "dividend",
+      "employer_or_payer": "Fidelity Brokerage",
+      "amount": 7395.72,
+      "withheld": 739.57
+    }
+  }
+}

@@ -1,0 +1,208 @@
+{
+  "events": [
+    {
+      "date": "20260520",
+      "country": "United States",
+      "pagePath": "/",
+      "deviceCategory": "desktop",
+      "sessions": 120,
+      "activeUsers": 98,
+      "screenPageViews": 340,
+      "eventCount": 1280
+    },
+    {
+      "date": "20260520",
+      "country": "United States",
+      "pagePath": "/membership",
+      "deviceCategory": "mobile",
+      "sessions": 85,
+      "activeUsers": 72,
+      "screenPageViews": 210,
+      "eventCount": 640
+    },
+    {
+      "date": "20260520",
+      "country": "United Kingdom",
+      "pagePath": "/tours",
+      "deviceCategory": "mobile",
+      "sessions": 60,
+      "activeUsers": 51,
+      "screenPageViews": 150,
+      "eventCount": 470
+    },
+    {
+      "date": "20260520",
+      "country": "Germany",
+      "pagePath": "/donate",
+      "deviceCategory": "desktop",
+      "sessions": 40,
+      "activeUsers": 33,
+      "screenPageViews": 95,
+      "eventCount": 300
+    },
+    {
+      "date": "20260521",
+      "country": "United States",
+      "pagePath": "/resources",
+      "deviceCategory": "desktop",
+      "sessions": 135,
+      "activeUsers": 110,
+      "screenPageViews": 372,
+      "eventCount": 1390
+    },
+    {
+      "date": "20260521",
+      "country": "United States",
+      "pagePath": "/events",
+      "deviceCategory": "mobile",
+      "sessions": 72,
+      "activeUsers": 60,
+      "screenPageViews": 168,
+      "eventCount": 520
+    },
+    {
+      "date": "20260521",
+      "country": "United Kingdom",
+      "pagePath": "/about",
+      "deviceCategory": "desktop",
+      "sessions": 48,
+      "activeUsers": 40,
+      "screenPageViews": 120,
+      "eventCount": 360
+    },
+    {
+      "date": "20260521",
+      "country": "Canada",
+      "pagePath": "/news",
+      "deviceCategory": "tablet",
+      "sessions": 22,
+      "activeUsers": 18,
+      "screenPageViews": 55,
+      "eventCount": 160
+    },
+    {
+      "date": "20260522",
+      "country": "United States",
+      "pagePath": "/",
+      "deviceCategory": "mobile",
+      "sessions": 150,
+      "activeUsers": 128,
+      "screenPageViews": 410,
+      "eventCount": 1530
+    },
+    {
+      "date": "20260522",
+      "country": "Germany",
+      "pagePath": "/membership",
+      "deviceCategory": "desktop",
+      "sessions": 55,
+      "activeUsers": 46,
+      "screenPageViews": 140,
+      "eventCount": 420
+    },
+    {
+      "date": "20260522",
+      "country": "United Kingdom",
+      "pagePath": "/tours",
+      "deviceCategory": "mobile",
+      "sessions": 38,
+      "activeUsers": 31,
+      "screenPageViews": 88,
+      "eventCount": 275
+    },
+    {
+      "date": "20260522",
+      "country": "Canada",
+      "pagePath": "/donate",
+      "deviceCategory": "desktop",
+      "sessions": 30,
+      "activeUsers": 25,
+      "screenPageViews": 72,
+      "eventCount": 210
+    },
+    {
+      "date": "20260523",
+      "country": "United States",
+      "pagePath": "/resources",
+      "deviceCategory": "desktop",
+      "sessions": 98,
+      "activeUsers": 80,
+      "screenPageViews": 250,
+      "eventCount": 900
+    },
+    {
+      "date": "20260523",
+      "country": "United States",
+      "pagePath": "/events",
+      "deviceCategory": "tablet",
+      "sessions": 28,
+      "activeUsers": 23,
+      "screenPageViews": 70,
+      "eventCount": 205
+    },
+    {
+      "date": "20260523",
+      "country": "Germany",
+      "pagePath": "/about",
+      "deviceCategory": "mobile",
+      "sessions": 44,
+      "activeUsers": 37,
+      "screenPageViews": 110,
+      "eventCount": 330
+    },
+    {
+      "date": "20260523",
+      "country": "France",
+      "pagePath": "/news",
+      "deviceCategory": "desktop",
+      "sessions": 33,
+      "activeUsers": 27,
+      "screenPageViews": 80,
+      "eventCount": 240
+    }
+  ],
+  "realtime": [
+    {
+      "country": "United States",
+      "deviceCategory": "desktop",
+      "unifiedScreenName": "Home",
+      "activeUsers": 18,
+      "eventCount": 72
+    },
+    {
+      "country": "United States",
+      "deviceCategory": "mobile",
+      "unifiedScreenName": "Membership",
+      "activeUsers": 11,
+      "eventCount": 44
+    },
+    {
+      "country": "United Kingdom",
+      "deviceCategory": "mobile",
+      "unifiedScreenName": "Tours",
+      "activeUsers": 7,
+      "eventCount": 28
+    },
+    {
+      "country": "Germany",
+      "deviceCategory": "desktop",
+      "unifiedScreenName": "Donate",
+      "activeUsers": 5,
+      "eventCount": 20
+    },
+    {
+      "country": "Canada",
+      "deviceCategory": "mobile",
+      "unifiedScreenName": "Resources",
+      "activeUsers": 3,
+      "eventCount": 12
+    },
+    {
+      "country": "France",
+      "deviceCategory": "desktop",
+      "unifiedScreenName": "Home",
+      "activeUsers": 2,
+      "eventCount": 9
+    }
+  ]
+}

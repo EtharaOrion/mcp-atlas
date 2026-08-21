@@ -1,0 +1,164 @@
+{
+  "courses": {
+    "r3oZi5ZXqmniwgZtBTh4qV": {
+      "cid": "r3oZi5ZXqmniwgZtBTh4qV",
+      "title": "Nonprofit Management Foundations",
+      "instructor": "Dr. Evelyn Marsh",
+      "description": "Grant writing, budgeting, and board relations.",
+      "category": "management",
+      "level": "beginner"
+    },
+    "v8CnPyxxuKnVumDWZBXSFw": {
+      "cid": "v8CnPyxxuKnVumDWZBXSFw",
+      "title": "Digital Photography Basics",
+      "instructor": "Gregory Pittman",
+      "description": "Camera settings, framing, and light.",
+      "category": "arts",
+      "level": "beginner"
+    },
+    "oDi5aGw8X2RH4L349HsfDP": {
+      "cid": "oDi5aGw8X2RH4L349HsfDP",
+      "title": "Local History Deep Dive",
+      "instructor": "Prof. Nadia Coleman",
+      "description": "Research methods for neighborhood archives.",
+      "category": "history",
+      "level": "intermediate"
+    }
+  },
+  "lessons": {
+    "fsH3NMa8YHPJZvXAoZqaHP": {
+      "lsid": "fsH3NMa8YHPJZvXAoZqaHP",
+      "course_id": "r3oZi5ZXqmniwgZtBTh4qV",
+      "title": "Mission and Vision",
+      "content": "Why a written mission anchors every program.",
+      "duration_min": 20,
+      "order": 1,
+      "is_completed": true
+    },
+    "ij5nzbvhm4GdmoEoJ98we3": {
+      "lsid": "ij5nzbvhm4GdmoEoJ98we3",
+      "course_id": "r3oZi5ZXqmniwgZtBTh4qV",
+      "title": "Reading a Budget",
+      "content": "Line items, restricted funds, and reserves.",
+      "duration_min": 25,
+      "order": 2,
+      "is_completed": true
+    },
+    "LMfLZkHH8Xtg8zbbXA7bXW": {
+      "lsid": "LMfLZkHH8Xtg8zbbXA7bXW",
+      "course_id": "r3oZi5ZXqmniwgZtBTh4qV",
+      "title": "Working with a Board",
+      "content": "Agendas, minutes, and committee structure.",
+      "duration_min": 30,
+      "order": 3,
+      "is_completed": false
+    },
+    "ZbymPpKc3QdURMoaEALnqk": {
+      "lsid": "ZbymPpKc3QdURMoaEALnqk",
+      "course_id": "v8CnPyxxuKnVumDWZBXSFw",
+      "title": "Exposure Triangle",
+      "content": "Aperture, shutter speed, and ISO.",
+      "duration_min": 20,
+      "order": 1,
+      "is_completed": true
+    },
+    "i4KcwnRiHQzBhPTHVSuvRn": {
+      "lsid": "i4KcwnRiHQzBhPTHVSuvRn",
+      "course_id": "v8CnPyxxuKnVumDWZBXSFw",
+      "title": "Composing a Frame",
+      "content": "Rule of thirds and leading lines.",
+      "duration_min": 25,
+      "order": 2,
+      "is_completed": false
+    },
+    "WEvAHMuR26EwNUuwvQaUVC": {
+      "lsid": "WEvAHMuR26EwNUuwvQaUVC",
+      "course_id": "oDi5aGw8X2RH4L349HsfDP",
+      "title": "Archive Research",
+      "content": "Working with city records and old newspapers.",
+      "duration_min": 35,
+      "order": 1,
+      "is_completed": false
+    }
+  },
+  "enrollments": {
+    "D69JUw6qrDJxQ8ENrpNPY3": {
+      "enid": "D69JUw6qrDJxQ8ENrpNPY3",
+      "course_id": "r3oZi5ZXqmniwgZtBTh4qV",
+      "enrolled_at": "2026-01-02T12:44",
+      "progress_percent": 100,
+      "is_completed": true,
+      "completed_at": "2026-01-02T16:38"
+    },
+    "FdSwv4WahjXDRYjTiN7GJn": {
+      "enid": "FdSwv4WahjXDRYjTiN7GJn",
+      "course_id": "v8CnPyxxuKnVumDWZBXSFw",
+      "enrolled_at": "2026-01-02T23:59",
+      "progress_percent": 40,
+      "is_completed": false,
+      "completed_at": ""
+    },
+    "TV8nYxhURQc8ZdrK2fyw3u": {
+      "enid": "TV8nYxhURQc8ZdrK2fyw3u",
+      "course_id": "oDi5aGw8X2RH4L349HsfDP",
+      "enrolled_at": "2026-01-03T02:42",
+      "progress_percent": 0,
+      "is_completed": false,
+      "completed_at": ""
+    }
+  },
+  "quizzes": {
+    "4MvwC8miRnYdhykKY7PNxe": {
+      "qzid": "4MvwC8miRnYdhykKY7PNxe",
+      "lesson_id": "fsH3NMa8YHPJZvXAoZqaHP",
+      "question": "Which document anchors a nonprofit's programs?",
+      "options": [
+        "The mission statement",
+        "The gala invite",
+        "The parking policy",
+        "The logo file"
+      ],
+      "correct_index": 0
+    },
+    "gyysWnQxDBovGWXszPN2XC": {
+      "qzid": "gyysWnQxDBovGWXszPN2XC",
+      "lesson_id": "ij5nzbvhm4GdmoEoJ98we3",
+      "question": "Restricted funds may be spent on what?",
+      "options": [
+        "Anything",
+        "The donor-specified purpose",
+        "Staff bonuses",
+        "Reserves"
+      ],
+      "correct_index": 1
+    },
+    "VnCLLPwLUPXWSkD9sHgPfe": {
+      "qzid": "VnCLLPwLUPXWSkD9sHgPfe",
+      "lesson_id": "ZbymPpKc3QdURMoaEALnqk",
+      "question": "Which setting controls depth of field?",
+      "options": [
+        "Shutter speed",
+        "ISO",
+        "Aperture",
+        "White balance"
+      ],
+      "correct_index": 2
+    }
+  },
+  "attempts": {
+    "vXbBwV4VaMfKkocr4DmeU4": {
+      "qaid": "vXbBwV4VaMfKkocr4DmeU4",
+      "quiz_id": "4MvwC8miRnYdhykKY7PNxe",
+      "selected_index": 0,
+      "is_correct": true,
+      "attempted_at": "2026-01-03T06:36"
+    },
+    "5onng6rW7KWoZtnWid3oLu": {
+      "qaid": "5onng6rW7KWoZtnWid3oLu",
+      "quiz_id": "gyysWnQxDBovGWXszPN2XC",
+      "selected_index": 3,
+      "is_correct": false,
+      "attempted_at": "2026-01-03T09:46"
+    }
+  }
+}

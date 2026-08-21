@@ -1,0 +1,222 @@
+{
+  "employees": [
+    {
+      "id": "emp-101",
+      "firstName": "Amos",
+      "lastName": "Whitfield",
+      "jobTitle": "Executive Director",
+      "department": "Executive",
+      "workEmail": "director@shpa-savannah.org",
+      "hireDate": "2019-04-01",
+      "status": "active",
+      "location": "Savannah, GA",
+      "supervisorId": null
+    },
+    {
+      "id": "emp-102",
+      "firstName": "Lorraine",
+      "lastName": "Deveraux",
+      "jobTitle": "Deputy Director",
+      "department": "Executive",
+      "workEmail": "lorraine.deveraux@shpa-savannah.org",
+      "hireDate": "2017-09-11",
+      "status": "active",
+      "location": "Savannah, GA",
+      "supervisorId": "emp-101"
+    },
+    {
+      "id": "emp-103",
+      "firstName": "Marcus",
+      "lastName": "Whitby",
+      "jobTitle": "Development Director",
+      "department": "Development",
+      "workEmail": "marcus.whitby@shpa-savannah.org",
+      "hireDate": "2020-02-17",
+      "status": "active",
+      "location": "Savannah, GA",
+      "supervisorId": "emp-101"
+    },
+    {
+      "id": "emp-104",
+      "firstName": "Josephine",
+      "lastName": "Halloway",
+      "jobTitle": "Programs Director",
+      "department": "Programs",
+      "workEmail": "josephine.halloway@shpa-savannah.org",
+      "hireDate": "2018-06-04",
+      "status": "active",
+      "location": "Savannah, GA",
+      "supervisorId": "emp-101"
+    },
+    {
+      "id": "emp-105",
+      "firstName": "Nathaniel",
+      "lastName": "Kessel",
+      "jobTitle": "Communications Director",
+      "department": "Communications",
+      "workEmail": "nathaniel.kessel@shpa-savannah.org",
+      "hireDate": "2021-01-19",
+      "status": "active",
+      "location": "Savannah, GA",
+      "supervisorId": "emp-101"
+    },
+    {
+      "id": "emp-106",
+      "firstName": "Priscilla",
+      "lastName": "Everton",
+      "jobTitle": "Finance & Administration Director",
+      "department": "Finance & Administration",
+      "workEmail": "priscilla.everton@shpa-savannah.org",
+      "hireDate": "2016-11-28",
+      "status": "active",
+      "location": "Savannah, GA",
+      "supervisorId": "emp-101"
+    },
+    {
+      "id": "emp-107",
+      "firstName": "Tamara",
+      "lastName": "Boyd",
+      "jobTitle": "Volunteer Coordinator",
+      "department": "Programs",
+      "workEmail": "tamara.boyd@shpa-savannah.org",
+      "hireDate": "2022-08-15",
+      "status": "active",
+      "location": "Savannah, GA",
+      "supervisorId": "emp-104"
+    },
+    {
+      "id": "emp-108",
+      "firstName": "Curtis",
+      "lastName": "Landry",
+      "jobTitle": "Facilities & Docent Coordinator",
+      "department": "Programs",
+      "workEmail": "curtis.landry@shpa-savannah.org",
+      "hireDate": "2023-03-06",
+      "status": "active",
+      "location": "Savannah, GA",
+      "supervisorId": "emp-104"
+    }
+  ],
+  "time_off": [
+    {
+      "id": "tor-5001",
+      "employeeId": "emp-103",
+      "type": "Vacation",
+      "status": "approved",
+      "start": "2026-02-09",
+      "end": "2026-02-13",
+      "amount": 5,
+      "unit": "days",
+      "notes": "Family trip to Atlanta",
+      "created": "2026-01-02"
+    },
+    {
+      "id": "tor-5002",
+      "employeeId": "emp-104",
+      "type": "Vacation",
+      "status": "approved",
+      "start": "2026-03-16",
+      "end": "2026-03-18",
+      "amount": 3,
+      "unit": "days",
+      "notes": "Long weekend",
+      "created": "2026-01-03"
+    },
+    {
+      "id": "tor-5003",
+      "employeeId": "emp-105",
+      "type": "Sick",
+      "status": "approved",
+      "start": "2026-01-06",
+      "end": "2026-01-06",
+      "amount": 1,
+      "unit": "days",
+      "notes": "",
+      "created": "2026-01-06"
+    },
+    {
+      "id": "tor-5004",
+      "employeeId": "emp-102",
+      "type": "Personal",
+      "status": "requested",
+      "start": "2026-01-23",
+      "end": "2026-01-23",
+      "amount": 1,
+      "unit": "days",
+      "notes": "Family obligation",
+      "created": "2026-01-04"
+    },
+    {
+      "id": "tor-5005",
+      "employeeId": "emp-106",
+      "type": "Vacation",
+      "status": "requested",
+      "start": "2026-04-06",
+      "end": "2026-04-10",
+      "amount": 5,
+      "unit": "days",
+      "notes": "Spring break with the grandkids",
+      "created": "2026-01-05"
+    },
+    {
+      "id": "tor-5006",
+      "employeeId": "emp-107",
+      "type": "Vacation",
+      "status": "approved",
+      "start": "2026-02-23",
+      "end": "2026-02-25",
+      "amount": 3,
+      "unit": "days",
+      "notes": "",
+      "created": "2026-01-02"
+    },
+    {
+      "id": "tor-5007",
+      "employeeId": "emp-108",
+      "type": "Sick",
+      "status": "approved",
+      "start": "2026-01-03",
+      "end": "2026-01-03",
+      "amount": 1,
+      "unit": "days",
+      "notes": "",
+      "created": "2026-01-03"
+    },
+    {
+      "id": "tor-5008",
+      "employeeId": "emp-101",
+      "type": "Vacation",
+      "status": "approved",
+      "start": "2026-10-12",
+      "end": "2026-10-16",
+      "amount": 5,
+      "unit": "days",
+      "notes": "October trip to the North Carolina mountains",
+      "created": "2026-01-05"
+    },
+    {
+      "id": "tor-5009",
+      "employeeId": "emp-103",
+      "type": "Personal",
+      "status": "denied",
+      "start": "2026-01-30",
+      "end": "2026-01-30",
+      "amount": 1,
+      "unit": "days",
+      "notes": "Conflicts with donor event",
+      "created": "2026-01-04"
+    },
+    {
+      "id": "tor-5010",
+      "employeeId": "emp-105",
+      "type": "Vacation",
+      "status": "requested",
+      "start": "2026-05-25",
+      "end": "2026-05-29",
+      "amount": 5,
+      "unit": "days",
+      "notes": "",
+      "created": "2026-01-05"
+    }
+  ]
+}

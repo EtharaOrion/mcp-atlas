@@ -1,0 +1,122 @@
+{
+  "records": {
+    "products": [
+      {
+        "objectID": "prod-001",
+        "name": "Preservation easements explained",
+        "description": "Preservation easements explained \u2014 SHPA member resource library.",
+        "category": "resource",
+        "brand": "resource",
+        "price": 199.99,
+        "in_stock": true
+      },
+      {
+        "objectID": "prod-002",
+        "name": "Regency architecture guide",
+        "description": "Regency architecture guide \u2014 SHPA member resource library.",
+        "category": "resource",
+        "brand": "resource",
+        "price": 89.99,
+        "in_stock": true
+      },
+      {
+        "objectID": "prod-003",
+        "name": "Facade grant application checklist",
+        "description": "Facade grant application checklist \u2014 SHPA member resource library.",
+        "category": "resource",
+        "brand": "resource",
+        "price": 449,
+        "in_stock": true
+      },
+      {
+        "objectID": "prod-004",
+        "name": "Ironwork restoration primer",
+        "description": "Ironwork restoration primer \u2014 SHPA member resource library.",
+        "category": "resource",
+        "brand": "resource",
+        "price": 599,
+        "in_stock": false
+      },
+      {
+        "objectID": "prod-005",
+        "name": "Historic paint colors of Savannah",
+        "description": "Historic paint colors of Savannah \u2014 SHPA member resource library.",
+        "category": "resource",
+        "brand": "resource",
+        "price": 129.99,
+        "in_stock": true
+      },
+      {
+        "objectID": "prod-006",
+        "name": "Window repair vs. replacement",
+        "description": "Window repair vs. replacement \u2014 SHPA member resource library.",
+        "category": "resource",
+        "brand": "resource",
+        "price": 49.99,
+        "in_stock": true
+      },
+      {
+        "objectID": "prod-007",
+        "name": "Tax incentives for historic homes",
+        "description": "Tax incentives for historic homes \u2014 SHPA member resource library.",
+        "category": "resource",
+        "brand": "resource",
+        "price": 69.99,
+        "in_stock": true
+      },
+      {
+        "objectID": "prod-008",
+        "name": "Docent handbook (PDF)",
+        "description": "Docent handbook (PDF) \u2014 SHPA member resource library.",
+        "category": "resource",
+        "brand": "resource",
+        "price": 39.99,
+        "in_stock": false
+      }
+    ],
+    "docs": [
+      {
+        "objectID": "doc-quickstart",
+        "title": "Preservation easements explained",
+        "body": "Get up and running with the search API in minutes",
+        "section": "getting-started",
+        "tags": "intro"
+      },
+      {
+        "objectID": "doc-indexing",
+        "title": "Regency architecture guide",
+        "body": "How to add and update records in an index",
+        "section": "guides",
+        "tags": "indexing"
+      },
+      {
+        "objectID": "doc-querying",
+        "title": "Facade grant application checklist",
+        "body": "Search records using query and filters",
+        "section": "guides",
+        "tags": "search"
+      },
+      {
+        "objectID": "doc-settings",
+        "title": "Ironwork restoration primer",
+        "body": "Set searchable attributes and ranking",
+        "section": "guides",
+        "tags": "settings"
+      },
+      {
+        "objectID": "doc-pagination",
+        "title": "Historic paint colors of Savannah",
+        "body": "Use page and hitsPerPage to paginate results",
+        "section": "guides",
+        "tags": "search"
+      },
+      {
+        "objectID": "doc-faq",
+        "title": "Window repair vs. replacement",
+        "body": "Answers to common questions about the API",
+        "section": "reference",
+        "tags": "faq"
+      }
+    ]
+  }
+}

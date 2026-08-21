@@ -1,0 +1,82 @@
+{
+  "meetings": [
+    {
+      "id": 85012345678,
+      "host_id": "u-amos-9f4b2e8d",
+      "topic": "SHPA staff sync",
+      "type": 2,
+      "status": "waiting",
+      "start_time": "2026-05-29T16:00:00Z",
+      "duration": 60,
+      "timezone": "America/New_York",
+      "join_url": "https://zoom.us/j/85012345678",
+      "agenda": "Agenda: shpa staff sync.",
+      "created_at": "2026-05-20T10:00:00Z"
+    },
+    {
+      "id": 85012345679,
+      "host_id": "u-amos-9f4b2e8d",
+      "topic": "Board meeting prep with Cordelia",
+      "type": 2,
+      "status": "waiting",
+      "start_time": "2026-05-30T18:00:00Z",
+      "duration": 90,
+      "timezone": "America/New_York",
+      "join_url": "https://zoom.us/j/85012345679",
+      "agenda": "Agenda: board meeting prep with cordelia.",
+      "created_at": "2026-05-21T11:00:00Z"
+    },
+    {
+      "id": 85012345680,
+      "host_id": "u-amos-9f4b2e8d",
+      "topic": "Community partners call",
+      "type": 2,
+      "status": "waiting",
+      "start_time": "2026-06-02T15:00:00Z",
+      "duration": 45,
+      "timezone": "America/New_York",
+      "join_url": "https://zoom.us/j/85012345680",
+      "agenda": "Agenda: community partners call.",
+      "created_at": "2026-05-22T09:00:00Z"
+    },
+    {
+      "id": 85012345670,
+      "host_id": "u-amos-9f4b2e8d",
+      "topic": "Docent orientation",
+      "type": 2,
+      "status": "finished",
+      "start_time": "2026-05-22T16:00:00Z",
+      "duration": 55,
+      "timezone": "America/New_York",
+      "join_url": "https://zoom.us/j/85012345670",
+      "agenda": "Agenda: docent orientation.",
+      "created_at": "2026-05-15T10:00:00Z"
+    },
+    {
+      "id": 85012345671,
+      "host_id": "u-amos-9f4b2e8d",
+      "topic": "Grant review with Georgia Trust",
+      "type": 2,
+      "status": "finished",
+      "start_time": "2026-05-19T17:00:00Z",
+      "duration": 75,
+      "timezone": "America/New_York",
+      "join_url": "https://zoom.us/j/85012345671",
+      "agenda": "Agenda: grant review with georgia trust.",
+      "created_at": "2026-05-12T10:00:00Z"
+    },
+    {
+      "id": 85012345672,
+      "host_id": "u-amos-9f4b2e8d",
+      "topic": "All-members briefing",
+      "type": 8,
+      "status": "finished",
+      "start_time": "2026-05-16T20:00:00Z",
+      "duration": 40,
+      "timezone": "America/New_York",
+      "join_url": "https://zoom.us/j/85012345672",
+      "agenda": "Agenda: all-members briefing.",
+      "created_at": "2026-05-09T10:00:00Z"
+    }
+  ]
+}

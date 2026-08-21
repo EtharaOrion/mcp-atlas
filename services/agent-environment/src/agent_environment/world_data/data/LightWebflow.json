@@ -1,0 +1,92 @@
+{
+  "items": [
+    {
+      "id": "770c3b0000000000000003c1",
+      "collection_id": "660b2a0000000000000002b1",
+      "name": "Historic Homes Tour",
+      "slug": "historic-homes-tour",
+      "is_draft": false,
+      "is_archived": false,
+      "summary": "Historic Homes Tour \u2014 Savannah Historic Preservation Alliance.",
+      "created_on": "2026-05-02T08:00:00.000Z",
+      "last_updated": "2026-05-02T09:00:00.000Z"
+    },
+    {
+      "id": "770c3b0000000000000003c2",
+      "collection_id": "660b2a0000000000000002b1",
+      "name": "Membership",
+      "slug": "membership",
+      "is_draft": false,
+      "is_archived": false,
+      "summary": "Membership \u2014 Savannah Historic Preservation Alliance.",
+      "created_on": "2026-05-09T11:30:00.000Z",
+      "last_updated": "2026-05-09T12:15:00.000Z"
+    },
+    {
+      "id": "770c3b0000000000000003c3",
+      "collection_id": "660b2a0000000000000002b1",
+      "name": "Preservation Resources",
+      "slug": "preservation-resources",
+      "is_draft": true,
+      "is_archived": false,
+      "summary": "Preservation Resources \u2014 Savannah Historic Preservation Alliance.",
+      "created_on": "2026-05-15T14:00:00.000Z",
+      "last_updated": "2026-05-15T14:00:00.000Z"
+    },
+    {
+      "id": "770c3b0000000000000003c4",
+      "collection_id": "660b2a0000000000000002b2",
+      "name": "About the Alliance",
+      "slug": "about-the-alliance",
+      "is_draft": false,
+      "is_archived": false,
+      "summary": "About the Alliance \u2014 Savannah Historic Preservation Alliance.",
+      "created_on": "2026-04-20T10:00:00.000Z",
+      "last_updated": "2026-05-01T10:00:00.000Z"
+    },
+    {
+      "id": "770c3b0000000000000003c5",
+      "collection_id": "660b2a0000000000000002b3",
+      "name": "Docent Program",
+      "slug": "docent-program",
+      "is_draft": false,
+      "is_archived": false,
+      "summary": "Docent Program \u2014 Savannah Historic Preservation Alliance.",
+      "created_on": "2026-05-04T09:00:00.000Z",
+      "last_updated": "2026-05-20T13:00:00.000Z"
+    },
+    {
+      "id": "770c3b0000000000000003c6",
+      "collection_id": "660b2a0000000000000002b4",
+      "name": "Events Calendar",
+      "slug": "events-calendar",
+      "is_draft": false,
+      "is_archived": false,
+      "summary": "Events Calendar \u2014 Savannah Historic Preservation Alliance.",
+      "created_on": "2026-05-06T07:30:00.000Z",
+      "last_updated": "2026-05-17T07:45:00.000Z"
+    },
+    {
+      "id": "770c3b0000000000000003c7",
+      "collection_id": "660b2a0000000000000002b5",
+      "name": "Easement Program",
+      "slug": "easement-program",
+      "is_draft": false,
+      "is_archived": false,
+      "summary": "Easement Program \u2014 Savannah Historic Preservation Alliance.",
+      "created_on": "2026-05-12T16:00:00.000Z",
+      "last_updated": "2026-05-24T17:30:00.000Z"
+    },
+    {
+      "id": "770c3b0000000000000003c8",
+      "collection_id": "660b2a0000000000000002b5",
+      "name": "News",
+      "slug": "news",
+      "is_draft": false,
+      "is_archived": true,
+      "summary": "News \u2014 Savannah Historic Preservation Alliance.",
+      "created_on": "2026-03-01T16:00:00.000Z",
+      "last_updated": "2026-05-10T17:30:00.000Z"
+    }
+  ]
+}

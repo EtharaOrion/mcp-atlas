@@ -1,0 +1,241 @@
+{
+  "albums": {
+    "EgdAZiUMaKczUGjXthTTTD": {
+      "alid": "EgdAZiUMaKczUGjXthTTTD",
+      "name": "Family",
+      "description": "Family gatherings and holidays.",
+      "cover_photo_id": "Vk4RtXzUAvYWWpjGksBVnB",
+      "created_at": "2026-01-02T15:35",
+      "is_shared": true
+    },
+    "3bCdZLxfqrDqETwuhNVMjf": {
+      "alid": "3bCdZLxfqrDqETwuhNVMjf",
+      "name": "Travel",
+      "description": "Trips and getaways.",
+      "cover_photo_id": "EFxZL9PzDvjWfbyLQiegzr",
+      "created_at": "2026-01-02T19:39",
+      "is_shared": true
+    },
+    "bbfsKdsNUM5jSNeW4Ugtqy": {
+      "alid": "bbfsKdsNUM5jSNeW4Ugtqy",
+      "name": "Home Projects",
+      "description": "Around the house and workshop.",
+      "cover_photo_id": "T5yRBhPeaeyPuLHE9afYPd",
+      "created_at": "2026-01-03T01:44",
+      "is_shared": false
+    }
+  },
+  "photos": {
+    "Vk4RtXzUAvYWWpjGksBVnB": {
+      "pid": "Vk4RtXzUAvYWWpjGksBVnB",
+      "album_id": "EgdAZiUMaKczUGjXthTTTD",
+      "title": "Holiday Dinner",
+      "filename": "IMG_0000.jpg",
+      "taken_at": "2026-01-03T07:42",
+      "tags": [
+        "family",
+        "holiday"
+      ],
+      "location": "Savannah",
+      "exif": {
+        "camera": "Mirrorless",
+        "iso": 100,
+        "aperture": "f/2.8"
+      },
+      "face_group_id": "pNhjUU6rfW2N6BWpFNzz2C"
+    },
+    "B2UrDtCTDGgTsoALGBFA9y": {
+      "pid": "B2UrDtCTDGgTsoALGBFA9y",
+      "album_id": "EgdAZiUMaKczUGjXthTTTD",
+      "title": "Birthday Party",
+      "filename": "IMG_0001.jpg",
+      "taken_at": "2026-01-03T15:33",
+      "tags": [
+        "family",
+        "party"
+      ],
+      "location": "Savannah",
+      "exif": {
+        "camera": "Mirrorless",
+        "iso": 800,
+        "aperture": "f/2.8"
+      },
+      "face_group_id": "eLU5UojdpM8Rdm8XL69H7e"
+    },
+    "cQYuZsvbUCZ5xjRvecRMGD": {
+      "pid": "cQYuZsvbUCZ5xjRvecRMGD",
+      "album_id": "EgdAZiUMaKczUGjXthTTTD",
+      "title": "Sunday Porch",
+      "filename": "IMG_0002.jpg",
+      "taken_at": "2026-01-03T22:26",
+      "tags": [
+        "family"
+      ],
+      "location": "Savannah",
+      "exif": {
+        "camera": "Mirrorless",
+        "iso": 100,
+        "aperture": "f/2.8"
+      },
+      "face_group_id": "M3vhwCoqbpbbns7cnfQFyb"
+    },
+    "iZcB5PsUSfBRCNMwXeGZwW": {
+      "pid": "iZcB5PsUSfBRCNMwXeGZwW",
+      "album_id": "EgdAZiUMaKczUGjXthTTTD",
+      "title": "Grandkids Visit",
+      "filename": "IMG_0003.jpg",
+      "taken_at": "2026-01-04T09:08",
+      "tags": [
+        "family",
+        "kids"
+      ],
+      "location": "Savannah",
+      "exif": {
+        "camera": "Mirrorless",
+        "iso": 800,
+        "aperture": "f/2.8"
+      },
+      "face_group_id": "eLU5UojdpM8Rdm8XL69H7e"
+    },
+    "EFxZL9PzDvjWfbyLQiegzr": {
+      "pid": "EFxZL9PzDvjWfbyLQiegzr",
+      "album_id": "3bCdZLxfqrDqETwuhNVMjf",
+      "title": "Downtown Walk",
+      "filename": "IMG_0004.jpg",
+      "taken_at": "2026-01-04T21:58",
+      "tags": [
+        "travel",
+        "city"
+      ],
+      "location": "Savannah",
+      "exif": {
+        "camera": "Mirrorless",
+        "iso": 400,
+        "aperture": "f/2.8"
+      },
+      "face_group_id": null
+    },
+    "eHXTbvJp7XwDgZvjqWFkdj": {
+      "pid": "eHXTbvJp7XwDgZvjqWFkdj",
+      "album_id": "3bCdZLxfqrDqETwuhNVMjf",
+      "title": "Riverside Morning",
+      "filename": "IMG_0005.jpg",
+      "taken_at": "2026-01-05T12:18",
+      "tags": [
+        "travel",
+        "nature"
+      ],
+      "location": "Savannah",
+      "exif": {
+        "camera": "Mirrorless",
+        "iso": 200,
+        "aperture": "f/2.8"
+      },
+      "face_group_id": null
+    },
+    "ZpWPtztwmGaiuxN9RwCsBC": {
+      "pid": "ZpWPtztwmGaiuxN9RwCsBC",
+      "album_id": "3bCdZLxfqrDqETwuhNVMjf",
+      "title": "Mountain Overlook",
+      "filename": "IMG_0006.jpg",
+      "taken_at": "2026-01-05T14:51",
+      "tags": [
+        "travel",
+        "landscape"
+      ],
+      "location": "Savannah",
+      "exif": {
+        "camera": "Mirrorless",
+        "iso": 100,
+        "aperture": "f/2.8"
+      },
+      "face_group_id": null
+    },
+    "T5yRBhPeaeyPuLHE9afYPd": {
+      "pid": "T5yRBhPeaeyPuLHE9afYPd",
+      "album_id": "bbfsKdsNUM5jSNeW4Ugtqy",
+      "title": "Workshop Bench",
+      "filename": "IMG_0007.jpg",
+      "taken_at": "2026-01-06T03:52",
+      "tags": [
+        "home",
+        "project"
+      ],
+      "location": "Savannah",
+      "exif": {
+        "camera": "Mirrorless",
+        "iso": 100,
+        "aperture": "f/2.8"
+      },
+      "face_group_id": null
+    },
+    "hjmP727uYqZAPSM72XxWXm": {
+      "pid": "hjmP727uYqZAPSM72XxWXm",
+      "album_id": "bbfsKdsNUM5jSNeW4Ugtqy",
+      "title": "Kitchen Remodel",
+      "filename": "IMG_0008.jpg",
+      "taken_at": "2026-01-06T13:40",
+      "tags": [
+        "home"
+      ],
+      "location": "Savannah",
+      "exif": {
+        "camera": "Mirrorless",
+        "iso": 800,
+        "aperture": "f/2.8"
+      },
+      "face_group_id": null
+    },
+    "aHZYUAHi4iuP6ND2MWCaez": {
+      "pid": "aHZYUAHi4iuP6ND2MWCaez",
+      "album_id": "bbfsKdsNUM5jSNeW4Ugtqy",
+      "title": "Backyard Deck",
+      "filename": "IMG_0009.jpg",
+      "taken_at": "2026-01-06T18:02",
+      "tags": [
+        "home",
+        "outdoor"
+      ],
+      "location": "Savannah",
+      "exif": {
+        "camera": "Mirrorless",
+        "iso": 100,
+        "aperture": "f/2.8"
+      },
+      "face_group_id": null
+    }
+  },
+  "face_groups": {
+    "eLU5UojdpM8Rdm8XL69H7e": {
+      "fgid": "eLU5UojdpM8Rdm8XL69H7e",
+      "name": "Denise",
+      "photo_count": 2
+    },
+    "pNhjUU6rfW2N6BWpFNzz2C": {
+      "fgid": "pNhjUU6rfW2N6BWpFNzz2C",
+      "name": "Terrence",
+      "photo_count": 1
+    },
+    "M3vhwCoqbpbbns7cnfQFyb": {
+      "fgid": "M3vhwCoqbpbbns7cnfQFyb",
+      "name": "Miles",
+      "photo_count": 1
+    }
+  },
+  "share_links": {
+    "JjLNoqYy7MeamGj4XCYZB4": {
+      "slid": "JjLNoqYy7MeamGj4XCYZB4",
+      "album_id": "EgdAZiUMaKczUGjXthTTTD",
+      "url": "https://share.example.com/AZ4GkDrwC7KT",
+      "expires_at": "2026-01-08T07:56",
+      "view_count": 5
+    },
+    "2JXNK6mHJVYHBuchmhYewT": {
+      "slid": "2JXNK6mHJVYHBuchmhYewT",
+      "album_id": "3bCdZLxfqrDqETwuhNVMjf",
+      "url": "https://share.example.com/me2qiHJKZ7qh",
+      "expires_at": "2026-01-10T03:52",
+      "view_count": 0
+    }
+  }
+}

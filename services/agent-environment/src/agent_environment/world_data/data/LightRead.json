@@ -1,0 +1,108 @@
+{
+  "books": {
+    "Dj7y7c5Kv3FzcXCTgLczzm": {
+      "bid": "Dj7y7c5Kv3FzcXCTgLczzm",
+      "title": "Meditations",
+      "author": "Marcus Aurelius",
+      "kind": "book",
+      "total_pages": 200,
+      "progress": 76
+    },
+    "9PsLyRLJLQGr9P3hF4Q7Su": {
+      "bid": "9PsLyRLJLQGr9P3hF4Q7Su",
+      "title": "The Long Walk Home",
+      "author": "Harriet Vance",
+      "kind": "book",
+      "total_pages": 320,
+      "progress": 231
+    },
+    "2CUrCwGuKfe6FMToYH42CG": {
+      "bid": "2CUrCwGuKfe6FMToYH42CG",
+      "title": "A History of Small Towns",
+      "author": "Eleanor Pratt",
+      "kind": "book",
+      "total_pages": 410,
+      "progress": 334
+    },
+    "nebfuPK6w5kDzwtYGSvsgc": {
+      "bid": "nebfuPK6w5kDzwtYGSvsgc",
+      "title": "The Joiner's Companion",
+      "author": "Samuel Reed",
+      "kind": "book",
+      "total_pages": 180,
+      "progress": 80
+    },
+    "wQ9DTE65GwgxaDT6hAtTky": {
+      "bid": "wQ9DTE65GwgxaDT6hAtTky",
+      "title": "Notes on Local Music",
+      "author": "Curtis Bell",
+      "kind": "book",
+      "total_pages": 240,
+      "progress": 211
+    },
+    "VdcZrsYf7N9b5tswgfHfpH": {
+      "bid": "VdcZrsYf7N9b5tswgfHfpH",
+      "title": "On Community Stewardship",
+      "author": "Dana Whitmore",
+      "kind": "article",
+      "total_pages": 28,
+      "progress": 17
+    }
+  },
+  "bookmarks": {
+    "zUZdz26mydj9WGyMRaiDfd": {
+      "kid": "zUZdz26mydj9WGyMRaiDfd",
+      "book_id": "Dj7y7c5Kv3FzcXCTgLczzm",
+      "page": 45,
+      "note": "Return to this passage."
+    },
+    "RXiwpzSv4H72r52bqthKHq": {
+      "kid": "RXiwpzSv4H72r52bqthKHq",
+      "book_id": "9PsLyRLJLQGr9P3hF4Q7Su",
+      "page": 112,
+      "note": "Great chapter opening."
+    },
+    "PueFoWNBN97o5DqhwfAXPX": {
+      "kid": "PueFoWNBN97o5DqhwfAXPX",
+      "book_id": "2CUrCwGuKfe6FMToYH42CG",
+      "page": 260,
+      "note": "Reference for the board memo."
+    },
+    "rfN67pXWv34FErBCTuNsB2": {
+      "kid": "rfN67pXWv34FErBCTuNsB2",
+      "book_id": "nebfuPK6w5kDzwtYGSvsgc",
+      "page": 60,
+      "note": "Technique to try in the workshop."
+    }
+  },
+  "highlights": {
+    "JhnG6NosYnmjhuYG2hVhBN": {
+      "hid": "JhnG6NosYnmjhuYG2hVhBN",
+      "book_id": "Dj7y7c5Kv3FzcXCTgLczzm",
+      "page": 45,
+      "text": "The impediment to action advances action.",
+      "color": "yellow"
+    },
+    "xgZzTJDySM2KwiZZug3qcY": {
+      "hid": "xgZzTJDySM2KwiZZug3qcY",
+      "book_id": "9PsLyRLJLQGr9P3hF4Q7Su",
+      "page": 118,
+      "text": "The house had always been the quiet center of things.",
+      "color": "green"
+    },
+    "PBxT7Tf8AJRHDqbnuaigAN": {
+      "hid": "PBxT7Tf8AJRHDqbnuaigAN",
+      "book_id": "2CUrCwGuKfe6FMToYH42CG",
+      "page": 205,
+      "text": "Small towns remember what cities forget.",
+      "color": "blue"
+    },
+    "zp2dX5bQKYEKbb4fwsYCn2": {
+      "hid": "zp2dX5bQKYEKbb4fwsYCn2",
+      "book_id": "wQ9DTE65GwgxaDT6hAtTky",
+      "page": 90,
+      "text": "A good record collection tells a life story.",
+      "color": "yellow"
+    }
+  }
+}

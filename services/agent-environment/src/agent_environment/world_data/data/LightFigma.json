@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "comment_id": "cmt-9001",
+      "file_key": "FK001abcdefg",
+      "user_id": "user-1001",
+      "user_handle": "nathaniel.kessel",
+      "message": "Tour flyer: enlarge the date block.",
+      "node_id": "5:12",
+      "resolved": false,
+      "created_at": "2026-05-22T15:01:00Z"
+    },
+    {
+      "comment_id": "cmt-9002",
+      "file_key": "FK001abcdefg",
+      "user_id": "user-1002",
+      "user_handle": "josephine.halloway",
+      "message": "Map legend reads well now.",
+      "node_id": "5:12",
+      "resolved": true,
+      "created_at": "2026-05-22T16:20:00Z"
+    },
+    {
+      "comment_id": "cmt-9003",
+      "file_key": "FK002hijklmn",
+      "user_id": "user-1001",
+      "user_handle": "amos.whitfield",
+      "message": "Use the alliance seal on the booklet cover.",
+      "node_id": "12:5",
+      "resolved": false,
+      "created_at": "2026-05-24T10:00:00Z"
+    },
+    {
+      "comment_id": "cmt-9004",
+      "file_key": "FK003opqrstu",
+      "user_id": "user-1003",
+      "user_handle": "nathaniel.kessel",
+      "message": "Colors match the letterhead \u2014 approved.",
+      "node_id": "3:8",
+      "resolved": false,
+      "created_at": "2026-05-20T19:10:00Z"
+    }
+  ]
+}
