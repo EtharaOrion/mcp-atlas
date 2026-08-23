@@ -46,7 +46,7 @@ if ! docker info >/dev/null 2>&1; then
   for _ in $(seq 1 60); do docker info >/dev/null 2>&1 && break; sleep 2; done
   docker info >/dev/null 2>&1 || { echo "[run_task] docker still down" >&2; exit 3; }
 fi
-IMAGE="$(grep -E '^image *= *"' "$TASK/task.toml" | head -1 | sed -E 's/.*"([^"]+)".*/\1/')"
+IMAGE="$(grep -E '^image *= *"' "$TASK/task.toml" 2>/dev/null | head -1 | sed -E 's/.*"([^"]+)".*/\1/' || true)"
 if [ -n "$IMAGE" ] && ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
   echo "[run_task] pulling $IMAGE"
   docker pull "$IMAGE"
