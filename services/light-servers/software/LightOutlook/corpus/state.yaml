@@ -1,0 +1,90 @@
+# Source: world_data 2/LightOutlook.json (verbatim). Corpus-only authored world.
+messages:
+- id: AAMkAGmsg0000001
+  subject: Q2 Budget Review
+  from_name: Nathaniel Kessel
+  from_address: nathaniel.kessel@shpa-savannah.org
+  to_name: Anselm Trumbull
+  to_address: anselm.trumbull@shpa-savannah.org
+  bodyPreview: Please find attached the Q2 budget for your review before Friday.
+  contentType: html
+  isRead: false
+  importance: high
+  receivedDateTime: '2026-05-04T08:30:00Z'
+- id: AAMkAGmsg0000002
+  subject: 'Re: Sprint Planning'
+  from_name: Grady Colton
+  from_address: grady.colton@savingplaces.org
+  to_name: Anselm Trumbull
+  to_address: anselm.trumbull@shpa-savannah.org
+  bodyPreview: Sounds good I will prepare the backlog ahead of the meeting.
+  contentType: html
+  isRead: true
+  importance: normal
+  receivedDateTime: '2026-05-05T13:10:00Z'
+- id: AAMkAGmsg0000003
+  subject: Welcome to the team!
+  from_name: Henry Beaumont
+  from_address: henry.beaumont@Finthesiss.ai
+  to_name: Anselm Trumbull
+  to_address: anselm.trumbull@shpa-savannah.org
+  bodyPreview: Excited to have you onboard. Here is your first-week guide.
+  contentType: html
+  isRead: true
+  importance: normal
+  receivedDateTime: '2026-05-06T09:00:00Z'
+- id: AAMkAGmsg0000004
+  subject: Invoice INV-2041 Past Due
+  from_name: Barrett Whitehall
+  from_address: barrett.whitehall@shpa-savannah.org
+  to_name: Anselm Trumbull
+  to_address: anselm.trumbull@shpa-savannah.org
+  bodyPreview: Our records show invoice INV-2041 is now 15 days past due.
+  contentType: html
+  isRead: false
+  importance: high
+  receivedDateTime: '2026-05-09T11:45:00Z'
+- id: AAMkAGmsg0000005
+  subject: Lunch next week?
+  from_name: Priscilla Everton
+  from_address: priscilla.everton@shpa-savannah.org
+  to_name: Anselm Trumbull
+  to_address: anselm.trumbull@shpa-savannah.org
+  bodyPreview: Are you free for lunch on Tuesday or Wednesday next week?
+  contentType: text
+  isRead: true
+  importance: low
+  receivedDateTime: '2026-05-12T16:20:00Z'
+- id: AAMkAGmsg0000006
+  subject: 'Security advisory: rotate keys'
+  from_name: Anselm Trumbull
+  from_address: anselm.trumbull@shpa-savannah.org
+  to_name: Anselm Trumbull
+  to_address: anselm.trumbull@shpa-savannah.org
+  bodyPreview: Please rotate your API keys before the end of the month.
+  contentType: html
+  isRead: false
+  importance: high
+  receivedDateTime: '2026-05-15T07:55:00Z'
+- id: AAMkAGmsg0000007
+  subject: Conference travel approved
+  from_name: Odetta Sinclair
+  from_address: odetta.sinclair@shpa-savannah.org
+  to_name: Anselm Trumbull
+  to_address: anselm.trumbull@shpa-savannah.org
+  bodyPreview: Your travel request for the May conference has been approved.
+  contentType: html
+  isRead: true
+  importance: normal
+  receivedDateTime: '2026-05-18T10:30:00Z'
+- id: AAMkAGmsg0000008
+  subject: Weekly metrics digest
+  from_name: Barrett Whitehall
+  from_address: barrett.whitehall@shpa-savannah.org
+  to_name: Anselm Trumbull
+  to_address: anselm.trumbull@shpa-savannah.org
+  bodyPreview: Signups are up 12 percent week over week. Full report inside.
+  contentType: html
+  isRead: true
+  importance: normal
+  receivedDateTime: '2026-05-25T06:00:00Z'

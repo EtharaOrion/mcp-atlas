@@ -1,0 +1,244 @@
+[
+    {
+        "tool_name": "get_current_user",
+        "description": "Get the currently authenticated GitLab user.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the current user object (id, username, name, email, state, is_admin, ...); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_users",
+        "description": "List all users known to the GitLab instance.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of user objects (id, username, name, email, state, is_admin, created_at); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_projects",
+        "description": "List projects, optionally filtered by visibility.",
+        "arguments": {
+            "visibility": {
+                "type": "string",
+                "description": "Optional visibility filter (e.g. 'private', 'internal', 'public')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of project objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_project",
+        "description": "Get a single project by its numeric id.",
+        "arguments": {
+            "project_id": {
+                "type": "string",
+                "description": "The numeric id of the project."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the project object; on failure (project not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_issues",
+        "description": "List issues for a project, optionally filtered by state and labels.",
+        "arguments": {
+            "project_id": {
+                "type": "string",
+                "description": "The numeric id of the project."
+            },
+            "state": {
+                "type": "string",
+                "description": "Optional issue state filter ('opened', 'closed', or 'all'). 'all' returns every state."
+            },
+            "labels": {
+                "type": "string",
+                "description": "Optional comma-separated list of labels; issues matching any of the labels are returned."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of issue objects sorted by updated_at descending; on failure (project not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_issue",
+        "description": "Get a single issue by project id and issue iid.",
+        "arguments": {
+            "project_id": {
+                "type": "string",
+                "description": "The numeric id of the project."
+            },
+            "issue_iid": {
+                "type": "integer",
+                "description": "The internal id (iid) of the issue within the project."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the issue object; on failure (project or issue not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_issue",
+        "description": "Create a new issue in a project.",
+        "arguments": {
+            "project_id": {
+                "type": "string",
+                "description": "The numeric id of the project."
+            },
+            "title": {
+                "type": "string",
+                "description": "The title of the issue."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional free-text description for the issue."
+            },
+            "assignee": {
+                "type": "string",
+                "description": "Optional username to assign the issue to."
+            },
+            "labels": {
+                "type": "array",
+                "description": "Optional list of label strings to attach to the issue."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created issue object; on failure (project not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_issue",
+        "description": "Update fields of an existing issue, or close/reopen it.",
+        "arguments": {
+            "project_id": {
+                "type": "string",
+                "description": "The numeric id of the project."
+            },
+            "issue_iid": {
+                "type": "integer",
+                "description": "The internal id (iid) of the issue within the project."
+            },
+            "title": {
+                "type": "string",
+                "description": "Optional new title for the issue."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional new description for the issue."
+            },
+            "state_event": {
+                "type": "string",
+                "description": "Optional state transition: 'close' to close the issue or 'reopen' to reopen it."
+            },
+            "assignee": {
+                "type": "string",
+                "description": "Optional new assignee username."
+            },
+            "labels": {
+                "type": "array",
+                "description": "Optional new list of label strings for the issue."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated issue object; on failure (project or issue not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_merge_requests",
+        "description": "List merge requests for a project, optionally filtered by state.",
+        "arguments": {
+            "project_id": {
+                "type": "string",
+                "description": "The numeric id of the project."
+            },
+            "state": {
+                "type": "string",
+                "description": "Optional merge request state filter ('opened', 'merged', 'closed', or 'all')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of merge request objects sorted by updated_at descending; on failure (project not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_merge_request",
+        "description": "Create a new merge request in a project.",
+        "arguments": {
+            "project_id": {
+                "type": "string",
+                "description": "The numeric id of the project."
+            },
+            "title": {
+                "type": "string",
+                "description": "The title of the merge request."
+            },
+            "source_branch": {
+                "type": "string",
+                "description": "The source branch of the merge request."
+            },
+            "target_branch": {
+                "type": "string",
+                "description": "The target branch of the merge request (default 'main')."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional free-text description for the merge request."
+            },
+            "assignee": {
+                "type": "string",
+                "description": "Optional username to assign the merge request to."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created merge request object; on failure (project not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "merge_merge_request",
+        "description": "Merge an existing merge request by project id and merge request iid.",
+        "arguments": {
+            "project_id": {
+                "type": "string",
+                "description": "The numeric id of the project."
+            },
+            "mr_iid": {
+                "type": "integer",
+                "description": "The internal id (iid) of the merge request within the project."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the merged merge request object; on failure (not found, draft, cannot be merged, or already merged), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_pipelines",
+        "description": "List pipelines for a project, optionally filtered by status.",
+        "arguments": {
+            "project_id": {
+                "type": "string",
+                "description": "The numeric id of the project."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional pipeline status filter (e.g. 'success', 'running', 'failed')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of pipeline objects sorted by created_at descending; on failure (project not found), output contains an error message."
+        }
+    }
+]

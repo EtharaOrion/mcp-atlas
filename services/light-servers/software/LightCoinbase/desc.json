@@ -1,0 +1,98 @@
+[
+    {
+        "tool_name": "get_user",
+        "description": "Get the current authenticated Coinbase user profile.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the user object (id, name, username, email, country, native_currency, created_at)."
+        }
+    },
+    {
+        "tool_name": "list_accounts",
+        "description": "List all crypto and fiat accounts (wallets) for the user.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of account objects (id, name, primary, type, currency, balance, native_balance, timestamps)."
+        }
+    },
+    {
+        "tool_name": "get_account",
+        "description": "Get a single account by its id.",
+        "arguments": {
+            "account_id": {
+                "type": "string",
+                "description": "The unique id of the account."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the account object; on failure (account not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_spot_price",
+        "description": "Get the spot price for a currency pair (e.g. BTC-USD).",
+        "arguments": {
+            "pair": {
+                "type": "string",
+                "description": "The currency pair such as 'BTC-USD'."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a price object (base, currency, amount); on failure (pair not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_buy",
+        "description": "Create a buy of the given crypto amount on an account, updating its balance and recording a transaction.",
+        "arguments": {
+            "account_id": {
+                "type": "string",
+                "description": "The unique id of the account to buy on."
+            },
+            "amount": {
+                "type": "string",
+                "description": "The quantity of the account's currency to buy, as a decimal string."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the buy result (amount, total, unit_price, transaction_id, etc.); on failure (account/price missing or invalid amount), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_sell",
+        "description": "Create a sell of the given crypto amount on an account, updating its balance and recording a transaction.",
+        "arguments": {
+            "account_id": {
+                "type": "string",
+                "description": "The unique id of the account to sell on."
+            },
+            "amount": {
+                "type": "string",
+                "description": "The quantity of the account's currency to sell, as a decimal string."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the sell result; on failure (account/price missing, invalid amount, or insufficient balance), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_transactions",
+        "description": "List transactions for an account, most recent first.",
+        "arguments": {
+            "account_id": {
+                "type": "string",
+                "description": "The unique id of the account."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of transaction objects; on failure (account not found), output contains an error message."
+        }
+    }
+]

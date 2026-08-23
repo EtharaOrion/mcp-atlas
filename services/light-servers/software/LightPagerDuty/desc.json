@@ -1,0 +1,186 @@
+[
+    {
+        "tool_name": "list_users",
+        "description": "List all users in the PagerDuty account.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'users' list of user objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_services",
+        "description": "List all services in the PagerDuty account.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'services' list of service objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_service",
+        "description": "Get a single service by its id.",
+        "arguments": {
+            "service_id": {
+                "type": "string",
+                "description": "The unique id of the service."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the service object; on failure (service not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_incidents",
+        "description": "List incidents, optionally filtered by statuses, service, and urgency; sorted by created_at descending.",
+        "arguments": {
+            "statuses": {
+                "type": "array",
+                "description": "Optional list of status strings to filter incidents by (triggered, acknowledged, resolved)."
+            },
+            "service_id": {
+                "type": "string",
+                "description": "Optional service id to filter incidents by."
+            },
+            "urgency": {
+                "type": "string",
+                "description": "Optional urgency to filter incidents by (e.g. high, low)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with an 'incidents' list and a 'total' count; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_incident",
+        "description": "Get a single incident by its id.",
+        "arguments": {
+            "incident_id": {
+                "type": "string",
+                "description": "The unique id of the incident."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the incident object; on failure (incident not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_incident",
+        "description": "Create a new incident on a service, optionally assigned to a user.",
+        "arguments": {
+            "title": {
+                "type": "string",
+                "description": "The title of the incident."
+            },
+            "service_id": {
+                "type": "string",
+                "description": "The id of the service the incident belongs to."
+            },
+            "urgency": {
+                "type": "string",
+                "description": "The urgency of the incident (default 'high')."
+            },
+            "assigned_to": {
+                "type": "string",
+                "description": "Optional user id to assign the incident to."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created incident object; on failure (service or user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_incident",
+        "description": "Update the status and/or assignee of an existing incident.",
+        "arguments": {
+            "incident_id": {
+                "type": "string",
+                "description": "The unique id of the incident to update."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional new status (triggered, acknowledged, resolved)."
+            },
+            "assigned_to": {
+                "type": "string",
+                "description": "Optional new assignee (user id)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated incident object; on failure (incident/user not found or invalid status), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_notes",
+        "description": "List the notes attached to an incident.",
+        "arguments": {
+            "incident_id": {
+                "type": "string",
+                "description": "The unique id of the incident."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'notes' list; on failure (incident not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_note",
+        "description": "Create a note on an incident.",
+        "arguments": {
+            "incident_id": {
+                "type": "string",
+                "description": "The unique id of the incident the note belongs to."
+            },
+            "content": {
+                "type": "string",
+                "description": "The text content of the note."
+            },
+            "user_id": {
+                "type": "string",
+                "description": "Optional user id of the note author."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created note object; on failure (incident not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_oncalls",
+        "description": "List current on-call entries derived from schedules, optionally filtered by escalation policy.",
+        "arguments": {
+            "escalation_policy_id": {
+                "type": "string",
+                "description": "Optional escalation policy id to filter on-call entries by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with an 'oncalls' list; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_schedules",
+        "description": "List all on-call schedules.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'schedules' list; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_escalation_policies",
+        "description": "List all escalation policies.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with an 'escalation_policies' list; on failure, output contains an error message."
+        }
+    }
+]

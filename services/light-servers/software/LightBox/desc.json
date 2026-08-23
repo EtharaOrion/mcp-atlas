@@ -1,0 +1,101 @@
+[
+    {
+        "tool_name": "get_me",
+        "description": "Get the current authenticated user (the owner of the token used for this Box session).",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the user object (type, id, name, login, role, status, language, timezone, space_amount, space_used, max_upload_size, job_title, phone, created_at); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_folder",
+        "description": "Get a single folder by its id.",
+        "arguments": {
+            "folder_id": {
+                "type": "string",
+                "description": "The unique id of the folder."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the folder object (type, id, name, description, size, created_at, modified_at, item_count, parent, owned_by); on failure (folder not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_folder_items",
+        "description": "List the items (subfolders and files) contained in a folder, with pagination.",
+        "arguments": {
+            "folder_id": {
+                "type": "string",
+                "description": "The unique id of the folder whose items are listed."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of entries to return in the page (default 100)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Zero-based offset into the full entry list for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with total_count, entries (folder and file objects), offset, and limit; on failure (folder not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_file",
+        "description": "Get a single file's metadata by its id.",
+        "arguments": {
+            "file_id": {
+                "type": "string",
+                "description": "The unique id of the file."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the file object (type, id, name, description, size, extension, sha1, created_at, modified_at, parent, owned_by); on failure (file not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "download_file",
+        "description": "Download the text content of a file by its id (text/markdown/json/xml/yaml/csv/pdf only).",
+        "arguments": {
+            "file_id": {
+                "type": "string",
+                "description": "The unique id of the file to download."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with file_id, name, mime_type, size_bytes, and content; on failure (file not found, unsupported mime, missing fixture, or too large), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "search",
+        "description": "Search folders and files by name substring, optionally filtered by type, with pagination.",
+        "arguments": {
+            "query": {
+                "type": "string",
+                "description": "Optional case-insensitive substring matched against item names."
+            },
+            "type": {
+                "type": "string",
+                "description": "Optional type filter; 'folder' or 'file' to restrict results to that type."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of entries to return in the page (default 100)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Zero-based offset into the full entry list for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with total_count, entries (matching folder and file objects), offset, and limit; on failure, output contains an error message."
+        }
+    }
+]

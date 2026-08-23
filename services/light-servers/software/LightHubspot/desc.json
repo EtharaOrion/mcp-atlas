@@ -1,0 +1,171 @@
+[
+    {
+        "tool_name": "list_contacts",
+        "description": "List contacts with pagination, returned in the HubSpot object shape.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of contacts to return per page (1-100, default 10)."
+            },
+            "after": {
+                "type": "string",
+                "description": "Optional pagination cursor (offset as a string) returned by a previous page."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a page object with 'results' (list of contact objects) and optional 'paging'; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_contact",
+        "description": "Get a single contact by its id.",
+        "arguments": {
+            "contact_id": {
+                "type": "string",
+                "description": "The unique id of the contact."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the contact object; on failure (contact not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_contact",
+        "description": "Create a new contact from a HubSpot properties map.",
+        "arguments": {
+            "properties": {
+                "type": "object",
+                "description": "Optional map of contact property keys to values (firstname, lastname, email, phone, jobtitle, company, lifecyclestage). createdate/lastmodifieddate are set automatically."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created contact object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_contact",
+        "description": "Update properties of an existing contact by its id.",
+        "arguments": {
+            "contact_id": {
+                "type": "string",
+                "description": "The unique id of the contact to update."
+            },
+            "properties": {
+                "type": "object",
+                "description": "Optional map of contact property keys to new values. lastmodifieddate is updated automatically."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated contact object; on failure (contact not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_companies",
+        "description": "List companies with pagination, returned in the HubSpot object shape.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of companies to return per page (1-100, default 10)."
+            },
+            "after": {
+                "type": "string",
+                "description": "Optional pagination cursor (offset as a string) returned by a previous page."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a page object with 'results' (list of company objects) and optional 'paging'; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_company",
+        "description": "Get a single company by its id.",
+        "arguments": {
+            "company_id": {
+                "type": "string",
+                "description": "The unique id of the company."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the company object; on failure (company not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_deals",
+        "description": "List deals with pagination, returned in the HubSpot object shape.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of deals to return per page (1-100, default 10)."
+            },
+            "after": {
+                "type": "string",
+                "description": "Optional pagination cursor (offset as a string) returned by a previous page."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a page object with 'results' (list of deal objects) and optional 'paging'; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_deal",
+        "description": "Get a single deal by its id.",
+        "arguments": {
+            "deal_id": {
+                "type": "string",
+                "description": "The unique id of the deal."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the deal object; on failure (deal not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_deal",
+        "description": "Create a new deal from a HubSpot properties map, defaulting pipeline and dealstage.",
+        "arguments": {
+            "properties": {
+                "type": "object",
+                "description": "Optional map of deal property keys to values (dealname, pipeline, dealstage, amount, closedate, dealtype). pipeline defaults to 'default' and dealstage to 'appointmentscheduled'; createdate/lastmodifieddate are set automatically."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created deal object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_deal",
+        "description": "Update properties of an existing deal by its id, validating dealstage against the pipeline.",
+        "arguments": {
+            "deal_id": {
+                "type": "string",
+                "description": "The unique id of the deal to update."
+            },
+            "properties": {
+                "type": "object",
+                "description": "Optional map of deal property keys to new values. If 'dealstage' is set it must be a valid stage of the deal's pipeline. lastmodifieddate is updated automatically."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated deal object; on failure (deal not found or invalid stage), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_deal_pipelines",
+        "description": "List all deal pipelines with their stages and metadata.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with 'results' (list of pipeline objects, each with id, label, displayOrder, and stages); on failure, output contains an error message."
+        }
+    }
+]

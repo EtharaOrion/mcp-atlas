@@ -4,7 +4,7 @@ IMAGE_NAME = agent-environment
 VERSION = 1.2.7
 GHCR_REPO = ghcr.io/scaleapi/mcp-atlas
 
-.PHONY: build run-docker shell push install-harness run-harness install-python run-eval test
+.PHONY: build run-docker shell push install-harness run-harness install-python run-eval test build-light-servers
 
 # ---------------------------------------------------------------------------
 # Agent Environment (docker image with the 36 MCP servers)
@@ -82,3 +82,6 @@ run-task: # run one task via Harbor and emit output/<task>/ (summary, pass_summa
 harbor-output: # reshape an existing Harbor job into output/<task>/ without re-running it
 	@test -n "$(JOB)" || { echo "usage: make harbor-output JOB=jobs/<job>"; exit 2; }
 	python3 scripts/harbor_to_output.py $(JOB) --output-dir output $(if $(COPY_TO),--copy-to $(COPY_TO),)
+
+build-light-servers: # build light-servers Docker image (all software + utility servers bundled in services/light-servers/)
+	docker build -t light-servers:latest services/light-servers/

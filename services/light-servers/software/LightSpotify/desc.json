@@ -1,0 +1,141 @@
+[
+    {
+        "tool_name": "get_me",
+        "description": "Get the current user's Spotify profile.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the current user's profile object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_my_playlists",
+        "description": "List playlists owned by the current user.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds an items list of playlist objects and a total count; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_playlist",
+        "description": "Get a single playlist including its tracks.",
+        "arguments": {
+            "playlist_id": {
+                "type": "string",
+                "description": "The id of the playlist to fetch."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the playlist object with tracks; on failure (playlist not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_playlist_tracks",
+        "description": "Get the tracks of a playlist.",
+        "arguments": {
+            "playlist_id": {
+                "type": "string",
+                "description": "The id of the playlist whose tracks are fetched."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a total count and items list of track entries; on failure (playlist not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_playlist",
+        "description": "Create a new playlist owned by a user.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The id of the user who will own the playlist."
+            },
+            "name": {
+                "type": "string",
+                "description": "The name of the playlist."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional description for the playlist."
+            },
+            "public": {
+                "type": "boolean",
+                "description": "Whether the playlist is public (default true)."
+            },
+            "collaborative": {
+                "type": "boolean",
+                "description": "Whether the playlist is collaborative (default false)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created playlist object with tracks; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "add_tracks",
+        "description": "Add one or more tracks (by uri) to a playlist.",
+        "arguments": {
+            "playlist_id": {
+                "type": "string",
+                "description": "The id of the playlist to add tracks to."
+            },
+            "uris": {
+                "type": "array",
+                "description": "List of track uris (or track ids) to add."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the playlist_id, number added, and a snapshot_id; on failure (playlist not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "search",
+        "description": "Search tracks, albums and/or artists by name substring.",
+        "arguments": {
+            "q": {
+                "type": "string",
+                "description": "The case-insensitive query string to match against names."
+            },
+            "type": {
+                "type": "string",
+                "description": "Optional comma-separated types to search (track, album, artist); defaults to all three."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds tracks/albums/artists result buckets each with items and total; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_player",
+        "description": "Get the current playback state.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the playback state object (is_playing, device, item, etc.); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "start_playback",
+        "description": "Start playback of specific track uris or a playlist context.",
+        "arguments": {
+            "uris": {
+                "type": "array",
+                "description": "Optional list of track uris to play; the first is used as the current item."
+            },
+            "context_uri": {
+                "type": "string",
+                "description": "Optional playlist context uri (spotify:playlist:...) to play from."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated playback state object; on failure, output contains an error message."
+        }
+    }
+]

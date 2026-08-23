@@ -1,0 +1,142 @@
+[
+    {
+        "tool_name": "list_stores",
+        "description": "List available stores, optionally filtered by cuisine and open state, sorted by rating descending.",
+        "arguments": {
+            "latitude": {
+                "type": "number",
+                "description": "Optional latitude of the delivery location (reserved for proximity filtering)."
+            },
+            "longitude": {
+                "type": "number",
+                "description": "Optional longitude of the delivery location (reserved for proximity filtering)."
+            },
+            "cuisine": {
+                "type": "string",
+                "description": "Optional cuisine name to filter stores by (case-insensitive)."
+            },
+            "open_only": {
+                "type": "boolean",
+                "description": "When true, only stores that are currently open are returned (default false)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with count and a list of store objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_store",
+        "description": "Get a single store by its store_id.",
+        "arguments": {
+            "store_id": {
+                "type": "string",
+                "description": "The unique id of the store."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the store object; on failure (store not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_menu",
+        "description": "Get the menu for a store, grouped into categories along with a flat items list.",
+        "arguments": {
+            "store_id": {
+                "type": "string",
+                "description": "The unique id of the store."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with store_id, categories, and items; on failure (store not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_cart",
+        "description": "Create a new empty cart for a given store.",
+        "arguments": {
+            "store_id": {
+                "type": "string",
+                "description": "The unique id of the store the cart belongs to."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the new cart object with computed totals; on failure (store not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_cart",
+        "description": "Get an existing cart by its cart_id, including computed totals.",
+        "arguments": {
+            "cart_id": {
+                "type": "string",
+                "description": "The unique id of the cart."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the cart object with computed totals; on failure (cart not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "add_cart_item",
+        "description": "Add a menu item (or increase its quantity) to an existing cart.",
+        "arguments": {
+            "cart_id": {
+                "type": "string",
+                "description": "The unique id of the cart."
+            },
+            "item_id": {
+                "type": "string",
+                "description": "The unique id of the menu item to add."
+            },
+            "quantity": {
+                "type": "integer",
+                "description": "The quantity to add (default 1)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated cart object with computed totals; on failure (cart/item not found, wrong store, or unavailable), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "checkout",
+        "description": "Check out a cart, creating a confirmed order and clearing the cart.",
+        "arguments": {
+            "cart_id": {
+                "type": "string",
+                "description": "The unique id of the cart to check out."
+            },
+            "customer_name": {
+                "type": "string",
+                "description": "Optional name of the customer placing the order (default 'Guest')."
+            },
+            "tip": {
+                "type": "number",
+                "description": "Optional tip amount added to the order total (default 0.0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created order object with its items; on failure (cart not found or empty), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_order",
+        "description": "Get a single order by its order_id, including its line items.",
+        "arguments": {
+            "order_id": {
+                "type": "string",
+                "description": "The unique id of the order."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the order object with its items; on failure (order not found), output contains an error message."
+        }
+    }
+]

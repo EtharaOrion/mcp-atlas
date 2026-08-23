@@ -1,0 +1,218 @@
+[
+    {
+        "tool_name": "list_incidents",
+        "description": "List incidents, optionally filtered with a ServiceNow encoded query and limited in count.",
+        "arguments": {
+            "sysparm_query": {
+                "type": "string",
+                "description": "Optional ServiceNow encoded query (e.g. 'state=2^priority=1') to filter incidents by field equality."
+            },
+            "sysparm_limit": {
+                "type": "integer",
+                "description": "Optional maximum number of records to return."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of incident records; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_incident",
+        "description": "Get a single incident by its sys_id.",
+        "arguments": {
+            "sys_id": {
+                "type": "string",
+                "description": "The unique sys_id of the incident."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the incident record; on failure (incident not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_incident",
+        "description": "Create a new incident record.",
+        "arguments": {
+            "short_description": {
+                "type": "string",
+                "description": "The short description (title) of the incident. Required."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional longer free-text description of the incident."
+            },
+            "priority": {
+                "type": "string",
+                "description": "Optional priority code (default '3')."
+            },
+            "impact": {
+                "type": "string",
+                "description": "Optional impact code (default '3')."
+            },
+            "urgency": {
+                "type": "string",
+                "description": "Optional urgency code (default '3')."
+            },
+            "category": {
+                "type": "string",
+                "description": "Optional category (default 'inquiry')."
+            },
+            "assigned_to": {
+                "type": "string",
+                "description": "Optional sys_id of the user the incident is assigned to."
+            },
+            "opened_by": {
+                "type": "string",
+                "description": "Optional sys_id of the user who opened the incident."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created incident record; on failure (missing short_description), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_incident",
+        "description": "Update fields of an existing incident by its sys_id.",
+        "arguments": {
+            "sys_id": {
+                "type": "string",
+                "description": "The unique sys_id of the incident to update."
+            },
+            "short_description": {
+                "type": "string",
+                "description": "Optional new short description."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional new description."
+            },
+            "state": {
+                "type": "string",
+                "description": "Optional new state code."
+            },
+            "priority": {
+                "type": "string",
+                "description": "Optional new priority code."
+            },
+            "impact": {
+                "type": "string",
+                "description": "Optional new impact code."
+            },
+            "urgency": {
+                "type": "string",
+                "description": "Optional new urgency code."
+            },
+            "category": {
+                "type": "string",
+                "description": "Optional new category."
+            },
+            "assigned_to": {
+                "type": "string",
+                "description": "Optional new assigned_to sys_id."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated incident record; on failure (incident not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_change_requests",
+        "description": "List change requests, optionally filtered with a ServiceNow encoded query and limited in count.",
+        "arguments": {
+            "sysparm_query": {
+                "type": "string",
+                "description": "Optional ServiceNow encoded query to filter change requests by field equality."
+            },
+            "sysparm_limit": {
+                "type": "integer",
+                "description": "Optional maximum number of records to return."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of change request records; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_change_request",
+        "description": "Get a single change request by its sys_id.",
+        "arguments": {
+            "sys_id": {
+                "type": "string",
+                "description": "The unique sys_id of the change request."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the change request record; on failure (change request not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_problems",
+        "description": "List problems, optionally filtered with a ServiceNow encoded query and limited in count.",
+        "arguments": {
+            "sysparm_query": {
+                "type": "string",
+                "description": "Optional ServiceNow encoded query to filter problems by field equality."
+            },
+            "sysparm_limit": {
+                "type": "integer",
+                "description": "Optional maximum number of records to return."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of problem records; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_problem",
+        "description": "Get a single problem by its sys_id.",
+        "arguments": {
+            "sys_id": {
+                "type": "string",
+                "description": "The unique sys_id of the problem."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the problem record; on failure (problem not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_users",
+        "description": "List users, optionally filtered with a ServiceNow encoded query and limited in count.",
+        "arguments": {
+            "sysparm_query": {
+                "type": "string",
+                "description": "Optional ServiceNow encoded query to filter users by field equality."
+            },
+            "sysparm_limit": {
+                "type": "integer",
+                "description": "Optional maximum number of records to return."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of user records; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_user",
+        "description": "Get a single user by its sys_id.",
+        "arguments": {
+            "sys_id": {
+                "type": "string",
+                "description": "The unique sys_id of the user."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the user record; on failure (user not found), output contains an error message."
+        }
+    }
+]

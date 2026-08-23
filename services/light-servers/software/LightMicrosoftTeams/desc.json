@@ -1,0 +1,87 @@
+[
+    {
+        "tool_name": "list_joined_teams",
+        "description": "List the teams the signed-in user has joined (excludes archived teams).",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a Graph collection {\"value\": [...]} of team objects (id, displayName, description, visibility, isArchived, webUrl); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_team",
+        "description": "Get a single team by its id.",
+        "arguments": {
+            "team_id": {
+                "type": "string",
+                "description": "The unique id of the team."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the team object; on failure (team not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_channels",
+        "description": "List the channels belonging to a team.",
+        "arguments": {
+            "team_id": {
+                "type": "string",
+                "description": "The unique id of the team."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a Graph collection {\"value\": [...]} of channel objects (id, displayName, description, membershipType, webUrl, createdDateTime); on failure (team not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_messages",
+        "description": "List the messages in a channel, ordered newest first.",
+        "arguments": {
+            "team_id": {
+                "type": "string",
+                "description": "The unique id of the team that owns the channel."
+            },
+            "channel_id": {
+                "type": "string",
+                "description": "The unique id of the channel."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a Graph collection {\"value\": [...]} of message objects; on failure (channel not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "send_message",
+        "description": "Send a new message to a channel as the signed-in user.",
+        "arguments": {
+            "team_id": {
+                "type": "string",
+                "description": "The unique id of the team that owns the channel."
+            },
+            "channel_id": {
+                "type": "string",
+                "description": "The unique id of the channel to post to."
+            },
+            "content": {
+                "type": "string",
+                "description": "The message body content."
+            },
+            "content_type": {
+                "type": "string",
+                "description": "The content type of the message body (default 'html')."
+            },
+            "importance": {
+                "type": "string",
+                "description": "The importance of the message, e.g. 'normal' or 'high' (default 'normal')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created message object; on failure (channel not found or missing content), output contains an error message."
+        }
+    }
+]

@@ -1,0 +1,215 @@
+[
+    {
+        "tool_name": "get_about",
+        "description": "Get information about the current user and drive storage quota.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the about object (user, storageQuota, maxUploadSize)."
+        }
+    },
+    {
+        "tool_name": "list_files",
+        "description": "List files, optionally filtered by a Drive query string and ordered/paginated.",
+        "arguments": {
+            "q": {
+                "type": "string",
+                "description": "Optional Drive query string (e.g. \"trashed = false\", \"'folder-eng' in parents\", \"name contains 'rfc'\")."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of files to return per page (default 100)."
+            },
+            "page_token": {
+                "type": "string",
+                "description": "Optional pagination offset token from a previous call."
+            },
+            "order_by": {
+                "type": "string",
+                "description": "Ordering directive, e.g. 'modifiedTime desc', 'createdTime asc', 'name asc'."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a fileList (kind, files, nextPageToken)."
+        }
+    },
+    {
+        "tool_name": "get_file",
+        "description": "Get a single file's metadata by its id.",
+        "arguments": {
+            "file_id": {
+                "type": "string",
+                "description": "The unique id of the file."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the file object; on failure (file not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "download_file",
+        "description": "Download the text content of a file by its id (text-based mime types only).",
+        "arguments": {
+            "file_id": {
+                "type": "string",
+                "description": "The unique id of the file to download."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has file_id, name, mime_type, size_bytes, content; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_file",
+        "description": "Create a new file or folder, optionally under a parent folder.",
+        "arguments": {
+            "name": {
+                "type": "string",
+                "description": "The name of the new file."
+            },
+            "mime_type": {
+                "type": "string",
+                "description": "The MIME type of the new file."
+            },
+            "parent_id": {
+                "type": "string",
+                "description": "Optional id of the parent folder."
+            },
+            "owner_email": {
+                "type": "string",
+                "description": "Optional owner email (default amelia@orbit-labs.com)."
+            },
+            "size": {
+                "type": "integer",
+                "description": "Optional file size in bytes (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created file object; on failure (parent not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_file",
+        "description": "Update a file's name, parent, starred, or trashed state.",
+        "arguments": {
+            "file_id": {
+                "type": "string",
+                "description": "The unique id of the file to update."
+            },
+            "name": {
+                "type": "string",
+                "description": "Optional new name for the file."
+            },
+            "parent_id": {
+                "type": "string",
+                "description": "Optional new parent folder id (addParents)."
+            },
+            "starred": {
+                "type": "boolean",
+                "description": "Optional new starred state."
+            },
+            "trashed": {
+                "type": "boolean",
+                "description": "Optional new trashed state."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated file object; on failure (file not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "trash_file",
+        "description": "Move a file to the trash by its id.",
+        "arguments": {
+            "file_id": {
+                "type": "string",
+                "description": "The unique id of the file to trash."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated (trashed) file object; on failure (file not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_file",
+        "description": "Permanently delete a file and its permissions by its id.",
+        "arguments": {
+            "file_id": {
+                "type": "string",
+                "description": "The unique id of the file to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has deleted and id; on failure (file not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_permissions",
+        "description": "List the permissions granted on a file.",
+        "arguments": {
+            "file_id": {
+                "type": "string",
+                "description": "The unique id of the file."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a permissionList (kind, permissions); on failure (file not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_permission",
+        "description": "Grant a new permission on a file to a user, group, domain, or anyone.",
+        "arguments": {
+            "file_id": {
+                "type": "string",
+                "description": "The unique id of the file."
+            },
+            "type": {
+                "type": "string",
+                "description": "The grantee type: 'user', 'group', 'domain', or 'anyone'."
+            },
+            "role": {
+                "type": "string",
+                "description": "The role: 'owner', 'writer', 'commenter', or 'reader'."
+            },
+            "email_address": {
+                "type": "string",
+                "description": "Optional email address of the grantee."
+            },
+            "display_name": {
+                "type": "string",
+                "description": "Optional display name of the grantee."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created permission object; on failure (file not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_permission",
+        "description": "Revoke a permission from a file by permission id.",
+        "arguments": {
+            "file_id": {
+                "type": "string",
+                "description": "The unique id of the file."
+            },
+            "permission_id": {
+                "type": "string",
+                "description": "The unique id of the permission to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has deleted and id; on failure (permission not found), output contains an error message."
+        }
+    }
+]

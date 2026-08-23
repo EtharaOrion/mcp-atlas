@@ -1,0 +1,167 @@
+# Source: world_data 2/LightDrive.json (verbatim). Corpus-only authored world.
+folders:
+  fd_root:
+    fdid: fd_root
+    name: My Drive
+    parent_id: ''
+    path: /
+    created_at: 2026-01-02T09:11
+  fd_documents:
+    fdid: fd_documents
+    name: Documents
+    parent_id: fd_root
+    path: /Documents
+    created_at: 2026-01-02T11:55
+  fd_photos:
+    fdid: fd_photos
+    name: Photos
+    parent_id: fd_root
+    path: /Photos
+    created_at: 2026-01-02T16:02
+files:
+  fSedUpkHWNX7MdQFYCKyCh:
+    fid: fSedUpkHWNX7MdQFYCKyCh
+    name: Amos Jeremiah Whitfield Resume.pdf
+    folder_id: fd_documents
+    path: /Documents/Amos Jeremiah Whitfield Resume.pdf
+    size_bytes: 2368920
+    mime_type: application/pdf
+    created_at: 2026-01-02T16:33
+    updated_at: 2026-01-02T21:18
+    is_starred: true
+    is_trashed: false
+    current_version_id: v_HreoV2oejC
+  ojf3TJcYzJEGBCzkdL7ZQm:
+    fid: ojf3TJcYzJEGBCzkdL7ZQm
+    name: Board Meeting Notes.txt
+    folder_id: fd_documents
+    path: /Documents/Board Meeting Notes.txt
+    size_bytes: 4430491
+    mime_type: text/plain
+    created_at: 2026-01-02T22:59
+    updated_at: 2026-01-03T00:04
+    is_starred: false
+    is_trashed: false
+    current_version_id: v_GQeFrbjjRz
+  8sJZaNWzfnXQwnQKPiQRoX:
+    fid: 8sJZaNWzfnXQwnQKPiQRoX
+    name: the Savannah Historic Preservation Alliance (SHPA) Budget.xlsx
+    folder_id: fd_root
+    path: /the Savannah Historic Preservation Alliance (SHPA) Budget.xlsx
+    size_bytes: 2021415
+    mime_type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+    created_at: 2026-01-03T05:50
+    updated_at: 2026-01-03T09:13
+    is_starred: false
+    is_trashed: false
+    current_version_id: v_n2qKLgz7H3
+  MdNMY2WFtEdwhGj7AnFJ4s:
+    fid: MdNMY2WFtEdwhGj7AnFJ4s
+    name: Old Draft.docx
+    folder_id: fd_root
+    path: /Old Draft.docx
+    size_bytes: 570395
+    mime_type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+    created_at: 2026-01-03T12:21
+    updated_at: 2026-01-03T15:38
+    is_starred: false
+    is_trashed: true
+    current_version_id: v_bXvwNtDF7Z
+  iZziKs2Ud6GoY6v5jwtdcz:
+    fid: iZziKs2Ud6GoY6v5jwtdcz
+    name: Family Photo.jpg
+    folder_id: fd_photos
+    path: /Photos/Family Photo.jpg
+    size_bytes: 2070028
+    mime_type: image/jpeg
+    created_at: 2026-01-03T21:47
+    updated_at: 2026-01-04T02:28
+    is_starred: false
+    is_trashed: false
+    current_version_id: v_QbX63y6NAX
+  wZtsgrXgsL8fR9uCTFCDtw:
+    fid: wZtsgrXgsL8fR9uCTFCDtw
+    name: Vacation.jpg
+    folder_id: fd_photos
+    path: /Photos/Vacation.jpg
+    size_bytes: 905166
+    mime_type: image/jpeg
+    created_at: 2026-01-04T04:23
+    updated_at: 2026-01-04T09:55
+    is_starred: false
+    is_trashed: false
+    current_version_id: v_gUZce46VTi
+versions:
+  v_HreoV2oejC:
+    vid: v_HreoV2oejC
+    file_id: fSedUpkHWNX7MdQFYCKyCh
+    version_number: 1
+    size_bytes: 2218419
+    created_at: 2026-01-02T18:00
+    comment: Initial upload
+  v_GQeFrbjjRz:
+    vid: v_GQeFrbjjRz
+    file_id: ojf3TJcYzJEGBCzkdL7ZQm
+    version_number: 1
+    size_bytes: 1423143
+    created_at: 2026-01-02T23:37
+    comment: Initial upload
+  v_n2qKLgz7H3:
+    vid: v_n2qKLgz7H3
+    file_id: 8sJZaNWzfnXQwnQKPiQRoX
+    version_number: 1
+    size_bytes: 365906
+    created_at: 2026-01-03T06:23
+    comment: Initial upload
+  v_CFcMG8j2Br:
+    vid: v_CFcMG8j2Br
+    file_id: MdNMY2WFtEdwhGj7AnFJ4s
+    version_number: 1
+    size_bytes: 475451
+    created_at: 2026-01-03T14:02
+    comment: Initial upload
+  v_bXvwNtDF7Z:
+    vid: v_bXvwNtDF7Z
+    file_id: MdNMY2WFtEdwhGj7AnFJ4s
+    version_number: 2
+    size_bytes: 38103
+    created_at: 2026-01-03T14:45
+    comment: Revised
+  v_QbX63y6NAX:
+    vid: v_QbX63y6NAX
+    file_id: iZziKs2Ud6GoY6v5jwtdcz
+    version_number: 1
+    size_bytes: 2036511
+    created_at: 2026-01-03T23:30
+    comment: Initial upload
+  v_tW3WjQ4b8F:
+    vid: v_tW3WjQ4b8F
+    file_id: wZtsgrXgsL8fR9uCTFCDtw
+    version_number: 1
+    size_bytes: 267490
+    created_at: 2026-01-04T05:52
+    comment: Initial upload
+  v_gUZce46VTi:
+    vid: v_gUZce46VTi
+    file_id: wZtsgrXgsL8fR9uCTFCDtw
+    version_number: 2
+    size_bytes: 594662
+    created_at: 2026-01-04T07:31
+    comment: Revised
+share_links:
+  sl_N3J3dMcrqU:
+    slid: sl_N3J3dMcrqU
+    target_kind: file
+    target_id: fSedUpkHWNX7MdQFYCKyCh
+    url: https://drive.example.com/s/Ecsh8i9wdHGh
+    can_edit: false
+    expires_at: 2026-01-07T14:14
+    view_count: 11
+  sl_ejxFChWknm:
+    slid: sl_ejxFChWknm
+    target_kind: folder
+    target_id: fd_photos
+    url: https://drive.example.com/s/PN5REpBZJpMu
+    can_edit: true
+    expires_at: 2026-01-10T11:44
+    view_count: 6

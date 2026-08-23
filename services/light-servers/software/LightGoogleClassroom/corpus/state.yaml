@@ -1,0 +1,3555 @@
+# Source: world_data 2/LightGoogleClassroom.json (verbatim). Corpus-only authored world.
+courses:
+- id: course_001
+  name: Docent Certification — Spring 2026
+  section: SHPA Education
+  descriptionHeading: Docent Certification — Spring 2026 — SHPA docent program
+  description: Part of the Alliance docent training curriculum.
+  room: 45 Bull Street, classroom
+  ownerId: teacher_001
+  courseState: ACTIVE
+  creationTime: '2025-01-06T08:00:00Z'
+  updateTime: '2025-04-25T14:30:00Z'
+  enrollmentCode: apcsa25
+  alternateLink: https://classroom.google.com/c/course_001
+  guardiansEnabled: false
+  calendarId: calendar_001
+- id: course_002
+  name: Savannah Architecture 101
+  section: SHPA Education
+  descriptionHeading: Savannah Architecture 101 — SHPA docent program
+  description: Part of the Alliance docent training curriculum.
+  room: 45 Bull Street, classroom
+  ownerId: teacher_001
+  courseState: ACTIVE
+  creationTime: '2025-01-06T08:00:00Z'
+  updateTime: '2025-04-26T09:15:00Z'
+  enrollmentCode: webdev25
+  alternateLink: https://classroom.google.com/c/course_002
+  guardiansEnabled: false
+  calendarId: calendar_002
+- id: course_003
+  name: Oral History Methods
+  section: SHPA Education
+  descriptionHeading: Oral History Methods — SHPA docent program
+  description: Part of the Alliance docent training curriculum.
+  room: 45 Bull Street, classroom
+  ownerId: teacher_001
+  courseState: ACTIVE
+  creationTime: '2025-01-06T08:00:00Z'
+  updateTime: '2025-04-24T16:45:00Z'
+  enrollmentCode: apcsp25
+  alternateLink: https://classroom.google.com/c/course_003
+  guardiansEnabled: false
+  calendarId: calendar_003
+- id: course_004
+  name: Preservation Ethics
+  section: SHPA Education
+  descriptionHeading: Preservation Ethics — SHPA docent program
+  description: Part of the Alliance docent training curriculum.
+  room: 45 Bull Street, classroom
+  ownerId: teacher_001
+  courseState: ARCHIVED
+  creationTime: '2024-08-19T08:00:00Z'
+  updateTime: '2024-12-20T15:00:00Z'
+  enrollmentCode: python24
+  alternateLink: https://classroom.google.com/c/course_004
+  guardiansEnabled: false
+  calendarId: calendar_004
+- id: course_005
+  name: Archival Research Basics
+  section: SHPA Education
+  descriptionHeading: Archival Research Basics — SHPA docent program
+  description: Part of the Alliance docent training curriculum.
+  room: 45 Bull Street, classroom
+  ownerId: teacher_003
+  courseState: ACTIVE
+  creationTime: '2025-01-15T09:00:00Z'
+  updateTime: '2025-05-12T14:30:00Z'
+  enrollmentCode: cbint25
+  alternateLink: https://classroom.google.com/c/course_005
+  guardiansEnabled: false
+  calendarId: calendar_005
+- id: uscg-charter-inspection-2026
+  name: Walking Tour Practicum
+  section: SHPA Education
+  descriptionHeading: Walking Tour Practicum — SHPA docent program
+  description: Part of the Alliance docent training curriculum.
+  room: 45 Bull Street, classroom
+  ownerId: teacher_004
+  courseState: ACTIVE
+  creationTime: '2026-04-20T08:00:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  enrollmentCode: LSK2026
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026
+  guardiansEnabled: false
+  calendarId: calendar_lsk_2026
+- id: uscg-charter-inspection-2025
+  name: Georgia History Refresher
+  section: SHPA Education
+  descriptionHeading: Georgia History Refresher — SHPA docent program
+  description: Part of the Alliance docent training curriculum.
+  room: 45 Bull Street, classroom
+  ownerId: teacher_004
+  courseState: ARCHIVED
+  creationTime: '2025-04-22T08:00:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  enrollmentCode: LSK2025
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025
+  guardiansEnabled: false
+  calendarId: calendar_lsk_2025
+coursework:
+- courseId: course_001
+  id: cw_101
+  title: 'Reading: Regency proportions'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 25.0
+  workType: ASSIGNMENT
+  topicId: topic_101
+  creationTime: '2025-01-13T09:00:00Z'
+  updateTime: '2025-01-13T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_101
+  dueDate:
+    year: 2025
+    month: 1
+    day: 20
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_001
+  id: cw_102
+  title: 'Quiz: architectural periods'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 50.0
+  workType: ASSIGNMENT
+  topicId: topic_102
+  creationTime: '2025-01-29T09:00:00Z'
+  updateTime: '2025-01-29T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_102
+  dueDate:
+    year: 2025
+    month: 2
+    day: 5
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_001
+  id: cw_103
+  title: Practice tour outline
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 10.0
+  workType: SHORT_ANSWER_QUESTION
+  topicId: topic_102
+  creationTime: '2025-02-03T09:00:00Z'
+  updateTime: '2025-02-03T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_103
+  dueDate:
+    year: 2025
+    month: 2
+    day: 3
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_001
+  id: cw_104
+  title: Interview recording exercise
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 50.0
+  workType: ASSIGNMENT
+  topicId: topic_103
+  creationTime: '2025-02-12T09:00:00Z'
+  updateTime: '2025-02-12T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_104
+  dueDate:
+    year: 2025
+    month: 2
+    day: 19
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_001
+  id: cw_105
+  title: Ethics case study
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 50.0
+  workType: ASSIGNMENT
+  topicId: topic_104
+  creationTime: '2025-02-26T09:00:00Z'
+  updateTime: '2025-02-26T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_105
+  dueDate:
+    year: 2025
+    month: 3
+    day: 5
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_001
+  id: cw_106
+  title: 'Map quiz: the squares'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_104
+  creationTime: '2025-03-03T09:00:00Z'
+  updateTime: '2025-03-03T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_106
+  dueDate:
+    year: 2025
+    month: 3
+    day: 12
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_001
+  id: cw_107
+  title: 'Field notes: Victorian District'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_105
+  creationTime: '2025-03-12T09:00:00Z'
+  updateTime: '2025-03-12T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_107
+  dueDate:
+    year: 2025
+    month: 3
+    day: 21
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_001
+  id: cw_108
+  title: Final walk-through assessment
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 50.0
+  workType: ASSIGNMENT
+  topicId: topic_107
+  creationTime: '2025-04-09T09:00:00Z'
+  updateTime: '2025-04-09T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_108
+  dueDate:
+    year: 2025
+    month: 4
+    day: 18
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_001
+  id: cw_109
+  title: 'Reading: easements primer'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_107
+  creationTime: '2025-04-21T09:00:00Z'
+  updateTime: '2025-04-21T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_109
+  dueDate:
+    year: 2025
+    month: 5
+    day: 2
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_002
+  id: cw_201
+  title: Storytelling workshop prep
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 50.0
+  workType: ASSIGNMENT
+  topicId: topic_201
+  creationTime: '2025-01-13T09:00:00Z'
+  updateTime: '2025-01-13T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_201
+  dueDate:
+    year: 2025
+    month: 1
+    day: 22
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_002
+  id: cw_202
+  title: Archive visit report
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 25.0
+  workType: ASSIGNMENT
+  topicId: topic_202
+  creationTime: '2025-01-29T09:00:00Z'
+  updateTime: '2025-01-29T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_202
+  dueDate:
+    year: 2025
+    month: 2
+    day: 5
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_002
+  id: cw_203
+  title: Tour safety checklist
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 50.0
+  workType: ASSIGNMENT
+  topicId: topic_203
+  creationTime: '2025-02-12T09:00:00Z'
+  updateTime: '2025-02-12T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_203
+  dueDate:
+    year: 2025
+    month: 2
+    day: 21
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_002
+  id: cw_204
+  title: Guest etiquette scenarios
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_204
+  creationTime: '2025-02-26T09:00:00Z'
+  updateTime: '2025-02-26T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_204
+  dueDate:
+    year: 2025
+    month: 3
+    day: 7
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_002
+  id: cw_205
+  title: History timeline drill
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_205
+  creationTime: '2025-03-12T09:00:00Z'
+  updateTime: '2025-03-12T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_205
+  dueDate:
+    year: 2025
+    month: 3
+    day: 21
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_002
+  id: cw_206
+  title: Capstone route proposal
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_206
+  creationTime: '2025-04-02T09:00:00Z'
+  updateTime: '2025-04-02T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_206
+  dueDate:
+    year: 2025
+    month: 4
+    day: 16
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_002
+  id: cw_207
+  title: 'Reading: Regency proportions'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_206
+  creationTime: '2025-04-21T09:00:00Z'
+  updateTime: '2025-04-21T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_207
+  dueDate:
+    year: 2025
+    month: 5
+    day: 5
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_003
+  id: cw_301
+  title: 'Quiz: architectural periods'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 25.0
+  workType: ASSIGNMENT
+  topicId: topic_301
+  creationTime: '2025-01-13T09:00:00Z'
+  updateTime: '2025-01-13T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_301
+  dueDate:
+    year: 2025
+    month: 1
+    day: 20
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_003
+  id: cw_302
+  title: Practice tour outline
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 10.0
+  workType: SHORT_ANSWER_QUESTION
+  topicId: topic_302
+  creationTime: '2025-01-30T09:00:00Z'
+  updateTime: '2025-01-30T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_302
+  dueDate:
+    year: 2025
+    month: 1
+    day: 30
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_003
+  id: cw_303
+  title: Interview recording exercise
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 50.0
+  workType: ASSIGNMENT
+  topicId: topic_303
+  creationTime: '2025-02-19T09:00:00Z'
+  updateTime: '2025-02-19T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_303
+  dueDate:
+    year: 2025
+    month: 2
+    day: 28
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_003
+  id: cw_304
+  title: Ethics case study
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_304
+  creationTime: '2025-03-12T09:00:00Z'
+  updateTime: '2025-03-12T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_304
+  dueDate:
+    year: 2025
+    month: 3
+    day: 28
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_003
+  id: cw_305
+  title: 'Map quiz: the squares'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_305
+  creationTime: '2025-04-02T09:00:00Z'
+  updateTime: '2025-04-02T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_305
+  dueDate:
+    year: 2025
+    month: 4
+    day: 25
+  dueTime:
+    hours: 23
+    minutes: 59
+- courseId: course_005
+  id: cw_501
+  title: 'Field notes: Victorian District'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 10.0
+  workType: ASSIGNMENT
+  topicId: topic_501
+  creationTime: '2025-05-14T18:00:00Z'
+  updateTime: '2025-05-14T18:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_005/a/cw_501
+  dueDate:
+    year: 2025
+    month: 5
+    day: 15
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_401
+  title: Final walk-through assessment
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_401
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_401
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_402
+  title: 'Reading: easements primer'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_401
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_402
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_403
+  title: Storytelling workshop prep
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_401
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_403
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_404
+  title: Archive visit report
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_402
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_404
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_405
+  title: Tour safety checklist
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_402
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_405
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_406
+  title: Guest etiquette scenarios
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_402
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_406
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_407
+  title: History timeline drill
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_402
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_407
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_408
+  title: Capstone route proposal
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_403
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_408
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_409
+  title: 'Reading: Regency proportions'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_403
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_409
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_410
+  title: 'Quiz: architectural periods'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_403
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_410
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_411
+  title: Practice tour outline
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_404
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_411
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_412
+  title: Interview recording exercise
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_404
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_412
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_413
+  title: Ethics case study
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_404
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_413
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_414
+  title: 'Map quiz: the squares'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_404
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_414
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_415
+  title: 'Field notes: Victorian District'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_405
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_415
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_416
+  title: Final walk-through assessment
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_405
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_416
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_417
+  title: 'Reading: easements primer'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_405
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_417
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2026
+  id: cw_418
+  title: Storytelling workshop prep
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_405
+  creationTime: '2026-04-25T08:00:00Z'
+  updateTime: '2026-05-07T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_418
+  dueDate:
+    year: 2026
+    month: 5
+    day: 7
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_419
+  title: Archive visit report
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_406
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_419
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_420
+  title: Tour safety checklist
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_406
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_420
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_421
+  title: Guest etiquette scenarios
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_406
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_421
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_422
+  title: History timeline drill
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_407
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_422
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_423
+  title: Capstone route proposal
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_407
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_423
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_424
+  title: 'Reading: Regency proportions'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_407
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_424
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_425
+  title: 'Quiz: architectural periods'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_407
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_425
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_426
+  title: Practice tour outline
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_408
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_426
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_427
+  title: Interview recording exercise
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_408
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_427
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_428
+  title: Ethics case study
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_408
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_428
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_429
+  title: 'Map quiz: the squares'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_409
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_429
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_430
+  title: 'Field notes: Victorian District'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_409
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_430
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_431
+  title: Final walk-through assessment
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_409
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_431
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_432
+  title: 'Reading: easements primer'
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_409
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_432
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_433
+  title: Storytelling workshop prep
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_410
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_433
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_434
+  title: Archive visit report
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_410
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_434
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_435
+  title: Tour safety checklist
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_410
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_435
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+- courseId: uscg-charter-inspection-2025
+  id: cw_436
+  title: Guest etiquette scenarios
+  description: Docent program assignment.
+  state: PUBLISHED
+  maxPoints: 100.0
+  workType: ASSIGNMENT
+  topicId: topic_410
+  creationTime: '2025-04-25T08:00:00Z'
+  updateTime: '2025-05-09T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_436
+  dueDate:
+    year: 2025
+    month: 5
+    day: 9
+  dueTime:
+    hours: 17
+    minutes: 0
+topics:
+- courseId: course_001
+  topicId: topic_101
+  name: Architecture
+  updateTime: '2025-01-10T08:00:00Z'
+- courseId: course_001
+  topicId: topic_102
+  name: Storytelling
+  updateTime: '2025-01-27T08:00:00Z'
+- courseId: course_001
+  topicId: topic_103
+  name: History
+  updateTime: '2025-02-10T08:00:00Z'
+- courseId: course_001
+  topicId: topic_104
+  name: Ethics
+  updateTime: '2025-02-24T08:00:00Z'
+- courseId: course_001
+  topicId: topic_105
+  name: Fieldwork
+  updateTime: '2025-03-10T08:00:00Z'
+- courseId: course_001
+  topicId: topic_106
+  name: Archives
+  updateTime: '2025-03-24T08:00:00Z'
+- courseId: course_001
+  topicId: topic_107
+  name: Safety
+  updateTime: '2025-04-07T08:00:00Z'
+- courseId: course_002
+  topicId: topic_201
+  name: Assessment
+  updateTime: '2025-01-10T08:00:00Z'
+- courseId: course_002
+  topicId: topic_202
+  name: The Squares
+  updateTime: '2025-01-27T08:00:00Z'
+- courseId: course_002
+  topicId: topic_203
+  name: Easements
+  updateTime: '2025-02-10T08:00:00Z'
+- courseId: course_002
+  topicId: topic_204
+  name: Architecture
+  updateTime: '2025-02-24T08:00:00Z'
+- courseId: course_002
+  topicId: topic_205
+  name: Storytelling
+  updateTime: '2025-03-10T08:00:00Z'
+- courseId: course_002
+  topicId: topic_206
+  name: History
+  updateTime: '2025-03-31T08:00:00Z'
+- courseId: course_003
+  topicId: topic_301
+  name: Ethics
+  updateTime: '2025-01-10T08:00:00Z'
+- courseId: course_003
+  topicId: topic_302
+  name: Fieldwork
+  updateTime: '2025-01-27T08:00:00Z'
+- courseId: course_003
+  topicId: topic_303
+  name: Archives
+  updateTime: '2025-02-17T08:00:00Z'
+- courseId: course_003
+  topicId: topic_304
+  name: Safety
+  updateTime: '2025-03-10T08:00:00Z'
+- courseId: course_003
+  topicId: topic_305
+  name: Assessment
+  updateTime: '2025-03-31T08:00:00Z'
+- courseId: course_005
+  topicId: topic_501
+  name: The Squares
+  updateTime: '2025-01-20T09:00:00Z'
+- courseId: course_005
+  topicId: topic_502
+  name: Easements
+  updateTime: '2025-04-10T14:00:00Z'
+- courseId: uscg-charter-inspection-2026
+  topicId: topic_401
+  name: Architecture
+  updateTime: '2026-04-21T08:00:00Z'
+- courseId: uscg-charter-inspection-2026
+  topicId: topic_402
+  name: Storytelling
+  updateTime: '2026-04-21T08:00:00Z'
+- courseId: uscg-charter-inspection-2026
+  topicId: topic_403
+  name: History
+  updateTime: '2026-04-21T08:00:00Z'
+- courseId: uscg-charter-inspection-2026
+  topicId: topic_404
+  name: Ethics
+  updateTime: '2026-04-21T08:00:00Z'
+- courseId: uscg-charter-inspection-2026
+  topicId: topic_405
+  name: Fieldwork
+  updateTime: '2026-04-21T08:00:00Z'
+- courseId: uscg-charter-inspection-2025
+  topicId: topic_406
+  name: Archives
+  updateTime: '2025-04-23T08:00:00Z'
+- courseId: uscg-charter-inspection-2025
+  topicId: topic_407
+  name: Safety
+  updateTime: '2025-04-23T08:00:00Z'
+- courseId: uscg-charter-inspection-2025
+  topicId: topic_408
+  name: Assessment
+  updateTime: '2025-04-23T08:00:00Z'
+- courseId: uscg-charter-inspection-2025
+  topicId: topic_409
+  name: The Squares
+  updateTime: '2025-04-23T08:00:00Z'
+- courseId: uscg-charter-inspection-2025
+  topicId: topic_410
+  name: Easements
+  updateTime: '2025-04-23T08:00:00Z'
+students:
+- courseId: course_001
+  userId: student_001
+  profile:
+    id: student_001
+    name:
+      fullName: Dr. Reginald Fox
+    emailAddress: josephine.halloway@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student001
+- courseId: course_001
+  userId: student_002
+  profile:
+    id: student_002
+    name:
+      fullName: Delbert Yancey CPA
+    emailAddress: dr.langston@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student002
+- courseId: course_001
+  userId: student_003
+  profile:
+    id: student_003
+    name:
+      fullName: Renard-Whitcomb residence
+    emailAddress: terrence.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student003
+- courseId: course_001
+  userId: student_004
+  profile:
+    id: student_004
+    name:
+      fullName: Corinne Lattimer
+    emailAddress: odetta.sinclair@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student004
+- courseId: course_001
+  userId: student_005
+  profile:
+    id: student_005
+    name:
+      fullName: Dr. Reginald Fox
+    emailAddress: everett.petain@senonprofit.com
+    photoUrl: https://lh3.googleusercontent.com/a/student005
+- courseId: course_001
+  userId: student_006
+  profile:
+    id: student_006
+    name:
+      fullName: Anselm Trumbull
+    emailAddress: terrence.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student006
+- courseId: course_001
+  userId: student_007
+  profile:
+    id: student_007
+    name:
+      fullName: Odetta Sinclair
+    emailAddress: malcolm.kingsley@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student007
+- courseId: course_001
+  userId: student_008
+  profile:
+    id: student_008
+    name:
+      fullName: Miles Carter
+    emailAddress: vivienne.boudreaux@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student008
+- courseId: course_001
+  userId: student_009
+  profile:
+    id: student_009
+    name:
+      fullName: Priscilla Everton
+    emailAddress: nathaniel.kessel@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student009
+- courseId: course_001
+  userId: student_030
+  profile:
+    id: student_030
+    name:
+      fullName: Loretta Simms
+    emailAddress: lorraine.deveraux@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student030
+- courseId: course_001
+  userId: student_031
+  profile:
+    id: student_031
+    name:
+      fullName: Odetta Sinclair
+    emailAddress: renardwhitcomb.residence@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student031
+- courseId: course_001
+  userId: student_032
+  profile:
+    id: student_032
+    name:
+      fullName: Delbert Yancey CPA
+    emailAddress: james.holloway@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student032
+- courseId: course_001
+  userId: student_033
+  profile:
+    id: student_033
+    name:
+      fullName: Malcolm Kingsley
+    emailAddress: grady.colton@savingplaces.org
+    photoUrl: https://lh3.googleusercontent.com/a/student033
+- courseId: course_001
+  userId: student_034
+  profile:
+    id: student_034
+    name:
+      fullName: Josephine Halloway
+    emailAddress: terrence.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student034
+- courseId: course_001
+  userId: student_035
+  profile:
+    id: student_035
+    name:
+      fullName: Henry Beaumont
+    emailAddress: reginald.thackery@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student035
+- courseId: course_001
+  userId: student_036
+  profile:
+    id: student_036
+    name:
+      fullName: Calvin Burke
+    emailAddress: dr.langston@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student036
+- courseId: course_001
+  userId: student_037
+  profile:
+    id: student_037
+    name:
+      fullName: Barrington family
+    emailAddress: barrington.family@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student037
+- courseId: course_001
+  userId: student_038
+  profile:
+    id: student_038
+    name:
+      fullName: Grady Colton
+    emailAddress: grady.colton@savingplaces.org
+    photoUrl: https://lh3.googleusercontent.com/a/student038
+- courseId: course_001
+  userId: student_039
+  profile:
+    id: student_039
+    name:
+      fullName: Cordelia Ashmore-Vance
+    emailAddress: delilah.hargrove@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student039
+- courseId: course_001
+  userId: student_040
+  profile:
+    id: student_040
+    name:
+      fullName: Amos Jeremiah Whitfield
+    emailAddress: terrence.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student040
+- courseId: course_001
+  userId: student_041
+  profile:
+    id: student_041
+    name:
+      fullName: Priscilla Everton
+    emailAddress: anselm.trumbull@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student041
+- courseId: course_001
+  userId: student_042
+  profile:
+    id: student_042
+    name:
+      fullName: Loretta Simms
+    emailAddress: roxanne.ellery@georgiatrust.org
+    photoUrl: https://lh3.googleusercontent.com/a/student042
+- courseId: course_001
+  userId: student_043
+  profile:
+    id: student_043
+    name:
+      fullName: Priscilla Everton
+    emailAddress: everett.petain@senonprofit.com
+    photoUrl: https://lh3.googleusercontent.com/a/student043
+- courseId: course_001
+  userId: student_044
+  profile:
+    id: student_044
+    name:
+      fullName: Amos Jeremiah Whitfield
+    emailAddress: malcolm.kingsley@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student044
+- courseId: course_001
+  userId: student_045
+  profile:
+    id: student_045
+    name:
+      fullName: Josephine Halloway
+    emailAddress: lorraine.deveraux@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student045
+- courseId: course_001
+  userId: student_046
+  profile:
+    id: student_046
+    name:
+      fullName: Everett Petain
+    emailAddress: denise.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student046
+- courseId: course_001
+  userId: student_047
+  profile:
+    id: student_047
+    name:
+      fullName: Cordelia Ashmore-Vance
+    emailAddress: denise.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student047
+- courseId: course_001
+  userId: student_048
+  profile:
+    id: student_048
+    name:
+      fullName: Calvin Burke
+    emailAddress: josephine.halloway@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student048
+- courseId: course_002
+  userId: student_010
+  profile:
+    id: student_010
+    name:
+      fullName: Henry Beaumont
+    emailAddress: malcolm.kingsley@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student010
+- courseId: course_002
+  userId: student_011
+  profile:
+    id: student_011
+    name:
+      fullName: Josephine Halloway
+    emailAddress: amos.whitfield@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student011
+- courseId: course_002
+  userId: student_012
+  profile:
+    id: student_012
+    name:
+      fullName: Amos Jeremiah Whitfield
+    emailAddress: delilah.hargrove@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student012
+- courseId: course_002
+  userId: student_013
+  profile:
+    id: student_013
+    name:
+      fullName: Pastor James Holloway
+    emailAddress: nathaniel.kessel@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student013
+- courseId: course_002
+  userId: student_014
+  profile:
+    id: student_014
+    name:
+      fullName: Pastor James Holloway
+    emailAddress: denise.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student014
+- courseId: course_002
+  userId: student_015
+  profile:
+    id: student_015
+    name:
+      fullName: Henry Beaumont
+    emailAddress: renardwhitcomb.residence@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student015
+- courseId: course_002
+  userId: student_016
+  profile:
+    id: student_016
+    name:
+      fullName: Anselm Trumbull
+    emailAddress: terrence.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student016
+- courseId: course_002
+  userId: student_017
+  profile:
+    id: student_017
+    name:
+      fullName: Delbert Yancey CPA
+    emailAddress: denise.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student017
+- courseId: course_002
+  userId: student_018
+  profile:
+    id: student_018
+    name:
+      fullName: Lorraine Deveraux
+    emailAddress: reginald.thackery@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student018
+- courseId: course_002
+  userId: student_019
+  profile:
+    id: student_019
+    name:
+      fullName: Henry Beaumont
+    emailAddress: roxanne.ellery@georgiatrust.org
+    photoUrl: https://lh3.googleusercontent.com/a/student019
+- courseId: course_002
+  userId: student_050
+  profile:
+    id: student_050
+    name:
+      fullName: Odetta Sinclair
+    emailAddress: dr.langston@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student050
+- courseId: course_002
+  userId: student_051
+  profile:
+    id: student_051
+    name:
+      fullName: Lorraine Deveraux
+    emailAddress: roxanne.ellery@georgiatrust.org
+    photoUrl: https://lh3.googleusercontent.com/a/student051
+- courseId: course_002
+  userId: student_052
+  profile:
+    id: student_052
+    name:
+      fullName: Delbert Yancey CPA
+    emailAddress: reginald.fox@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student052
+- courseId: course_002
+  userId: student_053
+  profile:
+    id: student_053
+    name:
+      fullName: Pastor James Holloway
+    emailAddress: dr.langston@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student053
+- courseId: course_002
+  userId: student_054
+  profile:
+    id: student_054
+    name:
+      fullName: Marcus Whitby
+    emailAddress: ellis.marchand@ashcrofthardwoods.com
+    photoUrl: https://lh3.googleusercontent.com/a/student054
+- courseId: course_002
+  userId: student_055
+  profile:
+    id: student_055
+    name:
+      fullName: Nathaniel Kessel
+    emailAddress: barrett.whitehall@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student055
+- courseId: course_002
+  userId: student_056
+  profile:
+    id: student_056
+    name:
+      fullName: Cordelia Ashmore-Vance
+    emailAddress: everett.petain@senonprofit.com
+    photoUrl: https://lh3.googleusercontent.com/a/student056
+- courseId: course_002
+  userId: student_057
+  profile:
+    id: student_057
+    name:
+      fullName: Miles Carter
+    emailAddress: calvin.burke@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student057
+- courseId: course_002
+  userId: student_058
+  profile:
+    id: student_058
+    name:
+      fullName: Amos Jeremiah Whitfield
+    emailAddress: delilah.hargrove@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student058
+- courseId: course_002
+  userId: student_059
+  profile:
+    id: student_059
+    name:
+      fullName: Cordelia Ashmore-Vance
+    emailAddress: ellis.marchand@ashcrofthardwoods.com
+    photoUrl: https://lh3.googleusercontent.com/a/student059
+- courseId: course_002
+  userId: student_060
+  profile:
+    id: student_060
+    name:
+      fullName: Cordelia Ashmore-Vance
+    emailAddress: everett.petain@senonprofit.com
+    photoUrl: https://lh3.googleusercontent.com/a/student060
+- courseId: course_002
+  userId: student_061
+  profile:
+    id: student_061
+    name:
+      fullName: Loretta Simms
+    emailAddress: amos.whitfield@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student061
+- courseId: course_002
+  userId: student_062
+  profile:
+    id: student_062
+    name:
+      fullName: Reginald Thackery
+    emailAddress: josephine.halloway@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student062
+- courseId: course_002
+  userId: student_063
+  profile:
+    id: student_063
+    name:
+      fullName: Corinne Lattimer
+    emailAddress: barrett.whitehall@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student063
+- courseId: course_002
+  userId: student_064
+  profile:
+    id: student_064
+    name:
+      fullName: Barrington family
+    emailAddress: grady.colton@savingplaces.org
+    photoUrl: https://lh3.googleusercontent.com/a/student064
+- courseId: course_002
+  userId: student_065
+  profile:
+    id: student_065
+    name:
+      fullName: Marcus Whitby
+    emailAddress: corinne.lattimer@halliwell-cpa.com
+    photoUrl: https://lh3.googleusercontent.com/a/student065
+- courseId: course_002
+  userId: student_066
+  profile:
+    id: student_066
+    name:
+      fullName: Reginald Thackery
+    emailAddress: corinne.lattimer@halliwell-cpa.com
+    photoUrl: https://lh3.googleusercontent.com/a/student066
+- courseId: course_002
+  userId: student_067
+  profile:
+    id: student_067
+    name:
+      fullName: Dr. Reginald Fox
+    emailAddress: corinne.lattimer@halliwell-cpa.com
+    photoUrl: https://lh3.googleusercontent.com/a/student067
+- courseId: course_002
+  userId: student_068
+  profile:
+    id: student_068
+    name:
+      fullName: Pastor James Holloway
+    emailAddress: vivienne.boudreaux@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student068
+- courseId: course_002
+  userId: student_069
+  profile:
+    id: student_069
+    name:
+      fullName: Ellis Marchand
+    emailAddress: priscilla.everton@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student069
+- courseId: course_002
+  userId: student_070
+  profile:
+    id: student_070
+    name:
+      fullName: Miles Carter
+    emailAddress: terrence.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student070
+- courseId: course_002
+  userId: student_071
+  profile:
+    id: student_071
+    name:
+      fullName: Delbert Yancey CPA
+    emailAddress: wesley.farraday@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student071
+- courseId: course_003
+  userId: student_020
+  profile:
+    id: student_020
+    name:
+      fullName: Cordelia Ashmore-Vance
+    emailAddress: dr.langston@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student020
+- courseId: course_003
+  userId: student_021
+  profile:
+    id: student_021
+    name:
+      fullName: Yvonne Cabrera
+    emailAddress: corinne.lattimer@halliwell-cpa.com
+    photoUrl: https://lh3.googleusercontent.com/a/student021
+- courseId: course_003
+  userId: student_022
+  profile:
+    id: student_022
+    name:
+      fullName: Ellis Marchand
+    emailAddress: calvin.burke@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student022
+- courseId: course_003
+  userId: student_023
+  profile:
+    id: student_023
+    name:
+      fullName: Reginald Thackery
+    emailAddress: renardwhitcomb.residence@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student023
+- courseId: course_003
+  userId: student_024
+  profile:
+    id: student_024
+    name:
+      fullName: Ellis Marchand
+    emailAddress: wesley.farraday@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student024
+- courseId: course_003
+  userId: student_025
+  profile:
+    id: student_025
+    name:
+      fullName: Odetta Sinclair
+    emailAddress: calvin.burke@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student025
+- courseId: course_003
+  userId: student_026
+  profile:
+    id: student_026
+    name:
+      fullName: Corinne Lattimer
+    emailAddress: delilah.hargrove@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student026
+- courseId: course_003
+  userId: student_027
+  profile:
+    id: student_027
+    name:
+      fullName: Lorraine Deveraux
+    emailAddress: calvin.burke@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student027
+- courseId: course_003
+  userId: student_028
+  profile:
+    id: student_028
+    name:
+      fullName: Ruth Ann Greer
+    emailAddress: corinne.lattimer@halliwell-cpa.com
+    photoUrl: https://lh3.googleusercontent.com/a/student028
+- courseId: course_003
+  userId: student_029
+  profile:
+    id: student_029
+    name:
+      fullName: Renard-Whitcomb residence
+    emailAddress: delilah.hargrove@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student029
+- courseId: course_003
+  userId: student_072
+  profile:
+    id: student_072
+    name:
+      fullName: Everett Petain
+    emailAddress: barrett.whitehall@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student072
+- courseId: course_003
+  userId: student_073
+  profile:
+    id: student_073
+    name:
+      fullName: Nathaniel Kessel
+    emailAddress: james.holloway@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student073
+- courseId: course_003
+  userId: student_074
+  profile:
+    id: student_074
+    name:
+      fullName: Dr. Vivienne Boudreaux
+    emailAddress: ellis.marchand@ashcrofthardwoods.com
+    photoUrl: https://lh3.googleusercontent.com/a/student074
+- courseId: course_003
+  userId: student_075
+  profile:
+    id: student_075
+    name:
+      fullName: Terrence Carter
+    emailAddress: barrington.family@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student075
+- courseId: course_003
+  userId: student_076
+  profile:
+    id: student_076
+    name:
+      fullName: Loretta Simms
+    emailAddress: reginald.fox@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student076
+- courseId: course_003
+  userId: student_077
+  profile:
+    id: student_077
+    name:
+      fullName: Loretta Simms
+    emailAddress: ruthann.greer@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student077
+- courseId: course_003
+  userId: student_078
+  profile:
+    id: student_078
+    name:
+      fullName: Renard-Whitcomb residence
+    emailAddress: barrett.whitehall@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student078
+- courseId: course_003
+  userId: student_079
+  profile:
+    id: student_079
+    name:
+      fullName: Rev. Delilah Hargrove
+    emailAddress: priscilla.everton@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student079
+- courseId: course_003
+  userId: student_080
+  profile:
+    id: student_080
+    name:
+      fullName: Miriam Aldridge
+    emailAddress: dr.langston@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student080
+- courseId: course_003
+  userId: student_081
+  profile:
+    id: student_081
+    name:
+      fullName: Pastor James Holloway
+    emailAddress: dr.langston@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student081
+- courseId: course_003
+  userId: student_082
+  profile:
+    id: student_082
+    name:
+      fullName: Ruth Ann Greer
+    emailAddress: reginald.thackery@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student082
+- courseId: course_003
+  userId: student_083
+  profile:
+    id: student_083
+    name:
+      fullName: Loretta Simms
+    emailAddress: ruthann.greer@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student083
+- courseId: course_003
+  userId: student_084
+  profile:
+    id: student_084
+    name:
+      fullName: Delbert Yancey CPA
+    emailAddress: anselm.trumbull@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student084
+- courseId: course_003
+  userId: student_085
+  profile:
+    id: student_085
+    name:
+      fullName: Marcus Whitby
+    emailAddress: delbert.yancey@yanceyballard-cpa.com
+    photoUrl: https://lh3.googleusercontent.com/a/student085
+- courseId: course_005
+  userId: student_086
+  profile:
+    id: student_086
+    name:
+      fullName: Yvonne Cabrera
+    emailAddress: vivienne.boudreaux@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student086
+- courseId: course_005
+  userId: student_087
+  profile:
+    id: student_087
+    name:
+      fullName: Calvin Burke
+    emailAddress: delilah.hargrove@shpa-savannah.org
+    photoUrl: https://lh3.googleusercontent.com/a/student087
+- courseId: course_005
+  userId: student_088
+  profile:
+    id: student_088
+    name:
+      fullName: Ellis Marchand
+    emailAddress: everett.petain@senonprofit.com
+    photoUrl: https://lh3.googleusercontent.com/a/student088
+- courseId: uscg-charter-inspection-2026
+  userId: student_100
+  profile:
+    id: student_100
+    name:
+      fullName: Renard-Whitcomb residence
+    emailAddress: terrence.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student100
+- courseId: uscg-charter-inspection-2026
+  userId: student_101
+  profile:
+    id: student_101
+    name:
+      fullName: Reginald Thackery
+    emailAddress: grady.colton@savingplaces.org
+    photoUrl: https://lh3.googleusercontent.com/a/student101
+- courseId: uscg-charter-inspection-2025
+  userId: student_100
+  profile:
+    id: student_100
+    name:
+      fullName: Renard-Whitcomb residence
+    emailAddress: terrence.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/student100
+- courseId: uscg-charter-inspection-2025
+  userId: student_101
+  profile:
+    id: student_101
+    name:
+      fullName: Reginald Thackery
+    emailAddress: grady.colton@savingplaces.org
+    photoUrl: https://lh3.googleusercontent.com/a/student101
+teachers:
+- courseId: course_001
+  userId: teacher_001
+  profile:
+    id: teacher_001
+    name:
+      fullName: Terrence Carter
+    emailAddress: denise.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/teacher001
+- courseId: course_002
+  userId: teacher_001
+  profile:
+    id: teacher_001
+    name:
+      fullName: Terrence Carter
+    emailAddress: denise.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/teacher001
+- courseId: course_003
+  userId: teacher_001
+  profile:
+    id: teacher_001
+    name:
+      fullName: Terrence Carter
+    emailAddress: denise.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/teacher001
+- courseId: course_004
+  userId: teacher_001
+  profile:
+    id: teacher_001
+    name:
+      fullName: Terrence Carter
+    emailAddress: denise.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/teacher001
+- courseId: course_002
+  userId: teacher_002
+  profile:
+    id: teacher_002
+    name:
+      fullName: Yvonne Cabrera
+    emailAddress: denise.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/teacher002
+- courseId: course_005
+  userId: teacher_003
+  profile:
+    id: teacher_003
+    name:
+      fullName: Dr. Reginald Fox
+    emailAddress: denise.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/teacher003
+- courseId: uscg-charter-inspection-2026
+  userId: teacher_004
+  profile:
+    id: teacher_004
+    name:
+      fullName: Renard-Whitcomb residence
+    emailAddress: terrence.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/teacher003
+- courseId: uscg-charter-inspection-2025
+  userId: teacher_004
+  profile:
+    id: teacher_004
+    name:
+      fullName: Renard-Whitcomb residence
+    emailAddress: terrence.carter@Finthesiss.ai
+    photoUrl: https://lh3.googleusercontent.com/a/teacher003
+submissions:
+- courseId: course_001
+  courseWorkId: cw_101
+  id: sub_001
+  userId: student_001
+  state: RETURNED
+  late: false
+  creationTime: '2025-01-14T10:00:00Z'
+  updateTime: '2025-01-22T14:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_101/submissions/sub_001
+  assignedGrade: 23.0
+  draftGrade: 23.0
+- courseId: course_001
+  courseWorkId: cw_101
+  id: sub_002
+  userId: student_002
+  state: RETURNED
+  late: false
+  creationTime: '2025-01-15T08:30:00Z'
+  updateTime: '2025-01-22T14:05:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_101/submissions/sub_002
+  assignedGrade: 25.0
+  draftGrade: 25.0
+- courseId: course_001
+  courseWorkId: cw_101
+  id: sub_003
+  userId: student_003
+  state: RETURNED
+  late: false
+  creationTime: '2025-01-18T22:45:00Z'
+  updateTime: '2025-01-22T14:10:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_101/submissions/sub_003
+  assignedGrade: 20.0
+  draftGrade: 20.0
+- courseId: course_001
+  courseWorkId: cw_101
+  id: sub_004
+  userId: student_004
+  state: RETURNED
+  late: true
+  creationTime: '2025-01-21T11:00:00Z'
+  updateTime: '2025-01-23T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_101/submissions/sub_004
+  assignedGrade: 18.0
+  draftGrade: 18.0
+- courseId: course_001
+  courseWorkId: cw_101
+  id: sub_005
+  userId: student_005
+  state: RETURNED
+  late: false
+  creationTime: '2025-01-19T15:20:00Z'
+  updateTime: '2025-01-22T14:15:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_101/submissions/sub_005
+  assignedGrade: 22.0
+  draftGrade: 22.0
+- courseId: course_001
+  courseWorkId: cw_102
+  id: sub_006
+  userId: student_001
+  state: RETURNED
+  late: false
+  creationTime: '2025-02-03T09:00:00Z'
+  updateTime: '2025-02-07T10:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_102/submissions/sub_006
+  assignedGrade: 45.0
+  draftGrade: 45.0
+- courseId: course_001
+  courseWorkId: cw_102
+  id: sub_007
+  userId: student_002
+  state: RETURNED
+  late: false
+  creationTime: '2025-02-02T16:30:00Z'
+  updateTime: '2025-02-07T10:05:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_102/submissions/sub_007
+  assignedGrade: 50.0
+  draftGrade: 50.0
+- courseId: course_001
+  courseWorkId: cw_102
+  id: sub_008
+  userId: student_003
+  state: RETURNED
+  late: false
+  creationTime: '2025-02-04T20:00:00Z'
+  updateTime: '2025-02-07T10:10:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_102/submissions/sub_008
+  assignedGrade: 38.0
+  draftGrade: 38.0
+- courseId: course_001
+  courseWorkId: cw_102
+  id: sub_009
+  userId: student_006
+  state: RETURNED
+  late: false
+  creationTime: '2025-02-04T14:00:00Z'
+  updateTime: '2025-02-07T10:15:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_102/submissions/sub_009
+  assignedGrade: 42.0
+  draftGrade: 42.0
+- courseId: course_001
+  courseWorkId: cw_102
+  id: sub_010
+  userId: student_004
+  state: RETURNED
+  late: true
+  creationTime: '2025-02-06T23:50:00Z'
+  updateTime: '2025-02-08T11:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_102/submissions/sub_010
+  assignedGrade: 30.0
+  draftGrade: 30.0
+- courseId: course_001
+  courseWorkId: cw_104
+  id: sub_011
+  userId: student_001
+  state: RETURNED
+  late: false
+  creationTime: '2025-02-17T10:00:00Z'
+  updateTime: '2025-02-21T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_104/submissions/sub_011
+  assignedGrade: 48.0
+  draftGrade: 48.0
+- courseId: course_001
+  courseWorkId: cw_104
+  id: sub_012
+  userId: student_002
+  state: RETURNED
+  late: false
+  creationTime: '2025-02-18T08:00:00Z'
+  updateTime: '2025-02-21T09:05:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_104/submissions/sub_012
+  assignedGrade: 50.0
+  draftGrade: 50.0
+- courseId: course_001
+  courseWorkId: cw_104
+  id: sub_013
+  userId: student_005
+  state: RETURNED
+  late: false
+  creationTime: '2025-02-19T22:30:00Z'
+  updateTime: '2025-02-21T09:10:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_104/submissions/sub_013
+  assignedGrade: 35.0
+  draftGrade: 35.0
+- courseId: course_001
+  courseWorkId: cw_105
+  id: sub_014
+  userId: student_001
+  state: RETURNED
+  late: false
+  creationTime: '2025-03-03T11:00:00Z'
+  updateTime: '2025-03-07T10:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_105/submissions/sub_014
+  assignedGrade: 47.0
+  draftGrade: 47.0
+- courseId: course_001
+  courseWorkId: cw_105
+  id: sub_015
+  userId: student_003
+  state: RETURNED
+  late: false
+  creationTime: '2025-03-04T15:00:00Z'
+  updateTime: '2025-03-07T10:05:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_105/submissions/sub_015
+  assignedGrade: 40.0
+  draftGrade: 40.0
+- courseId: course_001
+  courseWorkId: cw_106
+  id: sub_016
+  userId: student_001
+  state: RETURNED
+  late: false
+  creationTime: '2025-03-10T09:00:00Z'
+  updateTime: '2025-03-14T14:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_106/submissions/sub_016
+  assignedGrade: 92.0
+  draftGrade: 92.0
+- courseId: course_001
+  courseWorkId: cw_106
+  id: sub_017
+  userId: student_002
+  state: RETURNED
+  late: false
+  creationTime: '2025-03-11T08:30:00Z'
+  updateTime: '2025-03-14T14:05:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_106/submissions/sub_017
+  assignedGrade: 98.0
+  draftGrade: 98.0
+- courseId: course_001
+  courseWorkId: cw_106
+  id: sub_018
+  userId: student_003
+  state: RETURNED
+  late: false
+  creationTime: '2025-03-11T22:00:00Z'
+  updateTime: '2025-03-14T14:10:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_106/submissions/sub_018
+  assignedGrade: 75.0
+  draftGrade: 75.0
+- courseId: course_001
+  courseWorkId: cw_106
+  id: sub_019
+  userId: student_006
+  state: RETURNED
+  late: false
+  creationTime: '2025-03-10T16:00:00Z'
+  updateTime: '2025-03-14T14:15:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_106/submissions/sub_019
+  assignedGrade: 88.0
+  draftGrade: 88.0
+- courseId: course_001
+  courseWorkId: cw_107
+  id: sub_020
+  userId: student_001
+  state: RETURNED
+  late: false
+  creationTime: '2025-03-19T10:00:00Z'
+  updateTime: '2025-03-23T11:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_107/submissions/sub_020
+  assignedGrade: 95.0
+  draftGrade: 95.0
+- courseId: course_001
+  courseWorkId: cw_107
+  id: sub_021
+  userId: student_002
+  state: RETURNED
+  late: false
+  creationTime: '2025-03-18T14:00:00Z'
+  updateTime: '2025-03-23T11:05:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_107/submissions/sub_021
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: course_001
+  courseWorkId: cw_107
+  id: sub_022
+  userId: student_005
+  state: RETURNED
+  late: false
+  creationTime: '2025-03-20T23:00:00Z'
+  updateTime: '2025-03-24T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_107/submissions/sub_022
+  assignedGrade: 70.0
+  draftGrade: 70.0
+- courseId: course_001
+  courseWorkId: cw_107
+  id: sub_023
+  userId: student_004
+  state: NEW
+  late: false
+  creationTime: '2025-03-12T09:00:00Z'
+  updateTime: '2025-03-12T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_107/submissions/sub_023
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_001
+  courseWorkId: cw_108
+  id: sub_024
+  userId: student_001
+  state: TURNED_IN
+  late: false
+  creationTime: '2025-04-15T10:00:00Z'
+  updateTime: '2025-04-15T10:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_108/submissions/sub_024
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_001
+  courseWorkId: cw_108
+  id: sub_025
+  userId: student_002
+  state: TURNED_IN
+  late: false
+  creationTime: '2025-04-16T08:00:00Z'
+  updateTime: '2025-04-16T08:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_108/submissions/sub_025
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_001
+  courseWorkId: cw_108
+  id: sub_026
+  userId: student_003
+  state: TURNED_IN
+  late: false
+  creationTime: '2025-04-17T22:30:00Z'
+  updateTime: '2025-04-17T22:30:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_108/submissions/sub_026
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_001
+  courseWorkId: cw_108
+  id: sub_027
+  userId: student_006
+  state: RECLAIMED_BY_STUDENT
+  late: false
+  creationTime: '2025-04-14T14:00:00Z'
+  updateTime: '2025-04-16T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_108/submissions/sub_027
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_001
+  courseWorkId: cw_108
+  id: sub_028
+  userId: student_005
+  state: NEW
+  late: false
+  creationTime: '2025-04-09T09:00:00Z'
+  updateTime: '2025-04-09T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_108/submissions/sub_028
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_001
+  courseWorkId: cw_109
+  id: sub_029
+  userId: student_001
+  state: TURNED_IN
+  late: false
+  creationTime: '2025-04-28T09:00:00Z'
+  updateTime: '2025-04-28T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_109/submissions/sub_029
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_001
+  courseWorkId: cw_109
+  id: sub_030
+  userId: student_002
+  state: TURNED_IN
+  late: false
+  creationTime: '2025-04-27T16:00:00Z'
+  updateTime: '2025-04-27T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_109/submissions/sub_030
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_001
+  courseWorkId: cw_109
+  id: sub_031
+  userId: student_003
+  state: NEW
+  late: false
+  creationTime: '2025-04-21T09:00:00Z'
+  updateTime: '2025-04-21T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_109/submissions/sub_031
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_001
+  courseWorkId: cw_109
+  id: sub_032
+  userId: student_005
+  state: NEW
+  late: false
+  creationTime: '2025-04-21T09:00:00Z'
+  updateTime: '2025-04-21T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_001/a/cw_109/submissions/sub_032
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_002
+  courseWorkId: cw_201
+  id: sub_033
+  userId: student_010
+  state: RETURNED
+  late: false
+  creationTime: '2025-01-20T10:00:00Z'
+  updateTime: '2025-01-24T14:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_201/submissions/sub_033
+  assignedGrade: 45.0
+  draftGrade: 45.0
+- courseId: course_002
+  courseWorkId: cw_201
+  id: sub_034
+  userId: student_011
+  state: RETURNED
+  late: false
+  creationTime: '2025-01-19T15:00:00Z'
+  updateTime: '2025-01-24T14:05:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_201/submissions/sub_034
+  assignedGrade: 48.0
+  draftGrade: 48.0
+- courseId: course_002
+  courseWorkId: cw_201
+  id: sub_035
+  userId: student_012
+  state: RETURNED
+  late: false
+  creationTime: '2025-01-21T22:00:00Z'
+  updateTime: '2025-01-24T14:10:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_201/submissions/sub_035
+  assignedGrade: 38.0
+  draftGrade: 38.0
+- courseId: course_002
+  courseWorkId: cw_201
+  id: sub_036
+  userId: student_013
+  state: RETURNED
+  late: false
+  creationTime: '2025-01-18T09:00:00Z'
+  updateTime: '2025-01-24T14:15:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_201/submissions/sub_036
+  assignedGrade: 50.0
+  draftGrade: 50.0
+- courseId: course_002
+  courseWorkId: cw_202
+  id: sub_037
+  userId: student_010
+  state: RETURNED
+  late: false
+  creationTime: '2025-02-03T10:00:00Z'
+  updateTime: '2025-02-07T11:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_202/submissions/sub_037
+  assignedGrade: 22.0
+  draftGrade: 22.0
+- courseId: course_002
+  courseWorkId: cw_202
+  id: sub_038
+  userId: student_011
+  state: RETURNED
+  late: false
+  creationTime: '2025-02-02T14:00:00Z'
+  updateTime: '2025-02-07T11:05:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_202/submissions/sub_038
+  assignedGrade: 25.0
+  draftGrade: 25.0
+- courseId: course_002
+  courseWorkId: cw_202
+  id: sub_039
+  userId: student_014
+  state: RETURNED
+  late: false
+  creationTime: '2025-02-04T21:00:00Z'
+  updateTime: '2025-02-07T11:10:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_202/submissions/sub_039
+  assignedGrade: 20.0
+  draftGrade: 20.0
+- courseId: course_002
+  courseWorkId: cw_203
+  id: sub_040
+  userId: student_010
+  state: RETURNED
+  late: false
+  creationTime: '2025-02-19T10:00:00Z'
+  updateTime: '2025-02-23T10:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_203/submissions/sub_040
+  assignedGrade: 42.0
+  draftGrade: 42.0
+- courseId: course_002
+  courseWorkId: cw_203
+  id: sub_041
+  userId: student_011
+  state: RETURNED
+  late: false
+  creationTime: '2025-02-18T16:00:00Z'
+  updateTime: '2025-02-23T10:05:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_203/submissions/sub_041
+  assignedGrade: 48.0
+  draftGrade: 48.0
+- courseId: course_002
+  courseWorkId: cw_203
+  id: sub_042
+  userId: student_012
+  state: RETURNED
+  late: true
+  creationTime: '2025-02-22T23:50:00Z'
+  updateTime: '2025-02-24T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_203/submissions/sub_042
+  assignedGrade: 35.0
+  draftGrade: 35.0
+- courseId: course_002
+  courseWorkId: cw_204
+  id: sub_043
+  userId: student_010
+  state: RETURNED
+  late: false
+  creationTime: '2025-03-05T10:00:00Z'
+  updateTime: '2025-03-09T14:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_204/submissions/sub_043
+  assignedGrade: 85.0
+  draftGrade: 85.0
+- courseId: course_002
+  courseWorkId: cw_204
+  id: sub_044
+  userId: student_011
+  state: RETURNED
+  late: false
+  creationTime: '2025-03-04T14:00:00Z'
+  updateTime: '2025-03-09T14:05:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_204/submissions/sub_044
+  assignedGrade: 92.0
+  draftGrade: 92.0
+- courseId: course_002
+  courseWorkId: cw_204
+  id: sub_045
+  userId: student_013
+  state: RETURNED
+  late: false
+  creationTime: '2025-03-06T20:00:00Z'
+  updateTime: '2025-03-09T14:10:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_204/submissions/sub_045
+  assignedGrade: 78.0
+  draftGrade: 78.0
+- courseId: course_002
+  courseWorkId: cw_205
+  id: sub_046
+  userId: student_010
+  state: TURNED_IN
+  late: false
+  creationTime: '2025-03-19T10:00:00Z'
+  updateTime: '2025-03-19T10:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_205/submissions/sub_046
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_002
+  courseWorkId: cw_205
+  id: sub_047
+  userId: student_011
+  state: TURNED_IN
+  late: false
+  creationTime: '2025-03-18T15:00:00Z'
+  updateTime: '2025-03-18T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_205/submissions/sub_047
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_002
+  courseWorkId: cw_205
+  id: sub_048
+  userId: student_012
+  state: TURNED_IN
+  late: false
+  creationTime: '2025-03-20T23:00:00Z'
+  updateTime: '2025-03-20T23:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_205/submissions/sub_048
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_002
+  courseWorkId: cw_205
+  id: sub_049
+  userId: student_014
+  state: RECLAIMED_BY_STUDENT
+  late: false
+  creationTime: '2025-03-17T11:00:00Z'
+  updateTime: '2025-03-19T08:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_205/submissions/sub_049
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_002
+  courseWorkId: cw_206
+  id: sub_050
+  userId: student_010
+  state: TURNED_IN
+  late: false
+  creationTime: '2025-04-14T10:00:00Z'
+  updateTime: '2025-04-14T10:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_206/submissions/sub_050
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_002
+  courseWorkId: cw_206
+  id: sub_051
+  userId: student_011
+  state: TURNED_IN
+  late: false
+  creationTime: '2025-04-13T16:00:00Z'
+  updateTime: '2025-04-13T16:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_206/submissions/sub_051
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_002
+  courseWorkId: cw_206
+  id: sub_052
+  userId: student_013
+  state: TURNED_IN
+  late: true
+  creationTime: '2025-04-17T09:00:00Z'
+  updateTime: '2025-04-17T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_206/submissions/sub_052
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_002
+  courseWorkId: cw_206
+  id: sub_053
+  userId: student_012
+  state: NEW
+  late: false
+  creationTime: '2025-04-02T09:00:00Z'
+  updateTime: '2025-04-02T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_206/submissions/sub_053
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_002
+  courseWorkId: cw_207
+  id: sub_054
+  userId: student_010
+  state: NEW
+  late: false
+  creationTime: '2025-04-21T09:00:00Z'
+  updateTime: '2025-04-21T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_207/submissions/sub_054
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_002
+  courseWorkId: cw_207
+  id: sub_055
+  userId: student_011
+  state: NEW
+  late: false
+  creationTime: '2025-04-21T09:00:00Z'
+  updateTime: '2025-04-21T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_002/a/cw_207/submissions/sub_055
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_003
+  courseWorkId: cw_301
+  id: sub_056
+  userId: student_020
+  state: RETURNED
+  late: false
+  creationTime: '2025-01-18T10:00:00Z'
+  updateTime: '2025-01-22T14:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_301/submissions/sub_056
+  assignedGrade: 23.0
+  draftGrade: 23.0
+- courseId: course_003
+  courseWorkId: cw_301
+  id: sub_057
+  userId: student_021
+  state: RETURNED
+  late: false
+  creationTime: '2025-01-17T09:00:00Z'
+  updateTime: '2025-01-22T14:05:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_301/submissions/sub_057
+  assignedGrade: 25.0
+  draftGrade: 25.0
+- courseId: course_003
+  courseWorkId: cw_301
+  id: sub_058
+  userId: student_022
+  state: RETURNED
+  late: false
+  creationTime: '2025-01-19T22:00:00Z'
+  updateTime: '2025-01-22T14:10:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_301/submissions/sub_058
+  assignedGrade: 19.0
+  draftGrade: 19.0
+- courseId: course_003
+  courseWorkId: cw_301
+  id: sub_059
+  userId: student_023
+  state: RETURNED
+  late: true
+  creationTime: '2025-01-22T10:00:00Z'
+  updateTime: '2025-01-24T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_301/submissions/sub_059
+  assignedGrade: 15.0
+  draftGrade: 15.0
+- courseId: course_003
+  courseWorkId: cw_302
+  id: sub_060
+  userId: student_020
+  state: RETURNED
+  late: false
+  creationTime: '2025-01-30T10:00:00Z'
+  updateTime: '2025-02-03T10:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_302/submissions/sub_060
+  assignedGrade: 9.0
+  draftGrade: 9.0
+- courseId: course_003
+  courseWorkId: cw_302
+  id: sub_061
+  userId: student_021
+  state: RETURNED
+  late: false
+  creationTime: '2025-01-30T08:00:00Z'
+  updateTime: '2025-02-03T10:05:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_302/submissions/sub_061
+  assignedGrade: 10.0
+  draftGrade: 10.0
+- courseId: course_003
+  courseWorkId: cw_303
+  id: sub_062
+  userId: student_020
+  state: RETURNED
+  late: false
+  creationTime: '2025-02-25T10:00:00Z'
+  updateTime: '2025-03-03T11:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_303/submissions/sub_062
+  assignedGrade: 42.0
+  draftGrade: 42.0
+- courseId: course_003
+  courseWorkId: cw_303
+  id: sub_063
+  userId: student_021
+  state: RETURNED
+  late: false
+  creationTime: '2025-02-24T14:00:00Z'
+  updateTime: '2025-03-03T11:05:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_303/submissions/sub_063
+  assignedGrade: 48.0
+  draftGrade: 48.0
+- courseId: course_003
+  courseWorkId: cw_303
+  id: sub_064
+  userId: student_022
+  state: RETURNED
+  late: false
+  creationTime: '2025-02-27T20:00:00Z'
+  updateTime: '2025-03-03T11:10:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_303/submissions/sub_064
+  assignedGrade: 35.0
+  draftGrade: 35.0
+- courseId: course_003
+  courseWorkId: cw_303
+  id: sub_065
+  userId: student_023
+  state: RETURNED
+  late: true
+  creationTime: '2025-03-02T23:50:00Z'
+  updateTime: '2025-03-04T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_303/submissions/sub_065
+  assignedGrade: 28.0
+  draftGrade: 28.0
+- courseId: course_003
+  courseWorkId: cw_304
+  id: sub_066
+  userId: student_020
+  state: TURNED_IN
+  late: false
+  creationTime: '2025-03-25T10:00:00Z'
+  updateTime: '2025-03-25T10:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_304/submissions/sub_066
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_003
+  courseWorkId: cw_304
+  id: sub_067
+  userId: student_021
+  state: TURNED_IN
+  late: false
+  creationTime: '2025-03-24T14:00:00Z'
+  updateTime: '2025-03-24T14:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_304/submissions/sub_067
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_003
+  courseWorkId: cw_304
+  id: sub_068
+  userId: student_022
+  state: TURNED_IN
+  late: false
+  creationTime: '2025-03-27T20:00:00Z'
+  updateTime: '2025-03-27T20:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_304/submissions/sub_068
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_003
+  courseWorkId: cw_304
+  id: sub_069
+  userId: student_023
+  state: RECLAIMED_BY_STUDENT
+  late: false
+  creationTime: '2025-03-23T11:00:00Z'
+  updateTime: '2025-03-25T08:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_304/submissions/sub_069
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_003
+  courseWorkId: cw_305
+  id: sub_070
+  userId: student_020
+  state: TURNED_IN
+  late: false
+  creationTime: '2025-04-22T10:00:00Z'
+  updateTime: '2025-04-22T10:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_305/submissions/sub_070
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_003
+  courseWorkId: cw_305
+  id: sub_071
+  userId: student_021
+  state: NEW
+  late: false
+  creationTime: '2025-04-02T09:00:00Z'
+  updateTime: '2025-04-02T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_305/submissions/sub_071
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_003
+  courseWorkId: cw_305
+  id: sub_072
+  userId: student_022
+  state: NEW
+  late: false
+  creationTime: '2025-04-02T09:00:00Z'
+  updateTime: '2025-04-02T09:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_305/submissions/sub_072
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_003
+  courseWorkId: cw_305
+  id: sub_073
+  userId: student_023
+  state: TURNED_IN
+  late: false
+  creationTime: '2025-04-23T15:00:00Z'
+  updateTime: '2025-04-23T15:00:00Z'
+  alternateLink: https://classroom.google.com/c/course_003/a/cw_305/submissions/sub_073
+  assignedGrade: null
+  draftGrade: null
+- courseId: course_005
+  courseWorkId: cw_501
+  id: sub_074
+  userId: student_086
+  state: TURNED_IN
+  late: false
+  creationTime: '2025-05-15T14:22:00Z'
+  updateTime: '2025-05-15T14:22:00Z'
+  alternateLink: https://classroom.google.com/c/course_005/a/cw_501/submissions/sub_074
+  assignedGrade: null
+  draftGrade: null
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_401
+  id: sub_200
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T10:00:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_401/submissions/sub_074
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_402
+  id: sub_201
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T10:20:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_402/submissions/sub_075
+  assignedGrade: 0.0
+  draftGrade: 0.0
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_403
+  id: sub_202
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T10:40:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_403/submissions/sub_076
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_404
+  id: sub_203
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T11:00:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_404/submissions/sub_077
+  assignedGrade: 0.0
+  draftGrade: 0.0
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_405
+  id: sub_204
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T11:20:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_405/submissions/sub_078
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_406
+  id: sub_205
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T11:40:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_406/submissions/sub_079
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_407
+  id: sub_206
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T12:00:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_407/submissions/sub_080
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_408
+  id: sub_207
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T12:20:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_408/submissions/sub_081
+  assignedGrade: 0.0
+  draftGrade: 0.0
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_409
+  id: sub_208
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T12:40:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_409/submissions/sub_082
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_410
+  id: sub_209
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T13:00:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_410/submissions/sub_083
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_411
+  id: sub_210
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T13:20:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_411/submissions/sub_084
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_412
+  id: sub_211
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T13:40:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_412/submissions/sub_085
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_413
+  id: sub_212
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T14:00:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_413/submissions/sub_086
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_414
+  id: sub_213
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T14:20:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_414/submissions/sub_087
+  assignedGrade: 0.0
+  draftGrade: 0.0
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_415
+  id: sub_214
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T14:40:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_415/submissions/sub_088
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_416
+  id: sub_215
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T15:00:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_416/submissions/sub_089
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_417
+  id: sub_216
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T15:20:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_417/submissions/sub_090
+  assignedGrade: 0.0
+  draftGrade: 0.0
+- courseId: uscg-charter-inspection-2026
+  courseWorkId: cw_418
+  id: sub_217
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2026-05-07T15:40:00Z'
+  updateTime: '2026-05-07T18:30:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/a/cw_418/submissions/sub_091
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_419
+  id: sub_218
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T10:00:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_419/submissions/sub_092
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_420
+  id: sub_219
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T10:20:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_420/submissions/sub_093
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_421
+  id: sub_220
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T10:40:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_421/submissions/sub_094
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_422
+  id: sub_221
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T11:00:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_422/submissions/sub_095
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_423
+  id: sub_222
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T11:20:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_423/submissions/sub_096
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_424
+  id: sub_223
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T11:40:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_424/submissions/sub_097
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_425
+  id: sub_224
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T12:00:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_425/submissions/sub_098
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_426
+  id: sub_225
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T12:20:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_426/submissions/sub_099
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_427
+  id: sub_226
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T12:40:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_427/submissions/sub_100
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_428
+  id: sub_227
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T13:00:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_428/submissions/sub_101
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_429
+  id: sub_228
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T13:20:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_429/submissions/sub_102
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_430
+  id: sub_229
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T13:40:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_430/submissions/sub_103
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_431
+  id: sub_230
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T14:00:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_431/submissions/sub_104
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_432
+  id: sub_231
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T14:20:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_432/submissions/sub_105
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_433
+  id: sub_232
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T14:40:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_433/submissions/sub_106
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_434
+  id: sub_233
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T15:00:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_434/submissions/sub_107
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_435
+  id: sub_234
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T15:20:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_435/submissions/sub_108
+  assignedGrade: 100.0
+  draftGrade: 100.0
+- courseId: uscg-charter-inspection-2025
+  courseWorkId: cw_436
+  id: sub_235
+  userId: student_100
+  state: RETURNED
+  late: false
+  creationTime: '2025-05-09T15:40:00Z'
+  updateTime: '2025-05-09T17:15:00Z'
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/a/cw_436/submissions/sub_109
+  assignedGrade: 100.0
+  draftGrade: 100.0
+announcements:
+- courseId: course_001
+  id: ann_001
+  text: Welcome to the spring docent cohort!
+  state: PUBLISHED
+  creationTime: '2025-01-06T09:00:00Z'
+  updateTime: '2025-01-06T09:00:00Z'
+  creatorUserId: teacher_001
+  alternateLink: https://classroom.google.com/c/course_001/p/ann_001
+- courseId: course_001
+  id: ann_002
+  text: Field walk moved to Saturday 9 AM.
+  state: PUBLISHED
+  creationTime: '2025-02-03T08:00:00Z'
+  updateTime: '2025-02-03T08:00:00Z'
+  creatorUserId: teacher_001
+  alternateLink: https://classroom.google.com/c/course_001/p/ann_002
+- courseId: course_001
+  id: ann_003
+  text: Guest lecture by Miriam Aldridge next week.
+  state: PUBLISHED
+  creationTime: '2025-02-24T08:00:00Z'
+  updateTime: '2025-02-24T08:00:00Z'
+  creatorUserId: teacher_001
+  alternateLink: https://classroom.google.com/c/course_001/p/ann_003
+- courseId: course_001
+  id: ann_004
+  text: Capstone proposals due Friday.
+  state: PUBLISHED
+  creationTime: '2025-03-17T08:00:00Z'
+  updateTime: '2025-03-17T08:00:00Z'
+  creatorUserId: teacher_001
+  alternateLink: https://classroom.google.com/c/course_001/p/ann_004
+- courseId: course_002
+  id: ann_005
+  text: Certificates ready for pickup at 45 Bull Street.
+  state: PUBLISHED
+  creationTime: '2025-01-06T11:00:00Z'
+  updateTime: '2025-01-06T11:00:00Z'
+  creatorUserId: teacher_001
+  alternateLink: https://classroom.google.com/c/course_002/p/ann_005
+- courseId: course_002
+  id: ann_006
+  text: Welcome to the spring docent cohort!
+  state: PUBLISHED
+  creationTime: '2025-01-27T11:00:00Z'
+  updateTime: '2025-01-27T11:00:00Z'
+  creatorUserId: teacher_001
+  alternateLink: https://classroom.google.com/c/course_002/p/ann_006
+- courseId: course_002
+  id: ann_007
+  text: Field walk moved to Saturday 9 AM.
+  state: PUBLISHED
+  creationTime: '2025-04-14T11:00:00Z'
+  updateTime: '2025-04-14T11:00:00Z'
+  creatorUserId: teacher_001
+  alternateLink: https://classroom.google.com/c/course_002/p/ann_007
+- courseId: course_003
+  id: ann_008
+  text: Guest lecture by Miriam Aldridge next week.
+  state: PUBLISHED
+  creationTime: '2025-01-06T14:00:00Z'
+  updateTime: '2025-01-06T14:00:00Z'
+  creatorUserId: teacher_001
+  alternateLink: https://classroom.google.com/c/course_003/p/ann_008
+- courseId: course_003
+  id: ann_009
+  text: Capstone proposals due Friday.
+  state: PUBLISHED
+  creationTime: '2025-04-14T14:00:00Z'
+  updateTime: '2025-04-14T14:00:00Z'
+  creatorUserId: teacher_001
+  alternateLink: https://classroom.google.com/c/course_003/p/ann_009
+- courseId: course_003
+  id: ann_010
+  text: Certificates ready for pickup at 45 Bull Street.
+  state: PUBLISHED
+  creationTime: '2025-04-21T14:00:00Z'
+  updateTime: '2025-04-21T14:00:00Z'
+  creatorUserId: teacher_001
+  alternateLink: https://classroom.google.com/c/course_003/p/ann_010
+- courseId: uscg-charter-inspection-2026
+  id: ann_011
+  text: Welcome to the spring docent cohort!
+  state: PUBLISHED
+  creationTime: '2026-04-25T09:00:00Z'
+  updateTime: '2026-04-25T09:00:00Z'
+  creatorUserId: teacher_004
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/p/ann_011
+- courseId: uscg-charter-inspection-2026
+  id: ann_012
+  text: Field walk moved to Saturday 9 AM.
+  state: PUBLISHED
+  creationTime: '2026-05-01T10:00:00Z'
+  updateTime: '2026-05-01T10:00:00Z'
+  creatorUserId: teacher_004
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/p/ann_012
+- courseId: uscg-charter-inspection-2026
+  id: ann_013
+  text: Guest lecture by Miriam Aldridge next week.
+  state: PUBLISHED
+  creationTime: '2026-05-07T19:30:00Z'
+  updateTime: '2026-05-07T19:30:00Z'
+  creatorUserId: teacher_004
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/p/ann_013
+- courseId: uscg-charter-inspection-2026
+  id: ann_014
+  text: Capstone proposals due Friday.
+  state: PUBLISHED
+  creationTime: '2026-05-08T09:30:00Z'
+  updateTime: '2026-05-08T09:30:00Z'
+  creatorUserId: teacher_004
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/p/ann_014
+- courseId: uscg-charter-inspection-2025
+  id: ann_015
+  text: Certificates ready for pickup at 45 Bull Street.
+  state: PUBLISHED
+  creationTime: '2025-04-25T09:00:00Z'
+  updateTime: '2025-04-25T09:00:00Z'
+  creatorUserId: teacher_004
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/p/ann_015
+- courseId: uscg-charter-inspection-2025
+  id: ann_016
+  text: Welcome to the spring docent cohort!
+  state: PUBLISHED
+  creationTime: '2025-05-09T18:00:00Z'
+  updateTime: '2025-05-09T18:00:00Z'
+  creatorUserId: teacher_004
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/p/ann_016
+materials:
+- courseId: course_001
+  id: mat_001
+  title: Docent handbook
+  description: SHPA education material.
+  state: PUBLISHED
+  creationTime: '2025-01-06T08:30:00Z'
+  updateTime: '2025-01-06T08:30:00Z'
+  creatorUserId: teacher_001
+  topicId: topic_101
+  alternateLink: https://classroom.google.com/c/course_001/m/mat_001
+  materials:
+  - link:
+      url: https://docs.google.com/document/d/apcs-syllabus-2025
+      title: AP CS A Syllabus
+- courseId: course_001
+  id: mat_002
+  title: District map pack
+  description: SHPA education material.
+  state: PUBLISHED
+  creationTime: '2025-01-10T09:00:00Z'
+  updateTime: '2025-01-10T09:00:00Z'
+  creatorUserId: teacher_001
+  topicId: topic_101
+  alternateLink: https://classroom.google.com/c/course_001/m/mat_002
+  materials:
+  - link:
+      url: https://docs.google.com/document/d/java-style-guide
+      title: Java Style Guide
+- courseId: course_001
+  id: mat_003
+  title: Period style chart
+  description: SHPA education material.
+  state: PUBLISHED
+  creationTime: '2025-03-01T09:00:00Z'
+  updateTime: '2025-03-01T09:00:00Z'
+  creatorUserId: teacher_001
+  topicId: topic_107
+  alternateLink: https://classroom.google.com/c/course_001/m/mat_003
+  materials:
+  - link:
+      url: https://apcentral.collegeboard.org/media/pdf/ap-computer-science-a-java-quick-reference.pdf
+      title: AP CS A Exam Reference Sheet
+- courseId: course_002
+  id: mat_004
+  title: Interview consent forms
+  description: SHPA education material.
+  state: PUBLISHED
+  creationTime: '2025-01-06T11:30:00Z'
+  updateTime: '2025-01-06T11:30:00Z'
+  creatorUserId: teacher_001
+  topicId: topic_201
+  alternateLink: https://classroom.google.com/c/course_002/m/mat_004
+  materials:
+  - link:
+      url: https://docs.google.com/document/d/vscode-setup
+      title: VS Code Setup Guide
+- courseId: course_002
+  id: mat_005
+  title: Tour script templates
+  description: SHPA education material.
+  state: PUBLISHED
+  creationTime: '2025-01-10T11:00:00Z'
+  updateTime: '2025-01-10T11:00:00Z'
+  creatorUserId: teacher_001
+  topicId: topic_201
+  alternateLink: https://classroom.google.com/c/course_002/m/mat_005
+  materials:
+  - link:
+      url: https://developer.mozilla.org/en-US/
+      title: MDN Web Docs Reference
+- courseId: course_003
+  id: mat_006
+  title: Docent handbook
+  description: SHPA education material.
+  state: PUBLISHED
+  creationTime: '2025-03-15T14:00:00Z'
+  updateTime: '2025-03-15T14:00:00Z'
+  creatorUserId: teacher_001
+  topicId: topic_305
+  alternateLink: https://classroom.google.com/c/course_003/m/mat_006
+  materials:
+  - link:
+      url: https://apcentral.collegeboard.org/courses/ap-computer-science-principles/exam
+      title: AP CSP Exam Prep Resources
+- courseId: uscg-charter-inspection-2026
+  id: mat_007
+  title: District map pack
+  description: SHPA education material.
+  state: PUBLISHED
+  creationTime: '2026-04-25T08:30:00Z'
+  updateTime: '2026-04-25T08:30:00Z'
+  creatorUserId: teacher_004
+  topicId: topic_401
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/m/mat_007
+  materials:
+  - link:
+      url: https://drive.luckystrike-charters.com/inspections/2026/Lucky_Strike_Safety_Audit_Report.pdf
+      title: USCG Near-Barrett Charter Compliance Checklist
+- courseId: uscg-charter-inspection-2026
+  id: mat_008
+  title: Period style chart
+  description: SHPA education material.
+  state: PUBLISHED
+  creationTime: '2026-05-07T19:00:00Z'
+  updateTime: '2026-05-07T19:00:00Z'
+  creatorUserId: teacher_004
+  topicId: topic_401
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/m/mat_008
+  materials:
+  - link:
+      url: https://drive.luckystrike-charters.com/inspections/2026/photos
+      title: 2026 Lucky Strike Inspection Photo Album
+- courseId: uscg-charter-inspection-2026
+  id: mat_009
+  title: Interview consent forms
+  description: SHPA education material.
+  state: PUBLISHED
+  creationTime: '2026-05-07T19:05:00Z'
+  updateTime: '2026-05-07T19:05:00Z'
+  creatorUserId: teacher_004
+  topicId: topic_401
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/m/mat_009
+  materials:
+  - link:
+      url: https://drive.luckystrike-charters.com/inspections/2025/photos
+      title: 2025 Lucky Strike Comparison Photo Album
+- courseId: uscg-charter-inspection-2026
+  id: mat_010
+  title: Tour script templates
+  description: SHPA education material.
+  state: PUBLISHED
+  creationTime: '2026-05-08T09:00:00Z'
+  updateTime: '2026-05-08T09:00:00Z'
+  creatorUserId: teacher_004
+  topicId: topic_405
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2026/m/mat_010
+  materials:
+  - link:
+      url: https://drive.luckystrike-charters.com/vendors/marine_safety_suppliers.pdf
+      title: Dr. Chandlery and Safety Vendor Reference List
+- courseId: uscg-charter-inspection-2025
+  id: mat_011
+  title: Docent handbook
+  description: SHPA education material.
+  state: PUBLISHED
+  creationTime: '2025-05-09T18:00:00Z'
+  updateTime: '2025-05-09T18:00:00Z'
+  creatorUserId: teacher_004
+  topicId: topic_406
+  alternateLink: https://classroom.google.com/c/uscg-charter-inspection-2025/m/mat_011
+  materials:
+  - link:
+      url: https://drive.luckystrike-charters.com/inspections/2025/Lucky_Strike_Safety_Audit_Report_2025.pdf
+      title: 2025 Lucky Strike Annual USCG Inspection Report

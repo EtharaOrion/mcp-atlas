@@ -1,0 +1,170 @@
+[
+    {
+        "tool_name": "list_assets",
+        "description": "List rentable assets, optionally filtered by category and/or availability.",
+        "arguments": {
+            "category": {"type": "string", "description": "Optional category filter (car, bike, scooter, tool, camera)."},
+            "is_available": {"type": "boolean", "description": "Optional filter for availability."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of asset objects."
+        }
+    },
+    {
+        "tool_name": "get_asset",
+        "description": "Retrieve a full asset object by aid.",
+        "arguments": {
+            "aid": {"type": "string", "description": "Asset identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full asset object."
+        }
+    },
+    {
+        "tool_name": "add_asset",
+        "description": "Add a new rentable asset to the catalog.",
+        "arguments": {
+            "name": {"type": "string", "description": "Asset name/label."},
+            "category": {"type": "string", "description": "Category (car, bike, scooter, tool, camera)."},
+            "daily_rate": {"type": "number", "description": "Rental cost per day."},
+            "location": {"type": "string", "description": "Pickup location."},
+            "condition": {"type": "string", "description": "Physical condition (excellent, good, fair, poor)."},
+            "is_available": {"type": "boolean", "description": "Whether asset is initially available."},
+            "currency": {"type": "string", "description": "Currency code (default USD)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new asset object."
+        }
+    },
+    {
+        "tool_name": "list_bookings",
+        "description": "List bookings, optionally filtered by status and/or renter. Sorted by start_date desc.",
+        "arguments": {
+            "status": {"type": "string", "description": "Optional status filter (reserved, active, returned, cancelled)."},
+            "renter": {"type": "string", "description": "Optional renter filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of booking summaries."
+        }
+    },
+    {
+        "tool_name": "get_booking",
+        "description": "Retrieve a full booking object by bid.",
+        "arguments": {
+            "bid": {"type": "string", "description": "Booking identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full booking object."
+        }
+    },
+    {
+        "tool_name": "book_asset",
+        "description": "Reserve an asset for a date range. Fails if the range conflicts with another active/reserved booking.",
+        "arguments": {
+            "aid": {"type": "string", "description": "Asset identifier."},
+            "renter": {"type": "string", "description": "Renter name or identifier."},
+            "start_date": {"type": "string", "description": "ISO date (YYYY-MM-DD) rental start."},
+            "end_date": {"type": "string", "description": "ISO date (YYYY-MM-DD) rental end (inclusive)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new booking summary."
+        }
+    },
+    {
+        "tool_name": "cancel_booking",
+        "description": "Cancel a booking that has not been returned or already cancelled.",
+        "arguments": {
+            "bid": {"type": "string", "description": "Booking identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the cancelled booking summary."
+        }
+    },
+    {
+        "tool_name": "return_asset",
+        "description": "Mark a reserved/active booking as returned and free the asset.",
+        "arguments": {
+            "bid": {"type": "string", "description": "Booking identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated booking summary."
+        }
+    },
+    {
+        "tool_name": "report_damage",
+        "description": "File a damage record against an asset (optionally tied to a booking) with a repair cost estimate.",
+        "arguments": {
+            "aid": {"type": "string", "description": "Asset identifier."},
+            "bid": {"type": "string", "description": "Booking identifier the damage occurred during (may be empty)."},
+            "description": {"type": "string", "description": "Free-form damage description."},
+            "cost": {"type": "number", "description": "Estimated repair cost."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new damage record."
+        }
+    },
+    {
+        "tool_name": "list_damages",
+        "description": "List damage records, optionally filtered by asset_id. Sorted by date desc.",
+        "arguments": {
+            "asset_id": {"type": "string", "description": "Optional asset filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of damage records."
+        }
+    },
+    {
+        "tool_name": "get_asset_availability",
+        "description": "Check whether an asset is available for a given date range against existing bookings.",
+        "arguments": {
+            "aid": {"type": "string", "description": "Asset identifier."},
+            "start_date": {"type": "string", "description": "ISO date range start."},
+            "end_date": {"type": "string", "description": "ISO date range end."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {aid, start_date, end_date, available}."
+        }
+    },
+    {
+        "tool_name": "get_asset_revenue",
+        "description": "Sum revenue for an asset across active + returned bookings.",
+        "arguments": {
+            "aid": {"type": "string", "description": "Asset identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {aid, bookings_counted, revenue}."
+        }
+    },
+    {
+        "tool_name": "search_assets",
+        "description": "Search assets by keyword across name, category, and location.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search keyword."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of matching asset objects."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Aggregate stats: assets by category, bookings by status, damage count, active/returned revenue.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {assets, by_category, bookings, by_status, damages, revenue}."
+        }
+    }
+]

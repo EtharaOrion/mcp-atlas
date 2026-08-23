@@ -1,0 +1,157 @@
+[
+    {
+        "tool_name": "get_business",
+        "description": "Get the WhatsApp business account and phone number profile.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the business profile object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_contacts",
+        "description": "List WhatsApp contacts, optionally restricted to opted-in contacts.",
+        "arguments": {
+            "opted_in_only": {
+                "type": "boolean",
+                "description": "When true, only contacts who have opted in are returned (default false)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of contact objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_contact",
+        "description": "Get a single WhatsApp contact by its wa_id.",
+        "arguments": {
+            "wa_id": {
+                "type": "string",
+                "description": "The WhatsApp id of the contact."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the contact object; on failure (contact not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_templates",
+        "description": "List message templates, optionally filtered by status.",
+        "arguments": {
+            "status": {
+                "type": "string",
+                "description": "Optional template status to filter by (e.g. APPROVED); case-insensitive."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of template objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_template",
+        "description": "Get a single message template by its name.",
+        "arguments": {
+            "name": {
+                "type": "string",
+                "description": "The unique name of the template."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the template object; on failure (template not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_conversations",
+        "description": "List conversations, optionally filtered by contact wa_id, ordered by most recent activity.",
+        "arguments": {
+            "wa_id": {
+                "type": "string",
+                "description": "Optional contact wa_id to filter conversations by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of conversation objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_messages",
+        "description": "List messages, filtered by conversation or contact, ordered by most recent.",
+        "arguments": {
+            "conversation_id": {
+                "type": "string",
+                "description": "Optional conversation id to filter messages by."
+            },
+            "wa_id": {
+                "type": "string",
+                "description": "Optional contact wa_id to filter messages by (used when conversation_id is not given)."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of messages to return (default 20)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of message objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "send_text",
+        "description": "Send a text message to a contact within the 24-hour customer service window.",
+        "arguments": {
+            "to_wa_id": {
+                "type": "string",
+                "description": "The recipient contact's wa_id."
+            },
+            "body": {
+                "type": "string",
+                "description": "The text body of the message."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has a 'messages' list with the accepted message id; on failure (not opted in or outside window), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "send_template",
+        "description": "Send an approved template message to a contact, creating a conversation if needed.",
+        "arguments": {
+            "to_wa_id": {
+                "type": "string",
+                "description": "The recipient contact's wa_id."
+            },
+            "template_name": {
+                "type": "string",
+                "description": "The name of the approved template to send."
+            },
+            "components": {
+                "type": "array",
+                "description": "Optional list of template component objects for parameter substitution."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has a 'messages' list with the accepted message id; on failure (contact/template not found or not approved), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "mark_read",
+        "description": "Mark a message as read by its message id.",
+        "arguments": {
+            "message_id": {
+                "type": "string",
+                "description": "The id of the message to mark as read."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms success with the message id; on failure (message not found), output contains an error message."
+        }
+    }
+]

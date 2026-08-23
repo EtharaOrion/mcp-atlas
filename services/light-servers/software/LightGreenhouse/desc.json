@@ -1,0 +1,177 @@
+[
+    {
+        "tool_name": "list_candidates",
+        "description": "List all candidates in the Greenhouse session.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of candidate objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_candidate",
+        "description": "Get a single candidate by its id.",
+        "arguments": {
+            "candidate_id": {
+                "type": "string",
+                "description": "The unique id of the candidate."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the candidate object; on failure (candidate not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_candidate",
+        "description": "Create a new candidate record.",
+        "arguments": {
+            "first_name": {
+                "type": "string",
+                "description": "The candidate's first name (required)."
+            },
+            "last_name": {
+                "type": "string",
+                "description": "The candidate's last name (required)."
+            },
+            "email": {
+                "type": "string",
+                "description": "Optional email address."
+            },
+            "phone": {
+                "type": "string",
+                "description": "Optional phone number."
+            },
+            "company": {
+                "type": "string",
+                "description": "Optional current company."
+            },
+            "title": {
+                "type": "string",
+                "description": "Optional current job title."
+            },
+            "source": {
+                "type": "string",
+                "description": "Optional sourcing channel; defaults to 'API' when omitted."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created candidate object; on failure (missing required fields), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_jobs",
+        "description": "List jobs, optionally filtered by status.",
+        "arguments": {
+            "status": {
+                "type": "string",
+                "description": "Optional status filter (e.g. 'open' or 'closed')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of job objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_job",
+        "description": "Get a single job by its id.",
+        "arguments": {
+            "job_id": {
+                "type": "string",
+                "description": "The unique id of the job."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the job object; on failure (job not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_applications",
+        "description": "List applications, optionally filtered by job, candidate, and status.",
+        "arguments": {
+            "job_id": {
+                "type": "string",
+                "description": "Optional job id to filter applications by."
+            },
+            "candidate_id": {
+                "type": "string",
+                "description": "Optional candidate id to filter applications by."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional application status to filter by (e.g. 'active', 'rejected', 'hired')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of application objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_application",
+        "description": "Get a single application by its id.",
+        "arguments": {
+            "application_id": {
+                "type": "string",
+                "description": "The unique id of the application."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the application object; on failure (application not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "advance_application",
+        "description": "Advance an active application to the next pipeline stage (Application Review -> Interview -> Offer -> Hired).",
+        "arguments": {
+            "application_id": {
+                "type": "string",
+                "description": "The unique id of the application to advance."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated application object; on failure (application not found or not active), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "reject_application",
+        "description": "Reject an application, optionally recording a rejection reason.",
+        "arguments": {
+            "application_id": {
+                "type": "string",
+                "description": "The unique id of the application to reject."
+            },
+            "reason": {
+                "type": "string",
+                "description": "Optional rejection reason; defaults to 'Not a fit' when omitted."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated application object; on failure (application not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_scorecards",
+        "description": "List interview scorecards, optionally filtered by application and candidate.",
+        "arguments": {
+            "application_id": {
+                "type": "string",
+                "description": "Optional application id to filter scorecards by."
+            },
+            "candidate_id": {
+                "type": "string",
+                "description": "Optional candidate id to filter scorecards by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of scorecard objects; on failure, output contains an error message."
+        }
+    }
+]

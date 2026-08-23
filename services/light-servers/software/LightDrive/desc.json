@@ -1,0 +1,222 @@
+[
+    {
+        "tool_name": "list_folders",
+        "description": "List folders, optionally filtered by parent_id (e.g. to list children of fd_root). Sorted by name.",
+        "arguments": {
+            "parent_id": {"type": "string", "description": "Optional parent folder id to filter by (empty string means top-level)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of {fdid, name, parent_id, path, created_at}."
+        }
+    },
+    {
+        "tool_name": "get_folder",
+        "description": "Retrieve a folder record by fdid.",
+        "arguments": {
+            "fdid": {"type": "string", "description": "Folder identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full folder record."
+        }
+    },
+    {
+        "tool_name": "create_folder",
+        "description": "Create a new folder under the given parent. Path is derived from the parent's path + name.",
+        "arguments": {
+            "name": {"type": "string", "description": "Folder display name."},
+            "parent_id": {"type": "string", "description": "Parent folder id (default fd_root)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new folder record."
+        }
+    },
+    {
+        "tool_name": "delete_folder",
+        "description": "Delete a folder. Fails if the folder has sub-folders. Files directly inside are removed (along with their versions).",
+        "arguments": {
+            "fdid": {"type": "string", "description": "Folder identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {fdid, removed_files}."
+        }
+    },
+    {
+        "tool_name": "list_files",
+        "description": "List files, optionally filtered by folder_id, is_trashed, and/or is_starred. Sorted by name.",
+        "arguments": {
+            "folder_id": {"type": "string", "description": "Optional folder id to filter by."},
+            "is_trashed": {"type": "boolean", "description": "Optional filter: only trashed (true) or only untrashed (false)."},
+            "is_starred": {"type": "boolean", "description": "Optional filter: only starred (true) or only unstarred (false)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of file summaries."
+        }
+    },
+    {
+        "tool_name": "get_file",
+        "description": "Retrieve the full file record by fid.",
+        "arguments": {
+            "fid": {"type": "string", "description": "File identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full file record including current_version_id."
+        }
+    },
+    {
+        "tool_name": "upload_file",
+        "description": "Upload (create) a new file inside a folder. Automatically creates version 1 pointing to the initial upload.",
+        "arguments": {
+            "name": {"type": "string", "description": "File name including extension."},
+            "folder_id": {"type": "string", "description": "Destination folder id (default fd_root)."},
+            "size_bytes": {"type": "integer", "description": "Size of the uploaded blob in bytes."},
+            "mime_type": {"type": "string", "description": "MIME type (default application/octet-stream)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new file summary."
+        }
+    },
+    {
+        "tool_name": "delete_file",
+        "description": "Permanently delete a file, including all its versions and any share links pointing at it.",
+        "arguments": {
+            "fid": {"type": "string", "description": "File identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {fid, deleted: true, removed_versions}."
+        }
+    },
+    {
+        "tool_name": "star_file",
+        "description": "Mark a file as starred.",
+        "arguments": {
+            "fid": {"type": "string", "description": "File identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated file summary."
+        }
+    },
+    {
+        "tool_name": "unstar_file",
+        "description": "Remove the starred flag from a file.",
+        "arguments": {
+            "fid": {"type": "string", "description": "File identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated file summary."
+        }
+    },
+    {
+        "tool_name": "move_to_trash",
+        "description": "Move a file to trash (soft-delete). It remains listable via is_trashed=true.",
+        "arguments": {
+            "fid": {"type": "string", "description": "File identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated file summary."
+        }
+    },
+    {
+        "tool_name": "restore_from_trash",
+        "description": "Restore a trashed file (clear the is_trashed flag).",
+        "arguments": {
+            "fid": {"type": "string", "description": "File identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated file summary."
+        }
+    },
+    {
+        "tool_name": "list_versions",
+        "description": "List all versions for a given file, sorted by version_number ascending.",
+        "arguments": {
+            "file_id": {"type": "string", "description": "File identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of version records."
+        }
+    },
+    {
+        "tool_name": "create_version",
+        "description": "Create a new version of a file (auto-incremented version_number) and set it as current.",
+        "arguments": {
+            "file_id": {"type": "string", "description": "File identifier."},
+            "size_bytes": {"type": "integer", "description": "Size of the new version blob."},
+            "comment": {"type": "string", "description": "Optional version comment."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new version record."
+        }
+    },
+    {
+        "tool_name": "rollback_version",
+        "description": "Set an existing version as the current version of the file.",
+        "arguments": {
+            "file_id": {"type": "string", "description": "File identifier."},
+            "version_id": {"type": "string", "description": "Version identifier that must belong to file_id."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {fid, current_version_id, version_number}."
+        }
+    },
+    {
+        "tool_name": "list_share_links",
+        "description": "List share links, optionally filtered by target_kind (file|folder) and/or target_id.",
+        "arguments": {
+            "target_kind": {"type": "string", "description": "Optional 'file' or 'folder'."},
+            "target_id": {"type": "string", "description": "Optional target identifier to filter by."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of share link records."
+        }
+    },
+    {
+        "tool_name": "create_share_link",
+        "description": "Create a new share link for a file or folder.",
+        "arguments": {
+            "target_kind": {"type": "string", "description": "'file' or 'folder'."},
+            "target_id": {"type": "string", "description": "Identifier of the file or folder to share."},
+            "can_edit": {"type": "boolean", "description": "Whether the link grants edit permission."},
+            "expires_at": {"type": "string", "description": "Optional ISO datetime after which the link expires."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new share link record."
+        }
+    },
+    {
+        "tool_name": "search",
+        "description": "Search files and folders by keyword across names, paths, and (for files) mime types.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search keyword or phrase."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {files: [...], folders: [...]}."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Return drive-wide statistics: totals for folders, files, versions, share links, active size, trashed size, starred count, and counts by folder.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a stats dictionary."
+        }
+    }
+]

@@ -1,0 +1,144 @@
+[
+    {
+        "tool_name": "list_tickets",
+        "description": "List support tickets, optionally filtered by status, priority, and requester.",
+        "arguments": {
+            "status": {
+                "type": "integer",
+                "description": "Optional status code to filter tickets by (2=open, 3=pending, 4=resolved, 5=closed)."
+            },
+            "priority": {
+                "type": "integer",
+                "description": "Optional priority code to filter tickets by (1=low .. 4=urgent)."
+            },
+            "requester_id": {
+                "type": "integer",
+                "description": "Optional requester (contact) id to filter tickets by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of ticket objects (id, subject, description, status, priority, requester_id, responder_id, type, tags, created_at, updated_at); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_ticket",
+        "description": "Get a single support ticket by its id.",
+        "arguments": {
+            "ticket_id": {
+                "type": "integer",
+                "description": "The unique id of the ticket."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the ticket object; on failure (ticket not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_ticket",
+        "description": "Create a new support ticket with the supplied fields, applying defaults where omitted.",
+        "arguments": {
+            "subject": {
+                "type": "string",
+                "description": "Optional subject line of the ticket (defaults to empty string)."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional body description of the ticket (defaults to empty string)."
+            },
+            "status": {
+                "type": "integer",
+                "description": "Optional status code (defaults to 2=open)."
+            },
+            "priority": {
+                "type": "integer",
+                "description": "Optional priority code (defaults to 1=low)."
+            },
+            "requester_id": {
+                "type": "integer",
+                "description": "Optional requester (contact) id for the ticket."
+            },
+            "responder_id": {
+                "type": "integer",
+                "description": "Optional responder (agent) id assigned to the ticket."
+            },
+            "type": {
+                "type": "string",
+                "description": "Optional ticket type (defaults to 'Question')."
+            },
+            "tags": {
+                "type": "array",
+                "description": "Optional list of tag strings for the ticket."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created ticket object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_ticket",
+        "description": "Update fields of an existing support ticket by its id.",
+        "arguments": {
+            "ticket_id": {
+                "type": "integer",
+                "description": "The unique id of the ticket to update."
+            },
+            "subject": {
+                "type": "string",
+                "description": "Optional new subject line."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional new description body."
+            },
+            "status": {
+                "type": "integer",
+                "description": "Optional new status code."
+            },
+            "priority": {
+                "type": "integer",
+                "description": "Optional new priority code."
+            },
+            "responder_id": {
+                "type": "integer",
+                "description": "Optional new responder (agent) id."
+            },
+            "requester_id": {
+                "type": "integer",
+                "description": "Optional new requester (contact) id."
+            },
+            "type": {
+                "type": "string",
+                "description": "Optional new ticket type."
+            },
+            "tags": {
+                "type": "array",
+                "description": "Optional new list of tag strings."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated ticket object; on failure (ticket not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_contacts",
+        "description": "List all contacts (requesters) in the current Freshdesk session.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of contact objects (id, name, email, phone, company_id, active, created_at); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_agents",
+        "description": "List all support agents in the current Freshdesk session.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of agent objects (id, available, ticket_scope, occasional, created_at, contact); on failure, output contains an error message."
+        }
+    }
+]

@@ -1,0 +1,358 @@
+[
+    {
+        "tool_name": "get_current_user",
+        "description": "Get the currently authenticated Etsy user and their shop id.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the current user object (user_id, login_name, primary_email, create_timestamp, shop_id)."
+        }
+    },
+    {
+        "tool_name": "get_shop",
+        "description": "Get a shop by its id.",
+        "arguments": {
+            "shop_id": {
+                "type": "integer",
+                "description": "The unique id of the shop."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, shop}; on failure (shop not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_shop",
+        "description": "Update editable fields of a shop by its id.",
+        "arguments": {
+            "shop_id": {
+                "type": "integer",
+                "description": "The unique id of the shop to update."
+            },
+            "title": {"type": "string", "description": "Optional new shop title."},
+            "announcement": {"type": "string", "description": "Optional new shop announcement."},
+            "sale_message": {"type": "string", "description": "Optional new post-sale message."},
+            "is_vacation": {"type": "boolean", "description": "Optional vacation-mode flag."},
+            "vacation_message": {"type": "string", "description": "Optional vacation message."},
+            "accepts_custom_requests": {"type": "boolean", "description": "Optional flag for accepting custom requests."},
+            "policy_welcome": {"type": "string", "description": "Optional welcome policy text."},
+            "policy_payment": {"type": "string", "description": "Optional payment policy text."},
+            "policy_shipping": {"type": "string", "description": "Optional shipping policy text."},
+            "policy_refunds": {"type": "string", "description": "Optional refunds policy text."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, shop}; on failure (shop not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_shop_sections",
+        "description": "List the sections belonging to a shop.",
+        "arguments": {
+            "shop_id": {"type": "integer", "description": "The unique id of the shop."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, count, results}; on failure (shop not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_shop_section",
+        "description": "Get a single shop section by shop id and section id.",
+        "arguments": {
+            "shop_id": {"type": "integer", "description": "The unique id of the shop."},
+            "section_id": {"type": "integer", "description": "The unique id of the section."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, shop_section}; on failure (section not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_listings",
+        "description": "List a shop's listings with optional filtering, sorting, and pagination.",
+        "arguments": {
+            "shop_id": {"type": "integer", "description": "The unique id of the shop."},
+            "state": {"type": "string", "description": "Optional listing state filter (default 'active')."},
+            "sort_on": {"type": "string", "description": "Field to sort on: created, price, updated, or score (default 'created')."},
+            "sort_order": {"type": "string", "description": "Sort direction: 'asc' or 'desc' (default 'desc')."},
+            "limit": {"type": "integer", "description": "Max number of listings to return (default 25)."},
+            "offset": {"type": "integer", "description": "Result offset for pagination (default 0)."},
+            "section_id": {"type": "integer", "description": "Optional shop section id filter."},
+            "q": {"type": "string", "description": "Optional free-text search over title and description."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, count, total, offset, limit, results}."
+        }
+    },
+    {
+        "tool_name": "get_listing",
+        "description": "Get a single listing by its id.",
+        "arguments": {
+            "listing_id": {"type": "integer", "description": "The unique id of the listing."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, listing}; on failure (listing not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_listing",
+        "description": "Create a new draft listing in a shop.",
+        "arguments": {
+            "shop_id": {"type": "integer", "description": "The id of the shop to create the listing in."},
+            "title": {"type": "string", "description": "The listing title."},
+            "description": {"type": "string", "description": "The listing description."},
+            "price": {"type": "number", "description": "The listing price."},
+            "quantity": {"type": "integer", "description": "The available quantity."},
+            "who_made": {"type": "string", "description": "Who made the item (e.g. 'i_did')."},
+            "when_made": {"type": "string", "description": "When the item was made (e.g. '2020_2024')."},
+            "taxonomy_id": {"type": "integer", "description": "The Etsy taxonomy id for the item's category."},
+            "tags": {"type": "array", "description": "Optional list of tag strings."},
+            "materials": {"type": "array", "description": "Optional list of material strings."},
+            "shop_section_id": {"type": "integer", "description": "Optional shop section id."},
+            "shipping_profile_id": {"type": "integer", "description": "Optional shipping profile id."},
+            "return_policy_id": {"type": "integer", "description": "Optional return policy id."},
+            "processing_min": {"type": "integer", "description": "Optional minimum processing days."},
+            "processing_max": {"type": "integer", "description": "Optional maximum processing days."},
+            "item_weight": {"type": "number", "description": "Optional item weight."},
+            "item_weight_unit": {"type": "string", "description": "Optional weight unit (default 'oz')."},
+            "item_length": {"type": "number", "description": "Optional item length."},
+            "item_width": {"type": "number", "description": "Optional item width."},
+            "item_height": {"type": "number", "description": "Optional item height."},
+            "item_dimensions_unit": {"type": "string", "description": "Optional dimensions unit (default 'in')."},
+            "is_supply": {"type": "boolean", "description": "Whether the item is a supply (default false)."},
+            "is_customizable": {"type": "boolean", "description": "Whether the item is customizable (default false)."},
+            "is_personalizable": {"type": "boolean", "description": "Whether the item is personalizable (default false)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, listing}; on failure (missing required field), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_listing",
+        "description": "Update editable fields of an existing listing by its id.",
+        "arguments": {
+            "listing_id": {"type": "integer", "description": "The unique id of the listing to update."},
+            "title": {"type": "string", "description": "Optional new title."},
+            "description": {"type": "string", "description": "Optional new description."},
+            "price": {"type": "number", "description": "Optional new price."},
+            "quantity": {"type": "integer", "description": "Optional new quantity."},
+            "tags": {"type": "array", "description": "Optional new list of tags."},
+            "materials": {"type": "array", "description": "Optional new list of materials."},
+            "state": {"type": "string", "description": "Optional new listing state."},
+            "who_made": {"type": "string", "description": "Optional new who_made value."},
+            "when_made": {"type": "string", "description": "Optional new when_made value."},
+            "taxonomy_id": {"type": "integer", "description": "Optional new taxonomy id."},
+            "shop_section_id": {"type": "integer", "description": "Optional new shop section id."},
+            "shipping_profile_id": {"type": "integer", "description": "Optional new shipping profile id."},
+            "return_policy_id": {"type": "integer", "description": "Optional new return policy id."},
+            "processing_min": {"type": "integer", "description": "Optional new minimum processing days."},
+            "processing_max": {"type": "integer", "description": "Optional new maximum processing days."},
+            "item_weight": {"type": "number", "description": "Optional new item weight."},
+            "item_weight_unit": {"type": "string", "description": "Optional new weight unit."},
+            "item_length": {"type": "number", "description": "Optional new item length."},
+            "item_width": {"type": "number", "description": "Optional new item width."},
+            "item_height": {"type": "number", "description": "Optional new item height."},
+            "item_dimensions_unit": {"type": "string", "description": "Optional new dimensions unit."},
+            "is_supply": {"type": "boolean", "description": "Optional new is_supply flag."},
+            "is_customizable": {"type": "boolean", "description": "Optional new is_customizable flag."},
+            "is_personalizable": {"type": "boolean", "description": "Optional new is_personalizable flag."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, listing}; on failure (listing not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_listing",
+        "description": "Delete a listing by its id.",
+        "arguments": {
+            "listing_id": {"type": "integer", "description": "The unique id of the listing to delete."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms deletion; on failure (listing not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_listing_images",
+        "description": "List the images belonging to a listing.",
+        "arguments": {
+            "listing_id": {"type": "integer", "description": "The unique id of the listing."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, count, results}; on failure (listing not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_listing_image",
+        "description": "Get a single listing image by listing id and image id.",
+        "arguments": {
+            "listing_id": {"type": "integer", "description": "The unique id of the listing."},
+            "image_id": {"type": "integer", "description": "The unique id of the image."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, listing_image}; on failure (image not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_listing_image",
+        "description": "Delete a listing image by listing id and image id.",
+        "arguments": {
+            "listing_id": {"type": "integer", "description": "The unique id of the listing."},
+            "image_id": {"type": "integer", "description": "The unique id of the image to delete."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms deletion; on failure (image not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_receipts",
+        "description": "List a shop's receipts (orders) with optional filtering, sorting, and pagination.",
+        "arguments": {
+            "shop_id": {"type": "integer", "description": "The unique id of the shop."},
+            "status": {"type": "string", "description": "Optional receipt status filter."},
+            "min_created": {"type": "string", "description": "Optional minimum created timestamp filter."},
+            "max_created": {"type": "string", "description": "Optional maximum created timestamp filter."},
+            "sort_on": {"type": "string", "description": "Field to sort on: created or updated (default 'created')."},
+            "sort_order": {"type": "string", "description": "Sort direction: 'asc' or 'desc' (default 'desc')."},
+            "limit": {"type": "integer", "description": "Max number of receipts to return (default 25)."},
+            "offset": {"type": "integer", "description": "Result offset for pagination (default 0)."},
+            "was_shipped": {"type": "boolean", "description": "Optional filter on whether the receipt was shipped."},
+            "was_paid": {"type": "boolean", "description": "Optional filter on whether the receipt was paid."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, count, total, offset, limit, results} with transactions attached."
+        }
+    },
+    {
+        "tool_name": "get_receipt",
+        "description": "Get a single receipt (order) by its id, with transactions attached.",
+        "arguments": {
+            "receipt_id": {"type": "integer", "description": "The unique id of the receipt."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, receipt}; on failure (receipt not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_receipt",
+        "description": "Update shipping/tracking fields of a receipt, marking it shipped when applicable.",
+        "arguments": {
+            "receipt_id": {"type": "integer", "description": "The unique id of the receipt to update."},
+            "shipping_carrier": {"type": "string", "description": "Optional shipping carrier name."},
+            "tracking_code": {"type": "string", "description": "Optional tracking code."},
+            "was_shipped": {"type": "boolean", "description": "Optional flag to mark the receipt as shipped."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, receipt}; on failure (receipt not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_receipt_transactions",
+        "description": "List the transactions belonging to a receipt.",
+        "arguments": {
+            "receipt_id": {"type": "integer", "description": "The unique id of the receipt."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, count, results}; on failure (receipt not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_transaction",
+        "description": "Get a single transaction by its id.",
+        "arguments": {
+            "transaction_id": {"type": "integer", "description": "The unique id of the transaction."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, transaction}; on failure (transaction not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_shop_reviews",
+        "description": "List reviews for a shop, optionally filtered by listing and minimum rating, with pagination.",
+        "arguments": {
+            "shop_id": {"type": "integer", "description": "The unique id of the shop."},
+            "listing_id": {"type": "integer", "description": "Optional listing id filter."},
+            "min_rating": {"type": "integer", "description": "Optional minimum star rating (1-5)."},
+            "limit": {"type": "integer", "description": "Max number of reviews to return (default 25)."},
+            "offset": {"type": "integer", "description": "Result offset for pagination (default 0)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, count, total, offset, limit, results}."
+        }
+    },
+    {
+        "tool_name": "list_listing_reviews",
+        "description": "List reviews for a listing, optionally filtered by minimum rating, with pagination.",
+        "arguments": {
+            "listing_id": {"type": "integer", "description": "The unique id of the listing."},
+            "min_rating": {"type": "integer", "description": "Optional minimum star rating (1-5)."},
+            "limit": {"type": "integer", "description": "Max number of reviews to return (default 25)."},
+            "offset": {"type": "integer", "description": "Result offset for pagination (default 0)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, count, total, offset, limit, results}."
+        }
+    },
+    {
+        "tool_name": "list_shipping_profiles",
+        "description": "List the shipping profiles belonging to a shop.",
+        "arguments": {
+            "shop_id": {"type": "integer", "description": "The unique id of the shop."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, count, results}."
+        }
+    },
+    {
+        "tool_name": "get_shipping_profile",
+        "description": "Get a single shipping profile by shop id and profile id.",
+        "arguments": {
+            "shop_id": {"type": "integer", "description": "The unique id of the shop."},
+            "profile_id": {"type": "integer", "description": "The unique id of the shipping profile."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, shipping_profile}; on failure (profile not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_return_policies",
+        "description": "List the return policies belonging to a shop.",
+        "arguments": {
+            "shop_id": {"type": "integer", "description": "The unique id of the shop."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, count, results}."
+        }
+    },
+    {
+        "tool_name": "get_return_policy",
+        "description": "Get a single return policy by shop id and policy id.",
+        "arguments": {
+            "shop_id": {"type": "integer", "description": "The unique id of the shop."},
+            "policy_id": {"type": "integer", "description": "The unique id of the return policy."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {type, return_policy}; on failure (policy not found), output contains an error message."
+        }
+    }
+]

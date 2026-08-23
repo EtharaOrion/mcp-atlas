@@ -1,0 +1,92 @@
+[
+    {
+        "tool_name": "search_flight_offers",
+        "description": "Search flight offers between an origin and destination, with pricing scaled by number of adults.",
+        "arguments": {
+            "origin": {
+                "type": "string",
+                "description": "Origin location IATA code."
+            },
+            "destination": {
+                "type": "string",
+                "description": "Destination location IATA code."
+            },
+            "departure_date": {
+                "type": "string",
+                "description": "Optional departure date (YYYY-MM-DD) to filter offers."
+            },
+            "adults": {
+                "type": "integer",
+                "description": "Number of adult travelers (default 1); scales the quoted price."
+            },
+            "max_results": {
+                "type": "integer",
+                "description": "Maximum number of offers to return (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with meta, data (offers) and dictionaries (carriers, locations)."
+        }
+    },
+    {
+        "tool_name": "price_flight_offer",
+        "description": "Confirm pricing for a flight offer; seeded offers use the authoritative seeded price.",
+        "arguments": {
+            "offer": {
+                "type": "object",
+                "description": "A flight-offer object; if it has a seeded id the seeded price is used, otherwise the posted price is echoed."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with data (type, flightOffers); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "search_locations",
+        "description": "Search reference-data locations (airports and/or cities) by keyword.",
+        "arguments": {
+            "keyword": {
+                "type": "string",
+                "description": "Optional keyword matched against IATA code, name, or city name."
+            },
+            "sub_type": {
+                "type": "string",
+                "description": "Comma-separated location subtypes to include (default 'AIRPORT,CITY')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with meta and a data list of location views."
+        }
+    },
+    {
+        "tool_name": "get_location",
+        "description": "Get a single reference-data location by its id (e.g. A-prefixed airport or C-prefixed city).",
+        "arguments": {
+            "location_id": {
+                "type": "string",
+                "description": "The location id, optionally prefixed with 'A' (airport) or 'C' (city)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a data location view; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_airlines",
+        "description": "Get airline reference data, optionally filtered by IATA codes.",
+        "arguments": {
+            "airline_codes": {
+                "type": "string",
+                "description": "Optional comma-separated IATA airline codes to filter by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with meta and a data list of airline objects."
+        }
+    }
+]

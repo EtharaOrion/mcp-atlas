@@ -1,0 +1,282 @@
+[
+  {
+    "tool_name": "list_subscriptions",
+    "description": "List all subscriptions, optionally filtered by status/category.",
+    "arguments": {
+      "status": {
+        "type": "string",
+        "description": "active|paused|cancelled"
+      },
+      "category": {
+        "type": "string",
+        "description": "Category filter."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "get_subscription",
+    "description": "Get a subscription by sid.",
+    "arguments": {
+      "sid": {
+        "type": "string",
+        "description": "Subscription id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "add_subscription",
+    "description": "Add a new subscription.",
+    "arguments": {
+      "name": {
+        "type": "string",
+        "description": "Name."
+      },
+      "provider": {
+        "type": "string",
+        "description": "Provider."
+      },
+      "amount": {
+        "type": "number",
+        "description": "Amount per period."
+      },
+      "period": {
+        "type": "string",
+        "description": "monthly|yearly|weekly"
+      },
+      "currency": {
+        "type": "string",
+        "description": "Currency code."
+      },
+      "next_charge": {
+        "type": "string",
+        "description": "ISO next charge date."
+      },
+      "category": {
+        "type": "string",
+        "description": "Category."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "update_subscription",
+    "description": "Update fields of a subscription.",
+    "arguments": {
+      "sid": {
+        "type": "string",
+        "description": "Subscription id."
+      },
+      "name": {
+        "type": "string",
+        "description": "New name."
+      },
+      "provider": {
+        "type": "string",
+        "description": "New provider."
+      },
+      "amount": {
+        "type": "number",
+        "description": "New amount."
+      },
+      "period": {
+        "type": "string",
+        "description": "New period."
+      },
+      "currency": {
+        "type": "string",
+        "description": "New currency."
+      },
+      "next_charge": {
+        "type": "string",
+        "description": "New next charge."
+      },
+      "category": {
+        "type": "string",
+        "description": "New category."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "cancel_subscription",
+    "description": "Mark a subscription cancelled.",
+    "arguments": {
+      "sid": {
+        "type": "string",
+        "description": "Subscription id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "pause_subscription",
+    "description": "Pause a subscription.",
+    "arguments": {
+      "sid": {
+        "type": "string",
+        "description": "Subscription id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "resume_subscription",
+    "description": "Resume a subscription.",
+    "arguments": {
+      "sid": {
+        "type": "string",
+        "description": "Subscription id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "delete_subscription",
+    "description": "Delete a subscription.",
+    "arguments": {
+      "sid": {
+        "type": "string",
+        "description": "Subscription id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "record_payment",
+    "description": "Record a payment for a subscription.",
+    "arguments": {
+      "subscription_id": {
+        "type": "string",
+        "description": "Subscription id."
+      },
+      "amount": {
+        "type": "number",
+        "description": "Amount paid."
+      },
+      "date": {
+        "type": "string",
+        "description": "ISO date."
+      },
+      "currency": {
+        "type": "string",
+        "description": "Currency."
+      },
+      "status": {
+        "type": "string",
+        "description": "paid|failed|pending"
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "list_payments",
+    "description": "List payments, optionally filtered by subscription/status.",
+    "arguments": {
+      "subscription_id": {
+        "type": "string",
+        "description": "Optional subscription filter."
+      },
+      "status": {
+        "type": "string",
+        "description": "Status filter."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "monthly_cost",
+    "description": "Compute total monthly cost of active subscriptions.",
+    "arguments": {},
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "yearly_cost",
+    "description": "Compute total yearly cost of active subscriptions.",
+    "arguments": {},
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "cost_by_category",
+    "description": "Monthly cost broken down by category.",
+    "arguments": {},
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "upcoming_charges",
+    "description": "List upcoming charges sorted by next_charge date.",
+    "arguments": {
+      "limit": {
+        "type": "integer",
+        "description": "Max items."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "search",
+    "description": "Search subscriptions by name or provider.",
+    "arguments": {
+      "query": {
+        "type": "string",
+        "description": "Search term."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "get_stats",
+    "description": "Get subscription stats.",
+    "arguments": {},
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  }
+]

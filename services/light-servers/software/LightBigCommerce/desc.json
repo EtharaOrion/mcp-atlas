@@ -1,0 +1,146 @@
+[
+    {
+        "tool_name": "list_products",
+        "description": "List catalog products with optional name/sku/visibility filters and paging.",
+        "arguments": {
+            "name": {
+                "type": "string",
+                "description": "Optional case-insensitive substring to match against product names."
+            },
+            "sku": {
+                "type": "string",
+                "description": "Optional exact SKU (case-insensitive) to match."
+            },
+            "is_visible": {
+                "type": "boolean",
+                "description": "Optional visibility flag to filter products by."
+            },
+            "page": {
+                "type": "integer",
+                "description": "Page number (default 1)."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Page size (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'data' list of products and 'meta' pagination."
+        }
+    },
+    {
+        "tool_name": "get_product",
+        "description": "Get a single catalog product by its id.",
+        "arguments": {
+            "product_id": {
+                "type": "integer",
+                "description": "The id of the product."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the product 'data'; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_orders",
+        "description": "List orders with optional customer/status filters and paging.",
+        "arguments": {
+            "customer_id": {
+                "type": "integer",
+                "description": "Optional customer id to filter orders by."
+            },
+            "status_id": {
+                "type": "integer",
+                "description": "Optional status id to filter orders by."
+            },
+            "page": {
+                "type": "integer",
+                "description": "Page number (default 1)."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Page size (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of order objects."
+        }
+    },
+    {
+        "tool_name": "get_order",
+        "description": "Get a single order by its id.",
+        "arguments": {
+            "order_id": {
+                "type": "integer",
+                "description": "The id of the order."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the order object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_order",
+        "description": "Create a new order, computing totals from the supplied product lines.",
+        "arguments": {
+            "customer_id": {
+                "type": "integer",
+                "description": "The customer id for the order (default 0)."
+            },
+            "status_id": {
+                "type": "integer",
+                "description": "The order status id (default 1 = Pending)."
+            },
+            "payment_method": {
+                "type": "string",
+                "description": "The payment method (default 'manual')."
+            },
+            "currency_code": {
+                "type": "string",
+                "description": "The currency code (default 'USD')."
+            },
+            "billing_address": {
+                "type": "object",
+                "description": "Optional billing address (first_name, last_name, email)."
+            },
+            "products": {
+                "type": "array",
+                "description": "Optional list of product lines (product_id, quantity, price_inc_tax) used to compute the total."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created order object."
+        }
+    },
+    {
+        "tool_name": "list_customers",
+        "description": "List customers with optional email/company filters and paging.",
+        "arguments": {
+            "email": {
+                "type": "string",
+                "description": "Optional case-insensitive substring to match against customer emails."
+            },
+            "company": {
+                "type": "string",
+                "description": "Optional case-insensitive substring to match against customer companies."
+            },
+            "page": {
+                "type": "integer",
+                "description": "Page number (default 1)."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Page size (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'data' list of customers and 'meta' pagination."
+        }
+    }
+]

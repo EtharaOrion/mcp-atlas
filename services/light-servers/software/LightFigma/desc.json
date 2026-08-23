@@ -1,0 +1,125 @@
+[
+    {
+        "tool_name": "get_me",
+        "description": "Get the profile of the current authenticated Figma user.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the current user object (id, handle, email, img_url); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_team_projects",
+        "description": "List the projects belonging to a team.",
+        "arguments": {
+            "team_id": {
+                "type": "string",
+                "description": "The unique id of the team."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains the team name and a list of project objects (id, name); on failure (team not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_project_files",
+        "description": "List the files belonging to a project.",
+        "arguments": {
+            "project_id": {
+                "type": "string",
+                "description": "The unique id of the project."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains the project name and a list of file objects (key, name, thumbnail_url, last_modified); on failure (project not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_file",
+        "description": "Get a single file, including its document node tree and components, by its file key.",
+        "arguments": {
+            "file_key": {
+                "type": "string",
+                "description": "The unique key of the file."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the file object (name, role, lastModified, editorType, thumbnailUrl, version, document, components); on failure (file not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_file_nodes",
+        "description": "Get specific nodes within a file's document tree by their ids.",
+        "arguments": {
+            "file_key": {
+                "type": "string",
+                "description": "The unique key of the file."
+            },
+            "ids": {
+                "type": "string",
+                "description": "Comma-separated list of node ids to retrieve."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains the file name, lastModified, version, and a nodes map of requested node ids to node documents (or null when absent); on failure (file not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_comments",
+        "description": "List the comments on a file.",
+        "arguments": {
+            "file_key": {
+                "type": "string",
+                "description": "The unique key of the file."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains a list of comment views (id, file_key, message, client_meta, user, resolved_at, created_at); on failure (file not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_comment",
+        "description": "Create a new comment on a file, optionally attached to a node.",
+        "arguments": {
+            "file_key": {
+                "type": "string",
+                "description": "The unique key of the file to comment on."
+            },
+            "message": {
+                "type": "string",
+                "description": "The comment message text."
+            },
+            "node_id": {
+                "type": "string",
+                "description": "Optional node id to attach the comment to."
+            },
+            "user_id": {
+                "type": "string",
+                "description": "Optional user id of the comment author (defaults to 'user-1001')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created comment view; on failure (file not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_components",
+        "description": "List the published components in a file.",
+        "arguments": {
+            "file_key": {
+                "type": "string",
+                "description": "The unique key of the file."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains a meta object with a list of components (key, file_key, node_id, name, description); on failure (file not found), output contains an error message."
+        }
+    }
+]

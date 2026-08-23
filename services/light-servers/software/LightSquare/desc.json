@@ -1,0 +1,225 @@
+[
+    {
+        "tool_name": "get_merchant",
+        "description": "Get the current merchant profile.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the merchant document; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_payments",
+        "description": "List payments, optionally filtered by location, up to a limit.",
+        "arguments": {
+            "location_id": {
+                "type": "string",
+                "description": "Optional location id to filter payments by."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of payments to return (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a payments list; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_payment",
+        "description": "Get a single payment by id.",
+        "arguments": {
+            "payment_id": {
+                "type": "string",
+                "description": "The id of the payment to fetch."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the payment; on failure (payment not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_payment",
+        "description": "Create a payment for a positive integer cents amount.",
+        "arguments": {
+            "amount": {
+                "type": "integer",
+                "description": "The payment amount in integer cents (must be positive)."
+            },
+            "currency": {
+                "type": "string",
+                "description": "Currency code for the payment (default USD)."
+            },
+            "source_id": {
+                "type": "string",
+                "description": "Payment source id / card nonce (default cnon:card-nonce-ok)."
+            },
+            "customer_id": {
+                "type": "string",
+                "description": "Optional customer id to attach the payment to."
+            },
+            "order_id": {
+                "type": "string",
+                "description": "Optional order id to attach the payment to."
+            },
+            "location_id": {
+                "type": "string",
+                "description": "Location id for the payment (default LOC_MAIN)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the created payment; on failure (invalid amount or customer not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_refund",
+        "description": "Refund all or part of an existing payment.",
+        "arguments": {
+            "payment_id": {
+                "type": "string",
+                "description": "The id of the payment to refund."
+            },
+            "amount": {
+                "type": "integer",
+                "description": "Optional refund amount in integer cents; defaults to the full payment amount."
+            },
+            "currency": {
+                "type": "string",
+                "description": "Currency code for the refund (default USD)."
+            },
+            "reason": {
+                "type": "string",
+                "description": "Optional reason for the refund."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the created refund; on failure (payment not found or amount exceeds payment), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_customers",
+        "description": "List customers up to a limit.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of customers to return (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a customers list; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_customer",
+        "description": "Get a single customer by id.",
+        "arguments": {
+            "customer_id": {
+                "type": "string",
+                "description": "The id of the customer to fetch."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the customer; on failure (customer not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_customer",
+        "description": "Create a new customer record.",
+        "arguments": {
+            "given_name": {
+                "type": "string",
+                "description": "Optional given (first) name."
+            },
+            "family_name": {
+                "type": "string",
+                "description": "Optional family (last) name."
+            },
+            "email_address": {
+                "type": "string",
+                "description": "Optional email address."
+            },
+            "phone_number": {
+                "type": "string",
+                "description": "Optional phone number."
+            },
+            "company_name": {
+                "type": "string",
+                "description": "Optional company name."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the created customer; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_catalog",
+        "description": "List catalog objects, optionally filtered by type.",
+        "arguments": {
+            "types": {
+                "type": "string",
+                "description": "Optional comma-separated catalog object types to include (e.g. ITEM)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with an objects list of catalog items; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_order",
+        "description": "Create an order from line items and compute its total.",
+        "arguments": {
+            "customer_id": {
+                "type": "string",
+                "description": "Optional customer id to attach the order to."
+            },
+            "location_id": {
+                "type": "string",
+                "description": "Location id for the order (default LOC_MAIN)."
+            },
+            "line_items": {
+                "type": "array",
+                "description": "List of line item objects each with catalog_object_id and optional quantity."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the created order and its total; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_order",
+        "description": "Get a single order by id.",
+        "arguments": {
+            "order_id": {
+                "type": "string",
+                "description": "The id of the order to fetch."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the order; on failure (order not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_inventory",
+        "description": "Get inventory counts for a catalog object.",
+        "arguments": {
+            "catalog_object_id": {
+                "type": "string",
+                "description": "The catalog object (variation) id to look up inventory for."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a counts list; on failure (no inventory), output contains an error message."
+        }
+    }
+]

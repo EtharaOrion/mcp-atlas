@@ -1,0 +1,74 @@
+# Source: world_data 2/LightDiscord.json (verbatim). Corpus-only authored world.
+messages:
+- id: '1001000200030004001'
+  channel_id: '800100200300400001'
+  author:
+    id: '500100200300400001'
+    username: Wesley Farraday
+  content: Welcome everyone to the Savannah Historic Preservation Alliance community!
+  timestamp: '2025-05-01T09:00:00Z'
+  pinned: true
+  edited_timestamp: null
+- id: '1001000200030004002'
+  channel_id: '800100200300400001'
+  author:
+    id: '500100200300400002'
+    username: Barrington family
+  content: Glad to be here. The new dashboard looks great.
+  timestamp: '2025-05-01T09:05:00Z'
+  pinned: false
+  edited_timestamp: null
+- id: '1001000200030004003'
+  channel_id: '800100200300400001'
+  author:
+    id: '300100200300400001'
+    username: Loretta Simms
+  content: Release v2.18.0 is now live in production.
+  timestamp: '2025-05-01T12:00:00Z'
+  pinned: false
+  edited_timestamp: null
+- id: '1001000200030004004'
+  channel_id: '800100200300400002'
+  author:
+    id: '500100200300400004'
+    username: Malcolm Kingsley
+  content: My API key keeps returning 401 after rotation. Any ideas?
+  timestamp: '2025-05-02T10:30:00Z'
+  pinned: false
+  edited_timestamp: null
+- id: '1001000200030004005'
+  channel_id: '800100200300400002'
+  author:
+    id: '500100200300400003'
+    username: Malcolm Kingsley
+  content: 'Cordelia: make sure you regenerated the token after the rotation window closed.'
+  timestamp: '2025-05-02T10:42:00Z'
+  pinned: false
+  edited_timestamp: null
+- id: '1001000200030004006'
+  channel_id: '800100200300400003'
+  author:
+    id: '500100200300400002'
+    username: Barrington family
+  content: 'Friday demo idea: live latency dashboard on the big screen.'
+  timestamp: '2025-05-02T15:10:00Z'
+  pinned: false
+  edited_timestamp: null
+- id: '1001000200030004007'
+  channel_id: '800100200300400005'
+  author:
+    id: '500100200300400005'
+    username: Calvin Burke
+  content: Anyone using a custom physics engine or sticking with off-the-shelf?
+  timestamp: '2025-05-03T08:20:00Z'
+  pinned: false
+  edited_timestamp: null
+- id: '1001000200030004008'
+  channel_id: '800100200300400006'
+  author:
+    id: '500100200300400006'
+    username: Delbert Yancey CPA
+  content: Posted my roguelike prototype build in the link below. Feedback welcome!
+  timestamp: '2025-05-03T16:00:00Z'
+  pinned: true
+  edited_timestamp: null

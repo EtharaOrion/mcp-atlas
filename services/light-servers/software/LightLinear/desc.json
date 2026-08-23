@@ -1,0 +1,798 @@
+[
+    {
+        "tool_name": "list_teams",
+        "description": "List all teams in the workspace with pagination.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of teams to return (default 50)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of teams to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated teams envelope (type, count, total, offset, limit, results); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_team",
+        "description": "Get a single team by its id.",
+        "arguments": {
+            "team_id": {
+                "type": "string",
+                "description": "The unique id of the team."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the team object; on failure (team not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_team_members",
+        "description": "List the members (users) belonging to a team.",
+        "arguments": {
+            "team_id": {
+                "type": "string",
+                "description": "The unique id of the team."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a users envelope (type, count, results); on failure (team not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_team_issues",
+        "description": "List the issues belonging to a team with pagination.",
+        "arguments": {
+            "team_id": {
+                "type": "string",
+                "description": "The unique id of the team."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of issues to return (default 50)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of issues to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated issues envelope; on failure (team not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_team_projects",
+        "description": "List the projects associated with a team.",
+        "arguments": {
+            "team_id": {
+                "type": "string",
+                "description": "The unique id of the team."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a projects envelope (type, count, results); on failure (team not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_team_cycles",
+        "description": "List the cycles belonging to a team.",
+        "arguments": {
+            "team_id": {
+                "type": "string",
+                "description": "The unique id of the team."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a cycles envelope (type, count, results); on failure (team not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_team_workflow_states",
+        "description": "List the workflow states of a team, ordered by position.",
+        "arguments": {
+            "team_id": {
+                "type": "string",
+                "description": "The unique id of the team."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a workflow_states envelope (type, count, results); on failure (team not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_team_labels",
+        "description": "List the labels available to a team (team-specific plus workspace-wide labels).",
+        "arguments": {
+            "team_id": {
+                "type": "string",
+                "description": "The unique id of the team."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a labels envelope (type, count, results); on failure (team not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_users",
+        "description": "List all users in the workspace with pagination.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of users to return (default 50)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of users to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated users envelope; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_user",
+        "description": "Get a single user by their id.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the user object; on failure (user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_user_assigned_issues",
+        "description": "List the issues assigned to a user with pagination.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of issues to return (default 50)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of issues to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated issues envelope; on failure (user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_workflow_states",
+        "description": "List workflow states, optionally filtered by team, ordered by team and position.",
+        "arguments": {
+            "team_id": {
+                "type": "string",
+                "description": "Optional team id to filter workflow states by."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of workflow states to return (default 50)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of workflow states to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated workflow_states envelope; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_workflow_state",
+        "description": "Get a single workflow state by its id.",
+        "arguments": {
+            "state_id": {
+                "type": "string",
+                "description": "The unique id of the workflow state."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the workflow state object; on failure (state not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_labels",
+        "description": "List labels, optionally filtered by team (includes workspace-wide labels).",
+        "arguments": {
+            "team_id": {
+                "type": "string",
+                "description": "Optional team id to filter labels by."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of labels to return (default 50)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of labels to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated labels envelope; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_label",
+        "description": "Get a single label by its id.",
+        "arguments": {
+            "label_id": {
+                "type": "string",
+                "description": "The unique id of the label."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the label object; on failure (label not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_label",
+        "description": "Create a new label with a name and color, optionally scoped to a team.",
+        "arguments": {
+            "name": {
+                "type": "string",
+                "description": "The name of the label."
+            },
+            "color": {
+                "type": "string",
+                "description": "The hex color of the label."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional description for the label."
+            },
+            "teamId": {
+                "type": "string",
+                "description": "Optional team id to scope the label to."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created label object; on failure (missing required field), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_projects",
+        "description": "List all projects in the workspace with pagination.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of projects to return (default 50)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of projects to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated projects envelope; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_project",
+        "description": "Get a single project by its id.",
+        "arguments": {
+            "project_id": {
+                "type": "string",
+                "description": "The unique id of the project."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the project object; on failure (project not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_project",
+        "description": "Create a new project with a name and optional metadata.",
+        "arguments": {
+            "name": {
+                "type": "string",
+                "description": "The name of the project."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional project description."
+            },
+            "state": {
+                "type": "string",
+                "description": "Optional project state (defaults to 'planned')."
+            },
+            "leadId": {
+                "type": "string",
+                "description": "Optional user id of the project lead."
+            },
+            "teamIds": {
+                "type": "array",
+                "description": "Optional list of team ids the project belongs to."
+            },
+            "startDate": {
+                "type": "string",
+                "description": "Optional start date in 'YYYY-MM-DD' format."
+            },
+            "targetDate": {
+                "type": "string",
+                "description": "Optional target date in 'YYYY-MM-DD' format."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created project object; on failure (missing required field), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_project",
+        "description": "Update fields of an existing project by its id.",
+        "arguments": {
+            "project_id": {
+                "type": "string",
+                "description": "The unique id of the project to update."
+            },
+            "name": {
+                "type": "string",
+                "description": "Optional new name for the project."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional new description."
+            },
+            "state": {
+                "type": "string",
+                "description": "Optional new project state."
+            },
+            "leadId": {
+                "type": "string",
+                "description": "Optional new lead user id."
+            },
+            "teamIds": {
+                "type": "array",
+                "description": "Optional new list of team ids."
+            },
+            "startDate": {
+                "type": "string",
+                "description": "Optional new start date."
+            },
+            "targetDate": {
+                "type": "string",
+                "description": "Optional new target date."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated project object; on failure (project not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_project_issues",
+        "description": "List the issues belonging to a project with pagination.",
+        "arguments": {
+            "project_id": {
+                "type": "string",
+                "description": "The unique id of the project."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of issues to return (default 50)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of issues to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated issues envelope; on failure (project not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_cycles",
+        "description": "List cycles, optionally filtered by team and status (current, past, upcoming).",
+        "arguments": {
+            "team_id": {
+                "type": "string",
+                "description": "Optional team id to filter cycles by."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional status filter: 'current', 'past', or 'upcoming'."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of cycles to return (default 50)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of cycles to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated cycles envelope; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_cycle",
+        "description": "Get a single cycle by its id.",
+        "arguments": {
+            "cycle_id": {
+                "type": "string",
+                "description": "The unique id of the cycle."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the cycle object; on failure (cycle not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_cycle",
+        "description": "Create a new cycle for a team; the cycle number is auto-assigned.",
+        "arguments": {
+            "name": {
+                "type": "string",
+                "description": "The name of the cycle."
+            },
+            "teamId": {
+                "type": "string",
+                "description": "The id of the team the cycle belongs to."
+            },
+            "startsAt": {
+                "type": "string",
+                "description": "The start date of the cycle."
+            },
+            "endsAt": {
+                "type": "string",
+                "description": "The end date of the cycle."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created cycle object; on failure (missing required field), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_cycle_issues",
+        "description": "List the issues belonging to a cycle with pagination.",
+        "arguments": {
+            "cycle_id": {
+                "type": "string",
+                "description": "The unique id of the cycle."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of issues to return (default 50)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of issues to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated issues envelope; on failure (cycle not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_issues",
+        "description": "List issues with optional filters (state, assignee, project, cycle, team, priority, label), sorted by sort order.",
+        "arguments": {
+            "state_id": {
+                "type": "string",
+                "description": "Optional workflow state id to filter by."
+            },
+            "assignee_id": {
+                "type": "string",
+                "description": "Optional assignee user id to filter by."
+            },
+            "project_id": {
+                "type": "string",
+                "description": "Optional project id to filter by."
+            },
+            "cycle_id": {
+                "type": "string",
+                "description": "Optional cycle id to filter by."
+            },
+            "team_id": {
+                "type": "string",
+                "description": "Optional team id to filter by."
+            },
+            "priority": {
+                "type": "integer",
+                "description": "Optional priority value to filter by."
+            },
+            "label_id": {
+                "type": "string",
+                "description": "Optional label id; issues carrying this label are returned."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of issues to return (default 50)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of issues to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated issues envelope; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "search_issues",
+        "description": "Search issues by matching a query string against title, description, and identifier.",
+        "arguments": {
+            "query": {
+                "type": "string",
+                "description": "The search query string."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of issues to return (default 50)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of issues to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated issues envelope of matches; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_issue",
+        "description": "Get a single issue by its id.",
+        "arguments": {
+            "issue_id": {
+                "type": "string",
+                "description": "The unique id of the issue."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the issue object; on failure (issue not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_issue",
+        "description": "Create a new issue for a team with optional metadata; identifier, number and branch name are derived automatically.",
+        "arguments": {
+            "title": {
+                "type": "string",
+                "description": "The title of the issue."
+            },
+            "teamId": {
+                "type": "string",
+                "description": "The id of the team the issue belongs to."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional issue description."
+            },
+            "priority": {
+                "type": "integer",
+                "description": "Optional priority value (defaults to 0)."
+            },
+            "estimate": {
+                "type": "integer",
+                "description": "Optional point estimate."
+            },
+            "stateId": {
+                "type": "string",
+                "description": "Optional initial workflow state id (defaults to the team's backlog state)."
+            },
+            "assigneeId": {
+                "type": "string",
+                "description": "Optional user id to assign the issue to."
+            },
+            "projectId": {
+                "type": "string",
+                "description": "Optional project id the issue belongs to."
+            },
+            "cycleId": {
+                "type": "string",
+                "description": "Optional cycle id the issue belongs to."
+            },
+            "labelIds": {
+                "type": "array",
+                "description": "Optional list of label ids to attach."
+            },
+            "dueDate": {
+                "type": "string",
+                "description": "Optional due date in 'YYYY-MM-DD' format."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created issue object; on failure (missing required field), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_issue",
+        "description": "Update fields of an existing issue by its id; state transitions update startedAt/completedAt/canceledAt and reassignment updates the branch name.",
+        "arguments": {
+            "issue_id": {
+                "type": "string",
+                "description": "The unique id of the issue to update."
+            },
+            "title": {
+                "type": "string",
+                "description": "Optional new title."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional new description."
+            },
+            "priority": {
+                "type": "integer",
+                "description": "Optional new priority value."
+            },
+            "estimate": {
+                "type": "integer",
+                "description": "Optional new point estimate."
+            },
+            "stateId": {
+                "type": "string",
+                "description": "Optional new workflow state id."
+            },
+            "assigneeId": {
+                "type": "string",
+                "description": "Optional new assignee user id."
+            },
+            "projectId": {
+                "type": "string",
+                "description": "Optional new project id."
+            },
+            "cycleId": {
+                "type": "string",
+                "description": "Optional new cycle id."
+            },
+            "labelIds": {
+                "type": "array",
+                "description": "Optional new list of label ids."
+            },
+            "dueDate": {
+                "type": "string",
+                "description": "Optional new due date."
+            },
+            "sortOrder": {
+                "type": "number",
+                "description": "Optional new sort order value."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated issue object; on failure (issue not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_issue",
+        "description": "Delete an issue by its id.",
+        "arguments": {
+            "issue_id": {
+                "type": "string",
+                "description": "The unique id of the issue to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms the deletion (deleted flag and issueId); on failure (issue not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_comments",
+        "description": "List the comments on an issue, ordered by creation time, with pagination.",
+        "arguments": {
+            "issue_id": {
+                "type": "string",
+                "description": "The unique id of the issue."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of comments to return (default 50)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of comments to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated comments envelope; on failure (issue not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_comment",
+        "description": "Get a single comment by its id.",
+        "arguments": {
+            "comment_id": {
+                "type": "string",
+                "description": "The unique id of the comment."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the comment object; on failure (comment not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_comment",
+        "description": "Create a new comment on an issue.",
+        "arguments": {
+            "body": {
+                "type": "string",
+                "description": "The text body of the comment."
+            },
+            "issueId": {
+                "type": "string",
+                "description": "The id of the issue to comment on."
+            },
+            "userId": {
+                "type": "string",
+                "description": "Optional user id of the comment author (defaults to 'user-01')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created comment object; on failure (missing field or issue not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_comment",
+        "description": "Update the body of an existing comment by its id.",
+        "arguments": {
+            "comment_id": {
+                "type": "string",
+                "description": "The unique id of the comment to update."
+            },
+            "body": {
+                "type": "string",
+                "description": "The new text body of the comment."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated comment object; on failure (comment not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_comment",
+        "description": "Delete a comment by its id.",
+        "arguments": {
+            "comment_id": {
+                "type": "string",
+                "description": "The unique id of the comment to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms the deletion (deleted flag and commentId); on failure (comment not found), output contains an error message."
+        }
+    }
+]

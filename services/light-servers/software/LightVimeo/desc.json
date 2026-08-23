@@ -1,0 +1,79 @@
+[
+    {
+        "tool_name": "get_me",
+        "description": "Get the authenticated user (the owner of the token in use) as a Vimeo user object.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the authenticated user object (uri, name, link, location, bio, account, created_time, websites, metadata); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_my_videos",
+        "description": "List the authenticated user's videos in Vimeo's paged envelope, sorted by created_time descending.",
+        "arguments": {
+            "page": {
+                "type": "integer",
+                "description": "Optional page number for pagination (default 1)."
+            },
+            "per_page": {
+                "type": "integer",
+                "description": "Optional number of items per page (default 25)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paged envelope (total, page, per_page, paging, data) whose data is a list of video objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_video",
+        "description": "Get a single video by its id.",
+        "arguments": {
+            "video_id": {
+                "type": "string",
+                "description": "The unique id of the video."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the video object (uri, name, description, link, duration, width, height, privacy, status, stats, metadata, user); on failure (video not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_user",
+        "description": "Get a single user by their id.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the user object (uri, name, link, location, bio, account, created_time, websites, metadata); on failure (user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_user_videos",
+        "description": "List a given user's videos in Vimeo's paged envelope, sorted by created_time descending.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user whose videos to list."
+            },
+            "page": {
+                "type": "integer",
+                "description": "Optional page number for pagination (default 1)."
+            },
+            "per_page": {
+                "type": "integer",
+                "description": "Optional number of items per page (default 25)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paged envelope (total, page, per_page, paging, data) whose data is a list of video objects; on failure (user not found), output contains an error message."
+        }
+    }
+]

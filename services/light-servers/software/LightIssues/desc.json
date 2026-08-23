@@ -1,0 +1,255 @@
+[
+    {
+        "tool_name": "list_issues",
+        "description": "List issues, optionally filtered by status, priority, assignee, sprint_id, or tag.",
+        "arguments": {
+            "status": {"type": "string", "description": "Optional: open, in_progress, in_review, resolved, closed."},
+            "priority": {"type": "string", "description": "Optional: low, medium, high, critical."},
+            "assignee": {"type": "string", "description": "Optional assignee filter."},
+            "sprint_id": {"type": "string", "description": "Optional sprint sid filter."},
+            "tag": {"type": "string", "description": "Optional tag filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of issue summaries."
+        }
+    },
+    {
+        "tool_name": "get_issue",
+        "description": "Retrieve the full issue record by iid.",
+        "arguments": {
+            "iid": {"type": "string", "description": "Issue identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full issue including description and timestamps."
+        }
+    },
+    {
+        "tool_name": "create_issue",
+        "description": "Create a new issue in status=open.",
+        "arguments": {
+            "title": {"type": "string", "description": "Issue title."},
+            "description": {"type": "string", "description": "Optional long description."},
+            "priority": {"type": "string", "description": "Priority: low, medium, high, critical (default medium)."},
+            "issue_type": {"type": "string", "description": "Type: bug, feature, or task (default task)."},
+            "assignee": {"type": "string", "description": "Optional assignee identifier."},
+            "reporter": {"type": "string", "description": "Reporter identifier (default self)."},
+            "sprint_id": {"type": "string", "description": "Optional sprint sid to attach."},
+            "tags": {"type": "array", "items": {"type": "string"}, "description": "Optional list of tags."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new issue summary."
+        }
+    },
+    {
+        "tool_name": "update_issue",
+        "description": "Update one or more fields on an existing issue.",
+        "arguments": {
+            "iid": {"type": "string", "description": "Issue identifier."},
+            "title": {"type": "string", "description": "Optional new title."},
+            "description": {"type": "string", "description": "Optional new description."},
+            "status": {"type": "string", "description": "Optional new status."},
+            "priority": {"type": "string", "description": "Optional new priority."},
+            "issue_type": {"type": "string", "description": "Optional new issue_type."},
+            "assignee": {"type": "string", "description": "Optional new assignee."},
+            "sprint_id": {"type": "string", "description": "Optional new sprint id."},
+            "tags": {"type": "array", "items": {"type": "string"}, "description": "Optional replacement tags list."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated issue summary."
+        }
+    },
+    {
+        "tool_name": "delete_issue",
+        "description": "Delete an issue and all its comments.",
+        "arguments": {
+            "iid": {"type": "string", "description": "Issue identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output contains iid, deleted, and removed_comments count."
+        }
+    },
+    {
+        "tool_name": "assign_issue",
+        "description": "Assign an issue to a user.",
+        "arguments": {
+            "iid": {"type": "string", "description": "Issue identifier."},
+            "assignee": {"type": "string", "description": "Assignee identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated issue summary."
+        }
+    },
+    {
+        "tool_name": "change_status",
+        "description": "Change the status of an issue.",
+        "arguments": {
+            "iid": {"type": "string", "description": "Issue identifier."},
+            "status": {"type": "string", "description": "New status: open, in_progress, in_review, resolved, closed."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated issue summary."
+        }
+    },
+    {
+        "tool_name": "change_priority",
+        "description": "Change the priority of an issue.",
+        "arguments": {
+            "iid": {"type": "string", "description": "Issue identifier."},
+            "priority": {"type": "string", "description": "New priority: low, medium, high, critical."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated issue summary."
+        }
+    },
+    {
+        "tool_name": "add_to_sprint",
+        "description": "Attach an issue to a sprint.",
+        "arguments": {
+            "iid": {"type": "string", "description": "Issue identifier."},
+            "sid": {"type": "string", "description": "Sprint identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated issue summary."
+        }
+    },
+    {
+        "tool_name": "remove_from_sprint",
+        "description": "Detach an issue from its current sprint (returns to backlog).",
+        "arguments": {
+            "iid": {"type": "string", "description": "Issue identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated issue summary."
+        }
+    },
+    {
+        "tool_name": "list_sprints",
+        "description": "List all sprints sorted by start_date.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of sprint summaries."
+        }
+    },
+    {
+        "tool_name": "get_sprint",
+        "description": "Retrieve the full sprint record by sid.",
+        "arguments": {
+            "sid": {"type": "string", "description": "Sprint identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full sprint."
+        }
+    },
+    {
+        "tool_name": "create_sprint",
+        "description": "Create a new upcoming sprint.",
+        "arguments": {
+            "name": {"type": "string", "description": "Sprint name (e.g. Sprint 26)."},
+            "start_date": {"type": "string", "description": "Start date (YYYY-MM-DD)."},
+            "end_date": {"type": "string", "description": "End date (YYYY-MM-DD)."},
+            "goal": {"type": "string", "description": "Optional sprint goal."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new sprint summary."
+        }
+    },
+    {
+        "tool_name": "start_sprint",
+        "description": "Transition a sprint to active status.",
+        "arguments": {
+            "sid": {"type": "string", "description": "Sprint identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated sprint summary."
+        }
+    },
+    {
+        "tool_name": "close_sprint",
+        "description": "Mark a sprint as completed.",
+        "arguments": {
+            "sid": {"type": "string", "description": "Sprint identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated sprint summary."
+        }
+    },
+    {
+        "tool_name": "list_by_sprint",
+        "description": "List all issues attached to a given sprint.",
+        "arguments": {
+            "sid": {"type": "string", "description": "Sprint identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of issue summaries."
+        }
+    },
+    {
+        "tool_name": "add_comment",
+        "description": "Add a comment to an issue.",
+        "arguments": {
+            "iid": {"type": "string", "description": "Issue identifier."},
+            "author": {"type": "string", "description": "Comment author identifier."},
+            "text": {"type": "string", "description": "Comment text."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new comment."
+        }
+    },
+    {
+        "tool_name": "list_comments",
+        "description": "List all comments on an issue sorted by created_at.",
+        "arguments": {
+            "iid": {"type": "string", "description": "Issue identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of comments."
+        }
+    },
+    {
+        "tool_name": "search_issues",
+        "description": "Search issues by keyword across title, description, and tags.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search keyword or phrase."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of matching issue summaries sorted by recency."
+        }
+    },
+    {
+        "tool_name": "list_backlog",
+        "description": "List issues that are unassigned to a sprint and not yet resolved or closed.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of backlog issue summaries."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Aggregate stats: issues, sprints, comments, backlog size, breakdowns by status, priority, and type.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a stats object."
+        }
+    }
+]

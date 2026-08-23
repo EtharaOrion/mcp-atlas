@@ -1,0 +1,207 @@
+[
+    {
+        "tool_name": "list_tickets",
+        "description": "List tickets filtered by status, priority, and assignee, ordered by id.",
+        "arguments": {
+            "status": {
+                "type": "string",
+                "description": "Optional ticket status to filter by."
+            },
+            "priority": {
+                "type": "string",
+                "description": "Optional ticket priority to filter by."
+            },
+            "assignee_id": {
+                "type": "integer",
+                "description": "Optional assignee user id to filter by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has a 'tickets' list and 'count'; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_ticket",
+        "description": "Get a single ticket by its id.",
+        "arguments": {
+            "ticket_id": {
+                "type": "integer",
+                "description": "The unique id of the ticket."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has the 'ticket'; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_ticket",
+        "description": "Create a new ticket, optionally with an initial comment.",
+        "arguments": {
+            "subject": {
+                "type": "string",
+                "description": "The ticket subject (required)."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional ticket description."
+            },
+            "priority": {
+                "type": "string",
+                "description": "Ticket priority (default 'normal'); must be one of low/normal/high/urgent."
+            },
+            "ticket_type": {
+                "type": "string",
+                "description": "Ticket type (default 'question')."
+            },
+            "requester_id": {
+                "type": "integer",
+                "description": "Optional requester user id."
+            },
+            "assignee_id": {
+                "type": "integer",
+                "description": "Optional assignee user id."
+            },
+            "organization_id": {
+                "type": "integer",
+                "description": "Optional organization id."
+            },
+            "tags": {
+                "type": "array",
+                "description": "Optional list of tag strings."
+            },
+            "comment_body": {
+                "type": "string",
+                "description": "Optional initial comment body added to the ticket."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has the created 'ticket'; on failure (missing subject or invalid priority), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_ticket",
+        "description": "Update fields of a ticket, optionally adding a comment.",
+        "arguments": {
+            "ticket_id": {
+                "type": "integer",
+                "description": "The id of the ticket to update."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional new status; must be a valid Zendesk status."
+            },
+            "priority": {
+                "type": "string",
+                "description": "Optional new priority; must be a valid priority."
+            },
+            "assignee_id": {
+                "type": "integer",
+                "description": "Optional new assignee user id."
+            },
+            "ticket_type": {
+                "type": "string",
+                "description": "Optional new ticket type."
+            },
+            "tags": {
+                "type": "array",
+                "description": "Optional new list of tag strings."
+            },
+            "comment_body": {
+                "type": "string",
+                "description": "Optional comment body to add with the update."
+            },
+            "comment_public": {
+                "type": "boolean",
+                "description": "Whether the added comment is public (default true)."
+            },
+            "comment_author_id": {
+                "type": "integer",
+                "description": "Optional author id for the added comment."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has the updated 'ticket'; on failure (not found or invalid field), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_comments",
+        "description": "List comments on a ticket, ordered by creation time.",
+        "arguments": {
+            "ticket_id": {
+                "type": "integer",
+                "description": "The id of the ticket whose comments are listed."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has a 'comments' list and 'count'; on failure (ticket not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_comment",
+        "description": "Add a comment to a ticket.",
+        "arguments": {
+            "ticket_id": {
+                "type": "integer",
+                "description": "The id of the ticket to comment on."
+            },
+            "body": {
+                "type": "string",
+                "description": "The comment body text (required)."
+            },
+            "author_id": {
+                "type": "integer",
+                "description": "Optional author user id; defaults to the ticket assignee."
+            },
+            "public": {
+                "type": "boolean",
+                "description": "Whether the comment is public (default true)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has the created 'comment'; on failure (ticket not found or missing body), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_users",
+        "description": "List users, optionally filtered by role.",
+        "arguments": {
+            "role": {
+                "type": "string",
+                "description": "Optional role to filter users by (e.g. admin, agent, end-user)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has a 'users' list and 'count'; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_user",
+        "description": "Get a single user by its id.",
+        "arguments": {
+            "user_id": {
+                "type": "integer",
+                "description": "The unique id of the user."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has the 'user'; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_organizations",
+        "description": "List all organizations.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has an 'organizations' list and 'count'; on failure, output contains an error message."
+        }
+    }
+]

@@ -1,0 +1,131 @@
+# Source: world_data 2/LightRide.json (verbatim). Corpus-only authored world.
+drivers:
+  drv_YmaBXttn:
+    did: drv_YmaBXttn
+    name: Alice Chen
+    car_model: Toyota Camry
+    license_plate: ABC-1234
+    rating: 4.9
+    is_available: true
+  drv_uev2GXKW:
+    did: drv_uev2GXKW
+    name: Bob Rivera
+    car_model: Honda Civic
+    license_plate: XYZ-9911
+    rating: 4.7
+    is_available: true
+  drv_Dy7xYfWJ:
+    did: drv_Dy7xYfWJ
+    name: Carla Nguyen
+    car_model: Nissan Leaf
+    license_plate: EVX-2088
+    rating: 4.8
+    is_available: false
+  drv_NJPnw6BG:
+    did: drv_NJPnw6BG
+    name: Daniel Park
+    car_model: Ford Escape
+    license_plate: FDX-5580
+    rating: 4.5
+    is_available: true
+riders:
+  rid_yD7Kx7wt:
+    ruid: rid_yD7Kx7wt
+    name: Amos Jeremiah Whitfield
+    home_address: Historic District, Savannah, Georgia
+    work_address: the Savannah Historic Preservation Alliance (SHPA)
+    saved_places:
+    - Savannah Fitness Center
+    - Savannah Coffee House
+  rid_SCxjfbMo:
+    ruid: rid_SCxjfbMo
+    name: Guest Rider
+    home_address: Savannah Guest Avenue
+    work_address: ''
+    saved_places:
+    - Savannah Airport
+rides:
+  ride_vmHc2kdM:
+    rid: ride_vmHc2kdM
+    rider: Amos Jeremiah Whitfield
+    driver: drv_uev2GXKW
+    pickup: Historic District, Savannah, Georgia
+    dropoff: the Savannah Historic Preservation Alliance (SHPA)
+    distance_km: 5.2
+    fare: 12.4
+    currency: USD
+    status: completed
+    requested_at: 2026-01-02T12:07
+    started_at: 2026-01-02T12:25
+    completed_at: 2026-01-02T12:52
+    rating: 5
+  ride_ZZcSZr8C:
+    rid: ride_ZZcSZr8C
+    rider: Amos Jeremiah Whitfield
+    driver: drv_NJPnw6BG
+    pickup: the Savannah Historic Preservation Alliance (SHPA)
+    dropoff: Historic District, Savannah, Georgia
+    distance_km: 5.4
+    fare: 12.9
+    currency: USD
+    status: completed
+    requested_at: 2026-01-02T16:46
+    started_at: 2026-01-02T17:07
+    completed_at: 2026-01-02T17:41
+    rating: 4
+  ride_zGjAosHb:
+    rid: ride_zGjAosHb
+    rider: Amos Jeremiah Whitfield
+    driver: drv_YmaBXttn
+    pickup: Historic District, Savannah, Georgia
+    dropoff: Savannah Airport
+    distance_km: 18.7
+    fare: 42.3
+    currency: USD
+    status: completed
+    requested_at: 2026-01-02T22:13
+    started_at: 2026-01-02T22:55
+    completed_at: 2026-01-02T23:21
+    rating: 5
+  ride_xQsGmjBm:
+    rid: ride_xQsGmjBm
+    rider: Amos Jeremiah Whitfield
+    driver: drv_YmaBXttn
+    pickup: Savannah Fitness Center
+    dropoff: Historic District, Savannah, Georgia
+    distance_km: 3.1
+    fare: 8.1
+    currency: USD
+    status: in_progress
+    requested_at: 2026-01-03T01:32
+    started_at: 2026-01-03T02:00
+    completed_at: ''
+    rating: 0
+  ride_m76rJBmZ:
+    rid: ride_m76rJBmZ
+    rider: Amos Jeremiah Whitfield
+    driver: drv_NJPnw6BG
+    pickup: the Savannah Historic Preservation Alliance (SHPA)
+    dropoff: Historic District, Savannah, Georgia
+    distance_km: 11.0
+    fare: 24.6
+    currency: USD
+    status: accepted
+    requested_at: 2026-01-03T05:50
+    started_at: ''
+    completed_at: ''
+    rating: 0
+  ride_2YdA9Lqa:
+    rid: ride_2YdA9Lqa
+    rider: Amos Jeremiah Whitfield
+    driver: ''
+    pickup: Savannah Coffee House
+    dropoff: the Savannah Historic Preservation Alliance (SHPA)
+    distance_km: 4.4
+    fare: 10.2
+    currency: USD
+    status: requested
+    requested_at: 2026-01-03T07:16
+    started_at: ''
+    completed_at: ''
+    rating: 0

@@ -1,0 +1,140 @@
+[
+    {
+        "tool_name": "list_messages",
+        "description": "List SMS/MMS messages, optionally filtered by recipient, sender, and status, sorted by creation time (newest first).",
+        "arguments": {
+            "to": {
+                "type": "string",
+                "description": "Optional recipient phone number (in E.164 format) to filter messages by."
+            },
+            "from_": {
+                "type": "string",
+                "description": "Optional sender phone number (in E.164 format) to filter messages by."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional message status to filter by (e.g. queued, sent, delivered, undelivered, failed, received)."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of messages to return (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a list of message objects plus paging fields (page, page_size, uri); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_message",
+        "description": "Get a single message by its sid.",
+        "arguments": {
+            "sid": {
+                "type": "string",
+                "description": "The unique sid of the message."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the serialized message object; on failure (message not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_message",
+        "description": "Create (send) a new outbound message from one phone number to another.",
+        "arguments": {
+            "to": {
+                "type": "string",
+                "description": "The recipient phone number in E.164 format."
+            },
+            "from_": {
+                "type": "string",
+                "description": "The sender phone number in E.164 format."
+            },
+            "body": {
+                "type": "string",
+                "description": "Optional text body of the message."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created message object; on failure (missing To or From), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_calls",
+        "description": "List voice calls, optionally filtered by recipient, caller, and status, sorted by creation time (newest first).",
+        "arguments": {
+            "to": {
+                "type": "string",
+                "description": "Optional recipient phone number (in E.164 format) to filter calls by."
+            },
+            "from_": {
+                "type": "string",
+                "description": "Optional caller phone number (in E.164 format) to filter calls by."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional call status to filter by (e.g. queued, completed, no-answer, busy, in-progress)."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of calls to return (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a list of call objects plus paging fields (page, page_size, uri); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_call",
+        "description": "Create (initiate) a new outbound voice call from one phone number to another.",
+        "arguments": {
+            "to": {
+                "type": "string",
+                "description": "The recipient phone number in E.164 format."
+            },
+            "from_": {
+                "type": "string",
+                "description": "The caller phone number in E.164 format."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created call object; on failure (missing To or From), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_phone_numbers",
+        "description": "List incoming (owned) phone numbers on the account, optionally filtered by a specific phone number.",
+        "arguments": {
+            "phone_number": {
+                "type": "string",
+                "description": "Optional phone number (in E.164 format) to filter the list by."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of phone numbers to return (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a list of incoming phone number objects plus paging fields (page, page_size, uri); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "lookup",
+        "description": "Look up carrier/format information for a phone number, including country code, validity, and caller name if owned.",
+        "arguments": {
+            "phone_number": {
+                "type": "string",
+                "description": "The phone number to look up, ideally in E.164 format."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the lookup result object (phone_number, national_format, country_code, valid, caller_name, url); on failure, output contains an error message."
+        }
+    }
+]

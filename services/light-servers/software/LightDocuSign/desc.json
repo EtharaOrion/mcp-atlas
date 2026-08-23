@@ -1,0 +1,123 @@
+[
+    {
+        "tool_name": "list_envelopes",
+        "description": "List envelopes, optionally filtered by status.",
+        "arguments": {
+            "status": {
+                "type": "string",
+                "description": "Optional status to filter envelopes by (e.g. 'sent', 'delivered', 'completed', 'voided')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with resultSetSize, totalSetSize, and a list of envelope objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_envelope",
+        "description": "Get a single envelope by its envelope id.",
+        "arguments": {
+            "envelope_id": {
+                "type": "string",
+                "description": "The unique id of the envelope."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the envelope object; on failure (envelope not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_envelope",
+        "description": "Create a new envelope, optionally with recipients (signers) and documents.",
+        "arguments": {
+            "email_subject": {
+                "type": "string",
+                "description": "Optional email subject line for the envelope."
+            },
+            "status": {
+                "type": "string",
+                "description": "Envelope status to create it in (default 'created'); use 'sent' to send immediately."
+            },
+            "template_id": {
+                "type": "string",
+                "description": "Optional template id the envelope is based on."
+            },
+            "sender_name": {
+                "type": "string",
+                "description": "Optional sender display name."
+            },
+            "sender_email": {
+                "type": "string",
+                "description": "Optional sender email address."
+            },
+            "recipients": {
+                "type": "object",
+                "description": "Optional recipients object with a 'signers' list; each signer may include recipientId, name, email, and routingOrder."
+            },
+            "documents": {
+                "type": "array",
+                "description": "Optional list of document objects; each may include documentId, name, and pages."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output includes the new envelopeId, status, statusDateTime, and uri."
+        }
+    },
+    {
+        "tool_name": "update_envelope",
+        "description": "Update the status of an existing envelope.",
+        "arguments": {
+            "envelope_id": {
+                "type": "string",
+                "description": "The unique id of the envelope to update."
+            },
+            "status": {
+                "type": "string",
+                "description": "The new status for the envelope (e.g. 'sent', 'completed', 'voided')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output includes envelopeId, status, and statusDateTime; on failure (envelope not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_recipients",
+        "description": "List the recipients (signers) of an envelope, ordered by routing order.",
+        "arguments": {
+            "envelope_id": {
+                "type": "string",
+                "description": "The unique id of the envelope."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output includes a list of signer objects and recipientCount; on failure (envelope not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_documents",
+        "description": "List the documents attached to an envelope, ordered by document order.",
+        "arguments": {
+            "envelope_id": {
+                "type": "string",
+                "description": "The unique id of the envelope."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output includes envelopeId and a list of envelopeDocuments; on failure (envelope not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_templates",
+        "description": "List all envelope templates available in the account.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output includes resultSetSize and a list of envelopeTemplates objects."
+        }
+    }
+]

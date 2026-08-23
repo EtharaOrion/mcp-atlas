@@ -1,0 +1,118 @@
+[
+    {
+        "tool_name": "list_org_projects",
+        "description": "List all projects belonging to an organization.",
+        "arguments": {
+            "org_slug": {
+                "type": "string",
+                "description": "The slug of the organization."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of project objects (id, slug, name, platform, status, dateCreated); on failure (organization not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_project_issues",
+        "description": "List issues for a project, optionally filtered by status and level, sorted by last seen descending.",
+        "arguments": {
+            "org_slug": {
+                "type": "string",
+                "description": "The slug of the organization."
+            },
+            "project_slug": {
+                "type": "string",
+                "description": "The slug of the project."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional status filter (e.g. 'resolved', 'ignored', 'unresolved')."
+            },
+            "level": {
+                "type": "string",
+                "description": "Optional level filter (e.g. 'error', 'warning')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of issue objects; on failure (organization or project not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_issue",
+        "description": "Get a single issue by its id within an organization.",
+        "arguments": {
+            "org_slug": {
+                "type": "string",
+                "description": "The slug of the organization."
+            },
+            "issue_id": {
+                "type": "string",
+                "description": "The unique id of the issue."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the issue object; on failure (organization or issue not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_issue",
+        "description": "Update the status of an issue to 'resolved', 'ignored', or 'unresolved'.",
+        "arguments": {
+            "org_slug": {
+                "type": "string",
+                "description": "The slug of the organization."
+            },
+            "issue_id": {
+                "type": "string",
+                "description": "The unique id of the issue to update."
+            },
+            "status": {
+                "type": "string",
+                "description": "The new status; must be one of 'resolved', 'ignored', or 'unresolved'."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated issue object; on failure (invalid status, or organization/issue not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_issue_events",
+        "description": "List the events associated with an issue, sorted by creation date descending.",
+        "arguments": {
+            "org_slug": {
+                "type": "string",
+                "description": "The slug of the organization."
+            },
+            "issue_id": {
+                "type": "string",
+                "description": "The unique id of the issue."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of event objects; on failure (organization or issue not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_releases",
+        "description": "List releases for an organization, optionally filtered by project, sorted by creation date descending.",
+        "arguments": {
+            "org_slug": {
+                "type": "string",
+                "description": "The slug of the organization."
+            },
+            "project": {
+                "type": "string",
+                "description": "Optional project slug to filter releases by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of release objects; on failure (organization not found), output contains an error message."
+        }
+    }
+]

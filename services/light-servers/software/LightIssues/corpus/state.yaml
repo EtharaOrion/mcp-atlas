@@ -1,0 +1,106 @@
+# Source: world_data 2/LightIssues.json (verbatim). Corpus-only authored world.
+sprints:
+  AAnfVdhEKJ6uNwTDoZYymy:
+    sid: AAnfVdhEKJ6uNwTDoZYymy
+    name: Sprint 1
+    start_date: '2026-01-01'
+    end_date: '2026-01-04'
+    goal: Stabilize the member portal.
+    status: completed
+  N7M2YA3c7beNXUfbHTiUwM:
+    sid: N7M2YA3c7beNXUfbHTiUwM
+    name: Sprint 2
+    start_date: '2026-01-05'
+    end_date: '2026-01-18'
+    goal: Ship the event registration flow.
+    status: active
+issues:
+  DdtSmakTStzimDZDG8ZD2C:
+    iid: DdtSmakTStzimDZDG8ZD2C
+    title: Login page rejects valid passwords
+    description: Members report being bounced back to the login form.
+    status: resolved
+    priority: high
+    issue_type: bug
+    assignee: Nathaniel Kessel
+    reporter: Amos Jeremiah Whitfield
+    sprint_id: AAnfVdhEKJ6uNwTDoZYymy
+    tags: []
+    created_at: 2026-01-02T13:51
+    updated_at: 2026-01-02T13:51
+    resolved_at: 2026-01-02T14:56
+  nzEPQqJBbq7mmAcYzJrkSV:
+    iid: nzEPQqJBbq7mmAcYzJrkSV
+    title: Add export button to donor report
+    description: Finance wants a one-click CSV export.
+    status: in_progress
+    priority: medium
+    issue_type: feature
+    assignee: Marcus Whitby
+    reporter: Amos Jeremiah Whitfield
+    sprint_id: N7M2YA3c7beNXUfbHTiUwM
+    tags: []
+    created_at: 2026-01-02T19:51
+    updated_at: 2026-01-02T19:51
+    resolved_at: ''
+  hD6Mrotrmtw4mvM4yED9xi:
+    iid: hD6Mrotrmtw4mvM4yED9xi
+    title: Newsletter signup form styling broken
+    description: The form overflows its container on small screens.
+    status: open
+    priority: low
+    issue_type: bug
+    assignee: null
+    reporter: Amos Jeremiah Whitfield
+    sprint_id: N7M2YA3c7beNXUfbHTiUwM
+    tags: []
+    created_at: 2026-01-02T23:59
+    updated_at: 2026-01-02T23:59
+    resolved_at: ''
+  HHKYqciDn7j6sWxyzovDed:
+    iid: HHKYqciDn7j6sWxyzovDed
+    title: Migrate archive to new storage
+    description: Move the document archive off the old server.
+    status: in_review
+    priority: medium
+    issue_type: task
+    assignee: Priscilla Everton
+    reporter: Amos Jeremiah Whitfield
+    sprint_id: N7M2YA3c7beNXUfbHTiUwM
+    tags: []
+    created_at: 2026-01-03T03:03
+    updated_at: 2026-01-03T03:03
+    resolved_at: ''
+  bbmpwPMH77MHtT2kjnU4Vo:
+    iid: bbmpwPMH77MHtT2kjnU4Vo
+    title: Event page shows wrong dates
+    description: Dates render one day early for some visitors.
+    status: open
+    priority: critical
+    issue_type: bug
+    assignee: null
+    reporter: Amos Jeremiah Whitfield
+    sprint_id: null
+    tags: []
+    created_at: 2026-01-03T09:52
+    updated_at: 2026-01-03T09:52
+    resolved_at: ''
+comments:
+  vAAJtrRHxgk8PuShppBsFy:
+    cid: vAAJtrRHxgk8PuShppBsFy
+    issue_id: DdtSmakTStzimDZDG8ZD2C
+    author: Nathaniel Kessel
+    text: Reproduced on two accounts, fix confirmed in staging.
+    created_at: 2026-01-03T11:35
+  PFyHpizeJLQsjjAJuZivtq:
+    cid: PFyHpizeJLQsjjAJuZivtq
+    issue_id: nzEPQqJBbq7mmAcYzJrkSV
+    author: Marcus Whitby
+    text: Draft is up for review, needs a second pass on the totals.
+    created_at: 2026-01-03T13:23
+  HEQwnV2ggiXmnuUKqEkGcY:
+    cid: HEQwnV2ggiXmnuUKqEkGcY
+    issue_id: bbmpwPMH77MHtT2kjnU4Vo
+    author: Lorraine Deveraux
+    text: Likely a timezone handling problem in the template.
+    created_at: 2026-01-03T17:04

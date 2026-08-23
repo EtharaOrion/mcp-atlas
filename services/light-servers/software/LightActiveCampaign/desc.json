@@ -1,0 +1,126 @@
+[
+    {
+        "tool_name": "list_contacts",
+        "description": "List contacts, optionally filtered by email and status, with pagination.",
+        "arguments": {
+            "email": {
+                "type": "string",
+                "description": "Optional email to filter contacts by (case-insensitive exact match)."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional status value to filter contacts by."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of contacts to return (default 20)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of contacts to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a dict with a list of contact objects and a meta block containing the total count; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_contact",
+        "description": "Get a single contact by its id.",
+        "arguments": {
+            "contact_id": {
+                "type": "string",
+                "description": "The unique id of the contact."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a dict with the contact object; on failure (contact not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_contact",
+        "description": "Create a new contact with the given email and optional attributes.",
+        "arguments": {
+            "email": {
+                "type": "string",
+                "description": "The email address of the contact (required)."
+            },
+            "first_name": {
+                "type": "string",
+                "description": "Optional first name of the contact."
+            },
+            "last_name": {
+                "type": "string",
+                "description": "Optional last name of the contact."
+            },
+            "phone": {
+                "type": "string",
+                "description": "Optional phone number of the contact."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional status value for the contact (default '1')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a dict with the created contact object; on failure (missing email or duplicate), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_lists",
+        "description": "List all contact lists with pagination.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of lists to return (default 20)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of lists to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a dict with a list of list objects and a meta block containing the total count; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_campaigns",
+        "description": "List all campaigns with pagination.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of campaigns to return (default 20)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of campaigns to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a dict with a list of campaign objects and a meta block containing the total count; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_deals",
+        "description": "List all deals with pagination.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of deals to return (default 20)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of deals to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a dict with a list of deal objects and a meta block containing the total count; on failure, output contains an error message."
+        }
+    }
+]

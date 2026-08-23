@@ -1,0 +1,132 @@
+[
+    {
+        "tool_name": "subreddit_about",
+        "description": "Get metadata about a subreddit by its display name.",
+        "arguments": {
+            "subreddit": {
+                "type": "string",
+                "description": "The display name of the subreddit (e.g. 'programming')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a thing object (kind 't5' with the subreddit data); on failure (subreddit not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "subreddit_hot",
+        "description": "List a subreddit's posts sorted by hot (score-weighted).",
+        "arguments": {
+            "subreddit": {
+                "type": "string",
+                "description": "The display name of the subreddit."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of posts to return (default 25)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a Listing envelope of post things (kind 't3'); on failure (subreddit not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "subreddit_new",
+        "description": "List a subreddit's posts sorted by new (most recent first).",
+        "arguments": {
+            "subreddit": {
+                "type": "string",
+                "description": "The display name of the subreddit."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of posts to return (default 25)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a Listing envelope of post things (kind 't3'); on failure (subreddit not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "post_comments",
+        "description": "Get a post and its comment tree by post id.",
+        "arguments": {
+            "post_id": {
+                "type": "string",
+                "description": "The post id, with or without the 't3_' fullname prefix."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of two Listing envelopes (the post and its comments); on failure (post not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "submit",
+        "description": "Submit a new post (self text or link) to a subreddit.",
+        "arguments": {
+            "sr": {
+                "type": "string",
+                "description": "The display name of the target subreddit."
+            },
+            "title": {
+                "type": "string",
+                "description": "The title of the post."
+            },
+            "kind": {
+                "type": "string",
+                "description": "Post kind, 'self' or 'link' (default 'self')."
+            },
+            "url": {
+                "type": "string",
+                "description": "Optional link URL, used when kind is 'link'."
+            },
+            "text": {
+                "type": "string",
+                "description": "Optional self-text body, used when kind is 'self'."
+            },
+            "author": {
+                "type": "string",
+                "description": "Optional author username (default 'devkat')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a json envelope with the created post's id, name, and url; on failure (subreddit not found or missing title), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "vote",
+        "description": "Cast a vote on a post or comment by its fullname.",
+        "arguments": {
+            "id": {
+                "type": "string",
+                "description": "The fullname of the thing to vote on, e.g. 't3_p001' (post) or 't1_c001' (comment)."
+            },
+            "dir": {
+                "type": "integer",
+                "description": "Vote direction: 1 (up), -1 (down), or 0 (clear)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains the thing name, updated score, and likes state; on failure (invalid direction or thing not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "user_about",
+        "description": "Get a user's profile by username.",
+        "arguments": {
+            "username": {
+                "type": "string",
+                "description": "The username to look up."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a thing object (kind 't2' with the user data); on failure (user not found), output contains an error message."
+        }
+    }
+]

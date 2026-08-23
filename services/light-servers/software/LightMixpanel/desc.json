@@ -1,0 +1,121 @@
+[
+    {
+        "tool_name": "track",
+        "description": "Ingest a single analytics event into the Mixpanel event stream.",
+        "arguments": {
+            "event": {
+                "type": "string",
+                "description": "The name of the event to track (required)."
+            },
+            "distinct_id": {
+                "type": "string",
+                "description": "Optional distinct id of the user; defaults to 'anonymous' when omitted."
+            },
+            "time": {
+                "type": "string",
+                "description": "Optional ISO timestamp for the event; defaults to now when omitted."
+            },
+            "properties": {
+                "type": "object",
+                "description": "Optional dictionary of event properties."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds status (1) and the generated event_id; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "events_counts",
+        "description": "Return per-day counts for events, optionally filtered by event name(s) and date range.",
+        "arguments": {
+            "event": {
+                "type": "string",
+                "description": "Optional comma-separated list of event names to include; all events when omitted."
+            },
+            "from_date": {
+                "type": "string",
+                "description": "Optional inclusive start date in 'YYYY-MM-DD' format."
+            },
+            "to_date": {
+                "type": "string",
+                "description": "Optional inclusive end date in 'YYYY-MM-DD' format."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a data object with series (days) and values (per-event per-day counts) plus legend_size."
+        }
+    },
+    {
+        "tool_name": "funnels_list",
+        "description": "List all available funnels with their id and name.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of funnel objects (funnel_id, name)."
+        }
+    },
+    {
+        "tool_name": "funnel",
+        "description": "Get a single funnel by id with step-by-step and overall conversion ratios.",
+        "arguments": {
+            "funnel_id": {
+                "type": "integer",
+                "description": "The unique id of the funnel."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the funnel object with steps and analysis; on failure (funnel not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "segmentation",
+        "description": "Return per-day counts for a single event, optionally segmented by a property.",
+        "arguments": {
+            "event": {
+                "type": "string",
+                "description": "The event name to segment (required)."
+            },
+            "from_date": {
+                "type": "string",
+                "description": "Optional inclusive start date in 'YYYY-MM-DD' format."
+            },
+            "to_date": {
+                "type": "string",
+                "description": "Optional inclusive end date in 'YYYY-MM-DD' format."
+            },
+            "on": {
+                "type": "string",
+                "description": "Optional property name to segment the event counts by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a data object with series (days) and values (per-segment per-day counts); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "engage",
+        "description": "Query user profiles, optionally filtered by distinct id or a simple property expression.",
+        "arguments": {
+            "distinct_id": {
+                "type": "string",
+                "description": "Optional distinct id to fetch a single profile."
+            },
+            "where": {
+                "type": "string",
+                "description": "Optional simple filter expression of the form 'property==value'."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of profiles to return (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds results (list of profiles), page, page_size, and total."
+        }
+    }
+]

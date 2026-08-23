@@ -1,0 +1,450 @@
+[
+    {
+        "tool_name": "search_hashtags",
+        "description": "Search Instagram hashtags whose name contains the query string (leading '#' is ignored).",
+        "arguments": {
+            "q": {
+                "type": "string",
+                "description": "The hashtag search query; a leading '#' is stripped before matching."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'data' list of matching hashtag objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_hashtag",
+        "description": "Get a single hashtag by its id.",
+        "arguments": {
+            "hashtag_id": {
+                "type": "string",
+                "description": "The unique id of the hashtag."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the hashtag object (id, name, media_count); on failure (hashtag not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_hashtag_recent_media",
+        "description": "List a user's recent media whose caption contains the given hashtag, most recent first.",
+        "arguments": {
+            "hashtag_id": {
+                "type": "string",
+                "description": "The unique id of the hashtag."
+            },
+            "user_id": {
+                "type": "string",
+                "description": "The id of the user whose media is scanned for the hashtag."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of media items to return (default 25)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'data' list of media objects; on failure (hashtag not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_media_children",
+        "description": "List the child media items of a carousel album media object.",
+        "arguments": {
+            "media_id": {
+                "type": "string",
+                "description": "The unique id of the carousel album media."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'data' list of child media objects; on failure (media not found or not a carousel album), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_media_comments",
+        "description": "List non-hidden comments on a media object, most recent first, with pagination.",
+        "arguments": {
+            "media_id": {
+                "type": "string",
+                "description": "The unique id of the media."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of comments to return (default 25)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of comments to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'data' list of comment objects and a 'paging' object; on failure (media not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_media_insights",
+        "description": "Get lifetime insight metrics for a media object, optionally filtered to specific metrics.",
+        "arguments": {
+            "media_id": {
+                "type": "string",
+                "description": "The unique id of the media."
+            },
+            "metric": {
+                "type": "string",
+                "description": "Optional comma-separated list of metric names to filter by (e.g. 'impressions,reach')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'data' list of metric objects; on failure (media not found, no insights, or invalid metric), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_comment",
+        "description": "Create a comment (or a reply to a parent comment) on a media object, posted as the primary account.",
+        "arguments": {
+            "media_id": {
+                "type": "string",
+                "description": "The unique id of the media to comment on."
+            },
+            "message": {
+                "type": "string",
+                "description": "The text of the comment."
+            },
+            "parent_id": {
+                "type": "string",
+                "description": "Optional id of a parent comment to reply to."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created comment object; on failure (media not found or parent comment not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_comment",
+        "description": "Delete a comment from a media object and decrement the media's comment count.",
+        "arguments": {
+            "media_id": {
+                "type": "string",
+                "description": "The unique id of the media the comment belongs to."
+            },
+            "comment_id": {
+                "type": "string",
+                "description": "The unique id of the comment to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with 'success': true; on failure (media or comment not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "hide_comment",
+        "description": "Hide or unhide a comment on a media object.",
+        "arguments": {
+            "media_id": {
+                "type": "string",
+                "description": "The unique id of the media the comment belongs to."
+            },
+            "comment_id": {
+                "type": "string",
+                "description": "The unique id of the comment."
+            },
+            "hide": {
+                "type": "boolean",
+                "description": "Whether to hide (true) or unhide (false) the comment (default true)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with 'success': true; on failure (media or comment not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_media",
+        "description": "Get a single media object by its id.",
+        "arguments": {
+            "media_id": {
+                "type": "string",
+                "description": "The unique id of the media."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the media object; on failure (media not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_media",
+        "description": "Delete a media object by its id.",
+        "arguments": {
+            "media_id": {
+                "type": "string",
+                "description": "The unique id of the media to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with 'success': true; on failure (media not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_comment_replies",
+        "description": "List the replies to a comment, oldest first, with pagination.",
+        "arguments": {
+            "comment_id": {
+                "type": "string",
+                "description": "The unique id of the parent comment."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of replies to return (default 25)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of replies to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'data' list of reply comment objects and a 'paging' object; on failure (comment not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_comment",
+        "description": "Get a single comment by its id.",
+        "arguments": {
+            "comment_id": {
+                "type": "string",
+                "description": "The unique id of the comment."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the comment object; on failure (comment not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_story",
+        "description": "Get a single story by its id.",
+        "arguments": {
+            "story_id": {
+                "type": "string",
+                "description": "The unique id of the story."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the story object; on failure (story not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_media_container_status",
+        "description": "Get the publishing status of a media container by its id.",
+        "arguments": {
+            "container_id": {
+                "type": "string",
+                "description": "The unique id of the media container."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the container id, status, and status_code; on failure (container not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "search_users",
+        "description": "Search users whose username or name contains the query string.",
+        "arguments": {
+            "q": {
+                "type": "string",
+                "description": "The user search query matched against username and name."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'data' list of matching user objects; on failure (empty query), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_user_media",
+        "description": "List a user's media, most recent first, optionally filtered by media type, with pagination.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user."
+            },
+            "media_type": {
+                "type": "string",
+                "description": "Optional media type filter (e.g. 'IMAGE', 'VIDEO', 'CAROUSEL_ALBUM'); matched case-insensitively."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of media items to return (default 25)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of media items to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'data' list of media objects and a 'paging' object; on failure (user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_user_stories",
+        "description": "List a user's active stories, most recent first.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'data' list of story objects; on failure (user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_user_insights",
+        "description": "Get aggregated account-level insight metrics for a user, optionally filtered to specific metrics.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user."
+            },
+            "metric": {
+                "type": "string",
+                "description": "Optional comma-separated list of metric names to filter by (e.g. 'impressions,reach,follower_count')."
+            },
+            "period": {
+                "type": "string",
+                "description": "The aggregation period label applied to returned metrics (default 'day')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'data' list of metric objects; on failure (user not found or invalid metric), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_user_mentions",
+        "description": "List mentions of a user, most recent first, with pagination.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of mentions to return (default 25)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of mentions to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'data' list of mention objects and a 'paging' object; on failure (user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_media_container",
+        "description": "Create a media container (draft) for a user in preparation for publishing.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user creating the container."
+            },
+            "image_url": {
+                "type": "string",
+                "description": "Optional URL of the image to publish."
+            },
+            "video_url": {
+                "type": "string",
+                "description": "Optional URL of the video to publish."
+            },
+            "caption": {
+                "type": "string",
+                "description": "Optional caption for the media."
+            },
+            "media_type": {
+                "type": "string",
+                "description": "The media type of the container (default 'IMAGE'; 'CAROUSEL_ALBUM' requires children)."
+            },
+            "children": {
+                "type": "array",
+                "description": "Optional list of child container ids, required for a CAROUSEL_ALBUM."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the new container 'id'; on failure (user not found or carousel missing children), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "publish_media_container",
+        "description": "Publish a previously created media container, creating a new media object for the user.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user publishing the container."
+            },
+            "creation_id": {
+                "type": "string",
+                "description": "The id of the media container to publish."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the new media 'id'; on failure (user not found, container not found, or container not ready), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_user",
+        "description": "Update a user's profile fields (biography, website, name).",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user to update."
+            },
+            "biography": {
+                "type": "string",
+                "description": "Optional new biography text."
+            },
+            "website": {
+                "type": "string",
+                "description": "Optional new website URL."
+            },
+            "name": {
+                "type": "string",
+                "description": "Optional new display name."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated user object; on failure (no fields provided or user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_user",
+        "description": "Get a single user (account) by its id.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the user object; on failure (user not found), output contains an error message."
+        }
+    }
+]

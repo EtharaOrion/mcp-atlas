@@ -1,0 +1,87 @@
+[
+    {
+        "tool_name": "list_sites",
+        "description": "List all Webflow sites available in the current session.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'sites' list of site objects (id, workspaceId, displayName, shortName, previewUrl, timeZone, createdOn, lastPublished, customDomains); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_site",
+        "description": "Get a single Webflow site by its id.",
+        "arguments": {
+            "site_id": {
+                "type": "string",
+                "description": "The unique id of the site."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the site object; on failure (site not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_collections",
+        "description": "List the CMS collections belonging to a site.",
+        "arguments": {
+            "site_id": {
+                "type": "string",
+                "description": "The unique id of the site."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'collections' list of collection objects; on failure (site not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_items",
+        "description": "List the CMS items belonging to a collection, with pagination.",
+        "arguments": {
+            "collection_id": {
+                "type": "string",
+                "description": "The unique id of the collection."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of items to return (default 100)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of items to skip before returning results (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with an 'items' list and a 'pagination' object (limit, offset, total); on failure (collection not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_item",
+        "description": "Create a new CMS item in a collection. The item carries a fieldData object as in the Webflow v2 API.",
+        "arguments": {
+            "collection_id": {
+                "type": "string",
+                "description": "The unique id of the collection to create the item in."
+            },
+            "field_data": {
+                "type": "object",
+                "description": "Optional fieldData object for the item (may include name, slug, summary, and any extra custom fields). If name is omitted it defaults to 'Untitled', and slug is derived from name when omitted."
+            },
+            "is_draft": {
+                "type": "boolean",
+                "description": "Whether the item is created as a draft (default false)."
+            },
+            "is_archived": {
+                "type": "boolean",
+                "description": "Whether the item is created as archived (default false)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created item object (including its fieldData); on failure (collection not found), output contains an error message."
+        }
+    }
+]

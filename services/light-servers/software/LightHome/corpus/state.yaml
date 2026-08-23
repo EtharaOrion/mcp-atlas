@@ -1,0 +1,21 @@
+# Source: world_data 2/LightHome.json (verbatim). Corpus-only authored world.
+rooms:
+  rm_living:
+    rmid: rm_living
+    name: Living Room
+    floor: 1
+  rm_bedroom:
+    rmid: rm_bedroom
+    name: Bedroom
+    floor: 2
+  rm_kitchen:
+    rmid: rm_kitchen
+    name: Kitchen
+    floor: 1
+  rm_office:
+    rmid: rm_office
+    name: Office
+    floor: 2
+devices: {}
+scenes: {}
+automations: {}

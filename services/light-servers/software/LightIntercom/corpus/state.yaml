@@ -1,0 +1,98 @@
+# Source: world_data 2/LightIntercom.json (verbatim). Corpus-only authored world.
+conversations:
+- id: conv-1001
+  contact_id: contact-mara
+  state: open
+  title: Membership renewal receipt request
+  created_at: '2026-05-20T09:00:00.000Z'
+  updated_at: '2026-05-25T14:00:00.000Z'
+  assignee_id: admin-marcus
+  open: true
+- id: conv-1002
+  contact_id: contact-ethan
+  state: closed
+  title: Tour ticket date change
+  created_at: '2026-05-15T10:00:00.000Z'
+  updated_at: '2026-05-18T11:00:00.000Z'
+  assignee_id: admin-josephine
+  open: false
+- id: conv-1003
+  contact_id: contact-grace
+  state: open
+  title: Donation receipt for taxes
+  created_at: '2026-05-22T13:00:00.000Z'
+  updated_at: '2026-05-23T13:00:00.000Z'
+  assignee_id: admin-marcus
+  open: true
+- id: conv-1004
+  contact_id: contact-yara
+  state: closed
+  title: Portal login reset
+  created_at: '2026-05-10T08:00:00.000Z'
+  updated_at: '2026-05-12T09:00:00.000Z'
+  assignee_id: admin-josephine
+  open: false
+parts:
+- id: part-1
+  conversation_id: conv-1001
+  part_type: comment
+  author_type: user
+  author_id: contact-mara
+  body: Thanks for reaching out — handled.
+  created_at: '2026-05-20T09:00:00.000Z'
+- id: part-2
+  conversation_id: conv-1001
+  part_type: comment
+  author_type: admin
+  author_id: admin-marcus
+  body: Your tickets are moved to Sunday.
+  created_at: '2026-05-20T10:30:00.000Z'
+- id: part-3
+  conversation_id: conv-1001
+  part_type: comment
+  author_type: user
+  author_id: contact-mara
+  body: Statement attached.
+  created_at: '2026-05-25T14:00:00.000Z'
+- id: part-4
+  conversation_id: conv-1002
+  part_type: comment
+  author_type: user
+  author_id: contact-ethan
+  body: Reset link sent.
+  created_at: '2026-05-15T10:00:00.000Z'
+- id: part-5
+  conversation_id: conv-1002
+  part_type: comment
+  author_type: admin
+  author_id: admin-josephine
+  body: You are unsubscribed.
+  created_at: '2026-05-16T09:00:00.000Z'
+- id: part-6
+  conversation_id: conv-1002
+  part_type: close
+  author_type: admin
+  author_id: admin-josephine
+  body: Record updated.
+  created_at: '2026-05-18T11:00:00.000Z'
+- id: part-7
+  conversation_id: conv-1003
+  part_type: comment
+  author_type: user
+  author_id: contact-grace
+  body: Thanks for reaching out — handled.
+  created_at: '2026-05-22T13:00:00.000Z'
+- id: part-8
+  conversation_id: conv-1004
+  part_type: comment
+  author_type: user
+  author_id: contact-yara
+  body: Your tickets are moved to Sunday.
+  created_at: '2026-05-10T08:00:00.000Z'
+- id: part-9
+  conversation_id: conv-1004
+  part_type: close
+  author_type: admin
+  author_id: admin-josephine
+  body: Statement attached.
+  created_at: '2026-05-12T09:00:00.000Z'

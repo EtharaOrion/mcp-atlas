@@ -1,0 +1,182 @@
+[
+    {
+        "tool_name": "create_order",
+        "description": "Create a new PayPal checkout order with a single purchase unit.",
+        "arguments": {
+            "amount_value": {
+                "type": "string",
+                "description": "The order amount as a string decimal (e.g. '49.99')."
+            },
+            "currency_code": {
+                "type": "string",
+                "description": "ISO currency code for the amount (default 'USD')."
+            },
+            "payee_email": {
+                "type": "string",
+                "description": "Email address of the merchant/payee receiving the funds."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional free-text description of the purchase unit."
+            },
+            "intent": {
+                "type": "string",
+                "description": "Order intent, e.g. 'CAPTURE' (default 'CAPTURE')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created order object (id, intent, status, purchase_units, create_time)."
+        }
+    },
+    {
+        "tool_name": "get_order",
+        "description": "Get a single checkout order by its id.",
+        "arguments": {
+            "order_id": {
+                "type": "string",
+                "description": "The unique id of the order."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the order object; on failure (order not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "capture_order",
+        "description": "Capture payment for an approved/created order, marking it COMPLETED.",
+        "arguments": {
+            "order_id": {
+                "type": "string",
+                "description": "The unique id of the order to capture."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the capture result with payments.captures; on failure (order not found, already captured, or voided), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_refund",
+        "description": "Create a refund against a prior capture, optionally for a partial amount.",
+        "arguments": {
+            "capture_id": {
+                "type": "string",
+                "description": "The id of the capture to refund."
+            },
+            "amount_value": {
+                "type": "string",
+                "description": "Optional refund amount as a string decimal; when omitted the full capture amount is refunded."
+            },
+            "currency_code": {
+                "type": "string",
+                "description": "ISO currency code for the refund amount (default 'USD')."
+            },
+            "note_to_payer": {
+                "type": "string",
+                "description": "Optional note to the payer explaining the refund."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created refund object; on failure (capture not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_refund",
+        "description": "Get a single refund by its id.",
+        "arguments": {
+            "refund_id": {
+                "type": "string",
+                "description": "The unique id of the refund."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the refund object; on failure (refund not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_invoices",
+        "description": "List invoices, optionally filtered by status, with pagination.",
+        "arguments": {
+            "status": {
+                "type": "string",
+                "description": "Optional invoice status filter (e.g. 'PAID', 'SENT', 'DRAFT'); matched case-insensitively."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of invoices to return (default 20)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with total_items, total_pages, and items (list of invoices)."
+        }
+    },
+    {
+        "tool_name": "create_invoice",
+        "description": "Create a new draft invoice for a recipient.",
+        "arguments": {
+            "invoice_number": {
+                "type": "string",
+                "description": "Optional invoice number; auto-generated (INV-XXXX) when omitted."
+            },
+            "recipient_email": {
+                "type": "string",
+                "description": "Email address of the invoice's primary recipient."
+            },
+            "amount_value": {
+                "type": "string",
+                "description": "The invoice amount as a string decimal (default '0.00')."
+            },
+            "currency_code": {
+                "type": "string",
+                "description": "ISO currency code for the amount (default 'USD')."
+            },
+            "due_date": {
+                "type": "string",
+                "description": "Optional due date in 'YYYY-MM-DD' format."
+            },
+            "note": {
+                "type": "string",
+                "description": "Optional note included on the invoice detail."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created invoice object with DRAFT status."
+        }
+    },
+    {
+        "tool_name": "create_payout",
+        "description": "Create a single-item payout batch to a recipient.",
+        "arguments": {
+            "amount_value": {
+                "type": "string",
+                "description": "The payout amount as a string decimal (default '0.00')."
+            },
+            "currency_code": {
+                "type": "string",
+                "description": "ISO currency code for the amount (default 'USD')."
+            },
+            "recipient_email": {
+                "type": "string",
+                "description": "Email address of the payout recipient."
+            },
+            "sender_batch_id": {
+                "type": "string",
+                "description": "Optional sender batch id; auto-generated when omitted."
+            },
+            "note": {
+                "type": "string",
+                "description": "Optional email subject/note for the payout."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created payout object with batch_header and PENDING status."
+        }
+    }
+]

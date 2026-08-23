@@ -1,0 +1,213 @@
+[
+    {
+        "tool_name": "list_folders",
+        "description": "List all mail folders (inbox, sent, drafts, trash, spam) with total and unread message counts.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of {name, total, unread} folder summaries."
+        }
+    },
+    {
+        "tool_name": "list_messages",
+        "description": "List messages in a mail folder, most recent first, with paging.",
+        "arguments": {
+            "folder": {
+                "type": "string",
+                "description": "Folder name (one of: inbox, sent, drafts, trash, spam)."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of messages to return."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of messages to skip (for paging)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of message summaries including mid, from, subject, timestamp, read, starred, folder."
+        }
+    },
+    {
+        "tool_name": "get_message",
+        "description": "Retrieve the full contents of a single message by mid.",
+        "arguments": {
+            "mid": {
+                "type": "string",
+                "description": "The message identifier."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full message object with body and all headers."
+        }
+    },
+    {
+        "tool_name": "mark_as_read",
+        "description": "Mark a message as read.",
+        "arguments": {
+            "mid": {
+                "type": "string",
+                "description": "The message identifier."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated message summary."
+        }
+    },
+    {
+        "tool_name": "mark_as_unread",
+        "description": "Mark a message as unread.",
+        "arguments": {
+            "mid": {
+                "type": "string",
+                "description": "The message identifier."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated message summary."
+        }
+    },
+    {
+        "tool_name": "star",
+        "description": "Star a message.",
+        "arguments": {
+            "mid": {
+                "type": "string",
+                "description": "The message identifier."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated message summary."
+        }
+    },
+    {
+        "tool_name": "unstar",
+        "description": "Remove star from a message.",
+        "arguments": {
+            "mid": {
+                "type": "string",
+                "description": "The message identifier."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated message summary."
+        }
+    },
+    {
+        "tool_name": "move_to_folder",
+        "description": "Move a message to a different folder.",
+        "arguments": {
+            "mid": {
+                "type": "string",
+                "description": "The message identifier."
+            },
+            "folder": {
+                "type": "string",
+                "description": "Destination folder (one of: inbox, sent, drafts, trash, spam)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated message summary."
+        }
+    },
+    {
+        "tool_name": "delete_message",
+        "description": "Move a message to the trash folder.",
+        "arguments": {
+            "mid": {
+                "type": "string",
+                "description": "The message identifier."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated message summary now in trash."
+        }
+    },
+    {
+        "tool_name": "compose_email",
+        "description": "Create a new email in the drafts folder.",
+        "arguments": {
+            "to": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "List of recipient email addresses."
+            },
+            "subject": {
+                "type": "string",
+                "description": "Email subject line."
+            },
+            "body": {
+                "type": "string",
+                "description": "Email body content."
+            },
+            "cc": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Optional list of CC recipient email addresses."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new draft's message summary."
+        }
+    },
+    {
+        "tool_name": "send_email",
+        "description": "Send a draft message. The message must currently be in the drafts folder; it will be moved to sent.",
+        "arguments": {
+            "mid": {
+                "type": "string",
+                "description": "The draft message identifier."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the sent message summary."
+        }
+    },
+    {
+        "tool_name": "reply",
+        "description": "Create a reply draft to a given message (subject prefixed 'Re:'). Draft is placed in drafts; use send_email to send.",
+        "arguments": {
+            "mid": {
+                "type": "string",
+                "description": "The message identifier being replied to."
+            },
+            "body": {
+                "type": "string",
+                "description": "The reply body content."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the draft reply's message summary."
+        }
+    },
+    {
+        "tool_name": "search_messages",
+        "description": "Search messages by keyword in subject, body, sender name, or sender email. Optionally scope to a folder.",
+        "arguments": {
+            "query": {
+                "type": "string",
+                "description": "The keyword or phrase to search for."
+            },
+            "folder": {
+                "type": "string",
+                "description": "Optional folder scope (one of: inbox, sent, drafts, trash, spam)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of matching message summaries (most recent first)."
+        }
+    }
+]

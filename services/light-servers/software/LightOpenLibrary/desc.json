@@ -1,0 +1,116 @@
+[
+    {
+        "tool_name": "search",
+        "description": "Search works by free-text query, author, and/or title, with pagination.",
+        "arguments": {
+            "q": {
+                "type": "string",
+                "description": "Optional free-text query matched against title, author name, or subjects."
+            },
+            "author": {
+                "type": "string",
+                "description": "Optional author name substring filter."
+            },
+            "title": {
+                "type": "string",
+                "description": "Optional title substring filter."
+            },
+            "page": {
+                "type": "integer",
+                "description": "Result page number (1-based, default 1)."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of results per page (1-100, default 20)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has numFound, start, numFoundExact, and docs."
+        }
+    },
+    {
+        "tool_name": "get_work",
+        "description": "Get a single work by its Open Library work id.",
+        "arguments": {
+            "work_id": {
+                "type": "string",
+                "description": "The Open Library work id (e.g. OL27448W)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the work document; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_work_editions",
+        "description": "List the editions of a work.",
+        "arguments": {
+            "work_id": {
+                "type": "string",
+                "description": "The Open Library work id."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has links, size, and entries; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_author",
+        "description": "Get a single author by their Open Library author id.",
+        "arguments": {
+            "author_id": {
+                "type": "string",
+                "description": "The Open Library author id (e.g. OL26320A)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the author document; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_author_works",
+        "description": "List the works written by an author.",
+        "arguments": {
+            "author_id": {
+                "type": "string",
+                "description": "The Open Library author id."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has size and entries; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_subject",
+        "description": "Get a subject and the works tagged with it, ranked by edition count.",
+        "arguments": {
+            "subject": {
+                "type": "string",
+                "description": "The subject name or key (e.g. 'fantasy' or 'Science Fiction')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has key, name, subject_type, work_count, and works."
+        }
+    },
+    {
+        "tool_name": "get_isbn",
+        "description": "Look up an edition by its ISBN-13 or ISBN-10.",
+        "arguments": {
+            "isbn": {
+                "type": "string",
+                "description": "The ISBN (13 or 10 digit; hyphens are ignored)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the edition document; on failure (not found), output contains an error message."
+        }
+    }
+]

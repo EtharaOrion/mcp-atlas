@@ -1,0 +1,94 @@
+[
+    {
+        "tool_name": "send_message",
+        "description": "Send (queue) an email message from a domain to a recipient, recording the message and an 'accepted' delivery event.",
+        "arguments": {
+            "domain": {
+                "type": "string",
+                "description": "The sending domain (e.g. 'sandbox.mailgun.org')."
+            },
+            "sender": {
+                "type": "string",
+                "description": "The From address for the message."
+            },
+            "to": {
+                "type": "string",
+                "description": "The recipient address for the message."
+            },
+            "subject": {
+                "type": "string",
+                "description": "Optional subject line for the message."
+            },
+            "text": {
+                "type": "string",
+                "description": "Optional plain-text body for the message."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the queued message id and a confirmation message; on failure (missing from/to), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_events",
+        "description": "Query delivery events for a domain, optionally filtered by event type and recipient, returned newest first.",
+        "arguments": {
+            "domain": {
+                "type": "string",
+                "description": "The domain to query events for."
+            },
+            "event": {
+                "type": "string",
+                "description": "Optional event type filter; supports multiple values joined by ' OR ' (e.g. 'delivered OR opened')."
+            },
+            "recipient": {
+                "type": "string",
+                "description": "Optional recipient address to filter events by."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of events to return (1-300, default 300)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with an 'items' list of event objects and a 'paging' object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_stats_total",
+        "description": "Get total event counts for a domain, optionally limited to a comma-separated list of event types.",
+        "arguments": {
+            "domain": {
+                "type": "string",
+                "description": "The domain to compute stats for."
+            },
+            "event": {
+                "type": "string",
+                "description": "Optional comma-separated list of event types to count (default: accepted, delivered, failed, opened, clicked)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with start/end timestamps, resolution, and a 'stats' list of per-event totals; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_members",
+        "description": "List the members of a mailing list, optionally filtered by subscription state.",
+        "arguments": {
+            "address": {
+                "type": "string",
+                "description": "The mailing list address (e.g. 'newsletter@sandbox.mailgun.org')."
+            },
+            "subscribed": {
+                "type": "boolean",
+                "description": "Optional subscription flag; when set, only members matching this subscribed state are returned."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with an 'items' list of member objects and a 'total_count'; on failure (mailing list not found), output contains an error message."
+        }
+    }
+]

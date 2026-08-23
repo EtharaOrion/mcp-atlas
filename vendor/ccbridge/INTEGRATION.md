@@ -73,7 +73,7 @@ On start it prints the client wiring it expects:
 
 ```sh
 export ANTHROPIC_API_BASE=http://127.0.0.1:8765
-export ANTHROPIC_API_KEY=kaiju-cc-stub     # any non-empty stub; bridge strips it
+export ANTHROPIC_API_KEY=api-key     # any non-empty stub; bridge strips it
 ```
 
 ### Credentials / env vars it needs

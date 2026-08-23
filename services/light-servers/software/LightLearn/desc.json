@@ -1,0 +1,199 @@
+[
+    {
+        "tool_name": "list_courses",
+        "description": "List available courses, optionally filtered by category and/or level. Sorted by title.",
+        "arguments": {
+            "category": {"type": "string", "description": "Optional category filter (e.g. programming, math)."},
+            "level": {"type": "string", "description": "Optional level filter: beginner | intermediate | advanced."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of course summaries."
+        }
+    },
+    {
+        "tool_name": "get_course",
+        "description": "Retrieve the full course object by cid.",
+        "arguments": {
+            "cid": {"type": "string", "description": "Course identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full course object."
+        }
+    },
+    {
+        "tool_name": "enroll",
+        "description": "Enroll the current user in a course. Fails if already enrolled.",
+        "arguments": {
+            "course_id": {"type": "string", "description": "Course identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new Enrollment."
+        }
+    },
+    {
+        "tool_name": "unenroll",
+        "description": "Remove the current user's enrollment for a course.",
+        "arguments": {
+            "course_id": {"type": "string", "description": "Course identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {course_id, unenrolled: true}."
+        }
+    },
+    {
+        "tool_name": "list_lessons",
+        "description": "List lessons in a course, sorted by order ascending.",
+        "arguments": {
+            "course_id": {"type": "string", "description": "Course identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of Lesson objects."
+        }
+    },
+    {
+        "tool_name": "get_lesson",
+        "description": "Get the full lesson body by lsid.",
+        "arguments": {
+            "lsid": {"type": "string", "description": "Lesson identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the Lesson object."
+        }
+    },
+    {
+        "tool_name": "complete_lesson",
+        "description": "Mark a lesson as completed. Recomputes progress_percent on the parent enrollment if one exists.",
+        "arguments": {
+            "lesson_id": {"type": "string", "description": "Lesson identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated Lesson."
+        }
+    },
+    {
+        "tool_name": "list_enrollments",
+        "description": "List the current user's enrollments, optionally filtered by completion state.",
+        "arguments": {
+            "is_completed": {"type": "boolean", "description": "Optional filter: True for finished, False for in-progress."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of Enrollment objects."
+        }
+    },
+    {
+        "tool_name": "get_enrollment",
+        "description": "Look up the current user's enrollment for a course.",
+        "arguments": {
+            "course_id": {"type": "string", "description": "Course identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the Enrollment object."
+        }
+    },
+    {
+        "tool_name": "update_progress",
+        "description": "Manually set progress_percent on an enrollment. Automatically flips is_completed at 100%.",
+        "arguments": {
+            "course_id": {"type": "string", "description": "Course identifier."},
+            "progress_percent": {"type": "integer", "description": "Progress in the range [0, 100]."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated Enrollment."
+        }
+    },
+    {
+        "tool_name": "list_quizzes",
+        "description": "List quizzes, optionally filtered by lesson.",
+        "arguments": {
+            "lesson_id": {"type": "string", "description": "Optional lesson filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of Quiz objects."
+        }
+    },
+    {
+        "tool_name": "get_quiz",
+        "description": "Retrieve a quiz by qzid.",
+        "arguments": {
+            "qzid": {"type": "string", "description": "Quiz identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the Quiz object."
+        }
+    },
+    {
+        "tool_name": "submit_quiz",
+        "description": "Submit an answer for a quiz. Records a QuizAttempt with correctness.",
+        "arguments": {
+            "quiz_id": {"type": "string", "description": "Quiz identifier."},
+            "selected_index": {"type": "integer", "description": "Zero-based index into the quiz's options array."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the recorded QuizAttempt."
+        }
+    },
+    {
+        "tool_name": "list_quiz_attempts",
+        "description": "List quiz attempts, optionally filtered by quiz. Sorted by attempted_at desc.",
+        "arguments": {
+            "quiz_id": {"type": "string", "description": "Optional quiz filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of QuizAttempt objects."
+        }
+    },
+    {
+        "tool_name": "search_courses",
+        "description": "Search courses by keyword across title, instructor, description, and category.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search keyword or phrase."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of matching course summaries."
+        }
+    },
+    {
+        "tool_name": "list_finished",
+        "description": "List enrollments where is_completed is true. Sorted by completed_at desc.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of finished Enrollment objects."
+        }
+    },
+    {
+        "tool_name": "get_course_progress",
+        "description": "Return lesson-based progress details for a course: total_lessons, completed_lessons, progress_percent, enrolled, is_completed.",
+        "arguments": {
+            "course_id": {"type": "string", "description": "Course identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a progress summary object."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Aggregate counts across courses, lessons, enrollments, quizzes, and attempts, grouped by level and category.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is an aggregate stats object."
+        }
+    }
+]

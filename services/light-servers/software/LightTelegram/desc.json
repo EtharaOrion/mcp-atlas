@@ -1,0 +1,145 @@
+[
+    {
+        "tool_name": "get_me",
+        "description": "Get the bot's own identity/profile.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the bot user object (id, is_bot, first_name, username, capabilities)."
+        }
+    },
+    {
+        "tool_name": "send_message",
+        "description": "Send a text message to a chat.",
+        "arguments": {
+            "chat_id": {
+                "type": "integer",
+                "description": "The id of the target chat."
+            },
+            "text": {
+                "type": "string",
+                "description": "The text of the message to send."
+            },
+            "reply_to_message_id": {
+                "type": "integer",
+                "description": "Optional id of the message being replied to."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the formatted message object; on failure (chat not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "send_photo",
+        "description": "Send a photo to a chat with an optional caption.",
+        "arguments": {
+            "chat_id": {
+                "type": "integer",
+                "description": "The id of the target chat."
+            },
+            "photo": {
+                "type": "string",
+                "description": "The file id or reference of the photo to send."
+            },
+            "caption": {
+                "type": "string",
+                "description": "Optional caption for the photo."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the formatted message object with a photo array; on failure (chat not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "edit_message_text",
+        "description": "Edit the text of an existing message in a chat.",
+        "arguments": {
+            "chat_id": {
+                "type": "integer",
+                "description": "The id of the chat containing the message."
+            },
+            "message_id": {
+                "type": "integer",
+                "description": "The id of the message to edit."
+            },
+            "text": {
+                "type": "string",
+                "description": "The new text for the message."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the edited message object (with edit_date); on failure (message not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_message",
+        "description": "Delete a message from a chat.",
+        "arguments": {
+            "chat_id": {
+                "type": "integer",
+                "description": "The id of the chat containing the message."
+            },
+            "message_id": {
+                "type": "integer",
+                "description": "The id of the message to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is true; on failure (message not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_chat",
+        "description": "Get information about a chat by its id.",
+        "arguments": {
+            "chat_id": {
+                "type": "integer",
+                "description": "The id of the chat."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the chat object; on failure (chat not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_chat_member",
+        "description": "Get the membership status of a user in a chat.",
+        "arguments": {
+            "chat_id": {
+                "type": "integer",
+                "description": "The id of the chat."
+            },
+            "user_id": {
+                "type": "integer",
+                "description": "The id of the user."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the user and their status; on failure (chat or user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_updates",
+        "description": "Get pending updates (messages) for the bot, optionally starting from an offset.",
+        "arguments": {
+            "offset": {
+                "type": "integer",
+                "description": "Optional minimum update_id to return."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of updates to return (default 100)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of update objects each wrapping a message."
+        }
+    }
+]

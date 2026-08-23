@@ -1,0 +1,165 @@
+[
+    {
+        "tool_name": "get_me",
+        "description": "Get the current Zoom user's profile.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the user profile object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_meetings",
+        "description": "List a user's meetings filtered by type, ordered by start time.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The user id, or 'me' for the current user."
+            },
+            "meeting_type": {
+                "type": "string",
+                "description": "Meeting type filter: 'scheduled' (default, waiting) or 'previous_meetings' (finished)."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of meetings to return (default 30)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has page info and a 'meetings' list; on failure (user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_meeting",
+        "description": "Create a new meeting for a user.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The host user id, or 'me' for the current user."
+            },
+            "topic": {
+                "type": "string",
+                "description": "The meeting topic."
+            },
+            "start_time": {
+                "type": "string",
+                "description": "Optional ISO start time; defaults to now."
+            },
+            "duration": {
+                "type": "integer",
+                "description": "Meeting duration in minutes (default 60)."
+            },
+            "timezone": {
+                "type": "string",
+                "description": "Meeting timezone (default 'UTC')."
+            },
+            "agenda": {
+                "type": "string",
+                "description": "Optional meeting agenda text."
+            },
+            "meeting_type": {
+                "type": "integer",
+                "description": "Zoom meeting type code (default 2, scheduled)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created meeting object; on failure (user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_meeting",
+        "description": "Get a single meeting by its id.",
+        "arguments": {
+            "meeting_id": {
+                "type": "integer",
+                "description": "The unique id of the meeting."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the meeting object; on failure (not found), output contains a Zoom error object."
+        }
+    },
+    {
+        "tool_name": "update_meeting",
+        "description": "Update fields of an existing meeting.",
+        "arguments": {
+            "meeting_id": {
+                "type": "integer",
+                "description": "The id of the meeting to update."
+            },
+            "topic": {
+                "type": "string",
+                "description": "Optional new topic."
+            },
+            "start_time": {
+                "type": "string",
+                "description": "Optional new start time."
+            },
+            "duration": {
+                "type": "integer",
+                "description": "Optional new duration in minutes."
+            },
+            "agenda": {
+                "type": "string",
+                "description": "Optional new agenda text."
+            },
+            "timezone": {
+                "type": "string",
+                "description": "Optional new timezone."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated meeting object; on failure (not found), output contains a Zoom error object."
+        }
+    },
+    {
+        "tool_name": "delete_meeting",
+        "description": "Delete a meeting by its id.",
+        "arguments": {
+            "meeting_id": {
+                "type": "integer",
+                "description": "The id of the meeting to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms deletion; on failure (not found), output contains a Zoom error object."
+        }
+    },
+    {
+        "tool_name": "get_recordings",
+        "description": "Get the cloud recordings for a meeting.",
+        "arguments": {
+            "meeting_id": {
+                "type": "integer",
+                "description": "The id of the meeting whose recordings are requested."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has recording metadata and a 'recording_files' list; on failure (meeting not found or no recordings), output contains a Zoom error object."
+        }
+    },
+    {
+        "tool_name": "list_registrants",
+        "description": "List a meeting's registrants filtered by status.",
+        "arguments": {
+            "meeting_id": {
+                "type": "integer",
+                "description": "The id of the meeting whose registrants are listed."
+            },
+            "status": {
+                "type": "string",
+                "description": "Registrant status to filter by (default 'approved')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has page info and a 'registrants' list; on failure (meeting not found), output contains a Zoom error object."
+        }
+    }
+]

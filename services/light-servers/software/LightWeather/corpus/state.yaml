@@ -1,0 +1,19 @@
+# Source: world_data 2/LightWeather.json (verbatim). Corpus-only authored world.
+alerts:
+- aid: alert_5bM8WTp3e4Ah
+  location: Savannah
+  condition: rain
+  threshold: 70
+  timestamp: '2026-05-01 14:01:39'
+- aid: alert_L8ArD8hZViaL
+  location: Atlanta
+  condition: snow
+  threshold: 80
+  timestamp: '2026-05-02 09:29:24'
+- aid: alert_XHEHnaEj8B7z
+  location: Charleston
+  condition: thunderstorm
+  threshold: 70
+  timestamp: '2026-05-02 15:47:16'
+preferences:
+  primary_location: Savannah

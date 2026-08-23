@@ -1,0 +1,193 @@
+[
+    {
+        "tool_name": "list_restaurants",
+        "description": "List restaurants, optionally filtered by cuisine. Sorted by rating descending.",
+        "arguments": {
+            "cuisine": {"type": "string", "description": "Optional cuisine filter (case-insensitive)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of restaurant objects."
+        }
+    },
+    {
+        "tool_name": "get_restaurant",
+        "description": "Retrieve a full restaurant object by restid.",
+        "arguments": {
+            "restid": {"type": "string", "description": "Restaurant identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full restaurant object."
+        }
+    },
+    {
+        "tool_name": "list_menu",
+        "description": "List all menu items for a restaurant, optionally filtered by category.",
+        "arguments": {
+            "restaurant_id": {"type": "string", "description": "Restaurant identifier."},
+            "category": {"type": "string", "description": "Optional menu category filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of menu item objects."
+        }
+    },
+    {
+        "tool_name": "get_menu_item",
+        "description": "Retrieve a full menu item by miid.",
+        "arguments": {
+            "miid": {"type": "string", "description": "Menu item identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full menu item object."
+        }
+    },
+    {
+        "tool_name": "add_menu_item",
+        "description": "Add a new menu item to a restaurant.",
+        "arguments": {
+            "restaurant_id": {"type": "string", "description": "Restaurant identifier."},
+            "name": {"type": "string", "description": "Menu item name."},
+            "description": {"type": "string", "description": "Human-readable description."},
+            "price": {"type": "number", "description": "Item price."},
+            "category": {"type": "string", "description": "Menu category (e.g. pizza, side, dessert)."},
+            "available": {"type": "boolean", "description": "Whether the item is currently available."},
+            "currency": {"type": "string", "description": "Currency code (default USD)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new menu item object."
+        }
+    },
+    {
+        "tool_name": "update_menu_item",
+        "description": "Update one or more fields on an existing menu item. Only supplied fields are changed.",
+        "arguments": {
+            "miid": {"type": "string", "description": "Menu item identifier."},
+            "name": {"type": "string", "description": "Optional new name."},
+            "description": {"type": "string", "description": "Optional new description."},
+            "price": {"type": "number", "description": "Optional new price."},
+            "category": {"type": "string", "description": "Optional new category."},
+            "available": {"type": "boolean", "description": "Optional new availability flag."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated menu item object."
+        }
+    },
+    {
+        "tool_name": "list_orders",
+        "description": "List orders, optionally filtered by status and/or customer. Sorted by placed_at descending.",
+        "arguments": {
+            "status": {"type": "string", "description": "Optional status filter (placed, confirmed, preparing, out_for_delivery, delivered, cancelled)."},
+            "customer": {"type": "string", "description": "Optional customer filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of order summaries."
+        }
+    },
+    {
+        "tool_name": "get_order",
+        "description": "Retrieve a full order object by oid.",
+        "arguments": {
+            "oid": {"type": "string", "description": "Order identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full order object."
+        }
+    },
+    {
+        "tool_name": "place_order",
+        "description": "Place a new order at a restaurant. Enforces min_order and item availability.",
+        "arguments": {
+            "restaurant_id": {"type": "string", "description": "Restaurant identifier."},
+            "customer": {"type": "string", "description": "Customer name or identifier."},
+            "items": {"type": "array", "items": {"type": "object"}, "description": "List of {miid, quantity} entries."},
+            "address": {"type": "string", "description": "Delivery address."},
+            "tip": {"type": "number", "description": "Optional tip amount (default 0)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new order summary."
+        }
+    },
+    {
+        "tool_name": "cancel_order",
+        "description": "Cancel an order that is still in 'placed' or 'confirmed' status.",
+        "arguments": {
+            "oid": {"type": "string", "description": "Order identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the cancelled order summary."
+        }
+    },
+    {
+        "tool_name": "confirm_order",
+        "description": "Restaurant confirms a placed order. Transitions status placed -> confirmed.",
+        "arguments": {
+            "oid": {"type": "string", "description": "Order identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated order summary."
+        }
+    },
+    {
+        "tool_name": "start_preparation",
+        "description": "Kitchen starts preparing the order. Transitions status confirmed -> preparing.",
+        "arguments": {
+            "oid": {"type": "string", "description": "Order identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated order summary."
+        }
+    },
+    {
+        "tool_name": "mark_out_for_delivery",
+        "description": "Driver picks up an order. Transitions status preparing -> out_for_delivery.",
+        "arguments": {
+            "oid": {"type": "string", "description": "Order identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated order summary."
+        }
+    },
+    {
+        "tool_name": "mark_delivered",
+        "description": "Driver delivers an order. Transitions status out_for_delivery -> delivered and sets delivered_at.",
+        "arguments": {
+            "oid": {"type": "string", "description": "Order identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated order summary."
+        }
+    },
+    {
+        "tool_name": "search_restaurants",
+        "description": "Search restaurants by keyword across name and cuisine. Sorted by rating desc.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search keyword."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of matching restaurant objects."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Aggregate stats: restaurant count, menu size, orders by status, and non-cancelled revenue.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {restaurants, menu_items, orders, by_status, revenue}."
+        }
+    }
+]

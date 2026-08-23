@@ -10,6 +10,7 @@
 # Env overrides: AGENT (claude-code) MODEL (claude-opus-4-8) N (1) JOB (<task slug>)
 #                OUTPUT_DIR (<repo>/output) COPY_TO (unset) BUILD_MULT (3) AT (1)
 set -euo pipefail
+unset AWS_BEARER_TOKEN_BEDROCK 2>/dev/null || true
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO"

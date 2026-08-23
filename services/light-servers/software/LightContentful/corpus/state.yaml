@@ -1,0 +1,80 @@
+# Source: world_data 2/LightContentful.json (verbatim). Corpus-only authored world.
+entries:
+- id: author-mara
+  content_type: author
+  created_at: '2025-09-01T10:00:00.000Z'
+  updated_at: '2025-09-01T10:00:00.000Z'
+  published_version: 3
+  fields:
+    name: Preservation easements explained
+    bio: Product writer covering headless CMS workflows.
+    twitter: '@maralind'
+- id: author-tomas
+  content_type: author
+  created_at: '2025-09-02T11:00:00.000Z'
+  updated_at: '2025-09-02T11:00:00.000Z'
+  published_version: 2
+  fields:
+    name: Regency architecture field guide
+    bio: Engineer and occasional technical blogger.
+    twitter: '@tvega'
+- id: cat-engineering
+  content_type: category
+  created_at: '2025-09-01T09:00:00.000Z'
+  updated_at: '2025-09-01T09:00:00.000Z'
+  published_version: 1
+  fields:
+    title: Facade grant application checklist
+    slug: facade-grant-application-checklist
+- id: cat-product
+  content_type: category
+  created_at: '2025-09-01T09:05:00.000Z'
+  updated_at: '2025-09-01T09:05:00.000Z'
+  published_version: 1
+  fields:
+    title: Docent program overview
+    slug: docent-program-overview
+- id: post-getting-started
+  content_type: blogPost
+  created_at: '2025-09-10T08:00:00.000Z'
+  updated_at: '2025-09-12T14:00:00.000Z'
+  published_version: 5
+  fields:
+    title: Historic Homes Tour 2026
+    slug: historic-homes-tour-2026
+    body: Historic Homes Tour 2026 — an education resource from the Savannah Historic Preservation Alliance.
+    author: Josephine Halloway
+    heroImage:
+      sys:
+        type: Link
+        linkType: Asset
+        id: asset-hero-1
+    published: true
+- id: post-content-modeling
+  content_type: blogPost
+  created_at: '2025-10-01T08:00:00.000Z'
+  updated_at: '2025-10-03T09:30:00.000Z'
+  published_version: 4
+  fields:
+    title: Member education library
+    slug: member-education-library
+    body: Member education library — an education resource from the Savannah Historic Preservation Alliance.
+    author: Josephine Halloway
+    heroImage:
+      sys:
+        type: Link
+        linkType: Asset
+        id: asset-hero-2
+    published: true
+- id: post-draft-webhooks
+  content_type: blogPost
+  created_at: '2025-11-05T08:00:00.000Z'
+  updated_at: '2025-11-05T08:00:00.000Z'
+  published_version: 0
+  fields:
+    title: Victorian District survey highlights
+    slug: victorian-district-survey-highlights
+    body: Victorian District survey highlights — an education resource from the Savannah Historic Preservation
+      Alliance.
+    author: Josephine Halloway
+    published: false

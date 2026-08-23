@@ -1,0 +1,854 @@
+[
+    {
+        "tool_name": "list_courses",
+        "description": "List courses, optionally filtered by course state, with pagination.",
+        "arguments": {
+            "course_states": {
+                "type": "string",
+                "description": "Optional comma-separated list of course states (e.g. ACTIVE,ARCHIVED) to filter by."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of courses to return per page (default 20)."
+            },
+            "page_token": {
+                "type": "integer",
+                "description": "Offset token for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a 'courses' list and optional 'nextPageToken'; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_course",
+        "description": "Get a single course by its id.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the 'course' object; on failure (course not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_course",
+        "description": "Create a new course.",
+        "arguments": {
+            "name": {
+                "type": "string",
+                "description": "The name of the course."
+            },
+            "section": {
+                "type": "string",
+                "description": "Optional section label for the course."
+            },
+            "descriptionHeading": {
+                "type": "string",
+                "description": "Optional description heading for the course."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional description text for the course."
+            },
+            "room": {
+                "type": "string",
+                "description": "Optional room for the course."
+            },
+            "ownerId": {
+                "type": "string",
+                "description": "Optional owner user id (defaults to teacher_001)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the created 'course' object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_course",
+        "description": "Update fields of an existing course by its id.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course to update."
+            },
+            "name": {
+                "type": "string",
+                "description": "Optional new name for the course."
+            },
+            "section": {
+                "type": "string",
+                "description": "Optional new section label."
+            },
+            "descriptionHeading": {
+                "type": "string",
+                "description": "Optional new description heading."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional new description text."
+            },
+            "room": {
+                "type": "string",
+                "description": "Optional new room."
+            },
+            "courseState": {
+                "type": "string",
+                "description": "Optional new course state (e.g. ACTIVE, ARCHIVED)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the updated 'course' object; on failure (course not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "archive_course",
+        "description": "Archive a course, setting its state to ARCHIVED.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course to archive."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the archived 'course' object; on failure (course not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_coursework",
+        "description": "List coursework for a course, optionally filtered by topic and state, ordered and paginated.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "topic_id": {
+                "type": "string",
+                "description": "Optional topic id to filter coursework by."
+            },
+            "course_work_states": {
+                "type": "string",
+                "description": "Optional comma-separated list of coursework states to filter by."
+            },
+            "order_by": {
+                "type": "string",
+                "description": "Optional ordering clause (e.g. 'updateTime desc' or 'dueDate')."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of coursework items to return per page (default 20)."
+            },
+            "page_token": {
+                "type": "integer",
+                "description": "Offset token for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a 'courseWork' list and optional 'nextPageToken'; on failure (course not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_coursework",
+        "description": "Get a single coursework item by id within a course.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "coursework_id": {
+                "type": "string",
+                "description": "The unique id of the coursework item."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the 'courseWork' object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_coursework",
+        "description": "Create a new coursework item in a course.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "title": {
+                "type": "string",
+                "description": "The title of the coursework."
+            },
+            "workType": {
+                "type": "string",
+                "description": "The work type (e.g. ASSIGNMENT, SHORT_ANSWER_QUESTION)."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional description text."
+            },
+            "state": {
+                "type": "string",
+                "description": "Optional state (defaults to PUBLISHED)."
+            },
+            "maxPoints": {
+                "type": "number",
+                "description": "Optional maximum points for the coursework."
+            },
+            "topicId": {
+                "type": "string",
+                "description": "Optional topic id the coursework belongs to."
+            },
+            "dueDate": {
+                "type": "object",
+                "description": "Optional due date object with year, month, day."
+            },
+            "dueTime": {
+                "type": "object",
+                "description": "Optional due time object with hours, minutes."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the created 'courseWork' object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_coursework",
+        "description": "Update fields of an existing coursework item.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "coursework_id": {
+                "type": "string",
+                "description": "The unique id of the coursework item to update."
+            },
+            "title": {
+                "type": "string",
+                "description": "Optional new title."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional new description."
+            },
+            "state": {
+                "type": "string",
+                "description": "Optional new state."
+            },
+            "maxPoints": {
+                "type": "number",
+                "description": "Optional new maximum points."
+            },
+            "topicId": {
+                "type": "string",
+                "description": "Optional new topic id."
+            },
+            "dueDate": {
+                "type": "object",
+                "description": "Optional new due date object with year, month, day."
+            },
+            "dueTime": {
+                "type": "object",
+                "description": "Optional new due time object with hours, minutes."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the updated 'courseWork' object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_coursework",
+        "description": "Delete a coursework item from a course.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "coursework_id": {
+                "type": "string",
+                "description": "The unique id of the coursework item to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds {'deleted': true}; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_topics",
+        "description": "List topics for a course, with pagination.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of topics to return per page (default 20)."
+            },
+            "page_token": {
+                "type": "integer",
+                "description": "Offset token for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a 'topic' list and optional 'nextPageToken'; on failure (course not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_topic",
+        "description": "Get a single topic by id within a course.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "topic_id": {
+                "type": "string",
+                "description": "The unique id of the topic."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the 'topic' object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_topic",
+        "description": "Create a new topic in a course.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "name": {
+                "type": "string",
+                "description": "The name of the topic."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the created 'topic' object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_topic",
+        "description": "Update the name of an existing topic.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "topic_id": {
+                "type": "string",
+                "description": "The unique id of the topic to update."
+            },
+            "name": {
+                "type": "string",
+                "description": "Optional new name for the topic."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the updated 'topic' object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_topic",
+        "description": "Delete a topic from a course.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "topic_id": {
+                "type": "string",
+                "description": "The unique id of the topic to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds {'deleted': true}; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_submissions",
+        "description": "List student submissions for a coursework item, optionally filtered by state and lateness, with pagination.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "coursework_id": {
+                "type": "string",
+                "description": "The unique id of the coursework item."
+            },
+            "states": {
+                "type": "string",
+                "description": "Optional comma-separated list of submission states to filter by."
+            },
+            "late": {
+                "type": "boolean",
+                "description": "Optional lateness flag; when set, only submissions matching this late state are returned."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of submissions to return per page (default 20)."
+            },
+            "page_token": {
+                "type": "integer",
+                "description": "Offset token for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a 'studentSubmissions' list and optional 'nextPageToken'; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_submission",
+        "description": "Get a single student submission by id.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "coursework_id": {
+                "type": "string",
+                "description": "The unique id of the coursework item."
+            },
+            "submission_id": {
+                "type": "string",
+                "description": "The unique id of the submission."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the 'studentSubmission' object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "grade_submission",
+        "description": "Set the assigned and/or draft grade on a student submission.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "coursework_id": {
+                "type": "string",
+                "description": "The unique id of the coursework item."
+            },
+            "submission_id": {
+                "type": "string",
+                "description": "The unique id of the submission."
+            },
+            "assignedGrade": {
+                "type": "number",
+                "description": "Optional assigned grade to set."
+            },
+            "draftGrade": {
+                "type": "number",
+                "description": "Optional draft grade to set."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the updated 'studentSubmission' object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "return_submission",
+        "description": "Return a student submission, setting its state to RETURNED.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "coursework_id": {
+                "type": "string",
+                "description": "The unique id of the coursework item."
+            },
+            "submission_id": {
+                "type": "string",
+                "description": "The unique id of the submission."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the updated 'studentSubmission' object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "reclaim_submission",
+        "description": "Reclaim a student submission, setting its state to RECLAIMED_BY_STUDENT.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "coursework_id": {
+                "type": "string",
+                "description": "The unique id of the coursework item."
+            },
+            "submission_id": {
+                "type": "string",
+                "description": "The unique id of the submission."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the updated 'studentSubmission' object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "turn_in_submission",
+        "description": "Turn in a student submission, setting its state to TURNED_IN.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "coursework_id": {
+                "type": "string",
+                "description": "The unique id of the coursework item."
+            },
+            "submission_id": {
+                "type": "string",
+                "description": "The unique id of the submission."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the updated 'studentSubmission' object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "modify_submission_attachments",
+        "description": "Attach materials to a student submission, appending to its assignmentSubmission attachments.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "coursework_id": {
+                "type": "string",
+                "description": "The unique id of the coursework item."
+            },
+            "submission_id": {
+                "type": "string",
+                "description": "The unique id of the submission."
+            },
+            "addAttachments": {
+                "type": "array",
+                "description": "Optional list of attachment objects to add to the submission."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the updated 'studentSubmission' object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_students",
+        "description": "List students enrolled in a course, with pagination.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of students to return per page (default 30)."
+            },
+            "page_token": {
+                "type": "integer",
+                "description": "Offset token for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a 'students' list and optional 'nextPageToken'; on failure (course not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_student",
+        "description": "Get a single student by user id within a course.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "user_id": {
+                "type": "string",
+                "description": "The unique user id of the student."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the 'student' object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "invite_student",
+        "description": "Invite (enroll) a student to a course by email address.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "emailAddress": {
+                "type": "string",
+                "description": "The email address of the student to invite."
+            },
+            "fullName": {
+                "type": "string",
+                "description": "Optional full name of the student."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the created 'student' object; on failure (already enrolled or missing email), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "remove_student",
+        "description": "Remove a student from a course.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "user_id": {
+                "type": "string",
+                "description": "The unique user id of the student to remove."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds {'deleted': true}; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_teachers",
+        "description": "List teachers of a course.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a 'teachers' list; on failure (course not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_teacher",
+        "description": "Get a single teacher by user id within a course.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "user_id": {
+                "type": "string",
+                "description": "The unique user id of the teacher."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the 'teacher' object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_announcements",
+        "description": "List announcements for a course, optionally filtered by state, sorted by creation time descending, with pagination.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "announcement_states": {
+                "type": "string",
+                "description": "Optional comma-separated list of announcement states to filter by."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of announcements to return per page (default 20)."
+            },
+            "page_token": {
+                "type": "integer",
+                "description": "Offset token for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds an 'announcements' list and optional 'nextPageToken'; on failure (course not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_announcement",
+        "description": "Get a single announcement by id within a course.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "announcement_id": {
+                "type": "string",
+                "description": "The unique id of the announcement."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the 'announcement' object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_announcement",
+        "description": "Create a new announcement in a course.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "text": {
+                "type": "string",
+                "description": "The announcement text."
+            },
+            "state": {
+                "type": "string",
+                "description": "Optional state (defaults to PUBLISHED)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the created 'announcement' object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_announcement",
+        "description": "Update the text and/or state of an existing announcement.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "announcement_id": {
+                "type": "string",
+                "description": "The unique id of the announcement to update."
+            },
+            "text": {
+                "type": "string",
+                "description": "Optional new announcement text."
+            },
+            "state": {
+                "type": "string",
+                "description": "Optional new state."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the updated 'announcement' object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_announcement",
+        "description": "Delete an announcement from a course.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "announcement_id": {
+                "type": "string",
+                "description": "The unique id of the announcement to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds {'deleted': true}; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_materials",
+        "description": "List course work materials for a course, with pagination.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of materials to return per page (default 20)."
+            },
+            "page_token": {
+                "type": "integer",
+                "description": "Offset token for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a 'courseWorkMaterial' list and optional 'nextPageToken'; on failure (course not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_material",
+        "description": "Get a single course work material by id within a course.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "material_id": {
+                "type": "string",
+                "description": "The unique id of the material."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the 'courseWorkMaterial' object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_material",
+        "description": "Create a new course work material in a course.",
+        "arguments": {
+            "course_id": {
+                "type": "string",
+                "description": "The unique id of the course."
+            },
+            "title": {
+                "type": "string",
+                "description": "The title of the material."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional description text."
+            },
+            "topicId": {
+                "type": "string",
+                "description": "Optional topic id the material belongs to."
+            },
+            "materials": {
+                "type": "array",
+                "description": "Optional list of material items (e.g. link objects)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the created 'courseWorkMaterial' object; on failure, output contains an error message."
+        }
+    }
+]

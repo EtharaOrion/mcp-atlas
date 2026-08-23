@@ -1,0 +1,110 @@
+[
+    {
+        "tool_name": "text_search",
+        "description": "Search places by a free-text query matching name, address, or type.",
+        "arguments": {
+            "query": {
+                "type": "string",
+                "description": "The free-text search query."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a Google-style envelope with a results list of matching places; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "place_details",
+        "description": "Get the full details of a single place by its place_id.",
+        "arguments": {
+            "place_id": {
+                "type": "string",
+                "description": "The unique place_id of the place."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a Google-style envelope with the place result; on failure (place not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "nearby_search",
+        "description": "Find places within a radius of a resolved location, optionally filtered by type.",
+        "arguments": {
+            "location": {
+                "type": "string",
+                "description": "A 'lat,lng' pair, place name, geocode query, or place_id to center the search on."
+            },
+            "radius": {
+                "type": "integer",
+                "description": "Search radius in meters (default 5000)."
+            },
+            "place_type": {
+                "type": "string",
+                "description": "Optional place type to filter results by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a Google-style envelope with a distance-sorted results list; on failure (location not resolvable), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "geocode",
+        "description": "Resolve an address or place string into coordinates and a formatted address.",
+        "arguments": {
+            "address": {
+                "type": "string",
+                "description": "The address, place name, or geocode query to resolve."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. Output is a Google-style envelope with a results list (empty when zero results)."
+        }
+    },
+    {
+        "tool_name": "directions",
+        "description": "Compute a route between an origin and destination for a given travel mode.",
+        "arguments": {
+            "origin": {
+                "type": "string",
+                "description": "The origin as a 'lat,lng' pair, place name, geocode query, or place_id."
+            },
+            "destination": {
+                "type": "string",
+                "description": "The destination as a 'lat,lng' pair, place name, geocode query, or place_id."
+            },
+            "mode": {
+                "type": "string",
+                "description": "Travel mode, 'driving' (default) or 'walking'."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a Google-style envelope with a routes list; on failure (endpoint not resolvable), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "distance_matrix",
+        "description": "Compute a distance/duration matrix between lists of origins and destinations.",
+        "arguments": {
+            "origins": {
+                "type": "array",
+                "description": "List of origin strings (each a 'lat,lng' pair, place name, geocode query, or place_id)."
+            },
+            "destinations": {
+                "type": "array",
+                "description": "List of destination strings (each a 'lat,lng' pair, place name, geocode query, or place_id)."
+            },
+            "mode": {
+                "type": "string",
+                "description": "Travel mode, 'driving' (default) or 'walking'."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. Output is a Google-style envelope with origin_addresses, destination_addresses, and a rows matrix of distance/duration elements."
+        }
+    }
+]

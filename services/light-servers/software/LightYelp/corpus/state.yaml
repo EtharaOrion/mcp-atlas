@@ -1,0 +1,222 @@
+# Source: world_data 2/LightYelp.json (verbatim). Corpus-only authored world.
+businesses:
+- id: biz-the-grove-001
+  alias: the-indigo-fork
+  name: The Indigo Fork
+  rating: 4.5
+  price: $$
+  review_count: 1820
+  is_closed: false
+  phone: '+19125551000'
+  image_url: https://img.example.com/grove.jpg
+  categories:
+  - alias: cafes
+    title: Cafes
+  coordinates:
+    latitude: 32.066
+    longitude: -81.088
+  location:
+    address1: 10 Whitaker Street
+    city: Savannah
+    state: GA
+    display_address:
+    - 10 Whitaker Street
+    - Savannah, GA 31401
+- id: biz-tartine-0002
+  alias: magnolia-grille
+  name: Magnolia Grille
+  rating: 4.5
+  price: $$
+  review_count: 5400
+  is_closed: false
+  phone: '+19125551007'
+  image_url: https://img.example.com/tartine.jpg
+  categories:
+  - alias: bakeries
+    title: Bakeries
+  coordinates:
+    latitude: 32.0681
+    longitude: -81.0897
+  location:
+    address1: 22 Bull Street
+    city: Savannah
+    state: GA
+    display_address:
+    - 22 Bull Street
+    - Savannah, GA 31401
+- id: biz-zuni-00003
+  alias: pearl-street-deli
+  name: Pearl Street Deli
+  rating: 4.0
+  price: $$$
+  review_count: 3100
+  is_closed: false
+  phone: '+19125551014'
+  image_url: https://img.example.com/zuni.jpg
+  categories:
+  - alias: restaurants
+    title: Restaurants
+  coordinates:
+    latitude: 32.0702
+    longitude: -81.0914
+  location:
+    address1: 34 Whitaker Street
+    city: Savannah
+    state: GA
+    display_address:
+    - 34 Whitaker Street
+    - Savannah, GA 31401
+- id: biz-hop-prime-04
+  alias: savannah-fish-camp
+  name: Savannah Fish Camp
+  rating: 4.6
+  price: $$$$
+  review_count: 7200
+  is_closed: false
+  phone: '+19125551021'
+  image_url: https://img.example.com/hop.jpg
+  categories:
+  - alias: steak
+    title: Steakhouses
+  coordinates:
+    latitude: 32.0723
+    longitude: -81.0931
+  location:
+    address1: 46 Bull Street
+    city: Savannah
+    state: GA
+    display_address:
+    - 46 Bull Street
+    - Savannah, GA 31401
+- id: biz-philz-00005
+  alias: riverhouse-kitchen
+  name: Riverhouse Kitchen
+  rating: 4.5
+  price: $
+  review_count: 2600
+  is_closed: false
+  phone: '+19125551028'
+  image_url: https://img.example.com/philz.jpg
+  categories:
+  - alias: coffee
+    title: Coffee & Tea
+  coordinates:
+    latitude: 32.0744
+    longitude: -81.0948
+  location:
+    address1: 58 Whitaker Street
+    city: Savannah
+    state: GA
+    display_address:
+    - 58 Whitaker Street
+    - Savannah, GA 31401
+- id: biz-mission-006
+  alias: broughton-biscuit-co
+  name: Broughton Biscuit Co.
+  rating: 4.0
+  price: $$
+  review_count: 2900
+  is_closed: false
+  phone: '+19125551035'
+  image_url: https://img.example.com/mcf.jpg
+  categories:
+  - alias: chinese
+    title: Chinese
+  coordinates:
+    latitude: 32.0765
+    longitude: -81.0965
+  location:
+    address1: 70 Bull Street
+    city: Savannah
+    state: GA
+    display_address:
+    - 70 Bull Street
+    - Savannah, GA 31401
+- id: biz-la-taq-0007
+  alias: habersham-coffee-house
+  name: Habersham Coffee House
+  rating: 4.5
+  price: $
+  review_count: 4100
+  is_closed: false
+  phone: '+19125551042'
+  image_url: https://img.example.com/lataq.jpg
+  categories:
+  - alias: mexican
+    title: Mexican
+  coordinates:
+    latitude: 32.0786
+    longitude: -81.0982
+  location:
+    address1: 82 Whitaker Street
+    city: Savannah
+    state: GA
+    display_address:
+    - 82 Whitaker Street
+    - Savannah, GA 31401
+- id: biz-swans-0008
+  alias: big-belly-bbq
+  name: Big Belly BBQ
+  rating: 4.5
+  price: $$$
+  review_count: 3300
+  is_closed: false
+  phone: '+19125551049'
+  image_url: https://img.example.com/swans.jpg
+  categories:
+  - alias: seafood
+    title: Seafood
+  coordinates:
+    latitude: 32.0807
+    longitude: -81.0999
+  location:
+    address1: 94 Bull Street
+    city: Savannah
+    state: GA
+    display_address:
+    - 94 Bull Street
+    - Savannah, GA 31401
+- id: biz-burma-0009
+  alias: bull-street-taproom
+  name: Bull Street Taproom
+  rating: 4.0
+  price: $$
+  review_count: 5600
+  is_closed: false
+  phone: '+19125551056'
+  image_url: https://img.example.com/burma.jpg
+  categories:
+  - alias: burmese
+    title: Burmese
+  coordinates:
+    latitude: 32.0828
+    longitude: -81.1016
+  location:
+    address1: 106 Whitaker Street
+    city: Savannah
+    state: GA
+    display_address:
+    - 106 Whitaker Street
+    - Savannah, GA 31401
+- id: biz-old-rite-10
+  alias: gaston-street-oyster-bar
+  name: Gaston Street Oyster Bar
+  rating: 3.5
+  price: $
+  review_count: 640
+  is_closed: true
+  phone: '+19125551063'
+  image_url: https://img.example.com/oldrite.jpg
+  categories:
+  - alias: diners
+    title: Diners
+  coordinates:
+    latitude: 32.0849
+    longitude: -81.1033
+  location:
+    address1: 118 Bull Street
+    city: Savannah
+    state: GA
+    display_address:
+    - 118 Bull Street
+    - Savannah, GA 31401

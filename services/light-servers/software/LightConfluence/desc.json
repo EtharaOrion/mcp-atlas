@@ -1,0 +1,182 @@
+[
+    {
+        "tool_name": "list_spaces",
+        "description": "List Confluence spaces, up to a limit.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of spaces to return (default 25)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with results (list of space objects), size, and _links; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_space",
+        "description": "Get a single space by its key.",
+        "arguments": {
+            "space_key": {
+                "type": "string",
+                "description": "The unique key of the space."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the space object; on failure (space not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_content",
+        "description": "List content (pages), optionally filtered by type and space key.",
+        "arguments": {
+            "type": {
+                "type": "string",
+                "description": "Content type to filter by (default 'page')."
+            },
+            "space_key": {
+                "type": "string",
+                "description": "Optional space key to filter content by."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of content items to return (default 25)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with results (list of content views), size, and _links; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_content",
+        "description": "Get a single content item (page) by its id.",
+        "arguments": {
+            "content_id": {
+                "type": "string",
+                "description": "The unique id of the content item."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the content view; on failure (content not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_content",
+        "description": "Create a new page in a space, optionally nested under a parent page.",
+        "arguments": {
+            "title": {
+                "type": "string",
+                "description": "The title of the page."
+            },
+            "space_key": {
+                "type": "string",
+                "description": "The key of the space the page belongs to."
+            },
+            "body": {
+                "type": "string",
+                "description": "Optional storage-format body content of the page."
+            },
+            "parent_id": {
+                "type": "string",
+                "description": "Optional id of the parent page to nest under."
+            },
+            "created_by": {
+                "type": "string",
+                "description": "Optional username of the creator (default 'apiuser')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created content view; on failure (space or parent not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_content",
+        "description": "Update the title and/or body of an existing page, incrementing its version.",
+        "arguments": {
+            "content_id": {
+                "type": "string",
+                "description": "The unique id of the content item to update."
+            },
+            "title": {
+                "type": "string",
+                "description": "Optional new title for the page."
+            },
+            "body": {
+                "type": "string",
+                "description": "Optional new storage-format body content."
+            },
+            "version_number": {
+                "type": "integer",
+                "description": "Optional expected new version number; must equal the current version plus one."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated content view; on failure (content not found or version conflict), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_child_pages",
+        "description": "List the direct child pages of a given page.",
+        "arguments": {
+            "content_id": {
+                "type": "string",
+                "description": "The unique id of the parent content item."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of child pages to return (default 25)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with results (list of child content views), size, and _links; on failure (content not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_labels",
+        "description": "List the labels attached to a given page.",
+        "arguments": {
+            "content_id": {
+                "type": "string",
+                "description": "The unique id of the content item."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with results (list of label objects) and size; on failure (content not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_comments",
+        "description": "List the comments on a given page.",
+        "arguments": {
+            "content_id": {
+                "type": "string",
+                "description": "The unique id of the content item."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with results (list of comment objects) and size; on failure (content not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "search_content",
+        "description": "Search pages using a simplified CQL string (supports space=, title~, and type= clauses joined by AND).",
+        "arguments": {
+            "cql": {
+                "type": "string",
+                "description": "The simplified CQL query string."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with results (list of matched content wrappers), size, totalSize, and cqlQuery; on failure, output contains an error message."
+        }
+    }
+]

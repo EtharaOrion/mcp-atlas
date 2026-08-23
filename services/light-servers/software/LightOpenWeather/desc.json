@@ -1,0 +1,64 @@
+[
+    {
+        "tool_name": "get_current_weather",
+        "description": "Get the current weather for a city by name or by latitude/longitude.",
+        "arguments": {
+            "q": {
+                "type": "string",
+                "description": "Optional city query, e.g. 'London' or 'London,GB'."
+            },
+            "lat": {
+                "type": "number",
+                "description": "Optional latitude (used with lon if q is not provided)."
+            },
+            "lon": {
+                "type": "number",
+                "description": "Optional longitude (used with lat if q is not provided)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the OpenWeather current-weather payload; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_forecast",
+        "description": "Get the multi-step forecast for a city by name or by latitude/longitude.",
+        "arguments": {
+            "q": {
+                "type": "string",
+                "description": "Optional city query, e.g. 'London' or 'London,GB'."
+            },
+            "lat": {
+                "type": "number",
+                "description": "Optional latitude (used with lon if q is not provided)."
+            },
+            "lon": {
+                "type": "number",
+                "description": "Optional longitude (used with lat if q is not provided)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the OpenWeather forecast payload (cod, cnt, list, city); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "geocode_direct",
+        "description": "Geocode a place name to matching cities with coordinates.",
+        "arguments": {
+            "q": {
+                "type": "string",
+                "description": "The place name query to geocode."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of matches to return (1-10, default 5)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of matching locations (name, lat, lon, country, state)."
+        }
+    }
+]

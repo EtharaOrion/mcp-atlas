@@ -1,0 +1,94 @@
+[
+    {
+        "tool_name": "list_invoices",
+        "description": "List invoices, optionally filtered by status and type.",
+        "arguments": {
+            "status": {
+                "type": "string",
+                "description": "Optional invoice status filter (case-insensitive, e.g. AUTHORISED)."
+            },
+            "type_": {
+                "type": "string",
+                "description": "Optional invoice type filter (case-insensitive, e.g. ACCREC)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with an 'Invoices' list; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_invoice",
+        "description": "Get a single invoice by its InvoiceID or InvoiceNumber.",
+        "arguments": {
+            "invoice_id": {
+                "type": "string",
+                "description": "The InvoiceID or InvoiceNumber of the invoice."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with an 'Invoices' list holding the invoice; on failure (not found), output contains a Xero error object."
+        }
+    },
+    {
+        "tool_name": "create_invoice",
+        "description": "Create a new invoice for a contact with optional line items.",
+        "arguments": {
+            "contact_id": {
+                "type": "string",
+                "description": "The ContactID the invoice is billed to."
+            },
+            "line_items": {
+                "type": "array",
+                "description": "Optional list of line item objects with Quantity and UnitAmount used to compute totals."
+            },
+            "type_": {
+                "type": "string",
+                "description": "Invoice type (default 'ACCREC')."
+            },
+            "date": {
+                "type": "string",
+                "description": "Optional invoice date in 'YYYY-MM-DD'; defaults to today."
+            },
+            "due_date": {
+                "type": "string",
+                "description": "Optional invoice due date in 'YYYY-MM-DD'."
+            },
+            "status": {
+                "type": "string",
+                "description": "Invoice status (default 'DRAFT')."
+            },
+            "reference": {
+                "type": "string",
+                "description": "Optional invoice reference text."
+            },
+            "currency_code": {
+                "type": "string",
+                "description": "Invoice currency code (default 'USD')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with an 'Invoices' list holding the created invoice; on failure (contact not found), output contains a Xero error object."
+        }
+    },
+    {
+        "tool_name": "list_contacts",
+        "description": "List all contacts.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'Contacts' list; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_accounts",
+        "description": "List all accounts from the chart of accounts.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with an 'Accounts' list; on failure, output contains an error message."
+        }
+    }
+]

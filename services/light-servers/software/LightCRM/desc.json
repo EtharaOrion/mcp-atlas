@@ -1,0 +1,196 @@
+[
+    {
+        "tool_name": "list_contacts",
+        "description": "List all contacts, optionally filtered by tag. Sorted by name.",
+        "arguments": {
+            "tag": {"type": "string", "description": "Optional tag filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of contact summaries."
+        }
+    },
+    {
+        "tool_name": "get_contact",
+        "description": "Retrieve the full contact record by cid.",
+        "arguments": {
+            "cid": {"type": "string", "description": "Contact identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full contact including notes."
+        }
+    },
+    {
+        "tool_name": "create_contact",
+        "description": "Create a new contact.",
+        "arguments": {
+            "name": {"type": "string", "description": "Full name."},
+            "email": {"type": "string", "description": "Email address."},
+            "phone": {"type": "string", "description": "Optional phone number."},
+            "company": {"type": "string", "description": "Optional company."},
+            "title": {"type": "string", "description": "Optional job title."},
+            "tags": {"type": "array", "items": {"type": "string"}, "description": "Optional list of tags."},
+            "notes": {"type": "string", "description": "Optional free-form notes."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new contact summary."
+        }
+    },
+    {
+        "tool_name": "update_contact",
+        "description": "Update one or more fields on an existing contact.",
+        "arguments": {
+            "cid": {"type": "string", "description": "Contact identifier."},
+            "name": {"type": "string", "description": "Optional new name."},
+            "email": {"type": "string", "description": "Optional new email."},
+            "phone": {"type": "string", "description": "Optional new phone."},
+            "company": {"type": "string", "description": "Optional new company."},
+            "title": {"type": "string", "description": "Optional new title."},
+            "tags": {"type": "array", "items": {"type": "string"}, "description": "Optional replacement tags list."},
+            "notes": {"type": "string", "description": "Optional new notes."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated contact summary."
+        }
+    },
+    {
+        "tool_name": "delete_contact",
+        "description": "Delete a contact. All deals for this contact are also removed.",
+        "arguments": {
+            "cid": {"type": "string", "description": "Contact identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output contains cid and removed_deals count."
+        }
+    },
+    {
+        "tool_name": "list_deals",
+        "description": "List deals, optionally filtered by stage and/or contact_id. Sorted by close_date.",
+        "arguments": {
+            "stage": {"type": "string", "description": "Optional filter: lead, qualified, proposal, negotiation, won, lost."},
+            "contact_id": {"type": "string", "description": "Optional contact to filter by."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of deal summaries."
+        }
+    },
+    {
+        "tool_name": "get_deal",
+        "description": "Retrieve the full deal record by did.",
+        "arguments": {
+            "did": {"type": "string", "description": "Deal identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full deal including notes."
+        }
+    },
+    {
+        "tool_name": "create_deal",
+        "description": "Create a new deal linked to a contact.",
+        "arguments": {
+            "title": {"type": "string", "description": "Deal title."},
+            "contact_id": {"type": "string", "description": "Related contact cid."},
+            "stage": {"type": "string", "description": "Pipeline stage (default lead)."},
+            "amount": {"type": "number", "description": "Deal amount in currency units."},
+            "close_date": {"type": "string", "description": "Expected close date (ISO YYYY-MM-DD)."},
+            "notes": {"type": "string", "description": "Optional notes."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new deal summary."
+        }
+    },
+    {
+        "tool_name": "update_deal",
+        "description": "Update one or more fields on an existing deal.",
+        "arguments": {
+            "did": {"type": "string", "description": "Deal identifier."},
+            "title": {"type": "string", "description": "Optional new title."},
+            "contact_id": {"type": "string", "description": "Optional new contact cid."},
+            "stage": {"type": "string", "description": "Optional new stage."},
+            "amount": {"type": "number", "description": "Optional new amount."},
+            "close_date": {"type": "string", "description": "Optional new close_date."},
+            "notes": {"type": "string", "description": "Optional new notes."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated deal summary."
+        }
+    },
+    {
+        "tool_name": "delete_deal",
+        "description": "Delete a deal permanently.",
+        "arguments": {
+            "did": {"type": "string", "description": "Deal identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {did, deleted: true}."
+        }
+    },
+    {
+        "tool_name": "move_stage",
+        "description": "Move a deal to a new pipeline stage.",
+        "arguments": {
+            "did": {"type": "string", "description": "Deal identifier."},
+            "stage": {"type": "string", "description": "New stage: lead, qualified, proposal, negotiation, won, lost."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated deal summary."
+        }
+    },
+    {
+        "tool_name": "search_contacts",
+        "description": "Search contacts by keyword across name, email, company, title, notes, and tags.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search keyword or phrase."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of matching contact summaries."
+        }
+    },
+    {
+        "tool_name": "list_won",
+        "description": "List all won deals sorted by close_date descending.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of won deal summaries."
+        }
+    },
+    {
+        "tool_name": "list_lost",
+        "description": "List all lost deals sorted by close_date descending.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of lost deal summaries."
+        }
+    },
+    {
+        "tool_name": "get_pipeline_summary",
+        "description": "Aggregate deal counts and amount totals by pipeline stage, plus overall open pipeline value.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {by_stage, pipeline_value, total_deals}."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Aggregate stats: contact count, deal count, breakdown by stage, won and lost totals.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a stats object."
+        }
+    }
+]

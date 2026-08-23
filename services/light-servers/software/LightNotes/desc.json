@@ -1,0 +1,207 @@
+[
+    {
+        "tool_name": "list_notebooks",
+        "description": "List all notebooks (e.g. Personal, Work, Ideas).",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of {nbid, name, color, description} notebooks."
+        }
+    },
+    {
+        "tool_name": "create_notebook",
+        "description": "Create a new notebook.",
+        "arguments": {
+            "name": {"type": "string", "description": "Human-readable name for the notebook."},
+            "color": {"type": "string", "description": "Optional hex color like #4285F4."},
+            "description": {"type": "string", "description": "Optional description."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new notebook."
+        }
+    },
+    {
+        "tool_name": "delete_notebook",
+        "description": "Delete a notebook. All notes inside are also removed.",
+        "arguments": {
+            "nbid": {"type": "string", "description": "Notebook identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output contains nbid and removed_notes count."
+        }
+    },
+    {
+        "tool_name": "list_notes",
+        "description": "List notes, optionally filtered by notebook, tag, or archived flag. Pinned notes are sorted first.",
+        "arguments": {
+            "notebook_id": {"type": "string", "description": "Optional notebook to filter by."},
+            "tag": {"type": "string", "description": "Optional tag to filter by."},
+            "archived": {"type": "boolean", "description": "Optional archived flag filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of note summaries."
+        }
+    },
+    {
+        "tool_name": "get_note",
+        "description": "Retrieve the full note object by nid.",
+        "arguments": {
+            "nid": {"type": "string", "description": "Note identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full note including content."
+        }
+    },
+    {
+        "tool_name": "create_note",
+        "description": "Create a new note in a notebook.",
+        "arguments": {
+            "title": {"type": "string", "description": "Note title."},
+            "content": {"type": "string", "description": "Optional body content."},
+            "notebook_id": {"type": "string", "description": "Which notebook to add to (default nb_personal)."},
+            "tags": {"type": "array", "items": {"type": "string"}, "description": "Optional list of tags."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new note summary."
+        }
+    },
+    {
+        "tool_name": "update_note",
+        "description": "Update one or more fields on an existing note. Only supplied fields are changed.",
+        "arguments": {
+            "nid": {"type": "string", "description": "Note identifier."},
+            "title": {"type": "string", "description": "Optional new title."},
+            "content": {"type": "string", "description": "Optional new content."},
+            "notebook_id": {"type": "string", "description": "Optional new notebook."},
+            "tags": {"type": "array", "items": {"type": "string"}, "description": "Optional replacement tags list."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated note summary."
+        }
+    },
+    {
+        "tool_name": "delete_note",
+        "description": "Delete a note permanently.",
+        "arguments": {
+            "nid": {"type": "string", "description": "Note identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {nid, deleted: true}."
+        }
+    },
+    {
+        "tool_name": "pin_note",
+        "description": "Pin a note so it appears at the top of listings.",
+        "arguments": {
+            "nid": {"type": "string", "description": "Note identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated note summary."
+        }
+    },
+    {
+        "tool_name": "unpin_note",
+        "description": "Unpin a previously pinned note.",
+        "arguments": {
+            "nid": {"type": "string", "description": "Note identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated note summary."
+        }
+    },
+    {
+        "tool_name": "archive_note",
+        "description": "Archive a note (hide it from default listings).",
+        "arguments": {
+            "nid": {"type": "string", "description": "Note identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated note summary."
+        }
+    },
+    {
+        "tool_name": "unarchive_note",
+        "description": "Restore a note from the archive.",
+        "arguments": {
+            "nid": {"type": "string", "description": "Note identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated note summary."
+        }
+    },
+    {
+        "tool_name": "add_tag",
+        "description": "Add a tag to a note.",
+        "arguments": {
+            "nid": {"type": "string", "description": "Note identifier."},
+            "tag": {"type": "string", "description": "Tag to add."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated note summary."
+        }
+    },
+    {
+        "tool_name": "remove_tag",
+        "description": "Remove a tag from a note.",
+        "arguments": {
+            "nid": {"type": "string", "description": "Note identifier."},
+            "tag": {"type": "string", "description": "Tag to remove."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated note summary."
+        }
+    },
+    {
+        "tool_name": "search_notes",
+        "description": "Search notes by keyword across title, content, and tags.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search keyword or phrase."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of matching note summaries sorted by recency."
+        }
+    },
+    {
+        "tool_name": "list_recent",
+        "description": "List the most recently updated notes.",
+        "arguments": {
+            "limit": {"type": "integer", "description": "Maximum number of notes to return."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of note summaries."
+        }
+    },
+    {
+        "tool_name": "list_pinned",
+        "description": "List all currently pinned notes.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of pinned note summaries."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Get aggregate stats over all notes (total, pinned, archived, breakdown by notebook).",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a stats object."
+        }
+    }
+]

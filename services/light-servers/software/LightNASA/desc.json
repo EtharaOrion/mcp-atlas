@@ -1,0 +1,105 @@
+[
+    {
+        "tool_name": "get_apod",
+        "description": "Get the Astronomy Picture of the Day: latest, a single date, or a date range.",
+        "arguments": {
+            "date": {
+                "type": "string",
+                "description": "Optional single date (YYYY-MM-DD) to fetch the APOD entry for."
+            },
+            "start_date": {
+                "type": "string",
+                "description": "Optional range start date (YYYY-MM-DD)."
+            },
+            "end_date": {
+                "type": "string",
+                "description": "Optional range end date (YYYY-MM-DD)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a single APOD entry or a list of entries for a range; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_rover_photos",
+        "description": "Get Mars rover photos, optionally filtered by sol, camera, or earth date.",
+        "arguments": {
+            "rover": {
+                "type": "string",
+                "description": "The rover name (e.g. curiosity, opportunity, spirit)."
+            },
+            "sol": {
+                "type": "integer",
+                "description": "Optional Martian sol (day) to filter photos by."
+            },
+            "camera": {
+                "type": "string",
+                "description": "Optional camera abbreviation to filter photos by (e.g. FHAZ, MAST)."
+            },
+            "earth_date": {
+                "type": "string",
+                "description": "Optional Earth date (YYYY-MM-DD) to filter photos by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has a photos list; on failure (rover not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_rover_manifest",
+        "description": "Get the photo manifest (per-sol summary) for a Mars rover.",
+        "arguments": {
+            "rover": {
+                "type": "string",
+                "description": "The rover name (e.g. curiosity, opportunity, spirit)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has a photo_manifest object; on failure (rover not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_neo_feed",
+        "description": "Get the Near Earth Object feed grouped by close-approach date.",
+        "arguments": {
+            "start_date": {
+                "type": "string",
+                "description": "Optional feed start date (YYYY-MM-DD); defaults to the earliest available."
+            },
+            "end_date": {
+                "type": "string",
+                "description": "Optional feed end date (YYYY-MM-DD); defaults to the start date."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has element_count and near_earth_objects grouped by date."
+        }
+    },
+    {
+        "tool_name": "get_neo",
+        "description": "Get a single Near Earth Object by its id.",
+        "arguments": {
+            "neo_id": {
+                "type": "string",
+                "description": "The unique id of the near earth object."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the NEO object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_epic_natural",
+        "description": "Get the latest EPIC natural-color Earth imagery entries.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of EPIC image entries."
+        }
+    }
+]

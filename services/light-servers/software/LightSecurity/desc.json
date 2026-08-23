@@ -1,0 +1,214 @@
+[
+    {
+        "tool_name": "list_cameras",
+        "description": "List all security cameras in the home.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of camera objects."
+        }
+    },
+    {
+        "tool_name": "get_camera",
+        "description": "Retrieve a camera by caid.",
+        "arguments": {
+            "caid": {"type": "string", "description": "Camera identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full camera object."
+        }
+    },
+    {
+        "tool_name": "add_camera",
+        "description": "Register a new camera in the security system.",
+        "arguments": {
+            "name": {"type": "string", "description": "Camera name."},
+            "room": {"type": "string", "description": "Room or location the camera monitors."},
+            "resolution": {"type": "string", "description": "Optional resolution like 1080p or 720p."},
+            "night_vision": {"type": "boolean", "description": "Whether the camera supports night vision."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new camera."
+        }
+    },
+    {
+        "tool_name": "start_recording",
+        "description": "Start recording on the given camera and log a recording_started event.",
+        "arguments": {
+            "caid": {"type": "string", "description": "Camera identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated camera."
+        }
+    },
+    {
+        "tool_name": "stop_recording",
+        "description": "Stop recording on the given camera and log a recording_stopped event.",
+        "arguments": {
+            "caid": {"type": "string", "description": "Camera identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated camera."
+        }
+    },
+    {
+        "tool_name": "list_sensors",
+        "description": "List sensors, optionally filtered by kind and/or room.",
+        "arguments": {
+            "kind": {"type": "string", "description": "Optional sensor kind (door, window, motion, smoke, water)."},
+            "room": {"type": "string", "description": "Optional room name to filter by."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of sensor objects sorted by name."
+        }
+    },
+    {
+        "tool_name": "get_sensor",
+        "description": "Retrieve a sensor by seid.",
+        "arguments": {
+            "seid": {"type": "string", "description": "Sensor identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full sensor object."
+        }
+    },
+    {
+        "tool_name": "arm_sensor",
+        "description": "Arm (activate) a specific sensor.",
+        "arguments": {
+            "seid": {"type": "string", "description": "Sensor identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated sensor."
+        }
+    },
+    {
+        "tool_name": "disarm_sensor",
+        "description": "Disarm (deactivate) a specific sensor.",
+        "arguments": {
+            "seid": {"type": "string", "description": "Sensor identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated sensor."
+        }
+    },
+    {
+        "tool_name": "trigger_sensor",
+        "description": "Manually trigger a sensor. Creates a new unresolved alarm and logs a triggered event.",
+        "arguments": {
+            "seid": {"type": "string", "description": "Sensor identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {sensor, alarm}."
+        }
+    },
+    {
+        "tool_name": "list_alarms",
+        "description": "List alarms, optionally filtering by resolved status (true = resolved, false = unresolved).",
+        "arguments": {
+            "resolved": {"type": "boolean", "description": "Optional filter: true for resolved, false for unresolved."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of alarms sorted by triggered_at desc."
+        }
+    },
+    {
+        "tool_name": "resolve_alarm",
+        "description": "Mark an alarm as resolved with optional notes.",
+        "arguments": {
+            "alid": {"type": "string", "description": "Alarm identifier."},
+            "notes": {"type": "string", "description": "Optional resolution notes."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the resolved alarm."
+        }
+    },
+    {
+        "tool_name": "list_events",
+        "description": "List security events, optionally filtered by kind and/or source_kind.",
+        "arguments": {
+            "kind": {"type": "string", "description": "Optional event kind (e.g. armed, disarmed, triggered, resolved)."},
+            "source_kind": {"type": "string", "description": "Optional source kind (camera, sensor, alarm, user, system)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of events sorted by timestamp desc."
+        }
+    },
+    {
+        "tool_name": "record_event",
+        "description": "Manually record a security event.",
+        "arguments": {
+            "source_kind": {"type": "string", "description": "One of camera, sensor, alarm, user, system."},
+            "source_id": {"type": "string", "description": "Identifier of the source object."},
+            "kind": {"type": "string", "description": "Event kind label."},
+            "description": {"type": "string", "description": "Optional free-form description."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new event."
+        }
+    },
+    {
+        "tool_name": "list_access_logs",
+        "description": "List access logs, optionally filtered by user.",
+        "arguments": {
+            "user": {"type": "string", "description": "Optional user name to filter by."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of access logs sorted by timestamp desc."
+        }
+    },
+    {
+        "tool_name": "record_access",
+        "description": "Record an access log entry (lock/unlock etc.) and emit a matching event.",
+        "arguments": {
+            "user": {"type": "string", "description": "Who performed the action."},
+            "action": {"type": "string", "description": "Action performed, e.g. unlock, lock."},
+            "method": {"type": "string", "description": "One of keypad, phone, keycard, face."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new access log."
+        }
+    },
+    {
+        "tool_name": "arm_all_sensors",
+        "description": "Arm all sensors at once and log a system armed event.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {armed, total}."
+        }
+    },
+    {
+        "tool_name": "disarm_all_sensors",
+        "description": "Disarm all sensors at once and log a system disarmed event.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {disarmed, total}."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Aggregate counts of cameras, sensors, alarms, events, access logs and current active/recording/unresolved counters.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is an object of aggregate counters."
+        }
+    }
+]

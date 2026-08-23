@@ -1,0 +1,130 @@
+[
+    {
+        "tool_name": "get_company",
+        "description": "Get the company profile by its company id.",
+        "arguments": {
+            "company_id": {
+                "type": "string",
+                "description": "The unique id of the company."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the company object (id, name, ein, entity_type, company_status, primary_address, pay_schedule, currency); on failure (company not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_company_employees",
+        "description": "List all employees for a company, each enriched with its current compensation record.",
+        "arguments": {
+            "company_id": {
+                "type": "string",
+                "description": "The unique id of the company."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of employee objects each including a 'compensation' field; on failure (company not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_employee",
+        "description": "Get a single employee by id, enriched with its current compensation record.",
+        "arguments": {
+            "employee_id": {
+                "type": "string",
+                "description": "The unique id of the employee."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the employee object including a 'compensation' field; on failure (employee not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_company_payrolls",
+        "description": "List payrolls for a company, optionally filtered by processed state.",
+        "arguments": {
+            "company_id": {
+                "type": "string",
+                "description": "The unique id of the company."
+            },
+            "processed": {
+                "type": "boolean",
+                "description": "Optional processed flag; when set, only payrolls matching this processed state are returned."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of payroll objects; on failure (company not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_payroll",
+        "description": "Get a single payroll by its payroll id.",
+        "arguments": {
+            "payroll_id": {
+                "type": "string",
+                "description": "The unique id of the payroll."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the payroll object; on failure (payroll not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_payroll",
+        "description": "Create a new (unprocessed) payroll for a company over a pay period.",
+        "arguments": {
+            "company_id": {
+                "type": "string",
+                "description": "The unique id of the company the payroll belongs to."
+            },
+            "pay_period_start": {
+                "type": "string",
+                "description": "The pay period start date in 'YYYY-MM-DD' format (required)."
+            },
+            "pay_period_end": {
+                "type": "string",
+                "description": "The pay period end date in 'YYYY-MM-DD' format (required)."
+            },
+            "check_date": {
+                "type": "string",
+                "description": "Optional check date in 'YYYY-MM-DD' format."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created payroll object; on failure (company not found, or missing pay period dates), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "submit_payroll",
+        "description": "Submit (process) a payroll, computing gross and net pay from active employee compensation.",
+        "arguments": {
+            "payroll_id": {
+                "type": "string",
+                "description": "The unique id of the payroll to submit."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the processed payroll object with computed gross_pay and net_pay; on failure (payroll not found or already processed), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_company_contractors",
+        "description": "List all contractors for a company.",
+        "arguments": {
+            "company_id": {
+                "type": "string",
+                "description": "The unique id of the company."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of contractor objects; on failure (company not found), output contains an error message."
+        }
+    }
+]

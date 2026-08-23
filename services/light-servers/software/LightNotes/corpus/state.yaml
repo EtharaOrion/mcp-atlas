@@ -1,0 +1,120 @@
+# Source: world_data 2/LightNotes.json (verbatim). Corpus-only authored world.
+notebooks:
+  nb_personal:
+    nbid: nb_personal
+    name: Personal
+    color: '#4285F4'
+    description: Personal notes
+  nb_work:
+    nbid: nb_work
+    name: Work
+    color: '#DB4437'
+    description: Work notes
+  nb_ideas:
+    nbid: nb_ideas
+    name: Ideas
+    color: '#0F9D58'
+    description: Ideas and drafts
+notes:
+  c5wWimDA3a6KKYUZKyzFLU:
+    nid: c5wWimDA3a6KKYUZKyzFLU
+    title: Weekend errands
+    content: Pick up groceries, drop off the dry cleaning, and swing by the hardware store for sandpaper.
+    notebook_id: nb_personal
+    tags: []
+    is_pinned: false
+    is_archived: false
+    created_at: 2026-01-02T13:11
+    updated_at: 2026-01-02T13:11
+  mGkm3SvgkrSFbBZwE4wiBF:
+    nid: mGkm3SvgkrSFbBZwE4wiBF
+    title: Gift ideas for the family
+    content: Start a running list of gift ideas ahead of birthdays this year. Check sizes before ordering.
+    notebook_id: nb_personal
+    tags:
+    - reference
+    - important
+    is_pinned: false
+    is_archived: false
+    created_at: 2026-01-02T15:15
+    updated_at: 2026-01-02T15:15
+  uZ7pWKNYzwHkZY6M5pzcUP:
+    nid: uZ7pWKNYzwHkZY6M5pzcUP
+    title: Home maintenance log
+    content: Changed the air filter this month. Gutters need cleaning before the next heavy rain.
+    notebook_id: nb_personal
+    tags: []
+    is_pinned: false
+    is_archived: false
+    created_at: 2026-01-02T22:02
+    updated_at: 2026-01-02T22:02
+  fqP9bEMevWGcKiqdWzuc5P:
+    nid: fqP9bEMevWGcKiqdWzuc5P
+    title: Meeting prep checklist
+    content: Print the agenda, confirm the room, and bring last quarter's summary for reference.
+    notebook_id: nb_work
+    tags:
+    - todo
+    is_pinned: false
+    is_archived: false
+    created_at: 2026-01-03T06:55
+    updated_at: 2026-01-03T06:55
+  RqGmFZAJkPWsQYa7mu7oNL:
+    nid: RqGmFZAJkPWsQYa7mu7oNL
+    title: Budget follow-ups
+    content: Waiting on two line-item confirmations before the draft goes to the finance committee.
+    notebook_id: nb_work
+    tags:
+    - reference
+    - todo
+    is_pinned: false
+    is_archived: false
+    created_at: 2026-01-03T16:39
+    updated_at: 2026-01-03T16:39
+  pUqAJC9kqq7N8uQjLrYwwG:
+    nid: pUqAJC9kqq7N8uQjLrYwwG
+    title: Event planning outline
+    content: Venue is confirmed. Still need volunteer assignments and the printed program.
+    notebook_id: nb_work
+    tags:
+    - todo
+    - important
+    is_pinned: false
+    is_archived: false
+    created_at: 2026-01-03T22:37
+    updated_at: 2026-01-03T22:37
+  YJLZMBLWBvBuocp39B4Psq:
+    nid: YJLZMBLWBvBuocp39B4Psq
+    title: Project brainstorm
+    content: Rough list of improvements to propose next quarter. Rank by cost before sharing.
+    notebook_id: nb_ideas
+    tags:
+    - draft
+    - important
+    is_pinned: false
+    is_archived: false
+    created_at: 2026-01-04T03:54
+    updated_at: 2026-01-04T03:54
+  U2TvH38xHbwd5aufVpWFdo:
+    nid: U2TvH38xHbwd5aufVpWFdo
+    title: Reading list
+    content: Titles recommended by friends this month. Start with the shortest one.
+    notebook_id: nb_ideas
+    tags:
+    - important
+    - todo
+    is_pinned: false
+    is_archived: false
+    created_at: 2026-01-04T13:26
+    updated_at: 2026-01-04T13:26
+  MR6NsGdSii2QGYbpBwBFnm:
+    nid: MR6NsGdSii2QGYbpBwBFnm
+    title: Trip planning
+    content: Sketch of a long-weekend route. Check dates against the calendar before booking.
+    notebook_id: nb_ideas
+    tags:
+    - todo
+    is_pinned: false
+    is_archived: false
+    created_at: 2026-01-04T23:25
+    updated_at: 2026-01-04T23:25

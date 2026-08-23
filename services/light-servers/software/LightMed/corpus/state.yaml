@@ -1,0 +1,117 @@
+# Source: world_data 2/LightMed.json (verbatim). Corpus-only authored world.
+prescriptions:
+  CiuHGN9ocvz5ATZbKCmNmF:
+    rxid: CiuHGN9ocvz5ATZbKCmNmF
+    medication_name: Lisinopril
+    dosage: 10 mg
+    frequency: Once daily
+    quantity: 30
+    refills_remaining: 3
+    prescribed_by: Dr. Reginald Fox
+    prescribed_on: '2026-01-02'
+    expires_on: '2027-01-02'
+    status: active
+    dea_schedule: non_controlled
+  ePHtPKc6u9E3h8q4AUwVWC:
+    rxid: ePHtPKc6u9E3h8q4AUwVWC
+    medication_name: Metformin
+    dosage: 500 mg
+    frequency: Twice daily
+    quantity: 60
+    refills_remaining: 5
+    prescribed_by: Dr. Reginald Fox
+    prescribed_on: '2026-01-03'
+    expires_on: '2027-01-03'
+    status: active
+    dea_schedule: non_controlled
+  qqJGXq4YZ85paom4xBsq2F:
+    rxid: qqJGXq4YZ85paom4xBsq2F
+    medication_name: Atorvastatin
+    dosage: 20 mg
+    frequency: Once daily at night
+    quantity: 30
+    refills_remaining: 2
+    prescribed_by: Dr. Reginald Fox
+    prescribed_on: '2026-01-03'
+    expires_on: '2027-01-03'
+    status: active
+    dea_schedule: non_controlled
+  AaepTysgeMg63S47zWsLxg:
+    rxid: AaepTysgeMg63S47zWsLxg
+    medication_name: Aspirin
+    dosage: 81 mg
+    frequency: Once daily
+    quantity: 90
+    refills_remaining: 4
+    prescribed_by: Dr. Reginald Fox
+    prescribed_on: '2026-01-03'
+    expires_on: '2027-01-03'
+    status: active
+    dea_schedule: non_controlled
+  U7jixVTzaJQ9sztNnYvLuX:
+    rxid: U7jixVTzaJQ9sztNnYvLuX
+    medication_name: Amlodipine
+    dosage: 5 mg
+    frequency: Once daily
+    quantity: 30
+    refills_remaining: 1
+    prescribed_by: Dr. Reginald Fox
+    prescribed_on: '2026-01-04'
+    expires_on: '2027-01-04'
+    status: active
+    dea_schedule: non_controlled
+refills:
+  XzMHcnXELcYdAQkG5evEYo:
+    refid: XzMHcnXELcYdAQkG5evEYo
+    prescription_id: CiuHGN9ocvz5ATZbKCmNmF
+    pharmacy_id: ph_downtown
+    requested_at: 2026-01-04T09:51
+    filled_at: 2026-01-04T13:25
+    status: filled
+  gRPTcopbShp4QZvF5BXQgC:
+    refid: gRPTcopbShp4QZvF5BXQgC
+    prescription_id: ePHtPKc6u9E3h8q4AUwVWC
+    pharmacy_id: ph_riverside
+    requested_at: 2026-01-04T22:48
+    filled_at: ''
+    status: pending
+  7eD6K6omLf32iQtQN668JY:
+    refid: 7eD6K6omLf32iQtQN668JY
+    prescription_id: qqJGXq4YZ85paom4xBsq2F
+    pharmacy_id: ph_downtown
+    requested_at: 2026-01-05T06:39
+    filled_at: 2026-01-05T08:39
+    status: filled
+pharmacies:
+  ph_downtown:
+    phid: ph_downtown
+    name: Downtown Pharmacy
+    address: 12 Main St
+    phone: +1-555-0100
+  ph_riverside:
+    phid: ph_riverside
+    name: Riverside Drugs
+    address: 88 River Rd
+    phone: +1-555-0199
+audit_logs:
+  JyBy5o9T4GMzZc54rJer67:
+    alid: JyBy5o9T4GMzZc54rJer67
+    action: refill_requested
+    prescription_id: CiuHGN9ocvz5ATZbKCmNmF
+    actor: Amos Jeremiah Whitfield
+    timestamp: 2026-01-04T09:51
+    details: ''
+  fvRLjg9xrpB4DzoiRKbjff:
+    alid: fvRLjg9xrpB4DzoiRKbjff
+    action: refill_requested
+    prescription_id: ePHtPKc6u9E3h8q4AUwVWC
+    actor: Amos Jeremiah Whitfield
+    timestamp: 2026-01-04T22:48
+    details: ''
+  cnMr9fpENsmCeKGaFF2cM7:
+    alid: cnMr9fpENsmCeKGaFF2cM7
+    action: refill_requested
+    prescription_id: qqJGXq4YZ85paom4xBsq2F
+    actor: Amos Jeremiah Whitfield
+    timestamp: 2026-01-05T06:39
+    details: ''

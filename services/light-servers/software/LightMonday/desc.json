@@ -1,0 +1,164 @@
+[
+    {
+        "tool_name": "list_workspaces",
+        "description": "List all workspaces.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has a workspaces list (id, name, kind, description)."
+        }
+    },
+    {
+        "tool_name": "list_boards",
+        "description": "List boards, optionally filtered by workspace.",
+        "arguments": {
+            "workspace_id": {
+                "type": "string",
+                "description": "Optional workspace id to filter boards by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has a boards list (id, name, description, state, board_kind, workspace_id)."
+        }
+    },
+    {
+        "tool_name": "get_board",
+        "description": "Get a single board with its groups and columns.",
+        "arguments": {
+            "board_id": {
+                "type": "string",
+                "description": "The unique id of the board."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the board object with groups and columns; on failure (board not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_board_items",
+        "description": "List the items belonging to a board.",
+        "arguments": {
+            "board_id": {
+                "type": "string",
+                "description": "The unique id of the board."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has an items list; on failure (board not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_items",
+        "description": "List items, optionally filtered by board and/or group.",
+        "arguments": {
+            "board_id": {
+                "type": "string",
+                "description": "Optional board id to filter items by."
+            },
+            "group_id": {
+                "type": "string",
+                "description": "Optional group id to filter items by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has an items list."
+        }
+    },
+    {
+        "tool_name": "get_item",
+        "description": "Get a single item by its id, including its column values.",
+        "arguments": {
+            "item_id": {
+                "type": "string",
+                "description": "The unique id of the item."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the item view; on failure (item not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_item",
+        "description": "Create a new item on a board, optionally in a group and with initial column values.",
+        "arguments": {
+            "board_id": {
+                "type": "string",
+                "description": "The board id the item belongs to."
+            },
+            "item_name": {
+                "type": "string",
+                "description": "The name of the new item."
+            },
+            "group_id": {
+                "type": "string",
+                "description": "Optional group id; defaults to the board's first group."
+            },
+            "column_values": {
+                "type": "object",
+                "description": "Optional mapping of column_id to a value or {text, value} object."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created item view; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_item",
+        "description": "Update an item's group and/or a single column value.",
+        "arguments": {
+            "item_id": {
+                "type": "string",
+                "description": "The unique id of the item to update."
+            },
+            "column_id": {
+                "type": "string",
+                "description": "Optional column id to set."
+            },
+            "text": {
+                "type": "string",
+                "description": "Optional display text for the column value."
+            },
+            "value": {
+                "type": "string",
+                "description": "Optional raw value for the column value."
+            },
+            "group_id": {
+                "type": "string",
+                "description": "Optional new group id for the item."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated item view; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_item",
+        "description": "Delete an item and its column values by id.",
+        "arguments": {
+            "item_id": {
+                "type": "string",
+                "description": "The unique id of the item to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has id and deleted; on failure (item not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_users",
+        "description": "List all users.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has a users list (id, name, email, title, is_admin)."
+        }
+    }
+]

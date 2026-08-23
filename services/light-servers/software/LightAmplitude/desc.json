@@ -1,0 +1,52 @@
+[
+    {
+        "tool_name": "ingest",
+        "description": "Upload a batch of events via the Amplitude HTTP V2 event-upload API.",
+        "arguments": {
+            "events": {
+                "type": "array",
+                "description": "List of event objects to ingest. Each may include insert_id, user_id, device_id, event_type, time, and event_properties."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has code, events_ingested (count), and server_upload_time."
+        }
+    },
+    {
+        "tool_name": "segmentation",
+        "description": "Return event segmentation chart data (series counts by event type over dates).",
+        "arguments": {
+            "event": {
+                "type": "string",
+                "description": "Optional event_type to filter the segmentation series by."
+            },
+            "start": {
+                "type": "string",
+                "description": "Optional inclusive start date (YYYY-MM-DD) filter."
+            },
+            "end": {
+                "type": "string",
+                "description": "Optional inclusive end date (YYYY-MM-DD) filter."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has series, seriesLabels, and xValues."
+        }
+    },
+    {
+        "tool_name": "user_activity",
+        "description": "Return a user's profile data and their chronological event stream.",
+        "arguments": {
+            "user": {
+                "type": "string",
+                "description": "The user_id whose activity to retrieve."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has userData and events; on failure (user not found), output contains an error message."
+        }
+    }
+]

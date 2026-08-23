@@ -1,0 +1,215 @@
+[
+    {
+        "tool_name": "get_me",
+        "description": "Get the profile of the authenticated user (the first seed user).",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the authenticated user object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_user",
+        "description": "Get a single user by their user id.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the user object; on failure (user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_user_by_username",
+        "description": "Get a single user by their username (case-insensitive).",
+        "arguments": {
+            "username": {
+                "type": "string",
+                "description": "The username (handle) of the user."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the user object; on failure (user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_user_tweets",
+        "description": "List a user's tweets, most recent first.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user whose tweets to list."
+            },
+            "max_results": {
+                "type": "integer",
+                "description": "Maximum number of tweets to return (default 10)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a data list of tweets and a meta result_count; on failure (user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_followers",
+        "description": "List the users that follow a given user.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user whose followers to list."
+            },
+            "max_results": {
+                "type": "integer",
+                "description": "Maximum number of followers to return (default 100)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a data list of users and a meta result_count; on failure (user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_following",
+        "description": "List the users that a given user is following.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user whose followings to list."
+            },
+            "max_results": {
+                "type": "integer",
+                "description": "Maximum number of followed users to return (default 100)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a data list of users and a meta result_count; on failure (user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_tweets",
+        "description": "List tweets, either a specific set by ids or the most recent tweets.",
+        "arguments": {
+            "ids": {
+                "type": "array",
+                "description": "Optional list of tweet ids to fetch; when omitted, the most recent tweets are returned."
+            },
+            "max_results": {
+                "type": "integer",
+                "description": "Maximum number of tweets to return when no ids are given (default 10)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a data list of tweets and a meta result_count; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_tweet",
+        "description": "Get a single tweet by its id.",
+        "arguments": {
+            "tweet_id": {
+                "type": "string",
+                "description": "The unique id of the tweet."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the tweet object; on failure (tweet not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_tweet",
+        "description": "Create a new tweet, optionally as a reply to another tweet.",
+        "arguments": {
+            "text": {
+                "type": "string",
+                "description": "The text content of the tweet."
+            },
+            "author_id": {
+                "type": "string",
+                "description": "Optional id of the authoring user; defaults to the authenticated user."
+            },
+            "reply_to_tweet_id": {
+                "type": "string",
+                "description": "Optional id of the tweet being replied to."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created tweet object; on failure (user or reply-target not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_tweet",
+        "description": "Delete a tweet by its id.",
+        "arguments": {
+            "tweet_id": {
+                "type": "string",
+                "description": "The unique id of the tweet to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {deleted: true}; on failure (tweet not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "search_recent",
+        "description": "Search recent tweets whose text contains the query string (case-insensitive), most recent first.",
+        "arguments": {
+            "query": {
+                "type": "string",
+                "description": "The search query string matched against tweet text."
+            },
+            "max_results": {
+                "type": "integer",
+                "description": "Maximum number of matching tweets to return (default 10)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a data list of tweets and a meta result_count and query; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "like_tweet",
+        "description": "Like a tweet on behalf of a user (idempotent).",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The id of the user liking the tweet."
+            },
+            "tweet_id": {
+                "type": "string",
+                "description": "The id of the tweet being liked."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {liked: true}; on failure (user or tweet not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "retweet",
+        "description": "Retweet a tweet on behalf of a user (idempotent).",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The id of the user retweeting."
+            },
+            "tweet_id": {
+                "type": "string",
+                "description": "The id of the tweet being retweeted."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {retweeted: true}; on failure (user or tweet not found), output contains an error message."
+        }
+    }
+]

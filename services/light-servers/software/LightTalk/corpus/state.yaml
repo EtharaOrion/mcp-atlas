@@ -1,0 +1,1325 @@
+# Source: world_data 2/LightTalk.json (verbatim). Corpus-only authored world.
+contacts:
+  user_bU6qzNJdSZV93PTE6x5oTU:
+    uid: user_bU6qzNJdSZV93PTE6x5oTU
+    name: Amos Jeremiah Whitfield
+    gender: male
+    tag: me
+    blocked: false
+    remark: ''
+    chat_history: []
+    moments:
+    - moid: mo_nvCSHNgtcnQybSpgQpGmVX
+      owner_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      content: Great crowd downtown tonight. Savannah showed up.
+      timestamp: '2026-06-25 15:48:07'
+      ip: Savannah, GA
+      img_urls: []
+      who_likes:
+      - user_Eb5wtQfEw9ZLG43FCNDxLW
+      - user_772sP9z2rhkpciQKQEUsaS
+      - user_R6yQDEVRjW4jG7WCcEaJef
+      comments: []
+    - moid: mo_9GsvxYBkVrDx59GZnViJbw
+      owner_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      content: Proud of the young folks at church today. Coming right along.
+      timestamp: '2026-06-25 18:28:07'
+      ip: Savannah, GA
+      img_urls: []
+      who_likes:
+      - user_xXWyMeo8ePt9xqhYmfCAQw
+      - user_jvrBBUAChcbuhQs82YmYdr
+      comments: []
+    - moid: mo_rYdKdxhTsmcFZg73F8xF2W
+      owner_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      content: Up before sunrise getting ready. Today is going to be a good one.
+      timestamp: '2026-06-25 21:46:52'
+      ip: Savannah, GA
+      img_urls: []
+      who_likes:
+      - user_GmmEmSiSpZLWj6puESaEBm
+      - user_LMRhXFJr7SBJ4Pe3dhn376
+      - user_R6yQDEVRjW4jG7WCcEaJef
+      - user_eJBYDizEBce5ZX5JLFPLir
+      - user_Jc3Xoakbg3q2MpKMw39bXb
+      comments: []
+    read_new_message: true
+  user_oDzFzPm3bMNNMiV3E88jXx:
+    uid: user_oDzFzPm3bMNNMiV3E88jXx
+    name: Denise Whitfield-Carter
+    gender: female
+    tag: family
+    blocked: false
+    remark: ''
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_oDzFzPm3bMNNMiV3E88jXx
+      timestamp: '2026-06-01 09:26:00'
+      content: Quick one before I forget. About the spring event lineup.
+      mid: msg_5sv3fU6jjvYr36nAvz2qth
+    - send_uid: user_oDzFzPm3bMNNMiV3E88jXx
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-01 11:16:24'
+      content: Sounds good, keep me posted.
+      mid: msg_eAa2RPDnhn8kzJPuEkRyJg
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_oDzFzPm3bMNNMiV3E88jXx
+      timestamp: '2026-06-01 11:59:35'
+      content: Just left the office, wanted to loop you in. About picking up groceries on the way home.
+      mid: msg_YVWdAD3LLq9BoA4U5iWgd4
+    - send_uid: user_oDzFzPm3bMNNMiV3E88jXx
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-01 13:28:17'
+      content: Let me check the calendar and get back to you.
+      mid: msg_Rips9QMU5iWFH2ZXU6CcBJ
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_oDzFzPm3bMNNMiV3E88jXx
+      timestamp: '2026-06-01 15:59:36'
+      content: Just left the office, wanted to loop you in. About the big game this weekend.
+      mid: msg_rZiRKf2hCzBBcqM3oDoYNC
+    - send_uid: user_oDzFzPm3bMNNMiV3E88jXx
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-01 16:54:33'
+      content: Sounds good, keep me posted.
+      mid: msg_DD5RxAUgVYJNxQ7RivXyWS
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_oDzFzPm3bMNNMiV3E88jXx
+      timestamp: '2026-06-01 18:12:08'
+      content: Quick one before I forget. About the next weekend cook-out.
+      mid: msg_UyVktBBiPCj6NPNPdHEWPx
+    - send_uid: user_oDzFzPm3bMNNMiV3E88jXx
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-01 20:43:09'
+      content: Got it. I'll handle my end today.
+      mid: msg_R5T7JtpGqxisbqSz3hQC5W
+    moments: []
+    read_new_message: true
+  user_Z9d4FYTEngV6my3JPT3GBj:
+    uid: user_Z9d4FYTEngV6my3JPT3GBj
+    name: Terrence Carter
+    gender: male
+    tag: family
+    blocked: false
+    remark: ''
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Z9d4FYTEngV6my3JPT3GBj
+      timestamp: '2026-06-01 21:14:25'
+      content: Hey, you got a minute? About the big game this weekend.
+      mid: msg_MXPgmwc7wRuetpvgacBzXq
+    - send_uid: user_Z9d4FYTEngV6my3JPT3GBj
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-02 08:34:24'
+      content: Sounds good, keep me posted.
+      mid: msg_rDg4eJPhEugVTUifMTv4gt
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Z9d4FYTEngV6my3JPT3GBj
+      timestamp: '2026-06-02 12:34:58'
+      content: Hey, you got a minute? About that new record I picked up for the collection.
+      mid: msg_NqqcJqY5nQ9BRkmb2FWn6d
+    moments: []
+    read_new_message: true
+  user_2a99TiDfBLipK56g6g2Tob:
+    uid: user_2a99TiDfBLipK56g6g2Tob
+    name: Miles Carter
+    gender: male
+    tag: family
+    blocked: false
+    remark: ''
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_2a99TiDfBLipK56g6g2Tob
+      timestamp: '2026-06-02 15:14:21'
+      content: Just left the office, wanted to loop you in. About the next weekend cook-out.
+      mid: msg_WRFm6ELnV8Abuve3MxGnzZ
+    - send_uid: user_2a99TiDfBLipK56g6g2Tob
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-02 18:41:13'
+      content: Appreciate you. Talk soon.
+      mid: msg_BPhB9zTrkVpVUpuKnHbcRt
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_2a99TiDfBLipK56g6g2Tob
+      timestamp: '2026-06-02 19:04:29'
+      content: Morning! Checking in on something. About the contractor's schedule for the renovation.
+      mid: msg_PDTPMxQeJAqeSM9tsyCZiQ
+    - send_uid: user_2a99TiDfBLipK56g6g2Tob
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-02 21:32:21'
+      content: Let me check the calendar and get back to you.
+      mid: msg_CtoeTpLL5kisBkdFXsxn2b
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_2a99TiDfBLipK56g6g2Tob
+      timestamp: '2026-06-03 09:29:00'
+      content: Hey, you got a minute? About picking up groceries on the way home.
+      mid: msg_AiHFnCrWDDydUzMJirMnb3
+    - send_uid: user_2a99TiDfBLipK56g6g2Tob
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-03 09:48:37'
+      content: Works for me. Thanks for the heads up.
+      mid: msg_5jTcuJWzKt9ny6bxTE2bJY
+    moments: []
+    read_new_message: true
+  user_vaxLzQFSwnWi6A3Q9j7QKm:
+    uid: user_vaxLzQFSwnWi6A3Q9j7QKm
+    name: Pastor James Holloway
+    gender: male
+    tag: friends
+    blocked: false
+    remark: ''
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_vaxLzQFSwnWi6A3Q9j7QKm
+      timestamp: '2026-06-03 10:38:16'
+      content: Just left the office, wanted to loop you in. About picking up groceries on the way home.
+      mid: msg_ERS7RZK3bYbT6afVdnEkgM
+    - send_uid: user_vaxLzQFSwnWi6A3Q9j7QKm
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-03 14:21:30'
+      content: Works for me. Thanks for the heads up.
+      mid: msg_wTWmTvn752Lcy3QTv7Ecfs
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_vaxLzQFSwnWi6A3Q9j7QKm
+      timestamp: '2026-06-03 16:24:33'
+      content: Quick one before I forget. About that new record I picked up for the collection.
+      mid: msg_vZ7rdcZZUXinbW4bkxv6nG
+    - send_uid: user_vaxLzQFSwnWi6A3Q9j7QKm
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-03 20:22:33'
+      content: Appreciate you. Talk soon.
+      mid: msg_ZTsmRcdfXJCnxSicTMCgdd
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_vaxLzQFSwnWi6A3Q9j7QKm
+      timestamp: '2026-06-03 21:28:10'
+      content: Just left the office, wanted to loop you in. About the kitchen cabinet install.
+      mid: msg_W6rQvQNUrJprdUZy6z7Xwt
+    - send_uid: user_vaxLzQFSwnWi6A3Q9j7QKm
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-04 08:10:19'
+      content: Sounds good, keep me posted.
+      mid: msg_PXrDXe7SE9AkjJVXW8YZnC
+    moments: []
+    read_new_message: true
+  user_MTkQfGUrzbTK4AEiU2qsda:
+    uid: user_MTkQfGUrzbTK4AEiU2qsda
+    name: Ruth Ann Greer
+    gender: female
+    tag: friends
+    blocked: false
+    remark: ''
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_MTkQfGUrzbTK4AEiU2qsda
+      timestamp: '2026-06-04 08:28:18'
+      content: Morning! Checking in on something. About choir rehearsal times.
+      mid: msg_QhTcmRt2TH2g7574C5eLsv
+    - send_uid: user_MTkQfGUrzbTK4AEiU2qsda
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-04 11:48:42'
+      content: Appreciate you. Talk soon.
+      mid: msg_2K93TPC5KTf6uWFamCjz26
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_MTkQfGUrzbTK4AEiU2qsda
+      timestamp: '2026-06-04 14:00:38'
+      content: Before tonight gets busy - About the kitchen cabinet install.
+      mid: msg_YdprK7rjZpwLvdkQiWiGn2
+    - send_uid: user_MTkQfGUrzbTK4AEiU2qsda
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-04 15:39:29'
+      content: Let me check the calendar and get back to you.
+      mid: msg_SyAAGFoDU9anXqpTTYd3yj
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_MTkQfGUrzbTK4AEiU2qsda
+      timestamp: '2026-06-04 16:55:28'
+      content: Quick one before I forget. About the big game this weekend.
+      mid: msg_7kPdPYJckjVYqieQ4ToKUn
+    moments: []
+    read_new_message: true
+  user_Jc3Xoakbg3q2MpKMw39bXb:
+    uid: user_Jc3Xoakbg3q2MpKMw39bXb
+    name: Calvin Burke
+    gender: male
+    tag: friends
+    blocked: false
+    remark: ''
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Jc3Xoakbg3q2MpKMw39bXb
+      timestamp: '2026-06-04 20:03:03'
+      content: Before tonight gets busy - About that new record I picked up for the collection.
+      mid: msg_VasVSrox6UohyZAGTBHj22
+    - send_uid: user_Jc3Xoakbg3q2MpKMw39bXb
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-05 08:08:50'
+      content: Got it. I'll handle my end today.
+      mid: msg_jyY9LnkcCq9tiLLEGaUbaq
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Jc3Xoakbg3q2MpKMw39bXb
+      timestamp: '2026-06-05 12:06:07'
+      content: Hey, you got a minute? About picking up groceries on the way home.
+      mid: msg_xZqh4UvhLyBkbdV5oE2Syx
+    - send_uid: user_Jc3Xoakbg3q2MpKMw39bXb
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-05 13:33:47'
+      content: Can we talk after 10? Late night at the venue.
+      mid: msg_pwknSRTAdpuwN32HyoLhSf
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Jc3Xoakbg3q2MpKMw39bXb
+      timestamp: '2026-06-05 17:09:20'
+      content: Hey, you got a minute? About the next weekend cook-out.
+      mid: msg_kTTCb4aJCwVpfHp6CVrgHZ
+    - send_uid: user_Jc3Xoakbg3q2MpKMw39bXb
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-05 18:24:23'
+      content: Let me check the calendar and get back to you.
+      mid: msg_BGVa8dDizCQhvivTmcYSLr
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Jc3Xoakbg3q2MpKMw39bXb
+      timestamp: '2026-06-05 21:04:55'
+      content: Before tonight gets busy - About the next weekend cook-out.
+      mid: msg_4STZDe3ZykTDLzQKYatqvn
+    moments: []
+    read_new_message: true
+  user_agXUaoRB83q4opMxWQWqaw:
+    uid: user_agXUaoRB83q4opMxWQWqaw
+    name: Patricia Odom
+    gender: female
+    tag: family
+    blocked: false
+    remark: ''
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_agXUaoRB83q4opMxWQWqaw
+      timestamp: '2026-06-06 08:17:51'
+      content: Morning! Checking in on something. About Sunday dinner at the house.
+      mid: msg_LdfJ9UjwKPVTYagnYhewSt
+    - send_uid: user_agXUaoRB83q4opMxWQWqaw
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-06 08:45:43'
+      content: Appreciate you. Talk soon.
+      mid: msg_hC5jHsJVzBJT7z5LRnWLNR
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_agXUaoRB83q4opMxWQWqaw
+      timestamp: '2026-06-06 09:05:51'
+      content: Hey, you got a minute? About the contractor's schedule for the renovation.
+      mid: msg_TwZXdd7Bwc4gDGZ5wfigpz
+    - send_uid: user_agXUaoRB83q4opMxWQWqaw
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-06 09:57:08'
+      content: Can we talk after 10? Late night at the venue.
+      mid: msg_RQ3qrDFGcmFKeSbwTkG8NW
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_agXUaoRB83q4opMxWQWqaw
+      timestamp: '2026-06-06 10:53:09'
+      content: Just left the office, wanted to loop you in. About the big game this weekend.
+      mid: msg_ouDC9YQWm4cayTbhfT5ekP
+    - send_uid: user_agXUaoRB83q4opMxWQWqaw
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-06 12:04:57'
+      content: Let me check the calendar and get back to you.
+      mid: msg_AjzXYqntQp6SuDGkMVovU2
+    moments: []
+    read_new_message: false
+  user_DgXX7G4MmF6ecWbRAQ4F5E:
+    uid: user_DgXX7G4MmF6ecWbRAQ4F5E
+    name: Henry Beaumont
+    gender: male
+    tag: friends
+    blocked: false
+    remark: ''
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_DgXX7G4MmF6ecWbRAQ4F5E
+      timestamp: '2026-06-06 12:39:49'
+      content: Just left the office, wanted to loop you in. About choir rehearsal times.
+      mid: msg_o6RrAkFirhG7FnFKL4yRNd
+    - send_uid: user_DgXX7G4MmF6ecWbRAQ4F5E
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-06 13:54:35'
+      content: Let me check the calendar and get back to you.
+      mid: msg_5j4tnosuBX7eNJxtqLgSsF
+    moments: []
+    read_new_message: false
+  user_aNfnSxBjxhZeRyfAQ7NheF:
+    uid: user_aNfnSxBjxhZeRyfAQ7NheF
+    name: Loretta Simms
+    gender: female
+    tag: friends
+    blocked: false
+    remark: ''
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_aNfnSxBjxhZeRyfAQ7NheF
+      timestamp: '2026-06-06 16:24:24'
+      content: Hey, you got a minute? About choir rehearsal times.
+      mid: msg_wjvpGhLAkmsQsyFuJoP3zB
+    - send_uid: user_aNfnSxBjxhZeRyfAQ7NheF
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-06 17:30:58'
+      content: Sounds good, keep me posted.
+      mid: msg_uUJY4hsXvEAkoh8HvFJegr
+    moments: []
+    read_new_message: false
+  user_Rb2npz4o3Tb5Uy2tefpjEa:
+    uid: user_Rb2npz4o3Tb5Uy2tefpjEa
+    name: Dr. Reginald Fox
+    gender: male
+    tag: acquaintances
+    blocked: false
+    remark: ''
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Rb2npz4o3Tb5Uy2tefpjEa
+      timestamp: '2026-06-06 18:15:12'
+      content: Hey, you got a minute? About the kitchen cabinet install.
+      mid: msg_ajwwETQuDLvGTHpM3wXuvr
+    - send_uid: user_Rb2npz4o3Tb5Uy2tefpjEa
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-06 21:05:13'
+      content: Works for me. Thanks for the heads up.
+      mid: msg_hiUT3Ap2NSZJXh6KtwvKrP
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Rb2npz4o3Tb5Uy2tefpjEa
+      timestamp: '2026-06-06 21:23:27'
+      content: Hey, you got a minute? About the spring event lineup.
+      mid: msg_7bLKeW8nA6mb9PAGTTF9bi
+    - send_uid: user_Rb2npz4o3Tb5Uy2tefpjEa
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-07 08:24:36'
+      content: Got it. I'll handle my end today.
+      mid: msg_GZonkqxHUoQFaxy3dUs2E9
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Rb2npz4o3Tb5Uy2tefpjEa
+      timestamp: '2026-06-07 09:13:11'
+      content: Hey, you got a minute? About the next weekend cook-out.
+      mid: msg_AbjU8M3Xdu2KLpNcpEsN5o
+    moments: []
+    read_new_message: true
+  user_aPdomvFEg7nyiPKjM8VupG:
+    uid: user_aPdomvFEg7nyiPKjM8VupG
+    name: Dr. Sarah Langston
+    gender: female
+    tag: acquaintances
+    blocked: false
+    remark: ''
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_aPdomvFEg7nyiPKjM8VupG
+      timestamp: '2026-06-07 12:40:09'
+      content: Before tonight gets busy - About the big game this weekend.
+      mid: msg_EBNsfP32wSCuG3e9wPt8tz
+    - send_uid: user_aPdomvFEg7nyiPKjM8VupG
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-07 13:30:38'
+      content: Let me check the calendar and get back to you.
+      mid: msg_FUFog4RQqiSBFa7HnwY3uS
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_aPdomvFEg7nyiPKjM8VupG
+      timestamp: '2026-06-07 14:39:09'
+      content: Hey, you got a minute? About picking up groceries on the way home.
+      mid: msg_maywAPnL8Cci6py5yf8T5h
+    moments: []
+    read_new_message: true
+  user_CQLfKRVxVEzNaV3wKUNwNk:
+    uid: user_CQLfKRVxVEzNaV3wKUNwNk
+    name: Cordelia Ashmore-Vance
+    gender: female
+    tag: coworkers
+    blocked: false
+    remark: Chair
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_CQLfKRVxVEzNaV3wKUNwNk
+      timestamp: '2026-06-07 16:15:09'
+      content: Morning! Checking in on something. About the contractor's schedule for the renovation.
+      mid: msg_rWMPH3WBGU3ynAvh7JdHk5
+    - send_uid: user_CQLfKRVxVEzNaV3wKUNwNk
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-07 19:46:11'
+      content: Sounds good, keep me posted.
+      mid: msg_TLy9Gn8NKREebqi4tW8ix9
+    moments: []
+    read_new_message: true
+  user_Eb5wtQfEw9ZLG43FCNDxLW:
+    uid: user_Eb5wtQfEw9ZLG43FCNDxLW
+    name: Reginald Thackery
+    gender: male
+    tag: coworkers
+    blocked: false
+    remark: Treasurer
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Eb5wtQfEw9ZLG43FCNDxLW
+      timestamp: '2026-06-08 08:44:34'
+      content: Quick one before I forget. About choir rehearsal times.
+      mid: msg_rAC8nwBsF4ceqxS62Q57WM
+    - send_uid: user_Eb5wtQfEw9ZLG43FCNDxLW
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-08 10:47:11'
+      content: Sounds good, keep me posted.
+      mid: msg_caxTrWTtUkTMww8wD4m3Ai
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Eb5wtQfEw9ZLG43FCNDxLW
+      timestamp: '2026-06-08 12:36:35'
+      content: Hey, you got a minute? About picking up groceries on the way home.
+      mid: msg_pqdZSXvoGNwwwfYS9vEahG
+    - send_uid: user_Eb5wtQfEw9ZLG43FCNDxLW
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-08 13:59:46'
+      content: Appreciate you. Talk soon.
+      mid: msg_EgWfPKUB8xxmtQBDgKCJan
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Eb5wtQfEw9ZLG43FCNDxLW
+      timestamp: '2026-06-08 16:05:01'
+      content: Quick one before I forget. About the kitchen cabinet install.
+      mid: msg_FzRV459vtNiF9nW2mAnqed
+    - send_uid: user_Eb5wtQfEw9ZLG43FCNDxLW
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-08 16:46:27'
+      content: Sounds good, keep me posted.
+      mid: msg_hpmQ6cJdoqqYunBAmxCceS
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Eb5wtQfEw9ZLG43FCNDxLW
+      timestamp: '2026-06-08 17:51:22'
+      content: Just left the office, wanted to loop you in. About choir rehearsal times.
+      mid: msg_KijCb8PntQhpAj9TTpEcUW
+    moments: []
+    read_new_message: true
+  user_WoKpcwM8wtT7fwYywBgrZQ:
+    uid: user_WoKpcwM8wtT7fwYywBgrZQ
+    name: Dr. Vivienne Boudreaux
+    gender: female
+    tag: coworkers
+    blocked: false
+    remark: Secretary
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_WoKpcwM8wtT7fwYywBgrZQ
+      timestamp: '2026-06-08 20:38:48'
+      content: Hey, you got a minute? About the spring event lineup.
+      mid: msg_up3zdMqx5PDvjuqf5ztAtd
+    - send_uid: user_WoKpcwM8wtT7fwYywBgrZQ
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-08 21:30:46'
+      content: Got it. I'll handle my end today.
+      mid: msg_mg3Heh5h6PyNuBTndVYKH8
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_WoKpcwM8wtT7fwYywBgrZQ
+      timestamp: '2026-06-08 21:33:51'
+      content: Before tonight gets busy - About picking up groceries on the way home.
+      mid: msg_39rVvWmgmzRHfkqzS9cfpF
+    - send_uid: user_WoKpcwM8wtT7fwYywBgrZQ
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-09 08:24:07'
+      content: Got it. I'll handle my end today.
+      mid: msg_vHdtmDuATptRuuUKpnrN7v
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_WoKpcwM8wtT7fwYywBgrZQ
+      timestamp: '2026-06-09 10:14:40'
+      content: Just left the office, wanted to loop you in. About the kitchen cabinet install.
+      mid: msg_8fitbz722QoHygSsbWzCbN
+    - send_uid: user_WoKpcwM8wtT7fwYywBgrZQ
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-09 11:40:00'
+      content: Got it. I'll handle my end today.
+      mid: msg_afRxkVGeAQ4PdeNgXF4j6K
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_WoKpcwM8wtT7fwYywBgrZQ
+      timestamp: '2026-06-09 15:12:17'
+      content: Morning! Checking in on something. About the kitchen cabinet install.
+      mid: msg_DpL9N5uAqMvcTYuutVeANx
+    - send_uid: user_WoKpcwM8wtT7fwYywBgrZQ
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-09 15:38:34'
+      content: Sounds good, keep me posted.
+      mid: msg_FvK3TzfYm9MxbGK3BrK7UH
+    moments: []
+    read_new_message: true
+  user_eJBYDizEBce5ZX5JLFPLir:
+    uid: user_eJBYDizEBce5ZX5JLFPLir
+    name: Odetta Sinclair
+    gender: female
+    tag: coworkers
+    blocked: false
+    remark: Development
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_eJBYDizEBce5ZX5JLFPLir
+      timestamp: '2026-06-09 18:56:17'
+      content: Just left the office, wanted to loop you in. About the spring event lineup.
+      mid: msg_ZpaNeXanM3eNSYemSHqKXg
+    - send_uid: user_eJBYDizEBce5ZX5JLFPLir
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-10 08:09:54'
+      content: Appreciate you. Talk soon.
+      mid: msg_i7zCq7xTDoALfB73H5Zjwn
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_eJBYDizEBce5ZX5JLFPLir
+      timestamp: '2026-06-10 09:51:48'
+      content: Morning! Checking in on something. About choir rehearsal times.
+      mid: msg_P5frYc3hkDkCVwzvQhtvgw
+    - send_uid: user_eJBYDizEBce5ZX5JLFPLir
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-10 12:53:29'
+      content: Sounds good, keep me posted.
+      mid: msg_UrrkgB4gpHyYUvkWxs24qz
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_eJBYDizEBce5ZX5JLFPLir
+      timestamp: '2026-06-10 13:33:09'
+      content: Quick one before I forget. About Sunday dinner at the house.
+      mid: msg_VgtAY9Ti9qAR7UnuKSHeiT
+    - send_uid: user_eJBYDizEBce5ZX5JLFPLir
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-10 16:03:20'
+      content: Let me check the calendar and get back to you.
+      mid: msg_DFGkzeoz9JGThcLpT5Mpbd
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_eJBYDizEBce5ZX5JLFPLir
+      timestamp: '2026-06-10 18:29:49'
+      content: Morning! Checking in on something. About choir rehearsal times.
+      mid: msg_GA6s3NMGaK87HsPstefzwR
+    - send_uid: user_eJBYDizEBce5ZX5JLFPLir
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-11 09:21:07'
+      content: Can we talk after 10? Late night at the venue.
+      mid: msg_Go366xyZiVHBTJp4syPK2B
+    moments: []
+    read_new_message: true
+  user_772sP9z2rhkpciQKQEUsaS:
+    uid: user_772sP9z2rhkpciQKQEUsaS
+    name: Barrett Whitehall
+    gender: male
+    tag: coworkers
+    blocked: false
+    remark: Governance/HR
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_772sP9z2rhkpciQKQEUsaS
+      timestamp: '2026-06-11 12:22:42'
+      content: Hey, you got a minute? About the Form 990 filing deadline.
+      mid: msg_hJXMiGEodxnQFqkQtouAMC
+    - send_uid: user_772sP9z2rhkpciQKQEUsaS
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-11 13:12:16'
+      content: Works for me. Thanks for the heads up.
+      mid: msg_YsXx5RUGGEcEa7wPHrosEV
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_772sP9z2rhkpciQKQEUsaS
+      timestamp: '2026-06-11 14:59:29'
+      content: Before tonight gets busy - About the Form 990 filing deadline.
+      mid: msg_WD4S8HsKjFgb2CjqKsgNUs
+    - send_uid: user_772sP9z2rhkpciQKQEUsaS
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-11 16:32:04'
+      content: Got it. I'll handle my end today.
+      mid: msg_S3zBpo6J7idNW3UgfTPWgJ
+    moments: []
+    read_new_message: true
+  user_xG7y26F9Ww68CzXDUdDwfB:
+    uid: user_xG7y26F9Ww68CzXDUdDwfB
+    name: Malcolm Kingsley
+    gender: male
+    tag: coworkers
+    blocked: false
+    remark: Preservation Standards
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_xG7y26F9Ww68CzXDUdDwfB
+      timestamp: '2026-06-11 19:18:35'
+      content: Morning! Checking in on something. About the big game this weekend.
+      mid: msg_5DgD3xvn7LEMuqK89Hh4xD
+    - send_uid: user_xG7y26F9Ww68CzXDUdDwfB
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-11 19:30:29'
+      content: Works for me. Thanks for the heads up.
+      mid: msg_uaqahTKoQSh7BkQwZWkx5B
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_xG7y26F9Ww68CzXDUdDwfB
+      timestamp: '2026-06-11 21:28:32'
+      content: Just left the office, wanted to loop you in. About the spring event lineup.
+      mid: msg_DArFWdnJnCwWnWM7Ra32mF
+    - send_uid: user_xG7y26F9Ww68CzXDUdDwfB
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-12 09:24:49'
+      content: Can we talk after 10? Late night at the venue.
+      mid: msg_W3aHDXK58UUYrZaXvKmsLN
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_xG7y26F9Ww68CzXDUdDwfB
+      timestamp: '2026-06-12 11:15:59'
+      content: Before tonight gets busy - About the Form 990 filing deadline.
+      mid: msg_hfFsnYa64VGUcRsbbFsbwS
+    - send_uid: user_xG7y26F9Ww68CzXDUdDwfB
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-12 13:48:49'
+      content: Can we talk after 10? Late night at the venue.
+      mid: msg_kLJwEjRoBksVkFrvHdaq5x
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_xG7y26F9Ww68CzXDUdDwfB
+      timestamp: '2026-06-12 16:32:31'
+      content: Just left the office, wanted to loop you in. About the contractor's schedule for the renovation.
+      mid: msg_oaqUXvucUc4dk9tRWQ9F7P
+    moments: []
+    read_new_message: false
+  user_GmmEmSiSpZLWj6puESaEBm:
+    uid: user_GmmEmSiSpZLWj6puESaEBm
+    name: Rev. Delilah Hargrove
+    gender: female
+    tag: coworkers
+    blocked: false
+    remark: Community Engagement
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_GmmEmSiSpZLWj6puESaEBm
+      timestamp: '2026-06-12 18:47:33'
+      content: Before tonight gets busy - About the kitchen cabinet install.
+      mid: msg_J4zZnWoCxgJ2FZVGuUjgZc
+    - send_uid: user_GmmEmSiSpZLWj6puESaEBm
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-12 21:00:07'
+      content: Can we talk after 10? Late night at the venue.
+      mid: msg_4LM4FNW9cq3A76f7S75Tje
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_GmmEmSiSpZLWj6puESaEBm
+      timestamp: '2026-06-13 08:28:48'
+      content: Morning! Checking in on something. About choir rehearsal times.
+      mid: msg_NRPPwKpQUZmn58xCnnECxF
+    - send_uid: user_GmmEmSiSpZLWj6puESaEBm
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-13 09:59:58'
+      content: Appreciate you. Talk soon.
+      mid: msg_yaS4sy3nfUPU5ow5Li9N3J
+    moments: []
+    read_new_message: true
+  user_Mxdmt2k7D7gPNWB6x2aery:
+    uid: user_Mxdmt2k7D7gPNWB6x2aery
+    name: Anselm Trumbull
+    gender: male
+    tag: coworkers
+    blocked: false
+    remark: ''
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Mxdmt2k7D7gPNWB6x2aery
+      timestamp: '2026-06-13 13:34:25'
+      content: Hey, you got a minute? About the big game this weekend.
+      mid: msg_d9tks6xXsdH42NDrGpHNx9
+    - send_uid: user_Mxdmt2k7D7gPNWB6x2aery
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-13 14:48:30'
+      content: Works for me. Thanks for the heads up.
+      mid: msg_dpQMVPfS6DJBbyN9shCBtW
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Mxdmt2k7D7gPNWB6x2aery
+      timestamp: '2026-06-13 14:59:04'
+      content: Hey, you got a minute? About choir rehearsal times.
+      mid: msg_4i9jLHU96eAY24C7fCNzan
+    - send_uid: user_Mxdmt2k7D7gPNWB6x2aery
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-13 16:59:31'
+      content: Sounds good, keep me posted.
+      mid: msg_NeGFr6iyWBhVBMNfA98hPK
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Mxdmt2k7D7gPNWB6x2aery
+      timestamp: '2026-06-13 20:12:06'
+      content: Morning! Checking in on something. About the kitchen cabinet install.
+      mid: msg_7zUHEwgBZrsGFEt6AikvxT
+    - send_uid: user_Mxdmt2k7D7gPNWB6x2aery
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-14 08:05:36'
+      content: Got it. I'll handle my end today.
+      mid: msg_QwWRTBHKChoapiLxzwjP54
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Mxdmt2k7D7gPNWB6x2aery
+      timestamp: '2026-06-14 10:15:53'
+      content: Hey, you got a minute? About the spring event lineup.
+      mid: msg_d9ogSUvWvdkrYui2Fc9LvF
+    moments: []
+    read_new_message: true
+  user_c96uDT5NR65q35agprAdDQ:
+    uid: user_c96uDT5NR65q35agprAdDQ
+    name: Yvonne Cabrera
+    gender: female
+    tag: coworkers
+    blocked: false
+    remark: ''
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_c96uDT5NR65q35agprAdDQ
+      timestamp: '2026-06-14 13:26:43'
+      content: Morning! Checking in on something. About the next weekend cook-out.
+      mid: msg_myRYPb9dUD4hxk83KZAbYm
+    - send_uid: user_c96uDT5NR65q35agprAdDQ
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-14 14:02:42'
+      content: Appreciate you. Talk soon.
+      mid: msg_s3J73nM9ADyhG5QBWybhyf
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_c96uDT5NR65q35agprAdDQ
+      timestamp: '2026-06-14 17:21:27'
+      content: Before tonight gets busy - About that new record I picked up for the collection.
+      mid: msg_ngq8DquH2xPR23GMC7vTEU
+    - send_uid: user_c96uDT5NR65q35agprAdDQ
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-14 20:57:06'
+      content: Works for me. Thanks for the heads up.
+      mid: msg_9LbFHaT9v3QjxeCSCwud4f
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_c96uDT5NR65q35agprAdDQ
+      timestamp: '2026-06-14 21:38:55'
+      content: Morning! Checking in on something. About the kitchen cabinet install.
+      mid: msg_YfkPwpC4AujfZEf6pUEMES
+    moments: []
+    read_new_message: true
+  user_WcYy8e47niTGiwo8Yi6G7W:
+    uid: user_WcYy8e47niTGiwo8Yi6G7W
+    name: Lorraine Deveraux
+    gender: female
+    tag: coworkers
+    blocked: false
+    remark: Deputy
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_WcYy8e47niTGiwo8Yi6G7W
+      timestamp: '2026-06-15 08:44:27'
+      content: Quick one before I forget. About the Form 990 filing deadline.
+      mid: msg_K4RQXzKcr6XfdGtSXyGmF5
+    - send_uid: user_WcYy8e47niTGiwo8Yi6G7W
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-15 09:52:54'
+      content: Got it. I'll handle my end today.
+      mid: msg_yhMWE4hENGt6SJ8oePghoj
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_WcYy8e47niTGiwo8Yi6G7W
+      timestamp: '2026-06-15 13:28:37'
+      content: Just left the office, wanted to loop you in. About the next weekend cook-out.
+      mid: msg_K64tbgTtmP9PWHmNbDMmac
+    moments: []
+    read_new_message: true
+  user_7NtoaoLpNRFGxGqRgndaok:
+    uid: user_7NtoaoLpNRFGxGqRgndaok
+    name: Marcus Whitby
+    gender: male
+    tag: coworkers
+    blocked: false
+    remark: Development
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_7NtoaoLpNRFGxGqRgndaok
+      timestamp: '2026-06-15 13:58:15'
+      content: Morning! Checking in on something. About the big game this weekend.
+      mid: msg_eyMpivomWAZtBri9t2dJd5
+    - send_uid: user_7NtoaoLpNRFGxGqRgndaok
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-15 17:41:28'
+      content: Appreciate you. Talk soon.
+      mid: msg_55NgmE9XatzyYBLkfLmzpp
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_7NtoaoLpNRFGxGqRgndaok
+      timestamp: '2026-06-15 19:17:38'
+      content: Just left the office, wanted to loop you in. About the spring event lineup.
+      mid: msg_oUosdebKATyQcMVU7yVFua
+    moments: []
+    read_new_message: false
+  user_Atytr6Wwgu6jUA2uh8jEox:
+    uid: user_Atytr6Wwgu6jUA2uh8jEox
+    name: Josephine Halloway
+    gender: female
+    tag: coworkers
+    blocked: false
+    remark: Programs
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Atytr6Wwgu6jUA2uh8jEox
+      timestamp: '2026-06-16 09:08:32'
+      content: Before tonight gets busy - About Sunday dinner at the house.
+      mid: msg_fN7XBuYLcjgiSC65GMQVMt
+    - send_uid: user_Atytr6Wwgu6jUA2uh8jEox
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-16 10:10:20'
+      content: Works for me. Thanks for the heads up.
+      mid: msg_N4YkvmLKhqoY7r46NXo9TW
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Atytr6Wwgu6jUA2uh8jEox
+      timestamp: '2026-06-16 14:10:49'
+      content: Hey, you got a minute? About choir rehearsal times.
+      mid: msg_Z5vnwYPmpmFDHoA9p8PB8k
+    - send_uid: user_Atytr6Wwgu6jUA2uh8jEox
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-16 18:02:13'
+      content: Can we talk after 10? Late night at the venue.
+      mid: msg_DeH6XuZs3mDAViDAgH9bkM
+    moments: []
+    read_new_message: false
+  user_2ATXzhMfowhvQMzNV2WiUa:
+    uid: user_2ATXzhMfowhvQMzNV2WiUa
+    name: Nathaniel Kessel
+    gender: male
+    tag: coworkers
+    blocked: false
+    remark: Communications
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_2ATXzhMfowhvQMzNV2WiUa
+      timestamp: '2026-06-16 18:06:55'
+      content: Quick one before I forget. About the big game this weekend.
+      mid: msg_Haa4wWJt5pgQjrv5BMYEpU
+    - send_uid: user_2ATXzhMfowhvQMzNV2WiUa
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-16 21:58:08'
+      content: Appreciate you. Talk soon.
+      mid: msg_scZrj8xDnrPpLGuWWw6c3L
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_2ATXzhMfowhvQMzNV2WiUa
+      timestamp: '2026-06-17 09:21:02'
+      content: Hey, you got a minute? About the Form 990 filing deadline.
+      mid: msg_NAhqfg3X4nQSoSa6MESJeS
+    - send_uid: user_2ATXzhMfowhvQMzNV2WiUa
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-17 09:47:26'
+      content: Let me check the calendar and get back to you.
+      mid: msg_JjtYtFBLYwhxmHoyBwFUcF
+    moments: []
+    read_new_message: true
+  user_Hqorr4cYR9AfTL4AEBUvgV:
+    uid: user_Hqorr4cYR9AfTL4AEBUvgV
+    name: Priscilla Everton
+    gender: female
+    tag: coworkers
+    blocked: false
+    remark: Finance/Admin
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Hqorr4cYR9AfTL4AEBUvgV
+      timestamp: '2026-06-17 12:43:33'
+      content: Morning! Checking in on something. About the big game this weekend.
+      mid: msg_CJtog7oEe4f35hysnRtmTM
+    - send_uid: user_Hqorr4cYR9AfTL4AEBUvgV
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-17 16:42:25'
+      content: Works for me. Thanks for the heads up.
+      mid: msg_eR8diW9Hfi99L2ojdwT7A2
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_Hqorr4cYR9AfTL4AEBUvgV
+      timestamp: '2026-06-17 19:44:17'
+      content: Just left the office, wanted to loop you in. About that new record I picked up for the
+        collection.
+      mid: msg_b98NZBABoMuRVeuaWrxg5r
+    - send_uid: user_Hqorr4cYR9AfTL4AEBUvgV
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-17 21:35:31'
+      content: Sounds good, keep me posted.
+      mid: msg_SaquG7Jt5RnZJMn95acYge
+    moments: []
+    read_new_message: true
+  user_xXWyMeo8ePt9xqhYmfCAQw:
+    uid: user_xXWyMeo8ePt9xqhYmfCAQw
+    name: Grady Colton
+    gender: male
+    tag: coworkers
+    blocked: false
+    remark: National Trust
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_xXWyMeo8ePt9xqhYmfCAQw
+      timestamp: '2026-06-18 09:14:01'
+      content: Just left the office, wanted to loop you in. About choir rehearsal times.
+      mid: msg_FUJRhfeUQRLRVoAGaVy2Ep
+    - send_uid: user_xXWyMeo8ePt9xqhYmfCAQw
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-18 12:05:25'
+      content: Got it. I'll handle my end today.
+      mid: msg_3dSnaow3JHxBVnnNoxyseC
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_xXWyMeo8ePt9xqhYmfCAQw
+      timestamp: '2026-06-18 14:31:02'
+      content: Just left the office, wanted to loop you in. About the big game this weekend.
+      mid: msg_M6rJS3G3LFHE89wZBVkDMs
+    - send_uid: user_xXWyMeo8ePt9xqhYmfCAQw
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-18 18:04:52'
+      content: Works for me. Thanks for the heads up.
+      mid: msg_HCVsiRzYXzQXFTFqAXTuL7
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_xXWyMeo8ePt9xqhYmfCAQw
+      timestamp: '2026-06-18 19:35:31'
+      content: Hey, you got a minute? About the contractor's schedule for the renovation.
+      mid: msg_X6uWTrUuaEyy9i2SPkj2mo
+    - send_uid: user_xXWyMeo8ePt9xqhYmfCAQw
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-19 08:24:03'
+      content: Sounds good, keep me posted.
+      mid: msg_Rzd7zoVXHjfY3RbdbABKnd
+    moments: []
+    read_new_message: true
+  user_2CsVaBZspoGM6jLw9dTdWy:
+    uid: user_2CsVaBZspoGM6jLw9dTdWy
+    name: Roxanne Ellery
+    gender: female
+    tag: coworkers
+    blocked: false
+    remark: Georgia Trust
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_2CsVaBZspoGM6jLw9dTdWy
+      timestamp: '2026-06-19 09:44:26'
+      content: Before tonight gets busy - About Sunday dinner at the house.
+      mid: msg_eEW47BaEuNwDwVsz7x3ypZ
+    - send_uid: user_2CsVaBZspoGM6jLw9dTdWy
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-19 13:14:59'
+      content: Let me check the calendar and get back to you.
+      mid: msg_sSrBtue47vq6ndPJwZX34p
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_2CsVaBZspoGM6jLw9dTdWy
+      timestamp: '2026-06-19 14:06:07'
+      content: Hey, you got a minute? About the Form 990 filing deadline.
+      mid: msg_Ct9kfYbrQuF3XuXpmhpL6P
+    - send_uid: user_2CsVaBZspoGM6jLw9dTdWy
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-19 16:41:14'
+      content: Sounds good, keep me posted.
+      mid: msg_ZRRLVfbu2HUTJDRcMpAZSh
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_2CsVaBZspoGM6jLw9dTdWy
+      timestamp: '2026-06-19 19:23:29'
+      content: Hey, you got a minute? About Sunday dinner at the house.
+      mid: msg_SPXq5i9JMqYHVQCt6Nxy3h
+    - send_uid: user_2CsVaBZspoGM6jLw9dTdWy
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-19 21:25:56'
+      content: Can we talk after 10? Late night at the venue.
+      mid: msg_8ACm6YLfaA3bY27PXsdzmG
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_2CsVaBZspoGM6jLw9dTdWy
+      timestamp: '2026-06-20 08:18:39'
+      content: Morning! Checking in on something. About the contractor's schedule for the renovation.
+      mid: msg_gyrQ9kfreGqJxtRx6TQb7P
+    - send_uid: user_2CsVaBZspoGM6jLw9dTdWy
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-20 12:18:52'
+      content: Got it. I'll handle my end today.
+      mid: msg_yu7UtZBXdowcypoXuWSo3y
+    moments: []
+    read_new_message: true
+  user_jvrBBUAChcbuhQs82YmYdr:
+    uid: user_jvrBBUAChcbuhQs82YmYdr
+    name: Miriam Aldridge
+    gender: female
+    tag: coworkers
+    blocked: false
+    remark: City HPO
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_jvrBBUAChcbuhQs82YmYdr
+      timestamp: '2026-06-20 13:25:19'
+      content: Hey, you got a minute? About Sunday dinner at the house.
+      mid: msg_7MtWPeSNGW4BypF4dKbXWe
+    - send_uid: user_jvrBBUAChcbuhQs82YmYdr
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-20 15:47:05'
+      content: Let me check the calendar and get back to you.
+      mid: msg_WnMs5kCRj6imdwkHJc9Aed
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_jvrBBUAChcbuhQs82YmYdr
+      timestamp: '2026-06-20 18:32:00'
+      content: Before tonight gets busy - About the contractor's schedule for the renovation.
+      mid: msg_gfaC29yfeRC26iqhvbMwxh
+    - send_uid: user_jvrBBUAChcbuhQs82YmYdr
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-20 20:48:16'
+      content: Can we talk after 10? Late night at the venue.
+      mid: msg_rnPBJfUp2tGH2vLxZC7Rir
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_jvrBBUAChcbuhQs82YmYdr
+      timestamp: '2026-06-21 08:57:42'
+      content: Hey, you got a minute? About the big game this weekend.
+      mid: msg_SFbB5GnKd6dy3ceszBGG6S
+    moments: []
+    read_new_message: true
+  user_5QkEacQkkLZwFjjLVFbdM8:
+    uid: user_5QkEacQkkLZwFjjLVFbdM8
+    name: Corinne Lattimer
+    gender: female
+    tag: coworkers
+    blocked: false
+    remark: Halliwell CPA
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_5QkEacQkkLZwFjjLVFbdM8
+      timestamp: '2026-06-21 10:01:17'
+      content: Quick one before I forget. About the contractor's schedule for the renovation.
+      mid: msg_bDVtuS4NdPjG8MsFc4kn7z
+    - send_uid: user_5QkEacQkkLZwFjjLVFbdM8
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-21 12:37:15'
+      content: Let me check the calendar and get back to you.
+      mid: msg_bS2rufmdXAoAKjyBFzSgsh
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_5QkEacQkkLZwFjjLVFbdM8
+      timestamp: '2026-06-21 15:29:14'
+      content: Before tonight gets busy - About picking up groceries on the way home.
+      mid: msg_UgKxrcEzrjcrn8Kymh7nLv
+    moments: []
+    read_new_message: true
+  user_s2gwJRL6XQuMKRCuuYLqL9:
+    uid: user_s2gwJRL6XQuMKRCuuYLqL9
+    name: Everett Petain
+    gender: male
+    tag: coworkers
+    blocked: false
+    remark: Southeastern Nonprofit Insurance
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_s2gwJRL6XQuMKRCuuYLqL9
+      timestamp: '2026-06-21 15:43:02'
+      content: Quick one before I forget. About the spring event lineup.
+      mid: msg_M4H42fFsAKpQYy5PFbar8N
+    - send_uid: user_s2gwJRL6XQuMKRCuuYLqL9
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-21 18:59:33'
+      content: Appreciate you. Talk soon.
+      mid: msg_L2XyyCuZEc2eBqi5gERvjW
+    moments: []
+    read_new_message: false
+  user_R6yQDEVRjW4jG7WCcEaJef:
+    uid: user_R6yQDEVRjW4jG7WCcEaJef
+    name: Delbert Yancey CPA
+    gender: male
+    tag: coworkers
+    blocked: false
+    remark: Yancey & Ballard, entity tax
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_R6yQDEVRjW4jG7WCcEaJef
+      timestamp: '2026-06-21 21:18:59'
+      content: Morning! Checking in on something. About that new record I picked up for the collection.
+      mid: msg_cSskdJbWyYfA2wqyFy5TWp
+    - send_uid: user_R6yQDEVRjW4jG7WCcEaJef
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-21 21:23:12'
+      content: Works for me. Thanks for the heads up.
+      mid: msg_ktgSstPbQjGwFNdgzLWYeP
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_R6yQDEVRjW4jG7WCcEaJef
+      timestamp: '2026-06-22 08:15:49'
+      content: Quick one before I forget. About the next weekend cook-out.
+      mid: msg_2C5p8sHVnGpyUS5s5KBrkk
+    - send_uid: user_R6yQDEVRjW4jG7WCcEaJef
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-22 08:36:02'
+      content: Can we talk after 10? Late night at the venue.
+      mid: msg_Fep6v79RjTSLSQBmDU5zcy
+    moments: []
+    read_new_message: true
+  user_KS2iYoN5uZrEPq6XS3RUZu:
+    uid: user_KS2iYoN5uZrEPq6XS3RUZu
+    name: Wesley Farraday
+    gender: male
+    tag: coworkers
+    blocked: false
+    remark: Savannah Building Supply
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_KS2iYoN5uZrEPq6XS3RUZu
+      timestamp: '2026-06-22 11:39:30'
+      content: Morning! Checking in on something. About the Form 990 filing deadline.
+      mid: msg_8tzXqeVsDAGDQixF2dPubF
+    - send_uid: user_KS2iYoN5uZrEPq6XS3RUZu
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-22 15:14:27'
+      content: Let me check the calendar and get back to you.
+      mid: msg_QguZbmSoGsdTY2tWdtZ23j
+    moments: []
+    read_new_message: false
+  user_PgLhkT7ZVqnu6xhuzG9xmi:
+    uid: user_PgLhkT7ZVqnu6xhuzG9xmi
+    name: Ellis Marchand
+    gender: male
+    tag: coworkers
+    blocked: false
+    remark: Ashcroft Fine Hardwoods, Charleston SC
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_PgLhkT7ZVqnu6xhuzG9xmi
+      timestamp: '2026-06-22 18:54:14'
+      content: Hey, you got a minute? About picking up groceries on the way home.
+      mid: msg_oiiHJ2SbZX7x4hUoS2ZrHT
+    - send_uid: user_PgLhkT7ZVqnu6xhuzG9xmi
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-22 21:33:32'
+      content: Works for me. Thanks for the heads up.
+      mid: msg_iq9CUrRN7pVhHKtNHsyMQw
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_PgLhkT7ZVqnu6xhuzG9xmi
+      timestamp: '2026-06-23 08:24:28'
+      content: Before tonight gets busy - About that new record I picked up for the collection.
+      mid: msg_UKUGTcFWsHwdnNMEDchMFc
+    - send_uid: user_PgLhkT7ZVqnu6xhuzG9xmi
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-23 09:21:41'
+      content: Sounds good, keep me posted.
+      mid: msg_Ws6eTLE5Dd38qAUZqKWZzg
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_PgLhkT7ZVqnu6xhuzG9xmi
+      timestamp: '2026-06-23 13:05:35'
+      content: Quick one before I forget. About choir rehearsal times.
+      mid: msg_Y6cR6b42AbGNCmE92uREwg
+    - send_uid: user_PgLhkT7ZVqnu6xhuzG9xmi
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-23 16:29:50'
+      content: Sounds good, keep me posted.
+      mid: msg_gmnrHuLArQW9AkJ8qTcGBo
+    moments: []
+    read_new_message: false
+  user_PkcFUgf2a8oC3o8y6H3mJH:
+    uid: user_PkcFUgf2a8oC3o8y6H3mJH
+    name: Barrington family
+    gender: male
+    tag: coworkers
+    blocked: false
+    remark: Sheraton sideboard
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_PkcFUgf2a8oC3o8y6H3mJH
+      timestamp: '2026-06-23 18:19:26'
+      content: Quick one before I forget. About the next weekend cook-out.
+      mid: msg_oss8MSFgYreWUsMB6ETAxb
+    - send_uid: user_PkcFUgf2a8oC3o8y6H3mJH
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-23 19:48:49'
+      content: Let me check the calendar and get back to you.
+      mid: msg_MZSLapm8pYBpiwdCaNBSFF
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_PkcFUgf2a8oC3o8y6H3mJH
+      timestamp: '2026-06-24 08:05:49'
+      content: Before tonight gets busy - About that new record I picked up for the collection.
+      mid: msg_BHWLmpYt8WDFiDQeMDyxfo
+    moments: []
+    read_new_message: true
+  user_LMRhXFJr7SBJ4Pe3dhn376:
+    uid: user_LMRhXFJr7SBJ4Pe3dhn376
+    name: Renard-Whitcomb residence
+    gender: male
+    tag: coworkers
+    blocked: false
+    remark: Windsor side chairs
+    chat_history:
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_LMRhXFJr7SBJ4Pe3dhn376
+      timestamp: '2026-06-24 12:03:03'
+      content: Morning! Checking in on something. About the spring event lineup.
+      mid: msg_YuvHPeBgzVfhemsGtDh7au
+    - send_uid: user_LMRhXFJr7SBJ4Pe3dhn376
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-24 14:53:01'
+      content: Got it. I'll handle my end today.
+      mid: msg_Y29MX3U2MBQNzuCCi2fgdo
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_LMRhXFJr7SBJ4Pe3dhn376
+      timestamp: '2026-06-24 17:05:37'
+      content: Quick one before I forget. About the Form 990 filing deadline.
+      mid: msg_pxTFMMiMGCRjFxGH2AofNa
+    - send_uid: user_LMRhXFJr7SBJ4Pe3dhn376
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-24 20:35:39'
+      content: Got it. I'll handle my end today.
+      mid: msg_AHHLwXF68coZJazAGHMAYs
+    - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      receive_uid: user_LMRhXFJr7SBJ4Pe3dhn376
+      timestamp: '2026-06-25 08:36:22'
+      content: Morning! Checking in on something. About picking up groceries on the way home.
+      mid: msg_5XBfQ4rgFyHyr6J3geftr7
+    - send_uid: user_LMRhXFJr7SBJ4Pe3dhn376
+      receive_uid: user_bU6qzNJdSZV93PTE6x5oTU
+      timestamp: '2026-06-25 11:51:56'
+      content: Let me check the calendar and get back to you.
+      mid: msg_kmoRsfFbLxcp5UJWZD5cmd
+    moments: []
+    read_new_message: true
+groups:
+- gid: group_usUVbi7nAmHviG23MmrR2X
+  name: Family
+  owner_id: user_bU6qzNJdSZV93PTE6x5oTU
+  uids:
+  - user_bU6qzNJdSZV93PTE6x5oTU
+  - user_oDzFzPm3bMNNMiV3E88jXx
+  - user_Z9d4FYTEngV6my3JPT3GBj
+  - user_2a99TiDfBLipK56g6g2Tob
+  - user_agXUaoRB83q4opMxWQWqaw
+  chat_history:
+  - send_uid: user_2a99TiDfBLipK56g6g2Tob
+    receive_uid: group
+    timestamp: '2026-06-26 08:39:55'
+    content: Great job everyone on the weekend event.
+    mid: msg_GZHfsWGQCR5RZG9FA4TeV7
+  - send_uid: user_oDzFzPm3bMNNMiV3E88jXx
+    receive_uid: group
+    timestamp: '2026-06-26 08:56:11'
+    content: Reminder about this week's schedule, check your calendars.
+    mid: msg_jucofPPBi5ZDCtu53KyeS7
+  - send_uid: user_2a99TiDfBLipK56g6g2Tob
+    receive_uid: group
+    timestamp: '2026-06-26 12:22:44'
+    content: Count me in for Sunday.
+    mid: msg_wQvFhdhM5c3nTRyuL2LwJs
+  - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+    receive_uid: group
+    timestamp: '2026-06-26 13:59:15'
+    content: Sending around the updated notes tonight.
+    mid: msg_2DYvXETjsFvtWQqrCFF2E5
+  - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+    receive_uid: group
+    timestamp: '2026-06-26 14:45:57'
+    content: Great job everyone on the weekend event.
+    mid: msg_AnB9LvcvJNBZHp7KULcY4o
+  read_new_message: true
+- gid: group_2sZqJ2jHUtVFAJRaaeJQSA
+  name: Foundation Staff
+  owner_id: user_bU6qzNJdSZV93PTE6x5oTU
+  uids:
+  - user_bU6qzNJdSZV93PTE6x5oTU
+  - user_CQLfKRVxVEzNaV3wKUNwNk
+  - user_Eb5wtQfEw9ZLG43FCNDxLW
+  - user_WoKpcwM8wtT7fwYywBgrZQ
+  - user_eJBYDizEBce5ZX5JLFPLir
+  - user_772sP9z2rhkpciQKQEUsaS
+  - user_xG7y26F9Ww68CzXDUdDwfB
+  - user_GmmEmSiSpZLWj6puESaEBm
+  - user_Mxdmt2k7D7gPNWB6x2aery
+  - user_c96uDT5NR65q35agprAdDQ
+  - user_WcYy8e47niTGiwo8Yi6G7W
+  - user_7NtoaoLpNRFGxGqRgndaok
+  - user_Atytr6Wwgu6jUA2uh8jEox
+  - user_2ATXzhMfowhvQMzNV2WiUa
+  - user_Hqorr4cYR9AfTL4AEBUvgV
+  - user_xXWyMeo8ePt9xqhYmfCAQw
+  - user_2CsVaBZspoGM6jLw9dTdWy
+  - user_jvrBBUAChcbuhQs82YmYdr
+  - user_5QkEacQkkLZwFjjLVFbdM8
+  - user_s2gwJRL6XQuMKRCuuYLqL9
+  - user_R6yQDEVRjW4jG7WCcEaJef
+  - user_KS2iYoN5uZrEPq6XS3RUZu
+  - user_PgLhkT7ZVqnu6xhuzG9xmi
+  - user_PkcFUgf2a8oC3o8y6H3mJH
+  - user_LMRhXFJr7SBJ4Pe3dhn376
+  chat_history:
+  - send_uid: user_bU6qzNJdSZV93PTE6x5oTU
+    receive_uid: group
+    timestamp: '2026-06-26 14:48:12'
+    content: Anyone free to help set up Saturday morning?
+    mid: msg_rNKwP4Tjxr7YEEDienXQhc
+  - send_uid: user_772sP9z2rhkpciQKQEUsaS
+    receive_uid: group
+    timestamp: '2026-06-26 16:50:01'
+    content: Count me in for Sunday.
+    mid: msg_PR5jvKvCz3eqGv4LcYcXCv
+  - send_uid: user_772sP9z2rhkpciQKQEUsaS
+    receive_uid: group
+    timestamp: '2026-06-26 19:45:51'
+    content: Anyone free to help set up Saturday morning?
+    mid: msg_KzjBgE28eJuyYVyfhJvr3h
+  - send_uid: user_xXWyMeo8ePt9xqhYmfCAQw
+    receive_uid: group
+    timestamp: '2026-06-26 20:51:26'
+    content: Great job everyone on the weekend event.
+    mid: msg_QQbSQYhLoKRUVB2Ghkc4xN
+  read_new_message: true

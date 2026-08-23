@@ -1,0 +1,79 @@
+[
+    {
+        "tool_name": "get_ticker_price",
+        "description": "Get the latest price for a symbol, or all symbols when none is given.",
+        "arguments": {
+            "symbol": {
+                "type": "string",
+                "description": "Optional trading pair symbol (e.g. BTCUSDT). When omitted, prices for all symbols are returned."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a single {symbol, price} object or a list of them; on failure (invalid symbol), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_ticker_24hr",
+        "description": "Get 24-hour rolling window price change statistics for a symbol, or all symbols.",
+        "arguments": {
+            "symbol": {
+                "type": "string",
+                "description": "Optional trading pair symbol. When omitted, stats for all symbols are returned."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a single 24hr ticker object or a list; on failure (invalid symbol), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_depth",
+        "description": "Get the order book (bids and asks) for a symbol.",
+        "arguments": {
+            "symbol": {
+                "type": "string",
+                "description": "The trading pair symbol (e.g. BTCUSDT)."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of price levels per side (default 100)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has lastUpdateId, bids and asks; on failure (invalid symbol), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_klines",
+        "description": "Get candlestick (kline) data for a symbol and interval.",
+        "arguments": {
+            "symbol": {
+                "type": "string",
+                "description": "The trading pair symbol (e.g. BTCUSDT)."
+            },
+            "interval": {
+                "type": "string",
+                "description": "Candle interval (default '1h')."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of candles to return (default 500)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of candle arrays; on failure (invalid symbol), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_account",
+        "description": "Get the spot account information, including balances and permissions.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the account object with commissions, flags and balances."
+        }
+    }
+]

@@ -1,0 +1,241 @@
+# Source: world_data 2/LightCRM.json (verbatim). Corpus-only authored world.
+contacts:
+  vfDpJiyBzGkaEb46xJjkm8:
+    cid: vfDpJiyBzGkaEb46xJjkm8
+    name: Cordelia Ashmore-Vance
+    email: cordelia.ashmore.vance@shpa-savannah.org
+    phone: ''
+    company: Savannah Historic Preservation Alliance
+    title: Board Chair
+    tags:
+    - board
+    notes: ''
+  HaLvNAyTE3pfM5TPAoySCh:
+    cid: HaLvNAyTE3pfM5TPAoySCh
+    name: Reginald Thackery
+    email: reginald.thackery@shpa-savannah.org
+    phone: ''
+    company: Savannah Historic Preservation Alliance
+    title: Treasurer
+    tags:
+    - board
+    notes: ''
+  XpurbnEBrqPqeFKSrKvqCr:
+    cid: XpurbnEBrqPqeFKSrKvqCr
+    name: Dr. Vivienne Boudreaux
+    email: vivienne.boudreaux@shpa-savannah.org
+    phone: ''
+    company: Savannah Historic Preservation Alliance
+    title: Board Secretary
+    tags:
+    - board
+    notes: ''
+  FEZ3U7FYA3tLA85do2WAyV:
+    cid: FEZ3U7FYA3tLA85do2WAyV
+    name: Odetta Sinclair
+    email: odetta.sinclair@shpa-savannah.org
+    phone: ''
+    company: Savannah Historic Preservation Alliance
+    title: Development Chair
+    tags:
+    - board
+    notes: ''
+  H9km7TW5BkbQFHMt43fckA:
+    cid: H9km7TW5BkbQFHMt43fckA
+    name: Barrett Whitehall
+    email: barrett.whitehall@shpa-savannah.org
+    phone: ''
+    company: Savannah Historic Preservation Alliance
+    title: Governance/HR Chair
+    tags:
+    - board
+    notes: ''
+  jWyywXPiJCiwmxcyLgJGyi:
+    cid: jWyywXPiJCiwmxcyLgJGyi
+    name: Malcolm Kingsley
+    email: malcolm.kingsley@shpa-savannah.org
+    phone: ''
+    company: Savannah Historic Preservation Alliance
+    title: Preservation Standards Chair
+    tags:
+    - board
+    notes: ''
+  p8VZyvU8EtvtoqRkEBVfGP:
+    cid: p8VZyvU8EtvtoqRkEBVfGP
+    name: Rev. Delilah Hargrove
+    email: delilah.hargrove@shpa-savannah.org
+    phone: ''
+    company: Savannah Historic Preservation Alliance
+    title: Community Engagement Chair
+    tags:
+    - board
+    notes: ''
+  pm6yTXZwnMw8XQVgUu9y3L:
+    cid: pm6yTXZwnMw8XQVgUu9y3L
+    name: Anselm Trumbull
+    email: anselm.trumbull@shpa-savannah.org
+    phone: ''
+    company: Savannah Historic Preservation Alliance
+    title: Trustee
+    tags:
+    - board
+    notes: ''
+  SBEFhRK6KB4FpEGNXQiaXm:
+    cid: SBEFhRK6KB4FpEGNXQiaXm
+    name: Yvonne Cabrera
+    email: yvonne.cabrera@shpa-savannah.org
+    phone: ''
+    company: Savannah Historic Preservation Alliance
+    title: Trustee
+    tags:
+    - board
+    notes: ''
+  aBC6K5ynVmWJwNA5qzNbHm:
+    cid: aBC6K5ynVmWJwNA5qzNbHm
+    name: Lorraine Deveraux
+    email: lorraine.deveraux@shpa-savannah.org
+    phone: (555) 912-7010
+    company: Savannah Historic Preservation Alliance
+    title: Deputy Director
+    tags:
+    - staff
+    notes: ''
+  BjtL32kncst7oF3U47GoY9:
+    cid: BjtL32kncst7oF3U47GoY9
+    name: Marcus Whitby
+    email: marcus.whitby@shpa-savannah.org
+    phone: ''
+    company: Savannah Historic Preservation Alliance
+    title: Development Director
+    tags:
+    - staff
+    notes: ''
+  cDpqugi8o43abFsETbF2Xj:
+    cid: cDpqugi8o43abFsETbF2Xj
+    name: Josephine Halloway
+    email: josephine.halloway@shpa-savannah.org
+    phone: ''
+    company: Savannah Historic Preservation Alliance
+    title: Programs Director
+    tags:
+    - staff
+    notes: ''
+  X6ddtYJkLSwTVviHCSDNsK:
+    cid: X6ddtYJkLSwTVviHCSDNsK
+    name: Nathaniel Kessel
+    email: nathaniel.kessel@shpa-savannah.org
+    phone: ''
+    company: Savannah Historic Preservation Alliance
+    title: Communications Director
+    tags:
+    - staff
+    notes: ''
+  xpVdGHZbPqw3g4izUz3TBV:
+    cid: xpVdGHZbPqw3g4izUz3TBV
+    name: Priscilla Everton
+    email: priscilla.everton@shpa-savannah.org
+    phone: ''
+    company: Savannah Historic Preservation Alliance
+    title: Finance & Admin Director
+    tags:
+    - staff
+    notes: ''
+  MnAhujvMTnbh2yKobKkeEi:
+    cid: MnAhujvMTnbh2yKobKkeEi
+    name: Grady Colton
+    email: grady.colton@savingplaces.org
+    phone: ''
+    company: National Trust for Historic Preservation
+    title: Field Officer
+    tags:
+    - partner
+    notes: ''
+  7xn7eJQRiDw6RQr33hYnJj:
+    cid: 7xn7eJQRiDw6RQr33hYnJj
+    name: Roxanne Ellery
+    email: roxanne.ellery@georgiatrust.org
+    phone: ''
+    company: Georgia Trust for Historic Preservation
+    title: Grants Coordinator
+    tags:
+    - partner
+    notes: ''
+  D2zpRkQHL3k4omswEeBuUY:
+    cid: D2zpRkQHL3k4omswEeBuUY
+    name: Miriam Aldridge
+    email: miriam.aldridge@savannahga.gov
+    phone: ''
+    company: City of Savannah Historic Preservation Office
+    title: Preservation Officer
+    tags:
+    - partner
+    notes: ''
+  kRacWS5GNHRAmLmEbwU3X2:
+    cid: kRacWS5GNHRAmLmEbwU3X2
+    name: Wesley Farraday
+    email: wesley.farraday@Finthesiss.ai
+    phone: ''
+    company: Savannah Building Supply
+    title: Account Manager
+    tags:
+    - vendor
+    notes: ''
+  iCrtDoFuH5Sq56vZvUohqi:
+    cid: iCrtDoFuH5Sq56vZvUohqi
+    name: Corinne Lattimer
+    email: corinne.lattimer@halliwell-cpa.com
+    phone: ''
+    company: Halliwell CPA
+    title: Senior Accountant
+    tags:
+    - vendor
+    notes: ''
+deals:
+  ofDfkqmoLJjAcCQxoqu2DS:
+    did: ofDfkqmoLJjAcCQxoqu2DS
+    title: Annual membership renewal
+    contact_id: MnAhujvMTnbh2yKobKkeEi
+    stage: qualified
+    amount: 23322.44
+    close_date: '2026-02-01'
+    notes: ''
+  AeCuzwTZAuRy65a8FdMm6L:
+    did: AeCuzwTZAuRy65a8FdMm6L
+    title: Sponsorship package
+    contact_id: kRacWS5GNHRAmLmEbwU3X2
+    stage: proposal
+    amount: 3240.1
+    close_date: '2026-02-10'
+    notes: ''
+  CfHNGubNTcmzVMpbxjpQ6U:
+    did: CfHNGubNTcmzVMpbxjpQ6U
+    title: Restoration grant proposal
+    contact_id: 7xn7eJQRiDw6RQr33hYnJj
+    stage: qualified
+    amount: 17472.24
+    close_date: '2026-02-19'
+    notes: ''
+  FK9JqJxrdonWaKkDfHfLNU:
+    did: FK9JqJxrdonWaKkDfHfLNU
+    title: Event partnership
+    contact_id: D2zpRkQHL3k4omswEeBuUY
+    stage: proposal
+    amount: 19891.05
+    close_date: '2026-02-28'
+    notes: ''
+  Ej3rNFDc3R9rnNeUGypNTU:
+    did: Ej3rNFDc3R9rnNeUGypNTU
+    title: Consulting engagement
+    contact_id: iCrtDoFuH5Sq56vZvUohqi
+    stage: negotiation
+    amount: 1675.61
+    close_date: '2026-03-09'
+    notes: ''
+  qKejd6iFzLTdZcVdkkjBdZ:
+    did: qKejd6iFzLTdZcVdkkjBdZ
+    title: Facility rental agreement
+    contact_id: kRacWS5GNHRAmLmEbwU3X2
+    stage: won
+    amount: 3137.35
+    close_date: '2026-03-18'
+    notes: ''

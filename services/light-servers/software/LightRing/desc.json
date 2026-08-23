@@ -1,0 +1,441 @@
+[
+    {
+        "tool_name": "list_devices",
+        "description": "List all Ring devices grouped by category (doorbots, stickup_cams, chimes).",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the devices document keyed by category; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_device",
+        "description": "Get a single device by its numeric id.",
+        "arguments": {
+            "device_id": {
+                "type": "integer",
+                "description": "Numeric id of the device to retrieve."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type, device_type (category) and the device object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_device_health",
+        "description": "Get health information (firmware, battery, wifi signal, alerts) for a device.",
+        "arguments": {
+            "device_id": {
+                "type": "integer",
+                "description": "Numeric id of the device."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type and device_health details; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_device_settings",
+        "description": "Update mutable settings on a device (motion, detection, led, light schedule).",
+        "arguments": {
+            "device_id": {
+                "type": "integer",
+                "description": "Numeric id of the device to update."
+            },
+            "motion_sensitivity": {
+                "type": "integer",
+                "description": "Optional motion sensitivity level."
+            },
+            "motion_detection_enabled": {
+                "type": "boolean",
+                "description": "Optional flag to enable/disable motion detection."
+            },
+            "people_detection_enabled": {
+                "type": "boolean",
+                "description": "Optional flag to enable/disable people detection."
+            },
+            "package_detection_enabled": {
+                "type": "boolean",
+                "description": "Optional flag to enable/disable package detection."
+            },
+            "led_status": {
+                "type": "string",
+                "description": "Optional LED status value."
+            },
+            "light_schedule_enabled": {
+                "type": "boolean",
+                "description": "Optional flag to enable/disable the light schedule."
+            },
+            "light_on_duration_seconds": {
+                "type": "integer",
+                "description": "Optional duration in seconds the light stays on."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type, device_type and the updated device object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_location",
+        "description": "Get the location details for the given location id.",
+        "arguments": {
+            "location_id": {
+                "type": "string",
+                "description": "Id of the location to retrieve."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type and the location object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_location_devices",
+        "description": "List all devices belonging to the given location.",
+        "arguments": {
+            "location_id": {
+                "type": "string",
+                "description": "Id of the location whose devices to list."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the devices document; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_location_mode",
+        "description": "Get the current security mode for the given location.",
+        "arguments": {
+            "location_id": {
+                "type": "string",
+                "description": "Id of the location."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type, mode and location_id; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "set_location_mode",
+        "description": "Set the security mode for a location (home, away, or disarmed).",
+        "arguments": {
+            "location_id": {
+                "type": "string",
+                "description": "Id of the location."
+            },
+            "mode": {
+                "type": "string",
+                "description": "New mode; must be one of home, away, disarmed."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type, mode and location_id; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_active_dings",
+        "description": "List currently active dings (in-progress events) across devices.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the list of active dings; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_device_events",
+        "description": "List event history for a device with optional filtering and pagination.",
+        "arguments": {
+            "device_id": {
+                "type": "integer",
+                "description": "Numeric id of the device whose events to list."
+            },
+            "kind": {
+                "type": "string",
+                "description": "Optional event kind to filter by."
+            },
+            "date_from": {
+                "type": "string",
+                "description": "Optional lower bound (inclusive) on created_at."
+            },
+            "date_to": {
+                "type": "string",
+                "description": "Optional upper bound (inclusive) on created_at."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of events to return (default 20)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of events to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type, count, total, offset, limit and the results list; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_event",
+        "description": "Get a single event by its numeric id.",
+        "arguments": {
+            "event_id": {
+                "type": "integer",
+                "description": "Numeric id of the event."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type and the event object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_event_recording",
+        "description": "Get the recording url for an event whose recording is ready.",
+        "arguments": {
+            "event_id": {
+                "type": "integer",
+                "description": "Numeric id of the event."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type, event_id and recording_url; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_recordings",
+        "description": "List ready recordings for a device with optional date filtering.",
+        "arguments": {
+            "device_id": {
+                "type": "integer",
+                "description": "Numeric id of the device."
+            },
+            "date_from": {
+                "type": "string",
+                "description": "Optional lower bound (inclusive) on created_at."
+            },
+            "date_to": {
+                "type": "string",
+                "description": "Optional upper bound (inclusive) on created_at."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type, count and the results list of recordings; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_shared_users",
+        "description": "List shared users for the given location.",
+        "arguments": {
+            "location_id": {
+                "type": "string",
+                "description": "Id of the location whose shared users to list."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type, count and the results list of shared users; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_shared_user",
+        "description": "Get a single shared user by user id within a location.",
+        "arguments": {
+            "location_id": {
+                "type": "string",
+                "description": "Id of the location."
+            },
+            "user_id": {
+                "type": "integer",
+                "description": "Numeric id of the shared user."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type and the shared_user object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_chime_settings",
+        "description": "Get the settings for a chime device.",
+        "arguments": {
+            "device_id": {
+                "type": "integer",
+                "description": "Numeric id of the chime device."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type and the chime settings; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "link_chime_to_doorbell",
+        "description": "Link a chime to a doorbell so it plays for that doorbell's events.",
+        "arguments": {
+            "device_id": {
+                "type": "integer",
+                "description": "Numeric id of the chime device."
+            },
+            "doorbell_id": {
+                "type": "integer",
+                "description": "Numeric id of the doorbell to link."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type and the updated chime settings; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "unlink_chime_from_doorbell",
+        "description": "Unlink a chime from a doorbell.",
+        "arguments": {
+            "device_id": {
+                "type": "integer",
+                "description": "Numeric id of the chime device."
+            },
+            "doorbell_id": {
+                "type": "integer",
+                "description": "Numeric id of the doorbell to unlink."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type and the updated chime settings; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_motion_zones",
+        "description": "List the motion detection zones configured for a device.",
+        "arguments": {
+            "device_id": {
+                "type": "integer",
+                "description": "Numeric id of the device."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type, count and the results list of motion zones; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_notification_prefs",
+        "description": "List notification preferences across all devices.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type, count and the results list of notification preferences; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_notification_pref",
+        "description": "Get the notification preferences for a device and channel.",
+        "arguments": {
+            "device_id": {
+                "type": "integer",
+                "description": "Numeric id of the device."
+            },
+            "channel": {
+                "type": "string",
+                "description": "Notification channel (default 'push')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type and the notification_pref object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_notification_pref",
+        "description": "Update notification preferences (motion, ding, person, package alerts) for a device.",
+        "arguments": {
+            "device_id": {
+                "type": "integer",
+                "description": "Numeric id of the device."
+            },
+            "motion_alerts": {
+                "type": "boolean",
+                "description": "Optional flag to enable/disable motion alerts."
+            },
+            "ding_alerts": {
+                "type": "boolean",
+                "description": "Optional flag to enable/disable ding alerts."
+            },
+            "person_alerts": {
+                "type": "boolean",
+                "description": "Optional flag to enable/disable person alerts."
+            },
+            "package_alerts": {
+                "type": "boolean",
+                "description": "Optional flag to enable/disable package alerts."
+            },
+            "channel": {
+                "type": "string",
+                "description": "Notification channel (default 'push')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type and the updated notification_pref object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "activate_siren",
+        "description": "Activate the siren on a device that has one, for a given duration.",
+        "arguments": {
+            "device_id": {
+                "type": "integer",
+                "description": "Numeric id of the device."
+            },
+            "duration_seconds": {
+                "type": "integer",
+                "description": "Duration in seconds the siren stays on (default 30)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type, device_id and siren_status; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "deactivate_siren",
+        "description": "Deactivate the siren on a device that has one.",
+        "arguments": {
+            "device_id": {
+                "type": "integer",
+                "description": "Numeric id of the device."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type, device_id and siren_status; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "toggle_floodlight",
+        "description": "Turn a device's floodlight on or off.",
+        "arguments": {
+            "device_id": {
+                "type": "integer",
+                "description": "Numeric id of the device."
+            },
+            "on": {
+                "type": "boolean",
+                "description": "Whether the floodlight should be on (true) or off (false)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains type, device_id and floodlight_status; on failure, output contains an error message."
+        }
+    }
+]

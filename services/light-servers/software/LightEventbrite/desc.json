@@ -1,0 +1,294 @@
+[
+    {
+        "tool_name": "list_organizations",
+        "description": "List all organizations available to the current user.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains a list of organizations and pagination info; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_organization",
+        "description": "Get a single organization by its id.",
+        "arguments": {
+            "org_id": {
+                "type": "string",
+                "description": "The unique id of the organization."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the organization object; on failure (organization not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_events",
+        "description": "List events for a given organization, optionally filtered by status and a search query.",
+        "arguments": {
+            "org_id": {
+                "type": "string",
+                "description": "The unique id of the organization whose events to list."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional status filter (e.g. draft, live, completed, canceled)."
+            },
+            "q": {
+                "type": "string",
+                "description": "Optional search query matched against event name and summary."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of events to return (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains the serialized events and pagination info; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "search_events",
+        "description": "Search events across all organizations, optionally filtered by query and status.",
+        "arguments": {
+            "q": {
+                "type": "string",
+                "description": "Optional search query matched against event name and summary."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional status filter (e.g. draft, live, completed, canceled)."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of events to return (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains the serialized events and pagination info; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_event",
+        "description": "Get a single event by its id.",
+        "arguments": {
+            "event_id": {
+                "type": "string",
+                "description": "The unique id of the event."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the serialized event; on failure (event not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_event",
+        "description": "Create a new draft event for an organization.",
+        "arguments": {
+            "organization_id": {
+                "type": "string",
+                "description": "The id of the organization the event belongs to."
+            },
+            "name": {
+                "type": "string",
+                "description": "The name/title of the event."
+            },
+            "summary": {
+                "type": "string",
+                "description": "A short summary of the event."
+            },
+            "start_utc": {
+                "type": "string",
+                "description": "Event start time in UTC ISO format."
+            },
+            "end_utc": {
+                "type": "string",
+                "description": "Event end time in UTC ISO format."
+            },
+            "timezone": {
+                "type": "string",
+                "description": "Optional timezone name (default 'America/Los_Angeles')."
+            },
+            "venue_id": {
+                "type": "string",
+                "description": "Optional venue id where the event is held."
+            },
+            "capacity": {
+                "type": "integer",
+                "description": "Optional capacity for the event (default 50)."
+            },
+            "is_free": {
+                "type": "boolean",
+                "description": "Whether the event is free (default true)."
+            },
+            "online_event": {
+                "type": "boolean",
+                "description": "Whether the event is online (default false)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the serialized created event; on failure (organization not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "publish_event",
+        "description": "Publish an event, moving it to live status (requires at least one ticket class).",
+        "arguments": {
+            "event_id": {
+                "type": "string",
+                "description": "The unique id of the event to publish."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the serialized live event; on failure (event not found or no ticket class), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "cancel_event",
+        "description": "Cancel an event, moving it to canceled status.",
+        "arguments": {
+            "event_id": {
+                "type": "string",
+                "description": "The unique id of the event to cancel."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the serialized canceled event; on failure (event not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_venues",
+        "description": "List all venues.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains a list of venue objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_venue",
+        "description": "Get a single venue by its id.",
+        "arguments": {
+            "venue_id": {
+                "type": "string",
+                "description": "The unique id of the venue."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the venue object; on failure (venue not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_ticket_classes",
+        "description": "List the ticket classes belonging to an event.",
+        "arguments": {
+            "event_id": {
+                "type": "string",
+                "description": "The unique id of the event."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains a list of ticket class objects; on failure (event not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_ticket_class",
+        "description": "Create a new ticket class for an event.",
+        "arguments": {
+            "event_id": {
+                "type": "string",
+                "description": "The unique id of the event the ticket class belongs to."
+            },
+            "name": {
+                "type": "string",
+                "description": "The name of the ticket class."
+            },
+            "quantity_total": {
+                "type": "integer",
+                "description": "The total number of tickets available for this class."
+            },
+            "cost": {
+                "type": "integer",
+                "description": "The cost of the ticket in minor units (default 0)."
+            },
+            "free": {
+                "type": "boolean",
+                "description": "Whether the ticket class is free (default true)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created ticket class; on failure (event not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_attendees",
+        "description": "List attendees of an event, optionally filtered by status and check-in state.",
+        "arguments": {
+            "event_id": {
+                "type": "string",
+                "description": "The unique id of the event."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional attendee status filter (e.g. attending)."
+            },
+            "checked_in": {
+                "type": "boolean",
+                "description": "Optional check-in filter; when set, only attendees matching this checked-in state are returned."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains a list of attendees and pagination info; on failure (event not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "register_attendee",
+        "description": "Register a new attendee for an event against a ticket class.",
+        "arguments": {
+            "event_id": {
+                "type": "string",
+                "description": "The unique id of the event to register for."
+            },
+            "ticket_class_id": {
+                "type": "string",
+                "description": "The id of the ticket class to register against."
+            },
+            "name": {
+                "type": "string",
+                "description": "The attendee's name."
+            },
+            "email": {
+                "type": "string",
+                "description": "The attendee's email address."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created attendee; on failure (event/ticket class not found or sold out), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "check_in_attendee",
+        "description": "Check in an attendee by their id.",
+        "arguments": {
+            "attendee_id": {
+                "type": "string",
+                "description": "The unique id of the attendee to check in."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated attendee; on failure (attendee not found), output contains an error message."
+        }
+    }
+]

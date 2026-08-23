@@ -1,0 +1,211 @@
+[
+    {
+        "tool_name": "list_lists",
+        "description": "List all audiences (lists) available in the current Mailchimp session.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with 'lists' (array of list objects) and 'total_items'; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_list",
+        "description": "Get a single audience (list) by its id.",
+        "arguments": {
+            "list_id": {
+                "type": "string",
+                "description": "The unique id of the list."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the list object; on failure (list not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_members",
+        "description": "List the members of an audience (list), optionally filtered by subscription status.",
+        "arguments": {
+            "list_id": {
+                "type": "string",
+                "description": "The unique id of the list."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional member status to filter by (e.g. subscribed, unsubscribed, cleaned)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with 'members', 'list_id', and 'total_items'; on failure (list not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_member",
+        "description": "Get a single list member by subscriber hash or raw email address.",
+        "arguments": {
+            "list_id": {
+                "type": "string",
+                "description": "The unique id of the list."
+            },
+            "subscriber_hash": {
+                "type": "string",
+                "description": "The subscriber hash (MD5 of the lowercased email) or the raw email address of the member."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the member object; on failure (member not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_member",
+        "description": "Add a new member to an audience (list).",
+        "arguments": {
+            "list_id": {
+                "type": "string",
+                "description": "The unique id of the list to add the member to."
+            },
+            "email_address": {
+                "type": "string",
+                "description": "The email address of the new member."
+            },
+            "status": {
+                "type": "string",
+                "description": "Subscription status for the member (default 'subscribed')."
+            },
+            "full_name": {
+                "type": "string",
+                "description": "Optional full name of the member."
+            },
+            "member_rating": {
+                "type": "integer",
+                "description": "Optional member rating (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created member object; on failure (list not found or member already exists), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_member",
+        "description": "Update fields of an existing list member by subscriber hash or raw email address.",
+        "arguments": {
+            "list_id": {
+                "type": "string",
+                "description": "The unique id of the list."
+            },
+            "subscriber_hash": {
+                "type": "string",
+                "description": "The subscriber hash (MD5 of the lowercased email) or the raw email address of the member."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional new subscription status."
+            },
+            "full_name": {
+                "type": "string",
+                "description": "Optional new full name."
+            },
+            "member_rating": {
+                "type": "integer",
+                "description": "Optional new member rating."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated member object; on failure (member not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_campaigns",
+        "description": "List campaigns, optionally filtered by status.",
+        "arguments": {
+            "status": {
+                "type": "string",
+                "description": "Optional campaign status to filter by (e.g. sent, save)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with 'campaigns' (array) and 'total_items'; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_campaign",
+        "description": "Get a single campaign by its id.",
+        "arguments": {
+            "campaign_id": {
+                "type": "string",
+                "description": "The unique id of the campaign."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the campaign object; on failure (campaign not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_campaign",
+        "description": "Create a new campaign targeting an audience (list).",
+        "arguments": {
+            "list_id": {
+                "type": "string",
+                "description": "The unique id of the recipient list."
+            },
+            "subject_line": {
+                "type": "string",
+                "description": "The subject line of the campaign."
+            },
+            "from_name": {
+                "type": "string",
+                "description": "The from name shown to recipients."
+            },
+            "reply_to": {
+                "type": "string",
+                "description": "The reply-to email address for the campaign."
+            },
+            "title": {
+                "type": "string",
+                "description": "Optional internal title for the campaign."
+            },
+            "type_": {
+                "type": "string",
+                "description": "The campaign type (default 'regular')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created campaign object; on failure (list not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "send_campaign",
+        "description": "Send a campaign, marking it as sent and generating a report if one does not already exist.",
+        "arguments": {
+            "campaign_id": {
+                "type": "string",
+                "description": "The unique id of the campaign to send."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output describes the sent campaign (id, status, emails_sent); on failure (campaign not found or already sent), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_report",
+        "description": "Get the performance report for a campaign by its id.",
+        "arguments": {
+            "campaign_id": {
+                "type": "string",
+                "description": "The unique id of the campaign."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the report object (emails_sent, opens, clicks, unsubscribed, bounces); on failure (no report or campaign not found), output contains an error message."
+        }
+    }
+]

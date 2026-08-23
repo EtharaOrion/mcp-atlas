@@ -1,0 +1,285 @@
+# Source: world_data 2/LightSalesforce.json (verbatim). Corpus-only authored world.
+tables:
+  Account:
+  - Id: 001Ax000001AAAAAA1
+    Name: Coastal Georgia Community Foundation
+    Industry: Philanthropy
+    AnnualRevenue: 5400000
+    Phone: (555) 912-4400
+    Website: https://northwind.example.com
+    BillingCity: San Francisco
+    BillingState: CA
+    NumberOfEmployees: 120
+    attributes:
+      type: Account
+      url: /services/data/v59.0/sobjects/Account/001Ax000001AAAAAA1
+  - Id: 001Ax000002BBBBBB2
+    Name: Bull Street Merchants Association
+    Industry: Philanthropy
+    AnnualRevenue: 18200000
+    Phone: (555) 912-1100
+    Website: https://initech.example.com
+    BillingCity: Austin
+    BillingState: TX
+    NumberOfEmployees: 540
+    attributes:
+      type: Account
+      url: /services/data/v59.0/sobjects/Account/001Ax000002BBBBBB2
+  - Id: 001Ax000003CCCCCC3
+    Name: Savannah Rotary Club
+    Industry: Philanthropy
+    AnnualRevenue: 76500000
+    Phone: (555) 912-2217
+    Website: https://globex.example.com
+    BillingCity: Chicago
+    BillingState: IL
+    NumberOfEmployees: 2100
+    attributes:
+      type: Account
+      url: /services/data/v59.0/sobjects/Account/001Ax000003CCCCCC3
+  - Id: 001Ax000004DDDDDD4
+    Name: Telfair Neighbors Trust
+    Industry: Philanthropy
+    AnnualRevenue: 9800000
+    Phone: (555) 912-4412
+    Website: https://soylent.example.com
+    BillingCity: Boston
+    BillingState: MA
+    NumberOfEmployees: 310
+    attributes:
+      type: Account
+      url: /services/data/v59.0/sobjects/Account/001Ax000004DDDDDD4
+  - Id: 001Ax000005EEEEEE5
+    Name: Lowcountry Cooperative
+    Industry: Philanthropy
+    AnnualRevenue: 33400000
+    Phone: (555) 912-1100
+    Website: https://umbrella.example.com
+    BillingCity: Seattle
+    BillingState: WA
+    NumberOfEmployees: 870
+    attributes:
+      type: Account
+      url: /services/data/v59.0/sobjects/Account/001Ax000005EEEEEE5
+  Contact:
+  - Id: 003Ax000001AAAAAA1
+    FirstName: Marcus
+    LastName: Whitby
+    Email: marcus.whitby@shpa-savannah.org
+    Phone: (555) 912-4412
+    Title: Donor liaison
+    AccountId: 001Ax000001AAAAAA1
+    MailingCity: San Francisco
+    attributes:
+      type: Contact
+      url: /services/data/v59.0/sobjects/Contact/003Ax000001AAAAAA1
+  - Id: 003Ax000002BBBBBB2
+    FirstName: Lorraine
+    LastName: Deveraux
+    Email: lorraine.deveraux@shpa-savannah.org
+    Phone: (555) 912-8800
+    Title: Donor liaison
+    AccountId: 001Ax000002BBBBBB2
+    MailingCity: Austin
+    attributes:
+      type: Contact
+      url: /services/data/v59.0/sobjects/Contact/003Ax000002BBBBBB2
+  - Id: 003Ax000003CCCCCC3
+    FirstName: Henry
+    LastName: Beaumont
+    Email: henry.beaumont@Finthesiss.ai
+    Phone: (555) 404-3319
+    Title: Donor liaison
+    AccountId: 001Ax000002BBBBBB2
+    MailingCity: Austin
+    attributes:
+      type: Contact
+      url: /services/data/v59.0/sobjects/Contact/003Ax000003CCCCCC3
+  - Id: 003Ax000004DDDDDD4
+    FirstName: Loretta
+    LastName: Simms
+    Email: loretta.simms@Finthesiss.ai
+    Phone: (555) 912-3320
+    Title: Donor liaison
+    AccountId: 001Ax000003CCCCCC3
+    MailingCity: Chicago
+    attributes:
+      type: Contact
+      url: /services/data/v59.0/sobjects/Contact/003Ax000004DDDDDD4
+  - Id: 003Ax000005EEEEEE5
+    FirstName: Cordelia
+    LastName: Ashmore-Vance
+    Email: cordelia.ashmore.vance@shpa-savannah.org
+    Phone: (555) 912-5581
+    Title: Donor liaison
+    AccountId: 001Ax000003CCCCCC3
+    MailingCity: Chicago
+    attributes:
+      type: Contact
+      url: /services/data/v59.0/sobjects/Contact/003Ax000005EEEEEE5
+  - Id: 003Ax000006FFFFFF6
+    FirstName: Everett
+    LastName: Petain
+    Email: everett.petain@senonprofit.com
+    Phone: (555) 912-8800
+    Title: Donor liaison
+    AccountId: 001Ax000004DDDDDD4
+    MailingCity: Boston
+    attributes:
+      type: Contact
+      url: /services/data/v59.0/sobjects/Contact/003Ax000006FFFFFF6
+  - Id: 003Ax000007GGGGGG7
+    FirstName: Corinne
+    LastName: Lattimer
+    Email: corinne.lattimer@halliwell-cpa.com
+    Phone: (555) 912-4412
+    Title: Donor liaison
+    AccountId: 001Ax000005EEEEEE5
+    MailingCity: Seattle
+    attributes:
+      type: Contact
+      url: /services/data/v59.0/sobjects/Contact/003Ax000007GGGGGG7
+  - Id: 003Ax000008HHHHHH8
+    FirstName: Yvonne
+    LastName: Cabrera
+    Email: yvonne.cabrera@shpa-savannah.org
+    Phone: (555) 912-8800
+    Title: Donor liaison
+    AccountId: 001Ax000005EEEEEE5
+    MailingCity: Seattle
+    attributes:
+      type: Contact
+      url: /services/data/v59.0/sobjects/Contact/003Ax000008HHHHHH8
+  Lead:
+  - Id: 00QAx000001AAAAAA1
+    FirstName: Yvonne
+    LastName: Cabrera
+    Company: Coastal Georgia Community Foundation
+    Email: yvonne.cabrera@shpa-savannah.org
+    Phone: (555) 404-3319
+    Status: Open - Not Contacted
+    LeadSource: Web
+    Industry: Technology
+    Rating: Warm
+    attributes:
+      type: Lead
+      url: /services/data/v59.0/sobjects/Lead/00QAx000001AAAAAA1
+  - Id: 00QAx000002BBBBBB2
+    FirstName: Amos
+    LastName: Whitfield
+    Company: Bull Street Merchants Association
+    Email: amos.whitfield@Finthesiss.ai
+    Phone: (555) 404-3319
+    Status: Working - Contacted
+    LeadSource: Trade Show
+    Industry: Retail
+    Rating: Hot
+    attributes:
+      type: Lead
+      url: /services/data/v59.0/sobjects/Lead/00QAx000002BBBBBB2
+  - Id: 00QAx000003CCCCCC3
+    FirstName: Barrett
+    LastName: Whitehall
+    Company: Savannah Rotary Club
+    Email: barrett.whitehall@shpa-savannah.org
+    Phone: (555) 912-1100
+    Status: Qualified
+    LeadSource: Referral
+    Industry: Manufacturing
+    Rating: Hot
+    attributes:
+      type: Lead
+      url: /services/data/v59.0/sobjects/Lead/00QAx000003CCCCCC3
+  - Id: 00QAx000004DDDDDD4
+    FirstName: Reginald
+    LastName: Thackery
+    Company: Telfair Neighbors Trust
+    Email: reginald.thackery@shpa-savannah.org
+    Phone: (555) 404-3318
+    Status: Open - Not Contacted
+    LeadSource: Web
+    Industry: Healthcare
+    Rating: Cold
+    attributes:
+      type: Lead
+      url: /services/data/v59.0/sobjects/Lead/00QAx000004DDDDDD4
+  - Id: 00QAx000005EEEEEE5
+    FirstName: Pastor
+    LastName: Holloway
+    Company: Lowcountry Cooperative
+    Email: james.holloway@Finthesiss.ai
+    Phone: (555) 912-7010
+    Status: Working - Contacted
+    LeadSource: Email
+    Industry: Transportation
+    Rating: Warm
+    attributes:
+      type: Lead
+      url: /services/data/v59.0/sobjects/Lead/00QAx000005EEEEEE5
+  Opportunity:
+  - Id: 006Ax000001AAAAAA1
+    Name: Annual fund gift
+    AccountId: 001Ax000001AAAAAA1
+    StageName: Prospecting
+    Amount: 120000
+    Probability: 20
+    CloseDate: '2026-07-15'
+    Type: New Business
+    attributes:
+      type: Opportunity
+      url: /services/data/v59.0/sobjects/Opportunity/006Ax000001AAAAAA1
+  - Id: 006Ax000002BBBBBB2
+    Name: Corporate sponsorship — tour
+    AccountId: 001Ax000002BBBBBB2
+    StageName: Proposal/Price Quote
+    Amount: 450000
+    Probability: 60
+    CloseDate: '2026-06-30'
+    Type: Existing Business
+    attributes:
+      type: Opportunity
+      url: /services/data/v59.0/sobjects/Opportunity/006Ax000002BBBBBB2
+  - Id: 006Ax000003CCCCCC3
+    Name: Grant renewal — Georgia Trust
+    AccountId: 001Ax000003CCCCCC3
+    StageName: Negotiation/Review
+    Amount: 1250000
+    Probability: 75
+    CloseDate: '2026-08-10'
+    Type: New Business
+    attributes:
+      type: Opportunity
+      url: /services/data/v59.0/sobjects/Opportunity/006Ax000003CCCCCC3
+  - Id: 006Ax000004DDDDDD4
+    Name: Lecture series underwriting
+    AccountId: 001Ax000004DDDDDD4
+    StageName: Closed Won
+    Amount: 210000
+    Probability: 100
+    CloseDate: '2026-05-01'
+    Type: New Business
+    attributes:
+      type: Opportunity
+      url: /services/data/v59.0/sobjects/Opportunity/006Ax000004DDDDDD4
+  - Id: 006Ax000005EEEEEE5
+    Name: Facade fund pledge
+    AccountId: 001Ax000005EEEEEE5
+    StageName: Qualification
+    Amount: 340000
+    Probability: 40
+    CloseDate: '2026-09-20'
+    Type: New Business
+    attributes:
+      type: Opportunity
+      url: /services/data/v59.0/sobjects/Opportunity/006Ax000005EEEEEE5
+  - Id: 006Ax000006FFFFFF6
+    Name: Member upgrade campaign
+    AccountId: 001Ax000002BBBBBB2
+    StageName: Closed Lost
+    Amount: 85000
+    Probability: 0
+    CloseDate: '2026-04-22'
+    Type: Existing Business
+    attributes:
+      type: Opportunity
+      url: /services/data/v59.0/sobjects/Opportunity/006Ax000006FFFFFF6

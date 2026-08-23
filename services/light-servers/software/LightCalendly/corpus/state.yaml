@@ -1,0 +1,85 @@
+# Source: world_data 2/LightCalendly.json (verbatim). Corpus-only authored world.
+scheduled_events:
+- uuid: sev-1001
+  owner: Amos Jeremiah Whitfield
+  event_type: et-intro-15
+  name: SHPA partner introduction call
+  status: active
+  start_time: '2026-05-28T17:00:00.000000Z'
+  end_time: '2026-05-28T17:15:00.000000Z'
+  location_type: zoom
+  location: 56 Liberty Street, Savannah, GA
+  created_at: '2026-05-25T09:00:00.000000Z'
+  canceled_reason: null
+- uuid: sev-1002
+  owner: Amos Jeremiah Whitfield
+  event_type: et-discovery-30
+  name: Woodworks commission consultation
+  status: active
+  start_time: '2026-05-29T20:00:00.000000Z'
+  end_time: '2026-05-29T20:30:00.000000Z'
+  location_type: google_conference
+  location: 88 Whitaker Street, Savannah, GA
+  created_at: '2026-05-26T11:30:00.000000Z'
+  canceled_reason: null
+- uuid: sev-1003
+  owner: Amos Jeremiah Whitfield
+  event_type: et-deepdive-60
+  name: Docent program interest chat
+  status: active
+  start_time: '2026-06-01T18:00:00.000000Z'
+  end_time: '2026-06-01T19:00:00.000000Z'
+  location_type: physical
+  location: 34 Gaston Street, Savannah, GA
+  created_at: '2026-05-26T15:45:00.000000Z'
+  canceled_reason: null
+- uuid: sev-1004
+  owner: Amos Jeremiah Whitfield
+  event_type: et-intro-15
+  name: Member welcome call
+  status: canceled
+  start_time: '2026-05-22T16:00:00.000000Z'
+  end_time: '2026-05-22T16:15:00.000000Z'
+  location_type: zoom
+  location: 207 Jones Street, Savannah, GA
+  created_at: '2026-05-20T08:00:00.000000Z'
+  canceled_reason: Invitee had a scheduling conflict
+invitees:
+- uuid: inv-5001
+  event: sev-1001
+  name: Dr. Sarah Langston
+  email: dr.langston@Finthesiss.ai
+  status: active
+  timezone: America/New_York
+  created_at: '2026-05-25T09:00:00.000000Z'
+  questions_and_answers:
+  - question: What would you like to discuss?
+    answer: Pricing and onboarding
+- uuid: inv-5002
+  event: sev-1002
+  name: Reginald Thackery
+  email: reginald.thackery@shpa-savannah.org
+  status: active
+  timezone: Europe/Madrid
+  created_at: '2026-05-26T11:30:00.000000Z'
+  questions_and_answers:
+  - question: Company size?
+    answer: 50-100 employees
+- uuid: inv-5003
+  event: sev-1003
+  name: Ellis Marchand
+  email: ellis.marchand@ashcrofthardwoods.com
+  status: active
+  timezone: America/New_York
+  created_at: '2026-05-26T15:45:00.000000Z'
+  questions_and_answers:
+  - question: Main technical concern?
+    answer: Multi-region failover
+- uuid: inv-5004
+  event: sev-1004
+  name: Rev. Delilah Hargrove
+  email: delilah.hargrove@shpa-savannah.org
+  status: canceled
+  timezone: America/New_York
+  created_at: '2026-05-20T08:00:00.000000Z'
+  questions_and_answers: []

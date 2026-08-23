@@ -1,0 +1,348 @@
+[
+  {
+    "tool_name": "get_company_info",
+    "description": "Retrieve the company information document for the QuickBooks realm.",
+    "arguments": {},
+    "returns": {"type": "object", "description": "Envelope with status and output; output is a dict containing CompanyInfo."}
+  },
+  {
+    "tool_name": "get_company_raw",
+    "description": "Retrieve the raw, API-shaped company document (CompanyInfo envelope).",
+    "arguments": {},
+    "returns": {"type": "object", "description": "Envelope with status and output; output is the raw company document."}
+  },
+  {
+    "tool_name": "get_bill_payments",
+    "description": "Retrieve the bill payments document (QueryResponse with BillPayment list).",
+    "arguments": {},
+    "returns": {"type": "object", "description": "Envelope with status and output; output holds the bill payments QueryResponse."}
+  },
+  {
+    "tool_name": "get_corporate_expense_ledger",
+    "description": "Retrieve the supplemental Corporate Expense Ledger document.",
+    "arguments": {},
+    "returns": {"type": "object", "description": "Envelope with status and output; output is the corporate expense ledger document."}
+  },
+  {
+    "tool_name": "get_reimbursement_policy",
+    "description": "Retrieve the supplemental Reimbursement Policy document.",
+    "arguments": {},
+    "returns": {"type": "object", "description": "Envelope with status and output; output is the reimbursement policy document."}
+  },
+  {
+    "tool_name": "get_break_even_analysis",
+    "description": "Retrieve the Break Even Analysis report document.",
+    "arguments": {},
+    "returns": {"type": "object", "description": "Envelope with status and output; output holds the break-even analysis."}
+  },
+  {
+    "tool_name": "get_customer",
+    "description": "Fetch a single customer by its Id.",
+    "arguments": {
+      "customer_id": {"type": "string", "description": "The Id of the customer to retrieve."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has a Customer key, or status failed if not found."}
+  },
+  {
+    "tool_name": "create_customer",
+    "description": "Create a new customer record.",
+    "arguments": {
+      "DisplayName": {"type": "string", "description": "Display name of the customer."},
+      "GivenName": {"type": "string", "description": "Given (first) name."},
+      "FamilyName": {"type": "string", "description": "Family (last) name."},
+      "CompanyName": {"type": "string", "description": "Company name."},
+      "PrimaryEmailAddr": {"type": "object", "description": "Primary email address object, e.g. {\"Address\": \"...\"}."},
+      "PrimaryPhone": {"type": "object", "description": "Primary phone object, e.g. {\"FreeFormNumber\": \"...\"}."},
+      "BillAddr": {"type": "object", "description": "Billing address object."},
+      "Notes": {"type": "string", "description": "Free-form notes about the customer."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has the created Customer."}
+  },
+  {
+    "tool_name": "update_customer",
+    "description": "Update an existing customer by Id; only provided fields are changed.",
+    "arguments": {
+      "customer_id": {"type": "string", "description": "The Id of the customer to update."},
+      "DisplayName": {"type": "string", "description": "Updated display name."},
+      "GivenName": {"type": "string", "description": "Updated given name."},
+      "FamilyName": {"type": "string", "description": "Updated family name."},
+      "CompanyName": {"type": "string", "description": "Updated company name."},
+      "PrimaryEmailAddr": {"type": "object", "description": "Updated primary email object."},
+      "PrimaryPhone": {"type": "object", "description": "Updated primary phone object."},
+      "BillAddr": {"type": "object", "description": "Updated billing address object."},
+      "Active": {"type": "boolean", "description": "Whether the customer is active."},
+      "Notes": {"type": "string", "description": "Updated notes."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has the updated Customer, or status failed if not found."}
+  },
+  {
+    "tool_name": "get_vendor",
+    "description": "Fetch a single vendor by its Id.",
+    "arguments": {
+      "vendor_id": {"type": "string", "description": "The Id of the vendor to retrieve."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has a Vendor key, or status failed if not found."}
+  },
+  {
+    "tool_name": "create_vendor",
+    "description": "Create a new vendor record.",
+    "arguments": {
+      "DisplayName": {"type": "string", "description": "Display name of the vendor."},
+      "CompanyName": {"type": "string", "description": "Company name."},
+      "PrimaryEmailAddr": {"type": "object", "description": "Primary email address object."},
+      "PrimaryPhone": {"type": "object", "description": "Primary phone object."},
+      "BillAddr": {"type": "object", "description": "Billing address object."},
+      "AcctNum": {"type": "string", "description": "Vendor account number."},
+      "Vendor1099": {"type": "boolean", "description": "Whether the vendor is 1099 tracked."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has the created Vendor."}
+  },
+  {
+    "tool_name": "update_vendor",
+    "description": "Update an existing vendor by Id; only provided fields are changed.",
+    "arguments": {
+      "vendor_id": {"type": "string", "description": "The Id of the vendor to update."},
+      "DisplayName": {"type": "string", "description": "Updated display name."},
+      "CompanyName": {"type": "string", "description": "Updated company name."},
+      "PrimaryEmailAddr": {"type": "object", "description": "Updated primary email object."},
+      "PrimaryPhone": {"type": "object", "description": "Updated primary phone object."},
+      "BillAddr": {"type": "object", "description": "Updated billing address object."},
+      "Active": {"type": "boolean", "description": "Whether the vendor is active."},
+      "AcctNum": {"type": "string", "description": "Updated account number."},
+      "Vendor1099": {"type": "boolean", "description": "Whether the vendor is 1099 tracked."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has the updated Vendor, or status failed if not found."}
+  },
+  {
+    "tool_name": "get_item",
+    "description": "Fetch a single item (product/service) by its Id.",
+    "arguments": {
+      "item_id": {"type": "string", "description": "The Id of the item to retrieve."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has an Item key, or status failed if not found."}
+  },
+  {
+    "tool_name": "create_item",
+    "description": "Create a new item (product/service) record.",
+    "arguments": {
+      "Name": {"type": "string", "description": "Item name."},
+      "Description": {"type": "string", "description": "Item description."},
+      "Type": {"type": "string", "description": "Item type (e.g. Service)."},
+      "UnitPrice": {"type": "number", "description": "Unit price of the item."},
+      "IncomeAccountRef": {"type": "object", "description": "Income account reference object with value and name."},
+      "Taxable": {"type": "boolean", "description": "Whether the item is taxable."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has the created Item."}
+  },
+  {
+    "tool_name": "update_item",
+    "description": "Update an existing item by Id; only provided fields are changed.",
+    "arguments": {
+      "item_id": {"type": "string", "description": "The Id of the item to update."},
+      "Name": {"type": "string", "description": "Updated item name."},
+      "Description": {"type": "string", "description": "Updated description."},
+      "UnitPrice": {"type": "number", "description": "Updated unit price."},
+      "Active": {"type": "boolean", "description": "Whether the item is active."},
+      "Taxable": {"type": "boolean", "description": "Whether the item is taxable."},
+      "IncomeAccountRef": {"type": "object", "description": "Updated income account reference object."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has the updated Item, or status failed if not found."}
+  },
+  {
+    "tool_name": "get_account",
+    "description": "Fetch a single chart-of-accounts account by its Id.",
+    "arguments": {
+      "account_id": {"type": "string", "description": "The Id of the account to retrieve."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has an Account key, or status failed if not found."}
+  },
+  {
+    "tool_name": "get_invoice",
+    "description": "Fetch a single invoice by its Id.",
+    "arguments": {
+      "invoice_id": {"type": "string", "description": "The Id of the invoice to retrieve."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has an Invoice key, or status failed if not found."}
+  },
+  {
+    "tool_name": "get_invoice_pdf",
+    "description": "Get the PDF download URL for an invoice.",
+    "arguments": {
+      "invoice_id": {"type": "string", "description": "The Id of the invoice."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has a url field, or status failed if not found."}
+  },
+  {
+    "tool_name": "create_invoice",
+    "description": "Create a new invoice, computing the subtotal line and totals from provided lines.",
+    "arguments": {
+      "CustomerRef": {"type": "object", "description": "Customer reference object with value (and optional name)."},
+      "Line": {"type": "array", "description": "List of invoice line objects with Amount and DetailType."},
+      "TxnDate": {"type": "string", "description": "Transaction date (YYYY-MM-DD)."},
+      "DueDate": {"type": "string", "description": "Due date (YYYY-MM-DD)."},
+      "BillEmail": {"type": "object", "description": "Billing email object."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has the created Invoice."}
+  },
+  {
+    "tool_name": "update_invoice",
+    "description": "Update an existing invoice by Id; recomputes totals when Line is supplied.",
+    "arguments": {
+      "invoice_id": {"type": "string", "description": "The Id of the invoice to update."},
+      "CustomerRef": {"type": "object", "description": "Updated customer reference object."},
+      "Line": {"type": "array", "description": "Updated list of line objects."},
+      "DueDate": {"type": "string", "description": "Updated due date."},
+      "BillEmail": {"type": "object", "description": "Updated billing email object."},
+      "PrintStatus": {"type": "string", "description": "Print status value."},
+      "EmailStatus": {"type": "string", "description": "Email status value."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has the updated Invoice, or status failed if not found."}
+  },
+  {
+    "tool_name": "void_invoice",
+    "description": "Void an invoice, setting its status to Voided and balance to zero.",
+    "arguments": {
+      "invoice_id": {"type": "string", "description": "The Id of the invoice to void."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has the voided Invoice, or status failed if not found."}
+  },
+  {
+    "tool_name": "send_invoice",
+    "description": "Mark an invoice as sent (EmailStatus becomes Sent).",
+    "arguments": {
+      "invoice_id": {"type": "string", "description": "The Id of the invoice to send."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has the updated Invoice, or status failed if not found."}
+  },
+  {
+    "tool_name": "get_bill",
+    "description": "Fetch a single bill by its Id.",
+    "arguments": {
+      "bill_id": {"type": "string", "description": "The Id of the bill to retrieve."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has a Bill key, or status failed if not found."}
+  },
+  {
+    "tool_name": "create_bill",
+    "description": "Create a new bill from a vendor reference and line items.",
+    "arguments": {
+      "VendorRef": {"type": "object", "description": "Vendor reference object with value (and optional name)."},
+      "Line": {"type": "array", "description": "List of bill line objects with Amount."},
+      "TxnDate": {"type": "string", "description": "Transaction date (YYYY-MM-DD)."},
+      "DueDate": {"type": "string", "description": "Due date (YYYY-MM-DD)."},
+      "DocNumber": {"type": "string", "description": "Document number for the bill."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has the created Bill."}
+  },
+  {
+    "tool_name": "pay_bill",
+    "description": "Pay a bill, setting its balance to zero and status to Paid.",
+    "arguments": {
+      "bill_id": {"type": "string", "description": "The Id of the bill to pay."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has the updated Bill, or status failed if not found."}
+  },
+  {
+    "tool_name": "get_payment",
+    "description": "Fetch a single payment by its Id.",
+    "arguments": {
+      "payment_id": {"type": "string", "description": "The Id of the payment to retrieve."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has a Payment key, or status failed if not found."}
+  },
+  {
+    "tool_name": "create_payment",
+    "description": "Create a payment and apply linked invoice balances (marking invoices Paid when zeroed).",
+    "arguments": {
+      "CustomerRef": {"type": "object", "description": "Customer reference object with value (and optional name)."},
+      "TotalAmt": {"type": "number", "description": "Total amount of the payment."},
+      "Line": {"type": "array", "description": "List of payment line objects, each may contain LinkedTxn entries."},
+      "TxnDate": {"type": "string", "description": "Transaction date (YYYY-MM-DD)."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has the created Payment."}
+  },
+  {
+    "tool_name": "get_estimate",
+    "description": "Fetch a single estimate by its Id.",
+    "arguments": {
+      "estimate_id": {"type": "string", "description": "The Id of the estimate to retrieve."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has an Estimate key, or status failed if not found."}
+  },
+  {
+    "tool_name": "create_estimate",
+    "description": "Create a new estimate from a customer reference and line items.",
+    "arguments": {
+      "CustomerRef": {"type": "object", "description": "Customer reference object with value (and optional name)."},
+      "Line": {"type": "array", "description": "List of estimate line objects with Amount."},
+      "TxnDate": {"type": "string", "description": "Transaction date (YYYY-MM-DD)."},
+      "ExpirationDate": {"type": "string", "description": "Estimate expiration date (YYYY-MM-DD)."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has the created Estimate."}
+  },
+  {
+    "tool_name": "convert_estimate_to_invoice",
+    "description": "Convert a Pending or Accepted estimate into a new invoice and link them.",
+    "arguments": {
+      "estimate_id": {"type": "string", "description": "The Id of the estimate to convert."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has the new Invoice, or status failed if not found or not convertible."}
+  },
+  {
+    "tool_name": "get_expense",
+    "description": "Fetch a single expense (Purchase) by its Id.",
+    "arguments": {
+      "expense_id": {"type": "string", "description": "The Id of the expense to retrieve."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has a Purchase key, or status failed if not found."}
+  },
+  {
+    "tool_name": "create_expense",
+    "description": "Create a new expense (Purchase) from an account reference and line items.",
+    "arguments": {
+      "AccountRef": {"type": "object", "description": "Account reference object with value (and optional name)."},
+      "Line": {"type": "array", "description": "List of expense line objects with Amount."},
+      "PaymentType": {"type": "string", "description": "Payment type (e.g. CreditCard)."},
+      "TxnDate": {"type": "string", "description": "Transaction date (YYYY-MM-DD)."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has the created Purchase."}
+  },
+  {
+    "tool_name": "execute_query",
+    "description": "Run a simplified QuickBooks query: SELECT * FROM Entity [WHERE field op 'value'].",
+    "arguments": {
+      "query": {"type": "string", "description": "The query string, e.g. \"SELECT * FROM Invoice WHERE Balance > '0'\"."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output has a QueryResponse with matching rows, or status failed on invalid/unknown query."}
+  },
+  {
+    "tool_name": "profit_and_loss",
+    "description": "Generate a Profit and Loss report over an optional date range.",
+    "arguments": {
+      "start_date": {"type": "string", "description": "Start date filter (YYYY-MM-DD)."},
+      "end_date": {"type": "string", "description": "End date filter (YYYY-MM-DD)."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output holds the ProfitAndLoss report Header and Rows."}
+  },
+  {
+    "tool_name": "balance_sheet",
+    "description": "Generate a Balance Sheet report over an optional date range.",
+    "arguments": {
+      "start_date": {"type": "string", "description": "Start date filter (YYYY-MM-DD)."},
+      "end_date": {"type": "string", "description": "End date filter (YYYY-MM-DD)."}
+    },
+    "returns": {"type": "object", "description": "Envelope with status and output; output holds the BalanceSheet report Header and Rows."}
+  },
+  {
+    "tool_name": "accounts_receivable_aging",
+    "description": "Generate an Aged Receivable Detail report bucketed by days overdue.",
+    "arguments": {},
+    "returns": {"type": "object", "description": "Envelope with status and output; output holds the AgedReceivableDetail report."}
+  },
+  {
+    "tool_name": "accounts_payable_aging",
+    "description": "Generate an Aged Payable Detail report bucketed by days overdue.",
+    "arguments": {},
+    "returns": {"type": "object", "description": "Envelope with status and output; output holds the AgedPayableDetail report."}
+  }
+]

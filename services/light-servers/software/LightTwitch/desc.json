@@ -1,0 +1,124 @@
+[
+    {
+        "tool_name": "get_users",
+        "description": "Get Twitch users, optionally filtered by login names and/or user ids.",
+        "arguments": {
+            "logins": {
+                "type": "array",
+                "description": "Optional list of login names to filter users by (case-insensitive)."
+            },
+            "ids": {
+                "type": "array",
+                "description": "Optional list of user ids to filter users by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of user objects (id, login, display_name, view_count, etc.); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_streams",
+        "description": "Get live streams, optionally filtered by user logins, user ids, and/or game id. Results are sorted by viewer_count descending.",
+        "arguments": {
+            "user_logins": {
+                "type": "array",
+                "description": "Optional list of user login names to filter live streams by."
+            },
+            "user_ids": {
+                "type": "array",
+                "description": "Optional list of user ids to filter live streams by."
+            },
+            "game_id": {
+                "type": "string",
+                "description": "Optional game id to filter live streams by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of live stream objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_channels",
+        "description": "Get channel information for one or more broadcaster ids.",
+        "arguments": {
+            "broadcaster_ids": {
+                "type": "array",
+                "description": "List of broadcaster ids whose channel information should be returned."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of channel objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_channel_followers",
+        "description": "Get the follower total for a channel identified by its broadcaster id.",
+        "arguments": {
+            "broadcaster_id": {
+                "type": "string",
+                "description": "The broadcaster id of the channel."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a data list and a total follower count; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_top_games",
+        "description": "Get the top games ranked by popularity.",
+        "arguments": {
+            "first": {
+                "type": "integer",
+                "description": "Maximum number of top games to return (default 20)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of game objects ordered by rank; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_games",
+        "description": "Get games, optionally filtered by name and/or id.",
+        "arguments": {
+            "names": {
+                "type": "array",
+                "description": "Optional list of game names to filter by (case-insensitive)."
+            },
+            "ids": {
+                "type": "array",
+                "description": "Optional list of game ids to filter by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of game objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_clips",
+        "description": "Get clips, optionally filtered by broadcaster id and/or game id. Results are sorted by view_count descending.",
+        "arguments": {
+            "broadcaster_id": {
+                "type": "string",
+                "description": "Optional broadcaster id to filter clips by."
+            },
+            "game_id": {
+                "type": "string",
+                "description": "Optional game id to filter clips by."
+            },
+            "first": {
+                "type": "integer",
+                "description": "Maximum number of clips to return (default 20)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of clip objects; on failure, output contains an error message."
+        }
+    }
+]

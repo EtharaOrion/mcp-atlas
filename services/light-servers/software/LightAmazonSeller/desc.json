@@ -1,0 +1,429 @@
+[
+    {
+        "tool_name": "get_seller_account",
+        "description": "Get the seller account profile.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains the seller account object."
+        }
+    },
+    {
+        "tool_name": "get_account_health",
+        "description": "Get the seller account health metrics.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains the account health object."
+        }
+    },
+    {
+        "tool_name": "get_buying_notes",
+        "description": "Get the FW26 buying notes reference document.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains the buying notes."
+        }
+    },
+    {
+        "tool_name": "get_performance_notifications",
+        "description": "Get performance notifications, optionally filtered by severity.",
+        "arguments": {
+            "severity": {
+                "type": "string",
+                "description": "Optional severity filter (e.g. WARNING, CRITICAL)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains a count and results list."
+        }
+    },
+    {
+        "tool_name": "search_catalog_items",
+        "description": "Search catalog items by keywords or identifiers.",
+        "arguments": {
+            "keywords": {
+                "type": "string",
+                "description": "Optional keyword substring matched on title/description."
+            },
+            "identifiers": {
+                "type": "string",
+                "description": "Optional comma-separated ASINs or SKUs."
+            },
+            "identifiers_type": {
+                "type": "string",
+                "description": "Optional identifier type: ASIN or SKU."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Max results to return (default 10)."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional status filter."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains numberOfResults, pagination, and items."
+        }
+    },
+    {
+        "tool_name": "get_catalog_item",
+        "description": "Get a single catalog item by ASIN.",
+        "arguments": {
+            "asin": {
+                "type": "string",
+                "description": "The ASIN of the item."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains the catalog item; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_listing_item",
+        "description": "Get a seller's listing by seller id and SKU.",
+        "arguments": {
+            "seller_id": {
+                "type": "string",
+                "description": "The seller id."
+            },
+            "sku": {
+                "type": "string",
+                "description": "The listing SKU."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains the listing; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_listing_item",
+        "description": "Create a new listing item for a seller SKU.",
+        "arguments": {
+            "seller_id": {
+                "type": "string",
+                "description": "The seller id."
+            },
+            "sku": {
+                "type": "string",
+                "description": "The new listing SKU."
+            },
+            "data": {
+                "type": "object",
+                "description": "The listing attributes (productType, title, price, quantity, etc.)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms the accepted listing; on failure (already exists), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_listing_item",
+        "description": "Update fields of an existing listing item.",
+        "arguments": {
+            "seller_id": {
+                "type": "string",
+                "description": "The seller id."
+            },
+            "sku": {
+                "type": "string",
+                "description": "The listing SKU."
+            },
+            "data": {
+                "type": "object",
+                "description": "The fields to update."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms the accepted listing; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_listing_item",
+        "description": "Delete a listing item by seller id and SKU.",
+        "arguments": {
+            "seller_id": {
+                "type": "string",
+                "description": "The seller id."
+            },
+            "sku": {
+                "type": "string",
+                "description": "The listing SKU."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms deletion; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_orders",
+        "description": "List orders with optional date, status, and channel filters.",
+        "arguments": {
+            "created_after": {
+                "type": "string",
+                "description": "Optional lower bound on purchase date."
+            },
+            "created_before": {
+                "type": "string",
+                "description": "Optional upper bound on purchase date."
+            },
+            "order_statuses": {
+                "type": "string",
+                "description": "Optional comma-separated order statuses."
+            },
+            "fulfillment_channels": {
+                "type": "string",
+                "description": "Optional comma-separated fulfillment channels."
+            },
+            "max_results": {
+                "type": "integer",
+                "description": "Max results per page (default 100)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains count, total, and a payload with Orders."
+        }
+    },
+    {
+        "tool_name": "get_order",
+        "description": "Get a single order by its Amazon order id.",
+        "arguments": {
+            "order_id": {
+                "type": "string",
+                "description": "The Amazon order id."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains the order payload; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_order_items",
+        "description": "Get the line items for an order.",
+        "arguments": {
+            "order_id": {
+                "type": "string",
+                "description": "The Amazon order id."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains the order items payload; on failure (order not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "confirm_shipment",
+        "description": "Confirm shipment for an unshipped order.",
+        "arguments": {
+            "order_id": {
+                "type": "string",
+                "description": "The Amazon order id."
+            },
+            "data": {
+                "type": "object",
+                "description": "Shipment details (carrierCode, trackingNumber, shipDate, etc.)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms the shipment; on failure (not found or wrong status), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_inventory_summaries",
+        "description": "Get FBA inventory summaries, optionally for specific SKUs.",
+        "arguments": {
+            "seller_skus": {
+                "type": "string",
+                "description": "Optional comma-separated seller SKUs."
+            },
+            "granularity_type": {
+                "type": "string",
+                "description": "Granularity type (default 'Marketplace')."
+            },
+            "marketplace_id": {
+                "type": "string",
+                "description": "Granularity/marketplace id (default 'ATVPDKIKX0DER')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains a payload with inventorySummaries."
+        }
+    },
+    {
+        "tool_name": "update_inventory",
+        "description": "Set the total and in-stock quantity for a seller SKU.",
+        "arguments": {
+            "seller_sku": {
+                "type": "string",
+                "description": "The seller SKU."
+            },
+            "quantity": {
+                "type": "integer",
+                "description": "The new quantity."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms the update; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_reports",
+        "description": "List reports, optionally filtered by type and processing status.",
+        "arguments": {
+            "report_types": {
+                "type": "string",
+                "description": "Optional comma-separated report types."
+            },
+            "processing_statuses": {
+                "type": "string",
+                "description": "Optional comma-separated processing statuses."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains a payload with reports."
+        }
+    },
+    {
+        "tool_name": "get_report",
+        "description": "Get a single report by its id.",
+        "arguments": {
+            "report_id": {
+                "type": "string",
+                "description": "The report id."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains the report payload; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_report",
+        "description": "Request a new report for a type and date range.",
+        "arguments": {
+            "report_type": {
+                "type": "string",
+                "description": "The report type."
+            },
+            "data_start_time": {
+                "type": "string",
+                "description": "The report data start time."
+            },
+            "data_end_time": {
+                "type": "string",
+                "description": "The report data end time."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains the created report id."
+        }
+    },
+    {
+        "tool_name": "get_competitive_pricing",
+        "description": "Get competitive pricing for an ASIN or SKU.",
+        "arguments": {
+            "asin": {
+                "type": "string",
+                "description": "Optional ASIN."
+            },
+            "sku": {
+                "type": "string",
+                "description": "Optional seller SKU."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains competitive pricing; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_item_offers",
+        "description": "Get item offers for an ASIN.",
+        "arguments": {
+            "asin": {
+                "type": "string",
+                "description": "The ASIN."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains item offers; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_returns",
+        "description": "List returns, optionally filtered by status and order id.",
+        "arguments": {
+            "status": {
+                "type": "string",
+                "description": "Optional return status filter."
+            },
+            "order_id": {
+                "type": "string",
+                "description": "Optional Amazon order id filter."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains count, total, and results."
+        }
+    },
+    {
+        "tool_name": "get_return",
+        "description": "Get a single return by its id.",
+        "arguments": {
+            "return_id": {
+                "type": "string",
+                "description": "The return id."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains the return; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "authorize_return",
+        "description": "Authorize (complete with refund) a return in Authorized status.",
+        "arguments": {
+            "return_id": {
+                "type": "string",
+                "description": "The return id."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms authorization; on failure (not found or wrong status), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "close_return",
+        "description": "Close a return.",
+        "arguments": {
+            "return_id": {
+                "type": "string",
+                "description": "The return id."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms closure; on failure (not found), output contains an error message."
+        }
+    }
+]

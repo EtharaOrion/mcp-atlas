@@ -1,0 +1,204 @@
+[
+    {
+        "tool_name": "list_prescriptions",
+        "description": "List prescriptions, optionally filtered by status and/or DEA schedule. Sorted by prescribed_on desc.",
+        "arguments": {
+            "status": {"type": "string", "description": "Optional: active | expired | cancelled | filled."},
+            "dea_schedule": {"type": "string", "description": "Optional: non_controlled | II | III | IV | V."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of Prescription objects."
+        }
+    },
+    {
+        "tool_name": "get_prescription",
+        "description": "Get a single prescription by rxid.",
+        "arguments": {
+            "rxid": {"type": "string", "description": "Prescription identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the Prescription object."
+        }
+    },
+    {
+        "tool_name": "add_prescription",
+        "description": "Create a new prescription. Status starts as 'active'. An audit log entry is recorded.",
+        "arguments": {
+            "medication_name": {"type": "string", "description": "Medication name."},
+            "dosage": {"type": "string", "description": "Dosage description, e.g. '500 mg'."},
+            "frequency": {"type": "string", "description": "Frequency description, e.g. '3x daily'."},
+            "quantity": {"type": "integer", "description": "Quantity dispensed per fill."},
+            "refills_remaining": {"type": "integer", "description": "Number of refills allowed."},
+            "prescribed_by": {"type": "string", "description": "Name of the prescribing clinician."},
+            "prescribed_on": {"type": "string", "description": "ISO date the prescription was written."},
+            "expires_on": {"type": "string", "description": "ISO date the prescription expires."},
+            "dea_schedule": {"type": "string", "description": "DEA schedule: non_controlled | II | III | IV | V."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new Prescription."
+        }
+    },
+    {
+        "tool_name": "update_prescription",
+        "description": "Update mutable fields on an existing prescription. Only supplied fields change. Records an audit entry.",
+        "arguments": {
+            "rxid": {"type": "string", "description": "Prescription identifier."},
+            "dosage": {"type": "string", "description": "Optional new dosage."},
+            "frequency": {"type": "string", "description": "Optional new frequency."},
+            "quantity": {"type": "integer", "description": "Optional new quantity."},
+            "refills_remaining": {"type": "integer", "description": "Optional new refills remaining."},
+            "expires_on": {"type": "string", "description": "Optional new expiry ISO date."},
+            "status": {"type": "string", "description": "Optional new status: active | expired | cancelled | filled."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated Prescription."
+        }
+    },
+    {
+        "tool_name": "cancel_prescription",
+        "description": "Cancel a prescription (sets status to 'cancelled'). Records an audit entry.",
+        "arguments": {
+            "rxid": {"type": "string", "description": "Prescription identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the cancelled Prescription."
+        }
+    },
+    {
+        "tool_name": "list_refills",
+        "description": "List refill requests, optionally filtered by prescription and/or status. Sorted by requested_at desc.",
+        "arguments": {
+            "prescription_id": {"type": "string", "description": "Optional prescription filter."},
+            "status": {"type": "string", "description": "Optional: pending | filled | rejected | delayed."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of RefillRequest objects."
+        }
+    },
+    {
+        "tool_name": "request_refill",
+        "description": "Create a new pending refill request. Fails if the prescription is not active or has no refills remaining.",
+        "arguments": {
+            "prescription_id": {"type": "string", "description": "Prescription identifier."},
+            "pharmacy_id": {"type": "string", "description": "Pharmacy identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new RefillRequest."
+        }
+    },
+    {
+        "tool_name": "fill_refill",
+        "description": "Mark a pending refill as filled. Decrements refills_remaining on the parent prescription and records an audit entry.",
+        "arguments": {
+            "refid": {"type": "string", "description": "Refill request identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the filled RefillRequest."
+        }
+    },
+    {
+        "tool_name": "reject_refill",
+        "description": "Reject a pending refill with a reason. Records an audit entry.",
+        "arguments": {
+            "refid": {"type": "string", "description": "Refill request identifier."},
+            "reason": {"type": "string", "description": "Reason for rejection."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the rejected RefillRequest."
+        }
+    },
+    {
+        "tool_name": "list_pharmacies",
+        "description": "List all known pharmacies.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of Pharmacy objects."
+        }
+    },
+    {
+        "tool_name": "get_pharmacy",
+        "description": "Get a single pharmacy by phid.",
+        "arguments": {
+            "phid": {"type": "string", "description": "Pharmacy identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the Pharmacy object."
+        }
+    },
+    {
+        "tool_name": "add_pharmacy",
+        "description": "Add a new pharmacy to the directory.",
+        "arguments": {
+            "name": {"type": "string", "description": "Pharmacy name."},
+            "address": {"type": "string", "description": "Street address."},
+            "phone": {"type": "string", "description": "Contact phone number."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new Pharmacy."
+        }
+    },
+    {
+        "tool_name": "list_audit_logs",
+        "description": "List audit log entries, optionally filtered by prescription. Sorted by timestamp desc.",
+        "arguments": {
+            "prescription_id": {"type": "string", "description": "Optional prescription filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of AuditLog entries."
+        }
+    },
+    {
+        "tool_name": "search_prescriptions",
+        "description": "Search prescriptions across medication_name, prescribed_by, dosage, and frequency.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search keyword or phrase."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of matching prescriptions."
+        }
+    },
+    {
+        "tool_name": "get_controlled_substances",
+        "description": "Return every prescription whose dea_schedule is not 'non_controlled'.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of controlled-substance prescriptions sorted by DEA schedule."
+        }
+    },
+    {
+        "tool_name": "get_expiring_soon",
+        "description": "Return active prescriptions that expire within the next N days from the anchor date.",
+        "arguments": {
+            "days": {"type": "integer", "description": "Look-ahead window in days."},
+            "today": {"type": "string", "description": "Optional anchor ISO date; defaults to the session's initial day."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of Prescription objects sorted by expires_on."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Aggregate counts across prescriptions, refills, pharmacies, and audit logs, grouped by status/schedule.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is an aggregate stats object."
+        }
+    }
+]

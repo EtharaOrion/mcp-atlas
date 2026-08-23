@@ -1,0 +1,224 @@
+[
+  {
+    "tool_name": "list_listings",
+    "description": "List all auction listings, optionally filtered by status and/or category.",
+    "arguments": {
+      "status": {
+        "type": "string",
+        "description": "Filter: active|ended|cancelled."
+      },
+      "category": {
+        "type": "string",
+        "description": "Category filter."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output} with list of listings."
+    }
+  },
+  {
+    "tool_name": "get_listing",
+    "description": "Retrieve a listing by lid.",
+    "arguments": {
+      "lid": {
+        "type": "string",
+        "description": "Listing id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "create_listing",
+    "description": "Create a new auction listing.",
+    "arguments": {
+      "title": {
+        "type": "string",
+        "description": "Title."
+      },
+      "description": {
+        "type": "string",
+        "description": "Description."
+      },
+      "seller": {
+        "type": "string",
+        "description": "Seller id."
+      },
+      "starting_price": {
+        "type": "number",
+        "description": "Starting price."
+      },
+      "end_time": {
+        "type": "string",
+        "description": "ISO end time."
+      },
+      "category": {
+        "type": "string",
+        "description": "Category."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output} with new listing."
+    }
+  },
+  {
+    "tool_name": "cancel_listing",
+    "description": "Cancel a listing.",
+    "arguments": {
+      "lid": {
+        "type": "string",
+        "description": "Listing id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "end_listing",
+    "description": "End a listing (mark as ended).",
+    "arguments": {
+      "lid": {
+        "type": "string",
+        "description": "Listing id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "place_bid",
+    "description": "Place a bid on a listing.",
+    "arguments": {
+      "listing_id": {
+        "type": "string",
+        "description": "Listing id."
+      },
+      "bidder": {
+        "type": "string",
+        "description": "Bidder id."
+      },
+      "amount": {
+        "type": "number",
+        "description": "Bid amount (must exceed current price)."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output} with bid record."
+    }
+  },
+  {
+    "tool_name": "list_bids",
+    "description": "List bids, optionally filtered by listing or bidder.",
+    "arguments": {
+      "listing_id": {
+        "type": "string",
+        "description": "Optional listing filter."
+      },
+      "bidder": {
+        "type": "string",
+        "description": "Optional bidder filter."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output} with bids."
+    }
+  },
+  {
+    "tool_name": "get_bid",
+    "description": "Retrieve a bid by id.",
+    "arguments": {
+      "bid_id": {
+        "type": "string",
+        "description": "Bid id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "highest_bid",
+    "description": "Return the highest bid for a listing.",
+    "arguments": {
+      "listing_id": {
+        "type": "string",
+        "description": "Listing id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output} with top bid or null."
+    }
+  },
+  {
+    "tool_name": "add_to_watchlist",
+    "description": "Add a listing to the user's watchlist.",
+    "arguments": {
+      "lid": {
+        "type": "string",
+        "description": "Listing id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output} with current watchlist."
+    }
+  },
+  {
+    "tool_name": "remove_from_watchlist",
+    "description": "Remove a listing from the watchlist.",
+    "arguments": {
+      "lid": {
+        "type": "string",
+        "description": "Listing id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "get_watchlist",
+    "description": "Return all listings on the watchlist.",
+    "arguments": {},
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "search_listings",
+    "description": "Search listings by title or description.",
+    "arguments": {
+      "query": {
+        "type": "string",
+        "description": "Search term."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "get_stats",
+    "description": "Get auction stats.",
+    "arguments": {},
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  }
+]

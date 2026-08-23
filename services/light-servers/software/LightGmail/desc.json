@@ -1,0 +1,267 @@
+[
+    {
+        "tool_name": "get_profile",
+        "description": "Get the Gmail profile of the authenticated user.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the profile object (emailAddress, messagesTotal, threadsTotal, historyId)."
+        }
+    },
+    {
+        "tool_name": "list_labels",
+        "description": "List all labels in the mailbox.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'labels' list of label objects (id, name, type)."
+        }
+    },
+    {
+        "tool_name": "get_label",
+        "description": "Get a single label by its id.",
+        "arguments": {
+            "label_id": {
+                "type": "string",
+                "description": "The id of the label."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the label object; on failure (label not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_label",
+        "description": "Create a new user label with the given name.",
+        "arguments": {
+            "name": {
+                "type": "string",
+                "description": "The name of the label to create."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created label object; on failure (label already exists), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_messages",
+        "description": "List messages, optionally filtered by a Gmail search query, label ids, and a max result count.",
+        "arguments": {
+            "query": {
+                "type": "string",
+                "description": "Optional Gmail-style search query (supports from:, to:, subject:, label:, is:unread, is:starred and free text)."
+            },
+            "max_results": {
+                "type": "integer",
+                "description": "Maximum number of message ids to return (default 25)."
+            },
+            "label_ids": {
+                "type": "array",
+                "description": "Optional list of label ids; only messages carrying all of them are returned."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'messages' list (id, threadId) and 'resultSizeEstimate'."
+        }
+    },
+    {
+        "tool_name": "get_message",
+        "description": "Get a single message by its id, in the requested format.",
+        "arguments": {
+            "message_id": {
+                "type": "string",
+                "description": "The id of the message."
+            },
+            "fmt": {
+                "type": "string",
+                "description": "Format of the message; 'full' includes the payload/headers/body, otherwise only metadata is returned (default 'full')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the serialized message; on failure (message not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "send_message",
+        "description": "Send a new email message.",
+        "arguments": {
+            "to_addr": {
+                "type": "string",
+                "description": "The recipient email address."
+            },
+            "subject": {
+                "type": "string",
+                "description": "The subject line of the message."
+            },
+            "body": {
+                "type": "string",
+                "description": "The plain-text body of the message."
+            },
+            "cc": {
+                "type": "string",
+                "description": "Optional CC email address(es)."
+            },
+            "thread_id": {
+                "type": "string",
+                "description": "Optional thread id to attach the message to an existing thread."
+            },
+            "from_addr": {
+                "type": "string",
+                "description": "Optional sender address; defaults to the profile email address."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the serialized sent message."
+        }
+    },
+    {
+        "tool_name": "modify_message",
+        "description": "Add and/or remove labels on an existing message.",
+        "arguments": {
+            "message_id": {
+                "type": "string",
+                "description": "The id of the message to modify."
+            },
+            "add_labels": {
+                "type": "array",
+                "description": "Optional list of label ids to add."
+            },
+            "remove_labels": {
+                "type": "array",
+                "description": "Optional list of label ids to remove."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated serialized message; on failure (message not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "trash_message",
+        "description": "Move a message to trash (adds TRASH label, removes INBOX).",
+        "arguments": {
+            "message_id": {
+                "type": "string",
+                "description": "The id of the message to trash."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated serialized message; on failure (message not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_message",
+        "description": "Permanently delete a message by its id.",
+        "arguments": {
+            "message_id": {
+                "type": "string",
+                "description": "The id of the message to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {deleted: true, id}; on failure (message not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_threads",
+        "description": "List threads, optionally filtered by a Gmail search query.",
+        "arguments": {
+            "query": {
+                "type": "string",
+                "description": "Optional Gmail-style search query applied to the underlying messages."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'threads' list and 'resultSizeEstimate'."
+        }
+    },
+    {
+        "tool_name": "get_thread",
+        "description": "Get a thread and all of its messages by thread id.",
+        "arguments": {
+            "thread_id": {
+                "type": "string",
+                "description": "The id of the thread."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the thread object with its messages; on failure (thread not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_drafts",
+        "description": "List all drafts in the mailbox.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'drafts' list."
+        }
+    },
+    {
+        "tool_name": "get_draft",
+        "description": "Get a single draft by its id.",
+        "arguments": {
+            "draft_id": {
+                "type": "string",
+                "description": "The id of the draft."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the draft object; on failure (draft not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_draft",
+        "description": "Create a new draft message.",
+        "arguments": {
+            "to_addr": {
+                "type": "string",
+                "description": "The recipient email address."
+            },
+            "subject": {
+                "type": "string",
+                "description": "The subject line of the draft."
+            },
+            "body": {
+                "type": "string",
+                "description": "The plain-text body of the draft."
+            },
+            "cc": {
+                "type": "string",
+                "description": "Optional CC email address(es)."
+            },
+            "thread_id": {
+                "type": "string",
+                "description": "Optional thread id the draft belongs to."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created draft object."
+        }
+    },
+    {
+        "tool_name": "send_draft",
+        "description": "Send an existing draft by its id, removing it from the drafts list.",
+        "arguments": {
+            "draft_id": {
+                "type": "string",
+                "description": "The id of the draft to send."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the serialized sent message; on failure (draft not found), output contains an error message."
+        }
+    }
+]

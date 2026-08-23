@@ -1,0 +1,100 @@
+[
+    {
+        "tool_name": "capture",
+        "description": "Capture a new analytics event into the in-memory event store.",
+        "arguments": {
+            "distinct_id": {
+                "type": "string",
+                "description": "Optional distinct identifier of the user/actor the event belongs to."
+            },
+            "project_id": {
+                "type": "integer",
+                "description": "Optional project id the event belongs to (defaults to 1)."
+            },
+            "event": {
+                "type": "string",
+                "description": "Optional event name (defaults to '$pageview')."
+            },
+            "timestamp": {
+                "type": "string",
+                "description": "Optional ISO timestamp for the event; defaults to the current time."
+            },
+            "properties": {
+                "type": "object",
+                "description": "Optional properties object attached to the event."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {status: 1} confirming the event was captured."
+        }
+    },
+    {
+        "tool_name": "decide",
+        "description": "Evaluate feature flags for a given distinct id and project, returning which flags are enabled.",
+        "arguments": {
+            "distinct_id": {
+                "type": "string",
+                "description": "Optional distinct identifier of the user to evaluate flags for."
+            },
+            "project_id": {
+                "type": "integer",
+                "description": "Optional project id to scope flag evaluation to (defaults to 1)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has featureFlags (map of flag key to enabled boolean) and distinctId."
+        }
+    },
+    {
+        "tool_name": "list_events",
+        "description": "List captured events for a project, optionally filtered by event name and distinct id.",
+        "arguments": {
+            "project_id": {
+                "type": "integer",
+                "description": "The project id to list events for."
+            },
+            "event": {
+                "type": "string",
+                "description": "Optional event name to filter by."
+            },
+            "distinct_id": {
+                "type": "string",
+                "description": "Optional distinct id to filter events by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has results (list of event objects) and count."
+        }
+    },
+    {
+        "tool_name": "list_feature_flags",
+        "description": "List the feature flags defined for a project.",
+        "arguments": {
+            "project_id": {
+                "type": "integer",
+                "description": "The project id to list feature flags for."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has results (list of feature flag objects with id, key, name, active, rollout_percentage) and count."
+        }
+    },
+    {
+        "tool_name": "list_persons",
+        "description": "List the persons (users) known to a project.",
+        "arguments": {
+            "project_id": {
+                "type": "integer",
+                "description": "The project id to list persons for."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has results (list of person objects with id, distinct_ids, name, properties, created_at) and count."
+        }
+    }
+]

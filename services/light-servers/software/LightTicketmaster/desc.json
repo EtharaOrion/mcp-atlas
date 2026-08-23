@@ -1,0 +1,107 @@
+[
+    {
+        "tool_name": "search_events",
+        "description": "Search events, optionally filtered by keyword, city, classification name, and start time.",
+        "arguments": {
+            "keyword": {
+                "type": "string",
+                "description": "Optional case-insensitive substring to match in event names."
+            },
+            "city": {
+                "type": "string",
+                "description": "Optional city name to restrict events to venues in that city."
+            },
+            "classificationName": {
+                "type": "string",
+                "description": "Optional classification name (segment, genre, or subgenre) to filter by."
+            },
+            "startDateTime": {
+                "type": "string",
+                "description": "Optional ISO datetime lower bound; only events at or after are returned."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a page-wrapped object with _embedded.events and page metadata; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_event",
+        "description": "Get a single event by id.",
+        "arguments": {
+            "event_id": {
+                "type": "string",
+                "description": "The id of the event to fetch."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the event object; on failure (event not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "search_venues",
+        "description": "Search venues, optionally filtered by keyword matching name or city.",
+        "arguments": {
+            "keyword": {
+                "type": "string",
+                "description": "Optional case-insensitive substring to match in venue name or city."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a page-wrapped object with _embedded.venues and page metadata; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_venue",
+        "description": "Get a single venue by id.",
+        "arguments": {
+            "venue_id": {
+                "type": "string",
+                "description": "The id of the venue to fetch."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the venue object; on failure (venue not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "search_attractions",
+        "description": "Search attractions, optionally filtered by keyword matching the name.",
+        "arguments": {
+            "keyword": {
+                "type": "string",
+                "description": "Optional case-insensitive substring to match in attraction names."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a page-wrapped object with _embedded.attractions and page metadata; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_attraction",
+        "description": "Get a single attraction by id.",
+        "arguments": {
+            "attraction_id": {
+                "type": "string",
+                "description": "The id of the attraction to fetch."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the attraction object; on failure (attraction not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_classifications",
+        "description": "List all classifications with their nested genre and subgenre structure.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a page-wrapped object with _embedded.classifications and page metadata; on failure, output contains an error message."
+        }
+    }
+]

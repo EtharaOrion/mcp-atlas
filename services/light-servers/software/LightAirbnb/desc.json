@@ -1,0 +1,136 @@
+[
+    {
+        "tool_name": "search_listings",
+        "description": "Search lodging listings, optionally filtered by location, date range, guest count, and price bounds.",
+        "arguments": {
+            "location": {
+                "type": "string",
+                "description": "Optional location substring matched against a listing's city or country."
+            },
+            "checkin": {
+                "type": "string",
+                "description": "Optional check-in date in 'YYYY-MM-DD' format; combined with checkout to filter by availability."
+            },
+            "checkout": {
+                "type": "string",
+                "description": "Optional check-out date in 'YYYY-MM-DD' format; combined with checkin to filter by availability."
+            },
+            "guests": {
+                "type": "integer",
+                "description": "Optional minimum guest capacity; only listings with max_guests at least this are returned."
+            },
+            "min_price": {
+                "type": "number",
+                "description": "Optional minimum nightly price filter."
+            },
+            "max_price": {
+                "type": "number",
+                "description": "Optional maximum nightly price filter."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with count and a list of matching listings (each with attached host)."
+        }
+    },
+    {
+        "tool_name": "get_listing",
+        "description": "Get a single listing by its id, including host details.",
+        "arguments": {
+            "listing_id": {
+                "type": "string",
+                "description": "The unique id of the listing."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the listing object with attached host; on failure (listing not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_availability",
+        "description": "Get the availability windows for a listing.",
+        "arguments": {
+            "listing_id": {
+                "type": "string",
+                "description": "The unique id of the listing."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with listing_id and a list of availability windows; on failure (listing not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_reviews",
+        "description": "Get the reviews for a listing.",
+        "arguments": {
+            "listing_id": {
+                "type": "string",
+                "description": "The unique id of the listing."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with listing_id, count, and a list of reviews; on failure (listing not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_reservation",
+        "description": "Create a reservation for a listing over a date range, computing nightly subtotal, fees, and total.",
+        "arguments": {
+            "listing_id": {
+                "type": "string",
+                "description": "The unique id of the listing to reserve."
+            },
+            "checkin": {
+                "type": "string",
+                "description": "Check-in date in 'YYYY-MM-DD' format."
+            },
+            "checkout": {
+                "type": "string",
+                "description": "Check-out date in 'YYYY-MM-DD' format; must be after checkin."
+            },
+            "guests": {
+                "type": "integer",
+                "description": "Number of guests (default 1); must not exceed the listing's max_guests."
+            },
+            "guest_name": {
+                "type": "string",
+                "description": "Optional guest name (default 'Guest')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created reservation with pricing breakdown; on failure (not found, invalid dates, over capacity, or unavailable), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_reservation",
+        "description": "Get a reservation by its id.",
+        "arguments": {
+            "reservation_id": {
+                "type": "string",
+                "description": "The unique id of the reservation."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the reservation object; on failure (reservation not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "cancel_reservation",
+        "description": "Cancel an existing reservation by its id.",
+        "arguments": {
+            "reservation_id": {
+                "type": "string",
+                "description": "The unique id of the reservation to cancel."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the cancelled reservation; on failure (not found or already cancelled), output contains an error message."
+        }
+    }
+]

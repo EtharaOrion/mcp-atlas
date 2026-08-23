@@ -1,0 +1,449 @@
+[
+    {
+        "tool_name": "get_user_account",
+        "description": "Get the authenticated Pinterest user account details.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type 'user_account' and the user_account details; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_user_analytics",
+        "description": "Get aggregate analytics for the authenticated user, optionally filtered by date range.",
+        "arguments": {
+            "start_date": {
+                "type": "string",
+                "description": "Optional inclusive lower bound date (YYYY-MM-DD) to filter analytics rows by."
+            },
+            "end_date": {
+                "type": "string",
+                "description": "Optional inclusive upper bound date (YYYY-MM-DD) to filter analytics rows by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type, count, and a results list of daily analytics rows; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_boards",
+        "description": "List boards, optionally filtered by privacy, with pagination.",
+        "arguments": {
+            "privacy": {
+                "type": "string",
+                "description": "Optional privacy filter (e.g. PUBLIC, SECRET) to restrict returned boards."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of boards to return per page (default 25)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of boards to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type, count, total, offset, limit, and a results list of board objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_board",
+        "description": "Get a single board by its id.",
+        "arguments": {
+            "board_id": {
+                "type": "string",
+                "description": "The unique id of the board."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type 'board' and the board details; on failure (board not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_board",
+        "description": "Create a new board with a name and optional description and privacy.",
+        "arguments": {
+            "name": {
+                "type": "string",
+                "description": "The name of the new board (required)."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional description for the board."
+            },
+            "privacy": {
+                "type": "string",
+                "description": "Optional privacy setting (defaults to PUBLIC)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type 'board' and the created board; on failure (missing name), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_board",
+        "description": "Update an existing board's name, description, or privacy.",
+        "arguments": {
+            "board_id": {
+                "type": "string",
+                "description": "The unique id of the board to update."
+            },
+            "name": {
+                "type": "string",
+                "description": "Optional new name for the board."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional new description for the board."
+            },
+            "privacy": {
+                "type": "string",
+                "description": "Optional new privacy setting for the board."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type 'board' and the updated board; on failure (board not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_board",
+        "description": "Delete a board by its id.",
+        "arguments": {
+            "board_id": {
+                "type": "string",
+                "description": "The unique id of the board to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type 'board', deleted true, and the board_id; on failure (board not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_board_pins",
+        "description": "List the pins belonging to a board, with pagination.",
+        "arguments": {
+            "board_id": {
+                "type": "string",
+                "description": "The unique id of the board whose pins to list."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of pins to return per page (default 25)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of pins to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type, count, total, offset, limit, and a results list of pin objects; on failure (board not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_board_sections",
+        "description": "List the sections belonging to a board.",
+        "arguments": {
+            "board_id": {
+                "type": "string",
+                "description": "The unique id of the board whose sections to list."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type, count, and a results list of board section objects; on failure (board not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_board_section",
+        "description": "Create a new section within a board.",
+        "arguments": {
+            "board_id": {
+                "type": "string",
+                "description": "The unique id of the board to add the section to."
+            },
+            "name": {
+                "type": "string",
+                "description": "The name of the new board section (required)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type 'board_section' and the created section; on failure (board not found or missing name), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_section_pins",
+        "description": "List the pins belonging to a specific section of a board, with pagination.",
+        "arguments": {
+            "board_id": {
+                "type": "string",
+                "description": "The unique id of the board."
+            },
+            "section_id": {
+                "type": "string",
+                "description": "The unique id of the board section whose pins to list."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of pins to return per page (default 25)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of pins to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type, count, total, offset, limit, and a results list of pin objects; on failure (board or section not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_pins",
+        "description": "List all pins for the authenticated user, with pagination.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of pins to return per page (default 25)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of pins to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type, count, total, offset, limit, and a results list of pin objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_pin",
+        "description": "Get a single pin by its id.",
+        "arguments": {
+            "pin_id": {
+                "type": "string",
+                "description": "The unique id of the pin."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type 'pin' and the pin details; on failure (pin not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_pin",
+        "description": "Create a new pin on a board with a title and optional metadata.",
+        "arguments": {
+            "board_id": {
+                "type": "string",
+                "description": "The id of the board to create the pin on (required)."
+            },
+            "title": {
+                "type": "string",
+                "description": "The title of the new pin (required)."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional description for the pin."
+            },
+            "link": {
+                "type": "string",
+                "description": "Optional destination link for the pin."
+            },
+            "media_type": {
+                "type": "string",
+                "description": "Optional media type (defaults to image)."
+            },
+            "board_section_id": {
+                "type": "string",
+                "description": "Optional id of the board section to place the pin in."
+            },
+            "dominant_color": {
+                "type": "string",
+                "description": "Optional dominant color hex string (defaults to #FFFFFF)."
+            },
+            "alt_text": {
+                "type": "string",
+                "description": "Optional alternative text for the pin."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type 'pin' and the created pin; on failure (missing field or board not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_pin",
+        "description": "Update an existing pin's title, description, link, board, section, or alt text.",
+        "arguments": {
+            "pin_id": {
+                "type": "string",
+                "description": "The unique id of the pin to update."
+            },
+            "title": {
+                "type": "string",
+                "description": "Optional new title for the pin."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional new description for the pin."
+            },
+            "link": {
+                "type": "string",
+                "description": "Optional new destination link for the pin."
+            },
+            "board_id": {
+                "type": "string",
+                "description": "Optional new board id to move the pin to."
+            },
+            "board_section_id": {
+                "type": "string",
+                "description": "Optional new board section id for the pin."
+            },
+            "alt_text": {
+                "type": "string",
+                "description": "Optional new alternative text for the pin."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type 'pin' and the updated pin; on failure (pin not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_pin",
+        "description": "Delete a pin by its id.",
+        "arguments": {
+            "pin_id": {
+                "type": "string",
+                "description": "The unique id of the pin to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type 'pin', deleted true, and the pin_id; on failure (pin not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_pin_analytics",
+        "description": "Get analytics for a single pin, optionally filtered by date range.",
+        "arguments": {
+            "pin_id": {
+                "type": "string",
+                "description": "The unique id of the pin."
+            },
+            "start_date": {
+                "type": "string",
+                "description": "Optional inclusive lower bound date (YYYY-MM-DD) to filter analytics rows by."
+            },
+            "end_date": {
+                "type": "string",
+                "description": "Optional inclusive upper bound date (YYYY-MM-DD) to filter analytics rows by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type, count, pin_id, and a results list of daily analytics rows; on failure (pin not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "search_pins",
+        "description": "Search pins by matching a query against pin titles and descriptions, with pagination.",
+        "arguments": {
+            "query": {
+                "type": "string",
+                "description": "The search query string (required)."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of pins to return per page (default 25)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of pins to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type, count, total, offset, limit, and a results list of matching pin objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_media_upload_status",
+        "description": "Get the upload status of a media item by its id.",
+        "arguments": {
+            "media_id": {
+                "type": "string",
+                "description": "The unique id of the media item."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type, media_id, status, and media_type; on failure (media not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_ad_accounts",
+        "description": "List ad accounts available to the authenticated user, with pagination.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of ad accounts to return per page (default 25)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of ad accounts to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type, count, total, offset, limit, and a results list of ad account objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_ad_account",
+        "description": "Get a single ad account by its id.",
+        "arguments": {
+            "ad_account_id": {
+                "type": "string",
+                "description": "The unique id of the ad account."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type 'ad_account' and the ad account details; on failure (ad account not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_campaigns",
+        "description": "List campaigns for an ad account, optionally filtered by status, with pagination.",
+        "arguments": {
+            "ad_account_id": {
+                "type": "string",
+                "description": "The unique id of the ad account whose campaigns to list."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional status filter (e.g. ACTIVE, PAUSED) to restrict returned campaigns."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of campaigns to return per page (default 25)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of campaigns to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with type, count, total, offset, limit, and a results list of campaign objects; on failure (ad account not found), output contains an error message."
+        }
+    }
+]

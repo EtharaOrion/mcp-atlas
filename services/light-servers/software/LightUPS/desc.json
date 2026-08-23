@@ -1,0 +1,68 @@
+[
+    {
+        "tool_name": "get_rate",
+        "description": "Get UPS shipping rate quotes for an origin/destination zip pair, optionally filtered by service.",
+        "arguments": {
+            "origin_zip": {
+                "type": "string",
+                "description": "Origin postal (zip) code."
+            },
+            "dest_zip": {
+                "type": "string",
+                "description": "Destination postal (zip) code."
+            },
+            "weight_lb": {
+                "type": "number",
+                "description": "Package weight in pounds used to scale the charge (default 1.0)."
+            },
+            "service_code": {
+                "type": "string",
+                "description": "Optional UPS service code to filter rates (e.g. '03')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a UPS RateResponse envelope with rated shipments; on failure (no rates found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_shipment",
+        "description": "Create a UPS shipment (label) for an origin/destination zip pair and register initial tracking.",
+        "arguments": {
+            "origin_zip": {
+                "type": "string",
+                "description": "Origin postal (zip) code."
+            },
+            "dest_zip": {
+                "type": "string",
+                "description": "Destination postal (zip) code."
+            },
+            "weight_lb": {
+                "type": "number",
+                "description": "Package weight in pounds (default 1.0)."
+            },
+            "service_code": {
+                "type": "string",
+                "description": "UPS service code for the shipment (default '03')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a UPS ShipmentResponse envelope with the tracking number, charges, and label; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "track",
+        "description": "Get tracking details for a UPS tracking number.",
+        "arguments": {
+            "tracking_number": {
+                "type": "string",
+                "description": "The UPS tracking number to look up."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a UPS trackResponse envelope with package status and activity; on failure (tracking number not found), output contains an error message."
+        }
+    }
+]

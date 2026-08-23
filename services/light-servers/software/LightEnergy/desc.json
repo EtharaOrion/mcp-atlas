@@ -1,0 +1,193 @@
+[
+    {
+        "tool_name": "list_meters",
+        "description": "List all energy meters, optionally filtered by kind.",
+        "arguments": {
+            "kind": {"type": "string", "description": "Optional meter kind: electric, gas, water, or solar."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of meter objects sorted by name."
+        }
+    },
+    {
+        "tool_name": "get_meter",
+        "description": "Retrieve a meter by mid.",
+        "arguments": {
+            "mid": {"type": "string", "description": "Meter identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full meter object."
+        }
+    },
+    {
+        "tool_name": "add_meter",
+        "description": "Register a new meter.",
+        "arguments": {
+            "name": {"type": "string", "description": "Human-readable meter name."},
+            "kind": {"type": "string", "description": "One of electric, gas, water, solar."},
+            "current_reading": {"type": "number", "description": "Optional starting reading value."},
+            "currency_rate_per_unit": {"type": "number", "description": "Cost per unit (e.g. USD per kWh)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new meter."
+        }
+    },
+    {
+        "tool_name": "list_readings",
+        "description": "List raw readings, optionally filtered by meter_id and/or ISO date range.",
+        "arguments": {
+            "meter_id": {"type": "string", "description": "Optional meter to filter by."},
+            "start_date": {"type": "string", "description": "Optional inclusive lower-bound ISO datetime."},
+            "end_date": {"type": "string", "description": "Optional inclusive upper-bound ISO datetime."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of readings sorted by timestamp asc."
+        }
+    },
+    {
+        "tool_name": "record_reading",
+        "description": "Record a new reading for a meter. Updates the meter's current_reading and derives cost from the meter's rate.",
+        "arguments": {
+            "meter_id": {"type": "string", "description": "Meter identifier."},
+            "value": {"type": "number", "description": "New meter reading value."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new reading."
+        }
+    },
+    {
+        "tool_name": "get_latest_reading",
+        "description": "Return the most recent reading for the given meter.",
+        "arguments": {
+            "mid": {"type": "string", "description": "Meter identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the latest reading object."
+        }
+    },
+    {
+        "tool_name": "get_usage",
+        "description": "Compute total consumption and cost for a meter between the first and last readings in the given window.",
+        "arguments": {
+            "meter_id": {"type": "string", "description": "Meter identifier."},
+            "start_date": {"type": "string", "description": "Optional inclusive lower-bound ISO datetime."},
+            "end_date": {"type": "string", "description": "Optional inclusive upper-bound ISO datetime."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output has {meter_id, start, end, consumption, cost, readings}."
+        }
+    },
+    {
+        "tool_name": "list_bills",
+        "description": "List bills, optionally filtered by meter_id and/or status.",
+        "arguments": {
+            "meter_id": {"type": "string", "description": "Optional meter identifier."},
+            "status": {"type": "string", "description": "Optional bill status: unpaid, paid, or overdue."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of bills sorted by period_end desc."
+        }
+    },
+    {
+        "tool_name": "get_bill",
+        "description": "Retrieve a bill by bill_id.",
+        "arguments": {
+            "bill_id": {"type": "string", "description": "Bill identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full bill object."
+        }
+    },
+    {
+        "tool_name": "generate_bill",
+        "description": "Generate a new unpaid bill for a meter over the given ISO date period from the readings in that window.",
+        "arguments": {
+            "meter_id": {"type": "string", "description": "Meter identifier."},
+            "period_start": {"type": "string", "description": "ISO date (YYYY-MM-DD) start of the billing period."},
+            "period_end": {"type": "string", "description": "ISO date (YYYY-MM-DD) end of the billing period."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new bill."
+        }
+    },
+    {
+        "tool_name": "pay_bill",
+        "description": "Mark a bill as paid.",
+        "arguments": {
+            "bill_id": {"type": "string", "description": "Bill identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated (paid) bill."
+        }
+    },
+    {
+        "tool_name": "list_alerts",
+        "description": "List alerts, optionally filtered by is_active.",
+        "arguments": {
+            "is_active": {"type": "boolean", "description": "Optional; true for active alerts only, false for inactive."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of alerts."
+        }
+    },
+    {
+        "tool_name": "create_alert",
+        "description": "Create a new alert on a meter with a numeric threshold.",
+        "arguments": {
+            "meter_id": {"type": "string", "description": "Meter identifier."},
+            "threshold": {"type": "number", "description": "Numeric threshold for the alert."},
+            "kind": {"type": "string", "description": "One of high_usage, leak, outage."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new alert."
+        }
+    },
+    {
+        "tool_name": "toggle_alert",
+        "description": "Enable or disable an alert (flips is_active).",
+        "arguments": {
+            "aid": {"type": "string", "description": "Alert identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated alert."
+        }
+    },
+    {
+        "tool_name": "compare_periods",
+        "description": "Compare consumption/cost of two ISO time periods for the same meter.",
+        "arguments": {
+            "meter_id": {"type": "string", "description": "Meter identifier."},
+            "period_a_start": {"type": "string", "description": "Period A ISO datetime start."},
+            "period_a_end": {"type": "string", "description": "Period A ISO datetime end."},
+            "period_b_start": {"type": "string", "description": "Period B ISO datetime start."},
+            "period_b_end": {"type": "string", "description": "Period B ISO datetime end."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output has {meter_id, period_a, period_b, delta_consumption, delta_cost}."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Aggregate counts of meters, readings, bills, alerts and current unpaid totals and active-alert counters.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is an object of aggregate counters."
+        }
+    }
+]

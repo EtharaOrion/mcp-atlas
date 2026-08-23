@@ -1,0 +1,92 @@
+[
+    {
+        "tool_name": "list_records",
+        "description": "List records of a standard sObject (Account, Contact, Lead, Opportunity), up to an optional limit.",
+        "arguments": {
+            "sobject": {
+                "type": "string",
+                "description": "The sObject type to list (Account, Contact, Lead, or Opportunity; case-insensitive)."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Optional maximum number of records to return (default 200)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a query-result object with totalSize, done, and records; on failure (unsupported sObject), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_record",
+        "description": "Get a single record of an sObject by its Salesforce record Id.",
+        "arguments": {
+            "sobject": {
+                "type": "string",
+                "description": "The sObject type (Account, Contact, Lead, or Opportunity; case-insensitive)."
+            },
+            "record_id": {
+                "type": "string",
+                "description": "The Salesforce Id of the record to retrieve."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the record object including its attributes; on failure (unsupported sObject or record not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_record",
+        "description": "Create a new record of an sObject with the given field values.",
+        "arguments": {
+            "sobject": {
+                "type": "string",
+                "description": "The sObject type to create (Account, Contact, Lead, or Opportunity; case-insensitive)."
+            },
+            "fields": {
+                "type": "object",
+                "description": "Optional mapping of field names to values for the new record (the Id field is ignored)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with id, success, and errors; on failure (unsupported sObject), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_record",
+        "description": "Update fields of an existing sObject record by its Salesforce record Id.",
+        "arguments": {
+            "sobject": {
+                "type": "string",
+                "description": "The sObject type (Account, Contact, Lead, or Opportunity; case-insensitive)."
+            },
+            "record_id": {
+                "type": "string",
+                "description": "The Salesforce Id of the record to update."
+            },
+            "fields": {
+                "type": "object",
+                "description": "Optional mapping of field names to new values (the Id and attributes fields are ignored)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with updated and id; on failure (unsupported sObject or record not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "soql_query",
+        "description": "Run a simplified SOQL query (SELECT fields FROM sObject with an optional WHERE field = 'value' clause).",
+        "arguments": {
+            "q": {
+                "type": "string",
+                "description": "The SOQL query string, e.g. \"SELECT Name, Industry FROM Account WHERE Industry = 'Retail'\"."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a query-result object with totalSize, done, and records; on failure (malformed query or unsupported sObject), output contains an error message."
+        }
+    }
+]

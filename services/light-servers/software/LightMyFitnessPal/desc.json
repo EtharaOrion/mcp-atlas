@@ -1,0 +1,483 @@
+[
+    {
+        "tool_name": "get_user_profile",
+        "description": "Retrieve the current user's MyFitnessPal profile.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a type field and the user_profile object."
+        }
+    },
+    {
+        "tool_name": "get_scenario_user_profile",
+        "description": "Retrieve the scenario-specific user profile document served verbatim.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the scenario user profile document."
+        }
+    },
+    {
+        "tool_name": "update_user_profile",
+        "description": "Update editable fields on the current user's profile.",
+        "arguments": {
+            "display_name": {
+                "type": "string",
+                "description": "Optional new display name for the user."
+            },
+            "daily_calorie_goal": {
+                "type": "integer",
+                "description": "Optional new daily calorie goal."
+            },
+            "activity_level": {
+                "type": "string",
+                "description": "Optional new activity level (e.g. moderately_active)."
+            },
+            "current_weight_lbs": {
+                "type": "number",
+                "description": "Optional new current weight in pounds."
+            },
+            "goal_weight_lbs": {
+                "type": "number",
+                "description": "Optional new goal weight in pounds."
+            },
+            "weekly_weight_goal_lbs": {
+                "type": "number",
+                "description": "Optional new weekly weight change goal in pounds."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a type field and the updated user_profile object."
+        }
+    },
+    {
+        "tool_name": "get_goals",
+        "description": "Retrieve the user's nutrition and weight goals.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a type field and a goals object with calorie, macro, nutrient, and weight goals."
+        }
+    },
+    {
+        "tool_name": "update_goals",
+        "description": "Update the user's calorie, macro, and weight goals.",
+        "arguments": {
+            "daily_calorie_goal": {
+                "type": "integer",
+                "description": "Optional new daily calorie goal; also updates the calories nutrient goal."
+            },
+            "macro_goals": {
+                "type": "object",
+                "description": "Optional macro goal percentages (carbs_pct, fat_pct, protein_pct) to merge in."
+            },
+            "goal_weight_lbs": {
+                "type": "number",
+                "description": "Optional new goal weight in pounds."
+            },
+            "weekly_weight_goal_lbs": {
+                "type": "number",
+                "description": "Optional new weekly weight change goal in pounds."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a type field and the updated goals object."
+        }
+    },
+    {
+        "tool_name": "search_foods",
+        "description": "Search the food database by name or brand with pagination.",
+        "arguments": {
+            "q": {
+                "type": "string",
+                "description": "Optional query string matched against food name and brand; all foods when omitted."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of results to return (default 25)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of results to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds count, total, offset, limit, and a results list of food objects."
+        }
+    },
+    {
+        "tool_name": "get_food",
+        "description": "Get a single food item by its id.",
+        "arguments": {
+            "food_id": {
+                "type": "integer",
+                "description": "The unique id of the food."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a type field and the food object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_diary",
+        "description": "Get a day's food diary, optionally filtered by meal.",
+        "arguments": {
+            "date": {
+                "type": "string",
+                "description": "The diary date in 'YYYY-MM-DD' format (required)."
+            },
+            "meal": {
+                "type": "string",
+                "description": "Optional meal name to filter by (Breakfast, Lunch, Dinner, Snacks)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the date, meals grouped by slot, and computed totals."
+        }
+    },
+    {
+        "tool_name": "get_diary_range",
+        "description": "Get food diary entries across a date range grouped by day.",
+        "arguments": {
+            "start_date": {
+                "type": "string",
+                "description": "Inclusive start date in 'YYYY-MM-DD' format (required)."
+            },
+            "end_date": {
+                "type": "string",
+                "description": "Inclusive end date in 'YYYY-MM-DD' format (required)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds start_date, end_date, count, and a results list of per-day diary objects."
+        }
+    },
+    {
+        "tool_name": "create_diary_entry",
+        "description": "Add a food item to the diary for a given date and meal.",
+        "arguments": {
+            "date": {
+                "type": "string",
+                "description": "The diary date in 'YYYY-MM-DD' format (required)."
+            },
+            "meal": {
+                "type": "string",
+                "description": "The meal slot (Breakfast, Lunch, Dinner, Snacks) (required)."
+            },
+            "food_id": {
+                "type": "integer",
+                "description": "The id of the food to log (required)."
+            },
+            "servings": {
+                "type": "number",
+                "description": "Number of servings consumed (required)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a type field and the created diary_entry with computed nutrition; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_diary_entry",
+        "description": "Update an existing diary entry's servings and/or meal.",
+        "arguments": {
+            "entry_id": {
+                "type": "integer",
+                "description": "The id of the diary entry to update."
+            },
+            "servings": {
+                "type": "number",
+                "description": "Optional new servings; recomputes nutrition when provided."
+            },
+            "meal": {
+                "type": "string",
+                "description": "Optional new meal slot for the entry."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a type field and the updated diary_entry; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_diary_entry",
+        "description": "Delete a diary entry by id.",
+        "arguments": {
+            "entry_id": {
+                "type": "integer",
+                "description": "The id of the diary entry to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a type field, deleted flag, and the entry_id; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_daily_totals",
+        "description": "Get nutrition totals, goals, and remaining amounts for a single day.",
+        "arguments": {
+            "date": {
+                "type": "string",
+                "description": "The date in 'YYYY-MM-DD' format."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the date, totals, goal, and remaining nutrient amounts."
+        }
+    },
+    {
+        "tool_name": "get_weekly_summary",
+        "description": "Get a 7-day nutrition summary ending on the given date.",
+        "arguments": {
+            "end_date": {
+                "type": "string",
+                "description": "The last day of the week in 'YYYY-MM-DD' format."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds start_date, end_date, averages, and per-day details; on failure (bad date), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_progress",
+        "description": "Get calorie and macro progress over a recent number of days.",
+        "arguments": {
+            "days": {
+                "type": "integer",
+                "description": "Number of days of history to include (default 30)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds period_days, calorie_goal, and a results list of daily calorie and macro data."
+        }
+    },
+    {
+        "tool_name": "list_exercise_types",
+        "description": "List available exercise types with optional category filter and pagination.",
+        "arguments": {
+            "category": {
+                "type": "string",
+                "description": "Optional category to filter by (e.g. cardio, strength)."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of results to return (default 25)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of results to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds count, total, offset, limit, and a results list of exercise type objects."
+        }
+    },
+    {
+        "tool_name": "get_exercise_type",
+        "description": "Get a single exercise type by its id.",
+        "arguments": {
+            "exercise_type_id": {
+                "type": "integer",
+                "description": "The unique id of the exercise type."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a type field and the exercise_type object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_exercises",
+        "description": "List logged exercises, optionally filtered by date range, with pagination.",
+        "arguments": {
+            "start_date": {
+                "type": "string",
+                "description": "Optional inclusive start date in 'YYYY-MM-DD' format."
+            },
+            "end_date": {
+                "type": "string",
+                "description": "Optional inclusive end date in 'YYYY-MM-DD' format."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of results to return (default 25)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of results to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds count, total, offset, limit, and a results list of logged exercises sorted by date descending."
+        }
+    },
+    {
+        "tool_name": "get_exercise",
+        "description": "Get a single logged exercise by its id.",
+        "arguments": {
+            "exercise_id": {
+                "type": "integer",
+                "description": "The unique id of the logged exercise."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a type field and the exercise object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_exercise",
+        "description": "Log an exercise session for the user.",
+        "arguments": {
+            "date": {
+                "type": "string",
+                "description": "The date of the exercise in 'YYYY-MM-DD' format (required)."
+            },
+            "exercise_type_id": {
+                "type": "integer",
+                "description": "The id of the exercise type performed (required)."
+            },
+            "duration_minutes": {
+                "type": "integer",
+                "description": "Duration of the exercise in minutes (required)."
+            },
+            "calories_burned": {
+                "type": "integer",
+                "description": "Calories burned during the exercise (required)."
+            },
+            "notes": {
+                "type": "string",
+                "description": "Optional notes about the exercise session."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a type field and the created exercise object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_weight_entries",
+        "description": "List weight log entries sorted by date descending, with pagination.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of results to return (default 25)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of results to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds count, total, offset, limit, and a results list of weight entries."
+        }
+    },
+    {
+        "tool_name": "get_weight_entry",
+        "description": "Get a single weight log entry by its id.",
+        "arguments": {
+            "weight_id": {
+                "type": "integer",
+                "description": "The unique id of the weight entry."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a type field and the weight_entry object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_weight_entry",
+        "description": "Add a weight log entry for the user.",
+        "arguments": {
+            "date": {
+                "type": "string",
+                "description": "The date of the weigh-in in 'YYYY-MM-DD' format (required)."
+            },
+            "weight_lbs": {
+                "type": "number",
+                "description": "The recorded weight in pounds (required)."
+            },
+            "notes": {
+                "type": "string",
+                "description": "Optional notes about the weigh-in."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a type field and the created weight_entry object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_water",
+        "description": "Get the water intake entry for a given date.",
+        "arguments": {
+            "date": {
+                "type": "string",
+                "description": "The date in 'YYYY-MM-DD' format."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a type field and the water object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_water",
+        "description": "Create a water intake entry for a given date.",
+        "arguments": {
+            "date": {
+                "type": "string",
+                "description": "The date in 'YYYY-MM-DD' format (required)."
+            },
+            "cups": {
+                "type": "integer",
+                "description": "Number of cups of water consumed (required)."
+            },
+            "notes": {
+                "type": "string",
+                "description": "Optional notes about the water intake."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a type field and the created water object; on failure (already exists or missing field), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_water",
+        "description": "Update the water intake entry for a given date.",
+        "arguments": {
+            "date": {
+                "type": "string",
+                "description": "The date of the water entry in 'YYYY-MM-DD' format."
+            },
+            "cups": {
+                "type": "integer",
+                "description": "Optional new number of cups consumed."
+            },
+            "notes": {
+                "type": "string",
+                "description": "Optional new notes about the water intake."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a type field and the updated water object; on failure (not found), output contains an error message."
+        }
+    }
+]

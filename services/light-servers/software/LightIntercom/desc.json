@@ -1,0 +1,189 @@
+[
+    {
+        "tool_name": "list_contacts",
+        "description": "List contacts, optionally filtered by role (user or lead).",
+        "arguments": {
+            "role": {
+                "type": "string",
+                "description": "Optional role to filter contacts by (e.g. 'user' or 'lead')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list object with 'data' (contacts), 'type', and 'total_count'; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_contact",
+        "description": "Get a single contact by its id.",
+        "arguments": {
+            "contact_id": {
+                "type": "string",
+                "description": "The unique id of the contact."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the contact object; on failure (contact not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_contact",
+        "description": "Create a new contact with the given role and optional details.",
+        "arguments": {
+            "role": {
+                "type": "string",
+                "description": "The role of the contact (default 'user'). Typically 'user' or 'lead'."
+            },
+            "name": {
+                "type": "string",
+                "description": "Optional name of the contact."
+            },
+            "email": {
+                "type": "string",
+                "description": "Optional email address of the contact."
+            },
+            "phone": {
+                "type": "string",
+                "description": "Optional phone number of the contact."
+            },
+            "company_id": {
+                "type": "string",
+                "description": "Optional company id to associate the contact with."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created contact object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_companies",
+        "description": "List all companies.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list object with 'data' (companies), 'type', and 'total_count'; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_company",
+        "description": "Get a single company by its internal id or its company_id.",
+        "arguments": {
+            "company_id": {
+                "type": "string",
+                "description": "The internal id or the company_id of the company."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the company object; on failure (company not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_conversations",
+        "description": "List conversations, optionally filtered by state (open or closed).",
+        "arguments": {
+            "state": {
+                "type": "string",
+                "description": "Optional state to filter conversations by (e.g. 'open' or 'closed')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a conversation.list object with 'conversations' and 'total_count'; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_conversation",
+        "description": "Get a single conversation by its id, including its conversation parts.",
+        "arguments": {
+            "conversation_id": {
+                "type": "string",
+                "description": "The unique id of the conversation."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the conversation object with nested conversation_parts; on failure (conversation not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_conversation",
+        "description": "Create a new conversation started by a contact with an initial message body.",
+        "arguments": {
+            "contact_id": {
+                "type": "string",
+                "description": "The id of the contact starting the conversation."
+            },
+            "body": {
+                "type": "string",
+                "description": "The body text of the initial message."
+            },
+            "title": {
+                "type": "string",
+                "description": "Optional conversation title; defaults to the first 60 chars of the body if omitted."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created conversation object with conversation_parts; on failure (contact not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "reply_conversation",
+        "description": "Add a reply (comment part) to an existing conversation.",
+        "arguments": {
+            "conversation_id": {
+                "type": "string",
+                "description": "The id of the conversation to reply to."
+            },
+            "body": {
+                "type": "string",
+                "description": "The body text of the reply."
+            },
+            "author_type": {
+                "type": "string",
+                "description": "The author type of the reply (default 'admin')."
+            },
+            "author_id": {
+                "type": "string",
+                "description": "The id of the author (default 'admin-jonas')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated conversation object with conversation_parts; on failure (conversation not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "add_part",
+        "description": "Add an admin part to a conversation: a comment, note, assignment, close, or open action.",
+        "arguments": {
+            "conversation_id": {
+                "type": "string",
+                "description": "The id of the conversation to add the part to."
+            },
+            "message_type": {
+                "type": "string",
+                "description": "The part type: one of comment, note, assignment, close, or open."
+            },
+            "body": {
+                "type": "string",
+                "description": "Optional body text for the part."
+            },
+            "author_id": {
+                "type": "string",
+                "description": "The id of the admin author (default 'admin-jonas')."
+            },
+            "assignee_id": {
+                "type": "string",
+                "description": "Optional assignee id, used when message_type is 'assignment' (defaults to author_id)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated conversation object with conversation_parts; on failure (conversation not found), output contains an error message."
+        }
+    }
+]

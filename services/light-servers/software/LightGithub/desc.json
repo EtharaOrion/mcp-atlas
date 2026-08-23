@@ -1,0 +1,303 @@
+[
+    {
+        "tool_name": "get_user",
+        "description": "Get the authenticated user's profile for the current GitHub session.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the authenticated user object (login, id, name, email, etc.)."
+        }
+    },
+    {
+        "tool_name": "list_user_repos",
+        "description": "List repositories owned by a given user.",
+        "arguments": {
+            "owner": {
+                "type": "string",
+                "description": "The login of the user whose repositories to list."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of repository objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_org_repos",
+        "description": "List repositories owned by a given organization.",
+        "arguments": {
+            "owner": {
+                "type": "string",
+                "description": "The login of the organization whose repositories to list."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of repository objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_repo",
+        "description": "Get a single repository by its owner and name.",
+        "arguments": {
+            "owner": {
+                "type": "string",
+                "description": "The owner (user or org login) of the repository."
+            },
+            "repo": {
+                "type": "string",
+                "description": "The name of the repository."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the repository object; on failure (repo not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_issues",
+        "description": "List issues for a repository, optionally filtered by state, labels, and assignee.",
+        "arguments": {
+            "owner": {
+                "type": "string",
+                "description": "The owner (user or org login) of the repository."
+            },
+            "repo": {
+                "type": "string",
+                "description": "The name of the repository."
+            },
+            "state": {
+                "type": "string",
+                "description": "Issue state filter: 'open', 'closed', or 'all' (default 'open')."
+            },
+            "labels": {
+                "type": "string",
+                "description": "Optional comma-separated list of label names to filter by."
+            },
+            "assignee": {
+                "type": "string",
+                "description": "Optional assignee login to filter issues by."
+            },
+            "per_page": {
+                "type": "integer",
+                "description": "Maximum number of issues to return (default 30)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of issue objects; on failure (repo not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_issue",
+        "description": "Get a single issue by repository and issue number.",
+        "arguments": {
+            "owner": {
+                "type": "string",
+                "description": "The owner (user or org login) of the repository."
+            },
+            "repo": {
+                "type": "string",
+                "description": "The name of the repository."
+            },
+            "number": {
+                "type": "integer",
+                "description": "The issue number within the repository."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the issue object; on failure (issue not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_issue",
+        "description": "Create a new issue in a repository.",
+        "arguments": {
+            "owner": {
+                "type": "string",
+                "description": "The owner (user or org login) of the repository."
+            },
+            "repo": {
+                "type": "string",
+                "description": "The name of the repository."
+            },
+            "title": {
+                "type": "string",
+                "description": "The title of the issue."
+            },
+            "body": {
+                "type": "string",
+                "description": "Optional free-text body for the issue."
+            },
+            "assignee": {
+                "type": "string",
+                "description": "Optional assignee login for the issue."
+            },
+            "labels": {
+                "type": "array",
+                "description": "Optional list of label names to apply to the issue."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created issue object; on failure (repo not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_issue",
+        "description": "Update fields of an existing issue by repository and issue number.",
+        "arguments": {
+            "owner": {
+                "type": "string",
+                "description": "The owner (user or org login) of the repository."
+            },
+            "repo": {
+                "type": "string",
+                "description": "The name of the repository."
+            },
+            "number": {
+                "type": "integer",
+                "description": "The issue number within the repository."
+            },
+            "title": {
+                "type": "string",
+                "description": "Optional new title for the issue."
+            },
+            "body": {
+                "type": "string",
+                "description": "Optional new body text for the issue."
+            },
+            "state": {
+                "type": "string",
+                "description": "Optional new state, 'open' or 'closed'."
+            },
+            "assignee": {
+                "type": "string",
+                "description": "Optional new assignee login."
+            },
+            "labels": {
+                "type": "array",
+                "description": "Optional new list of label names."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated issue object; on failure (issue not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_pulls",
+        "description": "List pull requests for a repository, optionally filtered by state.",
+        "arguments": {
+            "owner": {
+                "type": "string",
+                "description": "The owner (user or org login) of the repository."
+            },
+            "repo": {
+                "type": "string",
+                "description": "The name of the repository."
+            },
+            "state": {
+                "type": "string",
+                "description": "Pull request state filter: 'open', 'closed', or 'all' (default 'open')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of pull request objects; on failure (repo not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_pull",
+        "description": "Get a single pull request by repository and number.",
+        "arguments": {
+            "owner": {
+                "type": "string",
+                "description": "The owner (user or org login) of the repository."
+            },
+            "repo": {
+                "type": "string",
+                "description": "The name of the repository."
+            },
+            "number": {
+                "type": "integer",
+                "description": "The pull request number within the repository."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the pull request object; on failure (pull not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "merge_pull",
+        "description": "Merge a pull request by repository and number.",
+        "arguments": {
+            "owner": {
+                "type": "string",
+                "description": "The owner (user or org login) of the repository."
+            },
+            "repo": {
+                "type": "string",
+                "description": "The name of the repository."
+            },
+            "number": {
+                "type": "integer",
+                "description": "The pull request number within the repository."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains merged and sha; on failure (not mergeable, draft, or pull not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_comments",
+        "description": "List comments on an issue or pull request by repository and number.",
+        "arguments": {
+            "owner": {
+                "type": "string",
+                "description": "The owner (user or org login) of the repository."
+            },
+            "repo": {
+                "type": "string",
+                "description": "The name of the repository."
+            },
+            "number": {
+                "type": "integer",
+                "description": "The issue or pull request number within the repository."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of comment objects; on failure (issue not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_comment",
+        "description": "Create a comment on an issue or pull request by repository and number.",
+        "arguments": {
+            "owner": {
+                "type": "string",
+                "description": "The owner (user or org login) of the repository."
+            },
+            "repo": {
+                "type": "string",
+                "description": "The name of the repository."
+            },
+            "number": {
+                "type": "integer",
+                "description": "The issue or pull request number within the repository."
+            },
+            "body": {
+                "type": "string",
+                "description": "The text body of the comment."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created comment object; on failure (issue not found), output contains an error message."
+        }
+    }
+]

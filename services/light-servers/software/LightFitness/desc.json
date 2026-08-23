@@ -1,0 +1,207 @@
+[
+    {
+        "tool_name": "list_exercises",
+        "description": "List exercises in the catalog, optionally filtered by muscle_group and/or kind.",
+        "arguments": {
+            "muscle_group": {"type": "string", "description": "Optional muscle group filter (e.g. legs, chest, back)."},
+            "kind": {"type": "string", "description": "Optional kind filter: strength | cardio | flexibility."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of {exid, name, muscle_group, kind}."
+        }
+    },
+    {
+        "tool_name": "get_exercise",
+        "description": "Get a single exercise by exid.",
+        "arguments": {
+            "exid": {"type": "string", "description": "Exercise identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the exercise object."
+        }
+    },
+    {
+        "tool_name": "add_exercise",
+        "description": "Add a new exercise to the catalog.",
+        "arguments": {
+            "name": {"type": "string", "description": "Exercise name."},
+            "muscle_group": {"type": "string", "description": "Target muscle group."},
+            "kind": {"type": "string", "description": "One of strength | cardio | flexibility."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new exercise."
+        }
+    },
+    {
+        "tool_name": "list_workouts",
+        "description": "List workouts, optionally filtered by an ISO date range. Sorted by date ascending.",
+        "arguments": {
+            "start_date": {"type": "string", "description": "Optional inclusive lower-bound ISO date YYYY-MM-DD."},
+            "end_date": {"type": "string", "description": "Optional inclusive upper-bound ISO date YYYY-MM-DD."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of workout objects."
+        }
+    },
+    {
+        "tool_name": "get_workout",
+        "description": "Get the full workout by wkid, including all sets.",
+        "arguments": {
+            "wkid": {"type": "string", "description": "Workout identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the workout object."
+        }
+    },
+    {
+        "tool_name": "create_workout",
+        "description": "Create a new workout session with optional initial sets.",
+        "arguments": {
+            "name": {"type": "string", "description": "Workout name."},
+            "date": {"type": "string", "description": "ISO date YYYY-MM-DD."},
+            "duration_min": {"type": "integer", "description": "Duration in minutes."},
+            "sets": {"type": "array", "items": {"type": "object"}, "description": "Optional list of sets: {exid, reps, weight_kg, distance_km, duration_sec}."},
+            "notes": {"type": "string", "description": "Optional notes."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the created workout."
+        }
+    },
+    {
+        "tool_name": "update_workout",
+        "description": "Update one or more fields on an existing workout. Only supplied fields change.",
+        "arguments": {
+            "wkid": {"type": "string", "description": "Workout identifier."},
+            "name": {"type": "string", "description": "Optional new name."},
+            "date": {"type": "string", "description": "Optional new date."},
+            "duration_min": {"type": "integer", "description": "Optional new duration in minutes."},
+            "notes": {"type": "string", "description": "Optional new notes."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated workout."
+        }
+    },
+    {
+        "tool_name": "delete_workout",
+        "description": "Delete a workout permanently.",
+        "arguments": {
+            "wkid": {"type": "string", "description": "Workout identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {wkid, deleted: true}."
+        }
+    },
+    {
+        "tool_name": "add_set",
+        "description": "Append a single set (one exercise entry) to an existing workout.",
+        "arguments": {
+            "wkid": {"type": "string", "description": "Workout identifier."},
+            "exid": {"type": "string", "description": "Exercise identifier."},
+            "reps": {"type": "integer", "description": "Optional reps count."},
+            "weight_kg": {"type": "number", "description": "Optional weight in kg."},
+            "distance_km": {"type": "number", "description": "Optional distance in km."},
+            "duration_sec": {"type": "integer", "description": "Optional duration in seconds."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated workout."
+        }
+    },
+    {
+        "tool_name": "list_prs",
+        "description": "List personal records, optionally filtered by exercise.",
+        "arguments": {
+            "exid": {"type": "string", "description": "Optional exercise identifier filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of PR objects sorted by achieved_at desc."
+        }
+    },
+    {
+        "tool_name": "record_pr",
+        "description": "Record a new personal record for an exercise.",
+        "arguments": {
+            "exid": {"type": "string", "description": "Exercise identifier."},
+            "kind": {"type": "string", "description": "One of max_weight | max_reps | best_time | longest_distance."},
+            "value": {"type": "number", "description": "Numeric value of the PR."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new PersonalRecord."
+        }
+    },
+    {
+        "tool_name": "list_weekly_stats",
+        "description": "List the most recent weekly stats, sorted by week_start_date desc.",
+        "arguments": {
+            "limit": {"type": "integer", "description": "Maximum number of weeks to return."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of WeeklyStat objects."
+        }
+    },
+    {
+        "tool_name": "compute_weekly_stats",
+        "description": "Compute and persist weekly stats for the 7 days starting at week_start_date.",
+        "arguments": {
+            "week_start_date": {"type": "string", "description": "ISO date YYYY-MM-DD marking the start of the week."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the computed WeeklyStat."
+        }
+    },
+    {
+        "tool_name": "get_muscle_group_frequency",
+        "description": "Return a map of muscle_group -> number of sets performed in the given ISO date range.",
+        "arguments": {
+            "start_date": {"type": "string", "description": "Optional inclusive lower-bound ISO date."},
+            "end_date": {"type": "string", "description": "Optional inclusive upper-bound ISO date."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {muscle_group: count} mapping."
+        }
+    },
+    {
+        "tool_name": "search_exercises",
+        "description": "Search exercises by keyword across name, muscle_group, and kind.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search keyword or phrase."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of matching exercises."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Return aggregate counts across the fitness session (exercises, workouts, PRs, weekly stats, totals by kind).",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is an aggregate stats object."
+        }
+    },
+    {
+        "tool_name": "get_calendar",
+        "description": "Return a per-day map of workouts for a given month.",
+        "arguments": {
+            "month": {"type": "string", "description": "Month formatted as YYYY-MM."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {month, days: {YYYY-MM-DD: [workout_summary...]}}."
+        }
+    }
+]

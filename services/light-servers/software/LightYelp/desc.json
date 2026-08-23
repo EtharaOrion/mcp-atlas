@@ -1,0 +1,77 @@
+[
+    {
+        "tool_name": "search_businesses",
+        "description": "Search businesses by term, location, categories, and price with sorting and pagination.",
+        "arguments": {
+            "term": {
+                "type": "string",
+                "description": "Optional search term matched against business name and categories."
+            },
+            "location": {
+                "type": "string",
+                "description": "Optional location matched against city, state, or address."
+            },
+            "categories": {
+                "type": "string",
+                "description": "Optional comma-separated category aliases to filter by."
+            },
+            "price": {
+                "type": "string",
+                "description": "Optional comma-separated price levels ('$'..'$$$$' or 1..4) to filter by."
+            },
+            "sort_by": {
+                "type": "string",
+                "description": "Sort order: 'best_match' (default), 'rating', or 'review_count'."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of businesses to return (default 20)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of businesses to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has total, businesses, and region; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_business",
+        "description": "Get a single business by its id or alias.",
+        "arguments": {
+            "business_id": {
+                "type": "string",
+                "description": "The id or alias of the business."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the business object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_business_reviews",
+        "description": "Get reviews for a business by its id or alias.",
+        "arguments": {
+            "business_id": {
+                "type": "string",
+                "description": "The id or alias of the business."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has total, reviews, and possible_languages; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_categories",
+        "description": "List all business categories.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has a 'categories' list; on failure, output contains an error message."
+        }
+    }
+]

@@ -1,0 +1,194 @@
+# Source: world_data 2/LightGoogleMaps.json (verbatim). Corpus-only authored world.
+places:
+- place_id: ChIJplace0000001
+  name: Forsyth Park
+  formatted_address: 1 West Gaston Street, Savannah, GA 31401
+  geometry:
+    location:
+      lat: 32.0687
+      lng: -81.0954
+  rating: 4.4
+  user_ratings_total: 1820
+  types:
+  - cafe
+  - food
+  - point_of_interest
+  business_status: OPERATIONAL
+  price_level: 2
+- place_id: ChIJplace0000002
+  name: Telfair Academy
+  formatted_address: 121 Barnard Street, Savannah, GA 31401
+  geometry:
+    location:
+      lat: 32.079
+      lng: -81.094
+  rating: 4.5
+  user_ratings_total: 5400
+  types:
+  - bakery
+  - food
+  - store
+  business_status: OPERATIONAL
+  price_level: 2
+- place_id: ChIJplace0000003
+  name: Wormsloe Historic Site
+  formatted_address: 7601 Skidaway Road, Savannah, GA 31406
+  geometry:
+    location:
+      lat: 31.9769
+      lng: -81.0687
+  rating: 4.7
+  user_ratings_total: 21000
+  types:
+  - shopping_mall
+  - food
+  - point_of_interest
+  business_status: OPERATIONAL
+  price_level: 2
+- place_id: ChIJplace0000004
+  name: City Market
+  formatted_address: 219 West Bryan Street, Savannah, GA 31401
+  geometry:
+    location:
+      lat: 32.0809
+      lng: -81.0954
+  rating: 4.8
+  user_ratings_total: 42000
+  types:
+  - park
+  - tourist_attraction
+  - point_of_interest
+  business_status: OPERATIONAL
+  price_level: 0
+- place_id: ChIJplace0000005
+  name: Leopold's Ice Cream
+  formatted_address: 212 East Broughton Street, Savannah, GA 31401
+  geometry:
+    location:
+      lat: 32.0785
+      lng: -81.0887
+  rating: 4.6
+  user_ratings_total: 18000
+  types:
+  - museum
+  - tourist_attraction
+  - point_of_interest
+  business_status: OPERATIONAL
+  price_level: 2
+- place_id: ChIJplace0000006
+  name: The Indigo Fork
+  formatted_address: 5 West Liberty Street, Savannah, GA 31401
+  geometry:
+    location:
+      lat: 32.0745
+      lng: -81.093
+  rating: 4.3
+  user_ratings_total: 3100
+  types:
+  - restaurant
+  - food
+  - point_of_interest
+  business_status: OPERATIONAL
+  price_level: 3
+- place_id: ChIJplace0000007
+  name: Cathedral Basilica of St. John the Baptist
+  formatted_address: 222 East Harris Street, Savannah, GA 31401
+  geometry:
+    location:
+      lat: 32.0723
+      lng: -81.0885
+  rating: 4.8
+  user_ratings_total: 9800
+  types:
+  - park
+  - point_of_interest
+  business_status: OPERATIONAL
+  price_level: 0
+- place_id: ChIJplace0000008
+  name: Savannah History Museum
+  formatted_address: 303 Martin Luther King Jr Boulevard, Savannah, GA 31401
+  geometry:
+    location:
+      lat: 32.0758
+      lng: -81.0997
+  rating: 4.5
+  user_ratings_total: 2600
+  types:
+  - cafe
+  - food
+  - store
+  business_status: OPERATIONAL
+  price_level: 1
+- place_id: ChIJplace0000009
+  name: Bonaventure Cemetery
+  formatted_address: 330 Bonaventure Road, Thunderbolt, GA 31404
+  geometry:
+    location:
+      lat: 31.9846
+      lng: -81.046
+  rating: 4.6
+  user_ratings_total: 7200
+  types:
+  - restaurant
+  - food
+  - point_of_interest
+  business_status: OPERATIONAL
+  price_level: 4
+- place_id: ChIJplace0000010
+  name: Magnolia Grille
+  formatted_address: 17 West McDonough Street, Savannah, GA 31401
+  geometry:
+    location:
+      lat: 32.0713
+      lng: -81.0934
+  rating: 4.7
+  user_ratings_total: 15000
+  types:
+  - museum
+  - tourist_attraction
+  - point_of_interest
+  business_status: OPERATIONAL
+  price_level: 2
+geocodes:
+- query: Forsyth Park
+  formatted_address: 1 West Gaston Street, Savannah, GA 31401
+  lat: 32.0687
+  lng: -81.0954
+  place_id: ChIJgeo0000000001
+  location_type: APPROXIMATE
+- query: Telfair Academy
+  formatted_address: 121 Barnard Street, Savannah, GA 31401
+  lat: 32.079
+  lng: -81.094
+  place_id: ChIJgeo0000000002
+  location_type: ROOFTOP
+- query: Wormsloe Historic Site
+  formatted_address: 7601 Skidaway Road, Savannah, GA 31406
+  lat: 31.9769
+  lng: -81.0687
+  place_id: ChIJgeo0000000003
+  location_type: ROOFTOP
+- query: City Market
+  formatted_address: 219 West Bryan Street, Savannah, GA 31401
+  lat: 32.0809
+  lng: -81.0954
+  place_id: ChIJgeo0000000004
+  location_type: APPROXIMATE
+- query: Leopold's Ice Cream
+  formatted_address: 212 East Broughton Street, Savannah, GA 31401
+  lat: 32.0785
+  lng: -81.0887
+  place_id: ChIJgeo0000000005
+  location_type: APPROXIMATE
+- query: The Indigo Fork
+  formatted_address: 5 West Liberty Street, Savannah, GA 31401
+  lat: 32.0745
+  lng: -81.093
+  place_id: ChIJgeo0000000006
+  location_type: APPROXIMATE
+- query: Cathedral Basilica of St. John the Baptist
+  formatted_address: 222 East Harris Street, Savannah, GA 31401
+  lat: 32.0723
+  lng: -81.0885
+  place_id: ChIJgeo0000000007
+  location_type: APPROXIMATE

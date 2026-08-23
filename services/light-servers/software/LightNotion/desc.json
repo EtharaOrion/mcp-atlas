@@ -1,0 +1,330 @@
+[
+    {
+        "tool_name": "list_users",
+        "description": "List workspace users with pagination.",
+        "arguments": {
+            "start_cursor": {
+                "type": "string",
+                "description": "Optional pagination cursor (offset) from a previous call."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of users to return (1-100, default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated list (object, results, next_cursor, has_more)."
+        }
+    },
+    {
+        "tool_name": "get_user",
+        "description": "Get a single user by id.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the user object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_me",
+        "description": "Get the current integration owner (first non-bot user).",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the owner user object."
+        }
+    },
+    {
+        "tool_name": "get_workspace",
+        "description": "Get information about the current workspace.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the workspace object."
+        }
+    },
+    {
+        "tool_name": "search",
+        "description": "Search pages and databases by title, optionally filtered by object type.",
+        "arguments": {
+            "query": {
+                "type": "string",
+                "description": "Optional case-insensitive substring to match against titles."
+            },
+            "filter_value": {
+                "type": "string",
+                "description": "Optional object type filter: 'page' or 'database'."
+            },
+            "start_cursor": {
+                "type": "string",
+                "description": "Optional pagination cursor (offset)."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of results to return (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated list of matching pages/databases."
+        }
+    },
+    {
+        "tool_name": "get_database",
+        "description": "Get a single database by id.",
+        "arguments": {
+            "database_id": {
+                "type": "string",
+                "description": "The unique id of the database."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the database object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "query_database",
+        "description": "Query the pages inside a database with optional status/assignee filters and sorting.",
+        "arguments": {
+            "database_id": {
+                "type": "string",
+                "description": "The unique id of the database to query."
+            },
+            "filter_status": {
+                "type": "string",
+                "description": "Optional Status property value to filter pages by."
+            },
+            "filter_assignee": {
+                "type": "string",
+                "description": "Optional Assignee (person) id to filter pages by."
+            },
+            "sort_by": {
+                "type": "string",
+                "description": "Optional sort timestamp: 'last_edited_time' or 'created_time' (descending)."
+            },
+            "start_cursor": {
+                "type": "string",
+                "description": "Optional pagination cursor (offset)."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of results to return (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated list of pages; on failure (database not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_page",
+        "description": "Get a single page by id, including its properties.",
+        "arguments": {
+            "page_id": {
+                "type": "string",
+                "description": "The unique id of the page."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the page object with properties; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_page",
+        "description": "Create a new page under a database, page, or workspace parent.",
+        "arguments": {
+            "parent_type": {
+                "type": "string",
+                "description": "The parent type: 'database', 'page', or 'workspace'."
+            },
+            "parent_id": {
+                "type": "string",
+                "description": "The id of the parent (database id, page id, or workspace id)."
+            },
+            "title": {
+                "type": "string",
+                "description": "The title of the new page."
+            },
+            "properties": {
+                "type": "object",
+                "description": "Optional mapping of property name to value or {type, value}."
+            },
+            "created_by": {
+                "type": "string",
+                "description": "Optional creator user id (default user-amelia)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created page; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_page",
+        "description": "Update a page's title, archived state, or properties.",
+        "arguments": {
+            "page_id": {
+                "type": "string",
+                "description": "The unique id of the page to update."
+            },
+            "title": {
+                "type": "string",
+                "description": "Optional new title."
+            },
+            "archived": {
+                "type": "boolean",
+                "description": "Optional new archived state."
+            },
+            "properties": {
+                "type": "object",
+                "description": "Optional mapping of property name to value or {type, value} to set/merge."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated page; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_page",
+        "description": "Archive (soft-delete) a page by id.",
+        "arguments": {
+            "page_id": {
+                "type": "string",
+                "description": "The unique id of the page to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the archived page; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_block_children",
+        "description": "List the child blocks of a page or block.",
+        "arguments": {
+            "block_id": {
+                "type": "string",
+                "description": "The page id (for root blocks) or block id (for nested blocks)."
+            },
+            "start_cursor": {
+                "type": "string",
+                "description": "Optional pagination cursor (offset)."
+            },
+            "page_size": {
+                "type": "integer",
+                "description": "Maximum number of blocks to return (1-100, default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated list of blocks."
+        }
+    },
+    {
+        "tool_name": "append_block_children",
+        "description": "Append new child blocks to a page or block.",
+        "arguments": {
+            "block_id": {
+                "type": "string",
+                "description": "The parent page id or block id to append to."
+            },
+            "children": {
+                "type": "array",
+                "description": "List of block objects to create (each with type, text, and optional checked)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has the list of created blocks; on failure (parent not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_block",
+        "description": "Update a block's text and/or checked state.",
+        "arguments": {
+            "block_id": {
+                "type": "string",
+                "description": "The unique id of the block to update."
+            },
+            "text": {
+                "type": "string",
+                "description": "Optional new text content."
+            },
+            "checked": {
+                "type": "boolean",
+                "description": "Optional new checked state (only applied to to_do blocks)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated block; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_block",
+        "description": "Delete a block by id.",
+        "arguments": {
+            "block_id": {
+                "type": "string",
+                "description": "The unique id of the block to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has object, id, and deleted; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_comments",
+        "description": "List comments, optionally filtered by block or page.",
+        "arguments": {
+            "block_id": {
+                "type": "string",
+                "description": "Optional block id to filter comments by."
+            },
+            "page_id": {
+                "type": "string",
+                "description": "Optional page id to filter comments by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has a list of comments."
+        }
+    },
+    {
+        "tool_name": "create_comment",
+        "description": "Create a comment on a page (optionally attached to a block).",
+        "arguments": {
+            "parent_page_id": {
+                "type": "string",
+                "description": "The id of the page the comment belongs to."
+            },
+            "author_id": {
+                "type": "string",
+                "description": "The id of the comment author."
+            },
+            "text": {
+                "type": "string",
+                "description": "The comment text."
+            },
+            "parent_block_id": {
+                "type": "string",
+                "description": "Optional block id the comment is attached to."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created comment; on failure (page not found), output contains an error message."
+        }
+    }
+]

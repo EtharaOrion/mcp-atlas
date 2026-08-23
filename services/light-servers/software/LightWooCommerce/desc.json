@@ -1,0 +1,150 @@
+[
+    {
+        "tool_name": "list_products",
+        "description": "List products with optional search, sku, and status filters plus pagination.",
+        "arguments": {
+            "search": {
+                "type": "string",
+                "description": "Optional case-insensitive substring to match against product names."
+            },
+            "sku": {
+                "type": "string",
+                "description": "Optional exact SKU to match (case-insensitive)."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional product status filter (e.g. publish)."
+            },
+            "page": {
+                "type": "integer",
+                "description": "Page number for pagination (default 1)."
+            },
+            "per_page": {
+                "type": "integer",
+                "description": "Number of products per page (default 10)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of serialized product objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_product",
+        "description": "Get a single product by its numeric id.",
+        "arguments": {
+            "product_id": {
+                "type": "integer",
+                "description": "The unique numeric id of the product."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the serialized product; on failure (invalid id), output contains a WooCommerce error object."
+        }
+    },
+    {
+        "tool_name": "list_orders",
+        "description": "List orders with optional customer and status filters plus pagination.",
+        "arguments": {
+            "customer": {
+                "type": "integer",
+                "description": "Optional customer id to filter orders by."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional order status filter (e.g. completed)."
+            },
+            "page": {
+                "type": "integer",
+                "description": "Page number for pagination (default 1)."
+            },
+            "per_page": {
+                "type": "integer",
+                "description": "Number of orders per page (default 10)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of serialized order objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_order",
+        "description": "Get a single order by its numeric id.",
+        "arguments": {
+            "order_id": {
+                "type": "integer",
+                "description": "The unique numeric id of the order."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the serialized order; on failure (invalid id), output contains a WooCommerce error object."
+        }
+    },
+    {
+        "tool_name": "create_order",
+        "description": "Create a new order for a customer with optional billing and line items.",
+        "arguments": {
+            "customer_id": {
+                "type": "integer",
+                "description": "The customer id the order belongs to (default 0)."
+            },
+            "status": {
+                "type": "string",
+                "description": "Initial order status (default 'pending')."
+            },
+            "currency": {
+                "type": "string",
+                "description": "Order currency code (default 'USD')."
+            },
+            "payment_method": {
+                "type": "string",
+                "description": "Payment method code (default 'bacs')."
+            },
+            "payment_method_title": {
+                "type": "string",
+                "description": "Human-readable payment method title (default 'Direct Bank Transfer')."
+            },
+            "billing": {
+                "type": "object",
+                "description": "Optional billing object with first_name, last_name, and email."
+            },
+            "line_items": {
+                "type": "array",
+                "description": "Optional list of line item objects with product_id and quantity used to compute totals."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created serialized order; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_customers",
+        "description": "List customers with optional search and email filters plus pagination.",
+        "arguments": {
+            "search": {
+                "type": "string",
+                "description": "Optional substring matched against customer name or email."
+            },
+            "email": {
+                "type": "string",
+                "description": "Optional substring matched against customer email."
+            },
+            "page": {
+                "type": "integer",
+                "description": "Page number for pagination (default 1)."
+            },
+            "per_page": {
+                "type": "integer",
+                "description": "Number of customers per page (default 10)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of serialized customer objects; on failure, output contains an error message."
+        }
+    }
+]

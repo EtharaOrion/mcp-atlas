@@ -1,0 +1,92 @@
+[
+    {
+        "tool_name": "get_accounts",
+        "description": "Retrieve the accounts associated with the connected Plaid item, optionally filtered to specific account ids. Each account includes embedded balances.",
+        "arguments": {
+            "account_ids": {
+                "type": "array",
+                "description": "Optional list of account_id strings to restrict the results to specific accounts."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with accounts (each including balances), item, and request_id; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_balances",
+        "description": "Retrieve real-time balances for the accounts on the connected Plaid item, optionally filtered to specific account ids. Same shape as get_accounts with balances embedded in each account.",
+        "arguments": {
+            "account_ids": {
+                "type": "array",
+                "description": "Optional list of account_id strings to restrict the results to specific accounts."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with accounts (each including balances), item, and request_id; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_transactions",
+        "description": "Retrieve transactions for the connected Plaid item, optionally filtered by date range and account ids, sorted by date descending and paginated with count and offset.",
+        "arguments": {
+            "start_date": {
+                "type": "string",
+                "description": "Optional inclusive lower bound date in 'YYYY-MM-DD' format; only transactions on or after this date are returned."
+            },
+            "end_date": {
+                "type": "string",
+                "description": "Optional inclusive upper bound date in 'YYYY-MM-DD' format; only transactions on or before this date are returned."
+            },
+            "account_ids": {
+                "type": "array",
+                "description": "Optional list of account_id strings to restrict the results to specific accounts."
+            },
+            "count": {
+                "type": "integer",
+                "description": "Maximum number of transactions to return (clamped between 1 and 500, default 100)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of transactions to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with accounts, transactions (the current page), total_transactions, item, and request_id; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_institution_by_id",
+        "description": "Retrieve details for a financial institution by its institution_id.",
+        "arguments": {
+            "institution_id": {
+                "type": "string",
+                "description": "The unique identifier of the institution to look up."
+            },
+            "country_codes": {
+                "type": "array",
+                "description": "Optional list of ISO country code strings (accepted for Plaid compatibility, does not affect the result)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the institution and request_id; on failure (institution not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_identity",
+        "description": "Retrieve account owner identity information (names, emails, phone numbers, addresses) for the accounts on the connected Plaid item, optionally filtered to specific account ids.",
+        "arguments": {
+            "account_ids": {
+                "type": "array",
+                "description": "Optional list of account_id strings to restrict the results to specific accounts."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with accounts (each including an owners list), item, and request_id; on failure, output contains an error message."
+        }
+    }
+]

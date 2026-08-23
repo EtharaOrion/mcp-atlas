@@ -1,0 +1,115 @@
+[
+    {
+        "tool_name": "get_athlete",
+        "description": "Get the profile of the currently authenticated athlete.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the athlete profile object (id, username, firstname, lastname, city, state, country, sex, premium, weight, ftp, follower_count, friend_count, created_at)."
+        }
+    },
+    {
+        "tool_name": "list_activities",
+        "description": "List the authenticated athlete's activities, sorted newest first, with optional time-window filtering and pagination.",
+        "arguments": {
+            "before": {
+                "type": "integer",
+                "description": "Optional unix epoch (seconds); only activities starting at or before this time are returned."
+            },
+            "after": {
+                "type": "integer",
+                "description": "Optional unix epoch (seconds); only activities starting at or after this time are returned."
+            },
+            "page": {
+                "type": "integer",
+                "description": "Page number (1-based, default 1)."
+            },
+            "per_page": {
+                "type": "integer",
+                "description": "Number of activities per page (default 30)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of activity objects."
+        }
+    },
+    {
+        "tool_name": "athlete_stats",
+        "description": "Get aggregate run, ride, and swim totals for an athlete.",
+        "arguments": {
+            "athlete_id": {
+                "type": "integer",
+                "description": "The id of the athlete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has all_run_totals, all_ride_totals, and all_swim_totals; on failure (athlete not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_activity",
+        "description": "Get a single activity by its id.",
+        "arguments": {
+            "activity_id": {
+                "type": "integer",
+                "description": "The id of the activity."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the activity object with an embedded athlete reference; on failure (activity not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_activity",
+        "description": "Update the name and/or type of an existing activity.",
+        "arguments": {
+            "activity_id": {
+                "type": "integer",
+                "description": "The id of the activity to update."
+            },
+            "name": {
+                "type": "string",
+                "description": "Optional new name for the activity."
+            },
+            "type": {
+                "type": "string",
+                "description": "Optional new activity type (also updates sport_type)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated activity object; on failure (activity not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "activity_kudos",
+        "description": "List the athletes who gave kudos to an activity.",
+        "arguments": {
+            "activity_id": {
+                "type": "integer",
+                "description": "The id of the activity."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of kudoers (firstname, lastname); on failure (activity not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_segment",
+        "description": "Get a single segment by its id.",
+        "arguments": {
+            "segment_id": {
+                "type": "integer",
+                "description": "The id of the segment."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the segment object; on failure (segment not found), output contains an error message."
+        }
+    }
+]

@@ -1,0 +1,207 @@
+[
+    {
+        "tool_name": "list_rooms",
+        "description": "List all rooms in the smart home.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of {rmid, name, floor}."
+        }
+    },
+    {
+        "tool_name": "add_room",
+        "description": "Add a new room to the home.",
+        "arguments": {
+            "name": {"type": "string", "description": "Human-readable room name."},
+            "floor": {"type": "integer", "description": "Floor number the room is on."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new {rmid, name, floor}."
+        }
+    },
+    {
+        "tool_name": "list_devices",
+        "description": "List devices, optionally filtered by room_id and/or kind.",
+        "arguments": {
+            "room_id": {"type": "string", "description": "Optional room to filter by."},
+            "kind": {"type": "string", "description": "Optional device kind (light, thermostat, plug, speaker, tv, curtain, fan)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of device summaries sorted by name."
+        }
+    },
+    {
+        "tool_name": "get_device",
+        "description": "Retrieve the full device object by dvid.",
+        "arguments": {
+            "dvid": {"type": "string", "description": "Device identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full device including state."
+        }
+    },
+    {
+        "tool_name": "add_device",
+        "description": "Register a new device in a room.",
+        "arguments": {
+            "name": {"type": "string", "description": "Device name."},
+            "room_id": {"type": "string", "description": "Room identifier the device lives in."},
+            "kind": {"type": "string", "description": "One of light, thermostat, plug, speaker, tv, curtain, fan."},
+            "brightness": {"type": "integer", "description": "Optional initial brightness 0..100."},
+            "temperature": {"type": "number", "description": "Optional initial temperature in Celsius."},
+            "color": {"type": "string", "description": "Optional initial color hex like #FFE4B5."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new device summary."
+        }
+    },
+    {
+        "tool_name": "remove_device",
+        "description": "Remove a device from the home. Any scene actions referencing it are cleaned up.",
+        "arguments": {
+            "dvid": {"type": "string", "description": "Device identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {dvid, deleted: true}."
+        }
+    },
+    {
+        "tool_name": "turn_on",
+        "description": "Power a device on.",
+        "arguments": {
+            "dvid": {"type": "string", "description": "Device identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated device summary."
+        }
+    },
+    {
+        "tool_name": "turn_off",
+        "description": "Power a device off.",
+        "arguments": {
+            "dvid": {"type": "string", "description": "Device identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated device summary."
+        }
+    },
+    {
+        "tool_name": "set_brightness",
+        "description": "Set the brightness of a device (0..100).",
+        "arguments": {
+            "dvid": {"type": "string", "description": "Device identifier."},
+            "brightness": {"type": "integer", "description": "Brightness value from 0 to 100."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated device summary."
+        }
+    },
+    {
+        "tool_name": "set_temperature",
+        "description": "Set the target temperature of a thermostat-like device in Celsius.",
+        "arguments": {
+            "dvid": {"type": "string", "description": "Device identifier."},
+            "temperature": {"type": "number", "description": "Target temperature in Celsius."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated device summary."
+        }
+    },
+    {
+        "tool_name": "set_color",
+        "description": "Set the color of a light or color-capable device.",
+        "arguments": {
+            "dvid": {"type": "string", "description": "Device identifier."},
+            "color": {"type": "string", "description": "Hex color like #FFE4B5."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated device summary."
+        }
+    },
+    {
+        "tool_name": "list_scenes",
+        "description": "List all scenes.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of scenes with their actions."
+        }
+    },
+    {
+        "tool_name": "get_scene",
+        "description": "Retrieve a scene by scid.",
+        "arguments": {
+            "scid": {"type": "string", "description": "Scene identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full scene definition."
+        }
+    },
+    {
+        "tool_name": "create_scene",
+        "description": "Create a new scene as a list of device state patches.",
+        "arguments": {
+            "name": {"type": "string", "description": "Scene name."},
+            "actions": {
+                "type": "array",
+                "items": {"type": "object"},
+                "description": "List of {dvid, state_patch} where state_patch is an object like {on: true, brightness: 30}."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new scene."
+        }
+    },
+    {
+        "tool_name": "activate_scene",
+        "description": "Apply every action of the given scene to the referenced devices.",
+        "arguments": {
+            "scid": {"type": "string", "description": "Scene identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {scid, applied: count}."
+        }
+    },
+    {
+        "tool_name": "list_automations",
+        "description": "List all automations (trigger -> action rules).",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of automations."
+        }
+    },
+    {
+        "tool_name": "toggle_automation",
+        "description": "Enable or disable an automation (flips is_enabled).",
+        "arguments": {
+            "auid": {"type": "string", "description": "Automation identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated automation."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Aggregate counts of rooms, devices, scenes, automations, and current on/online counts and per-kind/per-room breakdown.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is an object of aggregate counters."
+        }
+    }
+]

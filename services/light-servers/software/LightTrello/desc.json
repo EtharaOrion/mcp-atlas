@@ -1,0 +1,190 @@
+[
+    {
+        "tool_name": "get_me",
+        "description": "Get the member profile of the currently authenticated Trello user (the 'me' member).",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the current member object (id, username, full_name, email, initials); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_my_boards",
+        "description": "List the open boards the currently authenticated member belongs to.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of board objects (id, name, desc, closed, idOrganization, url, idMembers); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_board",
+        "description": "Get a single board by its id.",
+        "arguments": {
+            "board_id": {
+                "type": "string",
+                "description": "The unique id of the board."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the board object; on failure (board not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_board_lists",
+        "description": "List the open lists belonging to a board, sorted by position.",
+        "arguments": {
+            "board_id": {
+                "type": "string",
+                "description": "The unique id of the board."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of list objects (id, name, idBoard, pos, closed); on failure (board not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_cards",
+        "description": "List the open cards belonging to a list, sorted by position.",
+        "arguments": {
+            "list_id": {
+                "type": "string",
+                "description": "The unique id of the list."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of card objects; on failure (list not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_card",
+        "description": "Get a single card by its id.",
+        "arguments": {
+            "card_id": {
+                "type": "string",
+                "description": "The unique id of the card."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the card object; on failure (card not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_card",
+        "description": "Create a new card in a list. The card is positioned after existing cards in the list.",
+        "arguments": {
+            "id_list": {
+                "type": "string",
+                "description": "The id of the list the card is created in."
+            },
+            "name": {
+                "type": "string",
+                "description": "The name/title of the card."
+            },
+            "desc": {
+                "type": "string",
+                "description": "Optional description text for the card."
+            },
+            "due": {
+                "type": "string",
+                "description": "Optional due date/time in ISO 8601 format."
+            },
+            "member_ids": {
+                "type": "array",
+                "description": "Optional list of member ids to assign to the card."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created card object; on failure (list not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_card",
+        "description": "Update fields of an existing card by its id.",
+        "arguments": {
+            "card_id": {
+                "type": "string",
+                "description": "The unique id of the card to update."
+            },
+            "name": {
+                "type": "string",
+                "description": "Optional new name for the card."
+            },
+            "desc": {
+                "type": "string",
+                "description": "Optional new description for the card."
+            },
+            "id_list": {
+                "type": "string",
+                "description": "Optional new list id to move the card to (also updates the card's board)."
+            },
+            "due": {
+                "type": "string",
+                "description": "Optional new due date/time; pass an empty string to clear it."
+            },
+            "closed": {
+                "type": "boolean",
+                "description": "Optional new closed (archived) state for the card."
+            },
+            "pos": {
+                "type": "number",
+                "description": "Optional new position of the card within its list."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated card object; on failure (card or target list not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_card",
+        "description": "Delete a card by its id, also removing any checklists attached to it.",
+        "arguments": {
+            "card_id": {
+                "type": "string",
+                "description": "The unique id of the card to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms deletion (_value, deleted, id); on failure (card not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_card_checklists",
+        "description": "List the checklists attached to a card.",
+        "arguments": {
+            "card_id": {
+                "type": "string",
+                "description": "The unique id of the card."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of checklist objects (id, name, idCard, idBoard, checkItems); on failure (card not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_checklist",
+        "description": "Create a new (empty) checklist on a card.",
+        "arguments": {
+            "id_card": {
+                "type": "string",
+                "description": "The id of the card the checklist is created on."
+            },
+            "name": {
+                "type": "string",
+                "description": "The name of the checklist (defaults to 'Checklist')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created checklist object; on failure (card not found), output contains an error message."
+        }
+    }
+]

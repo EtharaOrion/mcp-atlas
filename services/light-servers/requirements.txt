@@ -1,0 +1,13 @@
+fastmcp==2.13.3
+colorlog
+shortuuid==1.0.13
+pyyaml
+httpx
+pillow
+numpy
+pandas
+python-dateutil
+pytz
+requests
+beautifulsoup4
+lxml

@@ -1,0 +1,170 @@
+[
+    {
+        "tool_name": "list_projects",
+        "description": "List all projects available in the Jira instance.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of project objects (id, key, name, projectTypeKey, lead, description); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_issue",
+        "description": "Get a single issue by its issue key.",
+        "arguments": {
+            "issue_key": {
+                "type": "string",
+                "description": "The issue key (e.g. 'ENG-101')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the serialized issue (id, key, fields); on failure (issue does not exist), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_issue",
+        "description": "Create a new issue in a project.",
+        "arguments": {
+            "project_key": {
+                "type": "string",
+                "description": "The key of the project the issue belongs to (e.g. 'ENG')."
+            },
+            "summary": {
+                "type": "string",
+                "description": "The summary/title of the issue."
+            },
+            "issue_type": {
+                "type": "string",
+                "description": "The issue type name (default 'Task'), e.g. 'Bug', 'Story', 'Task'."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional free-text description for the issue."
+            },
+            "priority": {
+                "type": "string",
+                "description": "The priority name (default 'Medium'), e.g. 'Highest', 'High', 'Low'."
+            },
+            "assignee": {
+                "type": "string",
+                "description": "Optional account id of the user to assign the issue to."
+            },
+            "reporter": {
+                "type": "string",
+                "description": "Account id of the reporter (default 'user-amelia')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the new issue id, key, and self link; on failure (project not found or invalid assignee), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_issue",
+        "description": "Update fields of an existing issue by its key.",
+        "arguments": {
+            "issue_key": {
+                "type": "string",
+                "description": "The key of the issue to update (e.g. 'ENG-101')."
+            },
+            "summary": {
+                "type": "string",
+                "description": "Optional new summary for the issue."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional new description for the issue."
+            },
+            "priority": {
+                "type": "string",
+                "description": "Optional new priority name."
+            },
+            "assignee": {
+                "type": "string",
+                "description": "Optional new assignee account id; an empty string clears the assignee."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms the update (key, updated); on failure (issue does not exist), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_transitions",
+        "description": "List the workflow transitions available for an issue from its current status.",
+        "arguments": {
+            "issue_key": {
+                "type": "string",
+                "description": "The key of the issue (e.g. 'ENG-101')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output contains a list of available transitions (id, name, to); on failure (issue does not exist), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "transition_issue",
+        "description": "Apply a workflow transition to an issue, changing its status.",
+        "arguments": {
+            "issue_key": {
+                "type": "string",
+                "description": "The key of the issue to transition (e.g. 'ENG-101')."
+            },
+            "transition_id": {
+                "type": "string",
+                "description": "The id of the transition to apply (as returned by get_transitions)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms the new status (key, status, transitioned); on failure (issue does not exist or transition not valid), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "search",
+        "description": "Search for issues using a small JQL subset supporting 'project = X' and 'status = Y' joined by AND.",
+        "arguments": {
+            "jql": {
+                "type": "string",
+                "description": "Optional JQL query string; supports 'project = X' and 'status = Y' clauses joined by AND."
+            },
+            "max_results": {
+                "type": "integer",
+                "description": "Maximum number of issues to return (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a search result object (expand, startAt, maxResults, total, issues); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_boards",
+        "description": "List all agile boards in the Jira instance.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated object with a list of board values (id, name, type, location); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_sprints",
+        "description": "List the sprints belonging to a board, optionally filtered by state.",
+        "arguments": {
+            "board_id": {
+                "type": "integer",
+                "description": "The numeric id of the board."
+            },
+            "state": {
+                "type": "string",
+                "description": "Optional sprint state filter, e.g. 'active', 'closed', 'future'."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated object with a list of sprint values; on failure (board not found), output contains an error message."
+        }
+    }
+]

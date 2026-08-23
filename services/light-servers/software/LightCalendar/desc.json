@@ -1,0 +1,180 @@
+[
+    {
+        "tool_name": "list_calendars",
+        "description": "List all sub-calendars for the current user (e.g. Personal, Work, Holidays).",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of {cid, name, color} calendars."
+        }
+    },
+    {
+        "tool_name": "create_calendar",
+        "description": "Create a new sub-calendar.",
+        "arguments": {
+            "name": {"type": "string", "description": "Human-readable name for the calendar."},
+            "color": {"type": "string", "description": "Optional hex color like #4285F4."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new {cid, name, color}."
+        }
+    },
+    {
+        "tool_name": "delete_calendar",
+        "description": "Delete a sub-calendar. All events in this calendar are also removed.",
+        "arguments": {
+            "cid": {"type": "string", "description": "Calendar identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output contains cid and removed_events count."
+        }
+    },
+    {
+        "tool_name": "list_events",
+        "description": "List events, optionally filtered by calendar_id and/or ISO date range. Sorted by start time ascending.",
+        "arguments": {
+            "calendar_id": {"type": "string", "description": "Optional calendar to filter by."},
+            "start_date": {"type": "string", "description": "Optional inclusive lower-bound ISO datetime."},
+            "end_date": {"type": "string", "description": "Optional inclusive upper-bound ISO datetime."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of event summaries."
+        }
+    },
+    {
+        "tool_name": "get_event",
+        "description": "Retrieve the full event object by eid.",
+        "arguments": {
+            "eid": {"type": "string", "description": "Event identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full event including description and attendees."
+        }
+    },
+    {
+        "tool_name": "create_event",
+        "description": "Create a new event on a calendar.",
+        "arguments": {
+            "title": {"type": "string", "description": "Event title."},
+            "start": {"type": "string", "description": "ISO datetime start."},
+            "end": {"type": "string", "description": "ISO datetime end."},
+            "calendar_id": {"type": "string", "description": "Which calendar to add to (default cal_personal)."},
+            "location": {"type": "string", "description": "Optional location."},
+            "description": {"type": "string", "description": "Optional long-form description."},
+            "attendees": {"type": "array", "items": {"type": "string"}, "description": "Optional list of attendee email addresses."},
+            "all_day": {"type": "boolean", "description": "Whether this is an all-day event."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new event summary."
+        }
+    },
+    {
+        "tool_name": "update_event",
+        "description": "Update one or more fields on an existing event. Only supplied fields are changed.",
+        "arguments": {
+            "eid": {"type": "string", "description": "Event identifier."},
+            "title": {"type": "string", "description": "Optional new title."},
+            "start": {"type": "string", "description": "Optional new ISO start."},
+            "end": {"type": "string", "description": "Optional new ISO end."},
+            "location": {"type": "string", "description": "Optional new location."},
+            "description": {"type": "string", "description": "Optional new description."},
+            "calendar_id": {"type": "string", "description": "Optional new calendar."},
+            "attendees": {"type": "array", "items": {"type": "string"}, "description": "Optional replacement attendees list."},
+            "all_day": {"type": "boolean", "description": "Optional all_day flag."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated event summary."
+        }
+    },
+    {
+        "tool_name": "delete_event",
+        "description": "Delete an event permanently.",
+        "arguments": {
+            "eid": {"type": "string", "description": "Event identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {eid, deleted: true}."
+        }
+    },
+    {
+        "tool_name": "move_event",
+        "description": "Reschedule an event to a new start/end time. Shortcut for update_event with just start+end.",
+        "arguments": {
+            "eid": {"type": "string", "description": "Event identifier."},
+            "new_start": {"type": "string", "description": "New ISO start datetime."},
+            "new_end": {"type": "string", "description": "New ISO end datetime."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the rescheduled event summary."
+        }
+    },
+    {
+        "tool_name": "search_events",
+        "description": "Search events by keyword across title, description, and location.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search keyword or phrase."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of matching event summaries sorted by start time."
+        }
+    },
+    {
+        "tool_name": "list_upcoming",
+        "description": "List the next N events from now (or from the supplied from_date).",
+        "arguments": {
+            "limit": {"type": "integer", "description": "Maximum number of events to return."},
+            "from_date": {"type": "string", "description": "Optional ISO anchor; defaults to the session's initial time."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of upcoming event summaries."
+        }
+    },
+    {
+        "tool_name": "list_today",
+        "description": "List events scheduled for today (or the supplied ISO date).",
+        "arguments": {
+            "today": {"type": "string", "description": "Optional ISO date (YYYY-MM-DD)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of event summaries starting on that day."
+        }
+    },
+    {
+        "tool_name": "check_availability",
+        "description": "Check whether a time range is free of conflicts against the user's own events.",
+        "arguments": {
+            "start": {"type": "string", "description": "ISO start datetime."},
+            "end": {"type": "string", "description": "ISO end datetime."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {free: bool, conflicts: [event_summary, ...]}."
+        }
+    },
+    {
+        "tool_name": "find_free_slot",
+        "description": "Find the first free slot of at least duration_min minutes within [start_date, end_date], respecting the given working-hours window.",
+        "arguments": {
+            "duration_min": {"type": "integer", "description": "Required slot length in minutes."},
+            "start_date": {"type": "string", "description": "ISO datetime lower bound for the search."},
+            "end_date": {"type": "string", "description": "ISO datetime upper bound for the search."},
+            "working_hours_start": {"type": "integer", "description": "Hour of day (0-23) working window starts."},
+            "working_hours_end": {"type": "integer", "description": "Hour of day (0-23) working window ends."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {start, end} of the first free slot or null if none found."
+        }
+    }
+]

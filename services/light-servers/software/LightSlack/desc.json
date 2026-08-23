@@ -1,0 +1,311 @@
+[
+    {
+        "tool_name": "auth_test",
+        "description": "Verify authentication and return the authenticated team and user identity.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds url, team, user, team_id and user_id for the authenticated admin; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "team_info",
+        "description": "Get information about the current Slack team.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the team document; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "users_list",
+        "description": "List all users (members) in the team.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a members list of user objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "users_info",
+        "description": "Get information about a single user by id.",
+        "arguments": {
+            "user": {
+                "type": "string",
+                "description": "The id of the user to look up."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the user; on failure (user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "users_set_presence",
+        "description": "Set the presence of a user to away or auto.",
+        "arguments": {
+            "user": {
+                "type": "string",
+                "description": "The id of the user whose presence is set."
+            },
+            "presence": {
+                "type": "string",
+                "description": "Presence value; 'away' sets away, anything else sets 'auto'."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the new presence; on failure (user not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "conversations_list",
+        "description": "List channels, optionally filtered by type and archived state.",
+        "arguments": {
+            "types": {
+                "type": "string",
+                "description": "Comma-separated channel types to include (public_channel, private_channel)."
+            },
+            "exclude_archived": {
+                "type": "boolean",
+                "description": "When true, archived channels are excluded (default true)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a channels list; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "conversations_info",
+        "description": "Get information about a single channel by id.",
+        "arguments": {
+            "channel": {
+                "type": "string",
+                "description": "The id of the channel to look up."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the channel; on failure (channel not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "conversations_create",
+        "description": "Create a new channel, optionally private, owned by a user.",
+        "arguments": {
+            "name": {
+                "type": "string",
+                "description": "The name of the channel to create."
+            },
+            "is_private": {
+                "type": "boolean",
+                "description": "Whether the channel is private (default false)."
+            },
+            "user_id": {
+                "type": "string",
+                "description": "The id of the user creating the channel (default U01AMELIA)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the created channel; on failure (name taken), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "conversations_archive",
+        "description": "Archive a channel by id.",
+        "arguments": {
+            "channel": {
+                "type": "string",
+                "description": "The id of the channel to archive."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an empty object; on failure (channel not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "conversations_members",
+        "description": "List the user ids who are members of a channel.",
+        "arguments": {
+            "channel": {
+                "type": "string",
+                "description": "The id of the channel."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a members list of user ids; on failure (channel not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "conversations_invite",
+        "description": "Invite one or more users (comma-separated) to a channel.",
+        "arguments": {
+            "channel": {
+                "type": "string",
+                "description": "The id of the channel to invite users into."
+            },
+            "users": {
+                "type": "string",
+                "description": "Comma-separated list of user ids to invite."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds an overall ok flag, per-user results, and the channel; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "conversations_history",
+        "description": "List top-level messages in a channel, newest first, with optional time bounds.",
+        "arguments": {
+            "channel": {
+                "type": "string",
+                "description": "The id of the channel."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of messages to return (default 20)."
+            },
+            "oldest": {
+                "type": "string",
+                "description": "Optional lower-bound timestamp; only messages at or after are returned."
+            },
+            "latest": {
+                "type": "string",
+                "description": "Optional upper-bound timestamp; only messages at or before are returned."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a messages list and a has_more flag; on failure (channel not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "conversations_replies",
+        "description": "Get a parent message and its threaded replies.",
+        "arguments": {
+            "channel": {
+                "type": "string",
+                "description": "The id of the channel containing the thread."
+            },
+            "ts": {
+                "type": "string",
+                "description": "The timestamp of the parent message."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a messages list (parent followed by replies); on failure (thread not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "chat_post_message",
+        "description": "Post a message to a channel, optionally as a threaded reply.",
+        "arguments": {
+            "channel": {
+                "type": "string",
+                "description": "The id of the channel to post to."
+            },
+            "text": {
+                "type": "string",
+                "description": "The text of the message."
+            },
+            "user": {
+                "type": "string",
+                "description": "The id of the posting user (default U01AMELIA)."
+            },
+            "thread_ts": {
+                "type": "string",
+                "description": "Optional parent message timestamp to post as a reply."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds channel, ts and the posted message; on failure (channel not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "chat_update",
+        "description": "Update the text of an existing message.",
+        "arguments": {
+            "channel": {
+                "type": "string",
+                "description": "The id of the channel containing the message."
+            },
+            "ts": {
+                "type": "string",
+                "description": "The timestamp of the message to update."
+            },
+            "text": {
+                "type": "string",
+                "description": "The new text for the message."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds channel, ts and text; on failure (message not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "chat_delete",
+        "description": "Delete a message by channel and timestamp.",
+        "arguments": {
+            "channel": {
+                "type": "string",
+                "description": "The id of the channel containing the message."
+            },
+            "ts": {
+                "type": "string",
+                "description": "The timestamp of the message to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds channel and ts; on failure (message not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "reactions_add",
+        "description": "Add an emoji reaction to a message from a user.",
+        "arguments": {
+            "channel": {
+                "type": "string",
+                "description": "The id of the channel containing the message."
+            },
+            "timestamp": {
+                "type": "string",
+                "description": "The timestamp of the message to react to."
+            },
+            "name": {
+                "type": "string",
+                "description": "The emoji name of the reaction."
+            },
+            "user": {
+                "type": "string",
+                "description": "The id of the reacting user (default U01AMELIA)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an empty object; on failure (message not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "search_messages",
+        "description": "Search all messages for a case-insensitive substring in the text.",
+        "arguments": {
+            "query": {
+                "type": "string",
+                "description": "The substring to search for in message text."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds a messages object with total and matches; on failure, output contains an error message."
+        }
+    }
+]

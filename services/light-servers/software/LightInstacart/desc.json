@@ -1,0 +1,235 @@
+[
+    {
+        "tool_name": "get_user",
+        "description": "Get the current authenticated user's profile, including default address, membership, and payment method.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the user profile object."
+        }
+    },
+    {
+        "tool_name": "list_retailers",
+        "description": "List available retailers, optionally filtered to those delivering to a given zip code.",
+        "arguments": {
+            "zip_code": {
+                "type": "string",
+                "description": "Optional zip code to filter retailers by delivery coverage."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of retailer objects."
+        }
+    },
+    {
+        "tool_name": "get_retailer",
+        "description": "Get the details of a single retailer by its retailer_id.",
+        "arguments": {
+            "retailer_id": {
+                "type": "string",
+                "description": "The unique id of the retailer."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the retailer object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "search_products",
+        "description": "Search products with optional filters by retailer, text query, category, and stock, with pagination.",
+        "arguments": {
+            "retailer_id": {
+                "type": "string",
+                "description": "Optional retailer id to restrict results to."
+            },
+            "query": {
+                "type": "string",
+                "description": "Optional free-text query matched against product name and brand."
+            },
+            "category": {
+                "type": "string",
+                "description": "Optional category to filter by (case-insensitive exact match)."
+            },
+            "in_stock_only": {
+                "type": "boolean",
+                "description": "If true (default), only in-stock products are returned."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of results per page (default 25)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of results to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated envelope with total, count, offset, limit, and a results list."
+        }
+    },
+    {
+        "tool_name": "get_product",
+        "description": "Get the details of a single product by its product_id.",
+        "arguments": {
+            "product_id": {
+                "type": "string",
+                "description": "The unique id of the product."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the product object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_cart",
+        "description": "Create a new empty cart for a user at a given retailer.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The id of the user who owns the cart."
+            },
+            "retailer_id": {
+                "type": "string",
+                "description": "The id of the retailer the cart is for."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the new cart with computed totals; on failure (retailer not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_cart",
+        "description": "Get a cart with its detailed items and computed totals by cart_id.",
+        "arguments": {
+            "cart_id": {
+                "type": "string",
+                "description": "The unique id of the cart."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the cart with detailed items and totals; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "add_to_cart",
+        "description": "Add a product to a cart (or increment its quantity if already present).",
+        "arguments": {
+            "cart_id": {
+                "type": "string",
+                "description": "The id of the cart to add to."
+            },
+            "product_id": {
+                "type": "string",
+                "description": "The id of the product to add."
+            },
+            "quantity": {
+                "type": "integer",
+                "description": "The quantity to add."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated cart with totals; on failure (cart/product not found or retailer mismatch), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_cart_item",
+        "description": "Set the quantity of a product in a cart; a quantity of zero or less removes the item.",
+        "arguments": {
+            "cart_id": {
+                "type": "string",
+                "description": "The id of the cart."
+            },
+            "product_id": {
+                "type": "string",
+                "description": "The id of the product to update."
+            },
+            "quantity": {
+                "type": "integer",
+                "description": "The new quantity; zero or negative removes the item from the cart."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated cart with totals; on failure (cart or item not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "checkout",
+        "description": "Check out a cart into a placed order, applying tip and delivery window, if it meets the retailer minimum.",
+        "arguments": {
+            "cart_id": {
+                "type": "string",
+                "description": "The id of the cart to check out."
+            },
+            "tip": {
+                "type": "number",
+                "description": "Tip amount to add to the order total (default 0.0)."
+            },
+            "delivery_window_start": {
+                "type": "string",
+                "description": "Optional ISO timestamp for the delivery window start; defaults to two hours from now."
+            },
+            "delivery_window_end": {
+                "type": "string",
+                "description": "Optional ISO timestamp for the delivery window end; defaults to one hour after the start."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the newly placed order; on failure (cart not found or minimum not met), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_orders",
+        "description": "List orders, optionally filtered by user and status, sorted by most recently placed.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "Optional user id to filter orders by."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional status to filter orders by (case-insensitive)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an envelope with count and a results list of orders."
+        }
+    },
+    {
+        "tool_name": "get_order",
+        "description": "Get a single order with its line items by order_id.",
+        "arguments": {
+            "order_id": {
+                "type": "string",
+                "description": "The unique id of the order."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the order with an items list; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "cancel_order",
+        "description": "Cancel an order by order_id, unless it is already delivered or cancelled.",
+        "arguments": {
+            "order_id": {
+                "type": "string",
+                "description": "The unique id of the order to cancel."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the cancelled order; on failure (not found or non-cancellable status), output contains an error message."
+        }
+    }
+]

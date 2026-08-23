@@ -1,0 +1,99 @@
+[
+    {
+        "tool_name": "search_movie",
+        "description": "Search movies by title substring, ordered by popularity, paginated.",
+        "arguments": {
+            "query": {
+                "type": "string",
+                "description": "The case-insensitive substring to match against movie titles."
+            },
+            "page": {
+                "type": "integer",
+                "description": "The 1-based page number of results (default 1)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated object with page, results, total_pages and total_results; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "movie_popular",
+        "description": "List movies ordered by popularity, paginated.",
+        "arguments": {
+            "page": {
+                "type": "integer",
+                "description": "The 1-based page number of results (default 1)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated object of popular movies; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_movie",
+        "description": "Get a single movie by id, including resolved genres.",
+        "arguments": {
+            "movie_id": {
+                "type": "integer",
+                "description": "The numeric id of the movie."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the movie object with a genres list; on failure (movie not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "movie_credits",
+        "description": "Get the cast and crew credits for a movie.",
+        "arguments": {
+            "movie_id": {
+                "type": "integer",
+                "description": "The numeric id of the movie."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds the movie id with cast and crew lists; on failure (movie not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_tv",
+        "description": "Get a single TV show by id, including resolved genres.",
+        "arguments": {
+            "tv_id": {
+                "type": "integer",
+                "description": "The numeric id of the TV show."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the TV show object with a genres list; on failure (tv not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "genre_movie_list",
+        "description": "List all movie genres.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a genres list; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "trending_all_week",
+        "description": "List trending movies and TV shows for the week, ordered by popularity, paginated.",
+        "arguments": {
+            "page": {
+                "type": "integer",
+                "description": "The 1-based page number of results (default 1)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a paginated object of combined trending movies and TV; on failure, output contains an error message."
+        }
+    }
+]

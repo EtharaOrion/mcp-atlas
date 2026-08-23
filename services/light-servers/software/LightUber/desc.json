@@ -1,0 +1,175 @@
+[
+    {
+        "tool_name": "list_products",
+        "description": "List the Uber products available at a given location.",
+        "arguments": {
+            "latitude": {
+                "type": "number",
+                "description": "Latitude of the location to list products for."
+            },
+            "longitude": {
+                "type": "number",
+                "description": "Longitude of the location to list products for."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'products' list of product objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_product",
+        "description": "Get a single Uber product by its product_id.",
+        "arguments": {
+            "product_id": {
+                "type": "string",
+                "description": "The unique id of the product (e.g. uberx)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the product object; on failure (product not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "price_estimates",
+        "description": "Estimate ride prices across products for a start and end location.",
+        "arguments": {
+            "start_latitude": {
+                "type": "number",
+                "description": "Latitude of the pickup location."
+            },
+            "start_longitude": {
+                "type": "number",
+                "description": "Longitude of the pickup location."
+            },
+            "end_latitude": {
+                "type": "number",
+                "description": "Latitude of the drop-off location."
+            },
+            "end_longitude": {
+                "type": "number",
+                "description": "Longitude of the drop-off location."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'prices' list of price estimate objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "time_estimates",
+        "description": "Estimate pickup ETAs across products for a pickup location.",
+        "arguments": {
+            "start_latitude": {
+                "type": "number",
+                "description": "Latitude of the pickup location."
+            },
+            "start_longitude": {
+                "type": "number",
+                "description": "Longitude of the pickup location."
+            },
+            "product_id": {
+                "type": "string",
+                "description": "Optional product id to restrict the estimate to a single product."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'times' list of ETA estimate objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_request",
+        "description": "Create a new ride request for a product with a start (and optional end) location.",
+        "arguments": {
+            "product_id": {
+                "type": "string",
+                "description": "The product id to request the ride for."
+            },
+            "start_latitude": {
+                "type": "number",
+                "description": "Latitude of the pickup location."
+            },
+            "start_longitude": {
+                "type": "number",
+                "description": "Longitude of the pickup location."
+            },
+            "end_latitude": {
+                "type": "number",
+                "description": "Optional latitude of the drop-off location."
+            },
+            "end_longitude": {
+                "type": "number",
+                "description": "Optional longitude of the drop-off location."
+            },
+            "rider_id": {
+                "type": "string",
+                "description": "Optional rider id; defaults to the current rider profile."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created ride request (trip) object; on failure (product not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_request",
+        "description": "Get a single ride request (trip) by its request_id.",
+        "arguments": {
+            "request_id": {
+                "type": "string",
+                "description": "The unique id of the ride request."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the ride request object; on failure (request not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "cancel_request",
+        "description": "Cancel a ride request by its request_id.",
+        "arguments": {
+            "request_id": {
+                "type": "string",
+                "description": "The unique id of the ride request to cancel."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated (canceled) ride request; on failure (not found or not cancelable), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_history",
+        "description": "List the rider's completed trip history with pagination.",
+        "arguments": {
+            "rider_id": {
+                "type": "string",
+                "description": "Optional rider id to filter history by."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of history entries to return (default 50)."
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Number of history entries to skip for pagination (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with count, limit, offset, and a 'history' list; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_me",
+        "description": "Get the current rider profile.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the rider profile object; on failure, output contains an error message."
+        }
+    }
+]

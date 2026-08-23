@@ -1,0 +1,125 @@
+# Source: world_data 2/LightHotel.json (verbatim). Corpus-only authored world.
+hotels:
+  hot_AenqpGMU:
+    hid: hot_AenqpGMU
+    name: Grand Marina Hotel
+    city: Savannah
+    star_rating: 5
+    amenities:
+    - wifi
+    - pool
+    - gym
+    - spa
+    - restaurant
+    price_per_night: 320.0
+    currency: USD
+  hot_RokrVnpW:
+    hid: hot_RokrVnpW
+    name: Bayview Inn
+    city: New Orleans
+    star_rating: 3
+    amenities:
+    - wifi
+    - breakfast
+    price_per_night: 140.0
+    currency: USD
+  hot_w6QHhGa3:
+    hid: hot_w6QHhGa3
+    name: Central Park Suites
+    city: Nashville
+    star_rating: 4
+    amenities:
+    - wifi
+    - gym
+    - restaurant
+    price_per_night: 260.0
+    currency: USD
+  hot_jMjjWSty:
+    hid: hot_jMjjWSty
+    name: Riverside Lodge
+    city: Charlotte
+    star_rating: 3
+    amenities:
+    - wifi
+    - breakfast
+    - gym
+    price_per_night: 175.0
+    currency: USD
+  hot_9dxtFfuR:
+    hid: hot_9dxtFfuR
+    name: Lakeside Retreat
+    city: Asheville
+    star_rating: 4
+    amenities:
+    - wifi
+    - pool
+    - spa
+    price_per_night: 210.0
+    currency: USD
+reservations:
+  res_L6ET8pMP:
+    resid: res_L6ET8pMP
+    hotel_id: hot_AenqpGMU
+    guest: Amos Jeremiah Whitfield
+    check_in: '2025-12-22'
+    check_out: '2025-12-24'
+    room_type: double
+    total_price: 640.0
+    currency: USD
+    status: checked_out
+    guests_count: 2
+  res_4vZThdSD:
+    resid: res_4vZThdSD
+    hotel_id: hot_w6QHhGa3
+    guest: Amos Jeremiah Whitfield
+    check_in: '2026-01-25'
+    check_out: '2026-01-29'
+    room_type: suite
+    total_price: 1040.0
+    currency: USD
+    status: booked
+    guests_count: 2
+  res_p9JGe4F8:
+    resid: res_p9JGe4F8
+    hotel_id: hot_RokrVnpW
+    guest: Amos Jeremiah Whitfield
+    check_in: '2026-01-05'
+    check_out: '2026-01-07'
+    room_type: single
+    total_price: 280.0
+    currency: USD
+    status: checked_in
+    guests_count: 1
+  res_Rpxc2nX7:
+    resid: res_Rpxc2nX7
+    hotel_id: hot_9dxtFfuR
+    guest: Amos Jeremiah Whitfield
+    check_in: '2025-11-26'
+    check_out: '2025-11-29'
+    room_type: family
+    total_price: 630.0
+    currency: USD
+    status: cancelled
+    guests_count: 4
+reviews:
+  rev_HPbFwFry:
+    revid: rev_HPbFwFry
+    hotel_id: hot_AenqpGMU
+    guest: Amos Jeremiah Whitfield
+    rating: 5
+    comment: Excellent service and a comfortable room.
+    date: '2025-12-26'
+  rev_bpEPLbZg:
+    revid: rev_bpEPLbZg
+    hotel_id: hot_w6QHhGa3
+    guest: Amos Jeremiah Whitfield
+    rating: 4
+    comment: Great location, a bit small.
+    date: '2025-12-16'
+  rev_fHpMUiq5:
+    revid: rev_fHpMUiq5
+    hotel_id: hot_RokrVnpW
+    guest: Amos Jeremiah Whitfield
+    rating: 3
+    comment: Fine for a short stay near downtown.
+    date: '2025-11-06'

@@ -1,0 +1,294 @@
+[
+  {
+    "tool_name": "list_subforums",
+    "description": "List all subforums.",
+    "arguments": {},
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "create_subforum",
+    "description": "Create a new subforum.",
+    "arguments": {
+      "name": {
+        "type": "string",
+        "description": "Name."
+      },
+      "description": {
+        "type": "string",
+        "description": "Description."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "delete_subforum",
+    "description": "Delete a subforum by fid.",
+    "arguments": {
+      "fid": {
+        "type": "string",
+        "description": "Subforum id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "list_threads",
+    "description": "List threads, optionally filtered by subforum_id and pinned.",
+    "arguments": {
+      "subforum_id": {
+        "type": "string",
+        "description": "Optional subforum filter."
+      },
+      "pinned": {
+        "type": "boolean",
+        "description": "Filter by pinned state."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "get_thread",
+    "description": "Get a thread by tid.",
+    "arguments": {
+      "tid": {
+        "type": "string",
+        "description": "Thread id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "create_thread",
+    "description": "Create a new thread in a subforum.",
+    "arguments": {
+      "subforum_id": {
+        "type": "string",
+        "description": "Subforum id."
+      },
+      "title": {
+        "type": "string",
+        "description": "Title."
+      },
+      "author": {
+        "type": "string",
+        "description": "Author."
+      },
+      "body": {
+        "type": "string",
+        "description": "Body."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "delete_thread",
+    "description": "Delete a thread and all its posts.",
+    "arguments": {
+      "tid": {
+        "type": "string",
+        "description": "Thread id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "lock_thread",
+    "description": "Lock/unlock a thread from receiving posts.",
+    "arguments": {
+      "tid": {
+        "type": "string",
+        "description": "Thread id."
+      },
+      "locked": {
+        "type": "boolean",
+        "description": "True to lock, False to unlock."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "pin_thread",
+    "description": "Pin/unpin a thread.",
+    "arguments": {
+      "tid": {
+        "type": "string",
+        "description": "Thread id."
+      },
+      "pinned": {
+        "type": "boolean",
+        "description": "True to pin, False to unpin."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "list_posts",
+    "description": "List posts in a thread.",
+    "arguments": {
+      "thread_id": {
+        "type": "string",
+        "description": "Thread id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "add_post",
+    "description": "Add a post to a thread.",
+    "arguments": {
+      "thread_id": {
+        "type": "string",
+        "description": "Thread id."
+      },
+      "author": {
+        "type": "string",
+        "description": "Author."
+      },
+      "body": {
+        "type": "string",
+        "description": "Body."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "delete_post",
+    "description": "Delete a post.",
+    "arguments": {
+      "pid": {
+        "type": "string",
+        "description": "Post id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "upvote_thread",
+    "description": "Upvote a thread.",
+    "arguments": {
+      "tid": {
+        "type": "string",
+        "description": "Thread id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "downvote_thread",
+    "description": "Downvote a thread.",
+    "arguments": {
+      "tid": {
+        "type": "string",
+        "description": "Thread id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "upvote_post",
+    "description": "Upvote a post.",
+    "arguments": {
+      "pid": {
+        "type": "string",
+        "description": "Post id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "downvote_post",
+    "description": "Downvote a post.",
+    "arguments": {
+      "pid": {
+        "type": "string",
+        "description": "Post id."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "search_threads",
+    "description": "Search threads by title/body.",
+    "arguments": {
+      "query": {
+        "type": "string",
+        "description": "Search term."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "top_threads",
+    "description": "Return threads ranked by (upvotes - downvotes).",
+    "arguments": {
+      "limit": {
+        "type": "integer",
+        "description": "Max items."
+      }
+    },
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  },
+  {
+    "tool_name": "get_stats",
+    "description": "Get forum stats.",
+    "arguments": {},
+    "returns": {
+      "type": "object",
+      "description": "Dict {status, output}."
+    }
+  }
+]

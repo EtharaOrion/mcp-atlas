@@ -1,0 +1,172 @@
+# Source: world_data 2/LightMailgun.json (verbatim). Corpus-only authored world.
+messages:
+- id: 20260501093012.1.A1B2C3D4E5F6@sandbox.mailgun.org
+  domain: sandbox.mailgun.org
+  sender: patricia.odom@Finthesiss.ai
+  recipient: lorraine.deveraux@shpa-savannah.org
+  subject: Welcome to Lowcountry
+  body: Thanks for signing up!
+  timestamp: '2026-05-01T09:30:12Z'
+- id: 20260503141522.2.B2C3D4E5F6A7@sandbox.mailgun.org
+  domain: sandbox.mailgun.org
+  sender: terrence.carter@Finthesiss.ai
+  recipient: terrence.carter@Finthesiss.ai
+  subject: Your invoice is ready
+  body: 'Invoice #1042 is attached.'
+  timestamp: '2026-05-03T14:15:22Z'
+- id: 20260507081005.3.C3D4E5F6A7B8@sandbox.mailgun.org
+  domain: sandbox.mailgun.org
+  sender: ellis.marchand@ashcrofthardwoods.com
+  recipient: priscilla.everton@shpa-savannah.org
+  subject: Password reset
+  body: Click the link to reset your password.
+  timestamp: '2026-05-07T08:10:05Z'
+- id: 20260512162844.4.D4E5F6A7B8C9@sandbox.mailgun.org
+  domain: sandbox.mailgun.org
+  sender: reginald.thackery@shpa-savannah.org
+  recipient: renardwhitcomb.residence@Finthesiss.ai
+  subject: May Newsletter
+  body: Here is what is new this month.
+  timestamp: '2026-05-12T16:28:44Z'
+- id: 20260515104733.5.E5F6A7B8C9D0@sandbox.mailgun.org
+  domain: sandbox.mailgun.org
+  sender: patricia.odom@Finthesiss.ai
+  recipient: malcolm.kingsley@shpa-savannah.org
+  subject: Order shipped
+  body: Your order is on the way.
+  timestamp: '2026-05-15T10:47:33Z'
+- id: 20260520113900.6.F6A7B8C9D0E1@sandbox.mailgun.org
+  domain: sandbox.mailgun.org
+  sender: everett.petain@senonprofit.com
+  recipient: marcus.whitby@shpa-savannah.org
+  subject: Meeting reminder
+  body: Standup at 10am tomorrow.
+  timestamp: '2026-05-20T11:39:00Z'
+- id: 20260524175611.7.A7B8C9D0E1F2@sandbox.mailgun.org
+  domain: sandbox.mailgun.org
+  sender: patricia.odom@Finthesiss.ai
+  recipient: cordelia.ashmore.vance@shpa-savannah.org
+  subject: Survey request
+  body: We value your feedback.
+  timestamp: '2026-05-24T17:56:11Z'
+events:
+- id: ev_0001
+  domain: sandbox.mailgun.org
+  message_id: 20260501093012.1.A1B2C3D4E5F6@sandbox.mailgun.org
+  event: accepted
+  recipient: lorraine.deveraux@shpa-savannah.org
+  timestamp: '2026-05-01T09:30:12Z'
+  reason: null
+- id: ev_0002
+  domain: sandbox.mailgun.org
+  message_id: 20260501093012.1.A1B2C3D4E5F6@sandbox.mailgun.org
+  event: delivered
+  recipient: lorraine.deveraux@shpa-savannah.org
+  timestamp: '2026-05-01T09:30:18Z'
+  reason: null
+- id: ev_0003
+  domain: sandbox.mailgun.org
+  message_id: 20260501093012.1.A1B2C3D4E5F6@sandbox.mailgun.org
+  event: opened
+  recipient: lorraine.deveraux@shpa-savannah.org
+  timestamp: '2026-05-01T10:02:41Z'
+  reason: null
+- id: ev_0004
+  domain: sandbox.mailgun.org
+  message_id: 20260503141522.2.B2C3D4E5F6A7@sandbox.mailgun.org
+  event: accepted
+  recipient: terrence.carter@Finthesiss.ai
+  timestamp: '2026-05-03T14:15:22Z'
+  reason: null
+- id: ev_0005
+  domain: sandbox.mailgun.org
+  message_id: 20260503141522.2.B2C3D4E5F6A7@sandbox.mailgun.org
+  event: delivered
+  recipient: terrence.carter@Finthesiss.ai
+  timestamp: '2026-05-03T14:15:30Z'
+  reason: null
+- id: ev_0006
+  domain: sandbox.mailgun.org
+  message_id: 20260507081005.3.C3D4E5F6A7B8@sandbox.mailgun.org
+  event: accepted
+  recipient: priscilla.everton@shpa-savannah.org
+  timestamp: '2026-05-07T08:10:05Z'
+  reason: null
+- id: ev_0007
+  domain: sandbox.mailgun.org
+  message_id: 20260507081005.3.C3D4E5F6A7B8@sandbox.mailgun.org
+  event: failed
+  recipient: priscilla.everton@shpa-savannah.org
+  timestamp: '2026-05-07T08:10:09Z'
+  reason: mailbox full
+- id: ev_0008
+  domain: sandbox.mailgun.org
+  message_id: 20260512162844.4.D4E5F6A7B8C9@sandbox.mailgun.org
+  event: delivered
+  recipient: renardwhitcomb.residence@Finthesiss.ai
+  timestamp: '2026-05-12T16:28:50Z'
+  reason: null
+- id: ev_0009
+  domain: sandbox.mailgun.org
+  message_id: 20260515104733.5.E5F6A7B8C9D0@sandbox.mailgun.org
+  event: delivered
+  recipient: malcolm.kingsley@shpa-savannah.org
+  timestamp: '2026-05-15T10:47:39Z'
+  reason: null
+- id: ev_0010
+  domain: sandbox.mailgun.org
+  message_id: 20260515104733.5.E5F6A7B8C9D0@sandbox.mailgun.org
+  event: clicked
+  recipient: malcolm.kingsley@shpa-savannah.org
+  timestamp: '2026-05-15T11:20:14Z'
+  reason: null
+- id: ev_0011
+  domain: sandbox.mailgun.org
+  message_id: 20260520113900.6.F6A7B8C9D0E1@sandbox.mailgun.org
+  event: delivered
+  recipient: marcus.whitby@shpa-savannah.org
+  timestamp: '2026-05-20T11:39:06Z'
+  reason: null
+- id: ev_0012
+  domain: sandbox.mailgun.org
+  message_id: 20260524175611.7.A7B8C9D0E1F2@sandbox.mailgun.org
+  event: accepted
+  recipient: cordelia.ashmore.vance@shpa-savannah.org
+  timestamp: '2026-05-24T17:56:11Z'
+  reason: null
+members:
+- list_address: wesley.farraday@Finthesiss.ai
+  address: lorraine.deveraux@shpa-savannah.org
+  name: Lorraine Deveraux
+  subscribed: true
+  vars: '{"plan":"pro"}'
+- list_address: wesley.farraday@Finthesiss.ai
+  address: terrence.carter@Finthesiss.ai
+  name: Terrence Carter
+  subscribed: true
+  vars: '{"plan":"free"}'
+- list_address: wesley.farraday@Finthesiss.ai
+  address: priscilla.everton@shpa-savannah.org
+  name: Priscilla Everton
+  subscribed: false
+  vars: '{"plan":"free"}'
+- list_address: wesley.farraday@Finthesiss.ai
+  address: renardwhitcomb.residence@Finthesiss.ai
+  name: Roxanne Ellery
+  subscribed: true
+  vars: '{"plan":"enterprise"}'
+- list_address: renardwhitcomb.residence@Finthesiss.ai
+  address: malcolm.kingsley@shpa-savannah.org
+  name: Malcolm Kingsley
+  subscribed: true
+  vars: '{"team":"backend"}'
+- list_address: renardwhitcomb.residence@Finthesiss.ai
+  address: marcus.whitby@shpa-savannah.org
+  name: Marcus Whitby
+  subscribed: true
+  vars: '{"team":"frontend"}'
+- list_address: renardwhitcomb.residence@Finthesiss.ai
+  address: cordelia.ashmore.vance@shpa-savannah.org
+  name: Cordelia Ashmore-Vance
+  subscribed: false
+  vars: '{"team":"qa"}'

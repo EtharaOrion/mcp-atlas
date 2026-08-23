@@ -1,0 +1,208 @@
+[
+    {
+        "tool_name": "query_metrics",
+        "description": "Query a timeseries for a metric over a unix-timestamp window, returning a deterministic sine-shaped point series.",
+        "arguments": {
+            "query": {
+                "type": "string",
+                "description": "The metric query string; the seeded metric whose name appears in the query is matched."
+            },
+            "from_": {
+                "type": "integer",
+                "description": "Start of the window as a unix timestamp (seconds)."
+            },
+            "to": {
+                "type": "integer",
+                "description": "End of the window as a unix timestamp (seconds); must be greater than from_."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the query result (query, from_date, to_date, series); on failure (invalid timestamps), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_monitors",
+        "description": "List monitors, optionally filtered by overall_state.",
+        "arguments": {
+            "overall_state": {
+                "type": "string",
+                "description": "Optional overall_state to filter monitors by (e.g. OK, Warn, Alert)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of monitor objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_monitor",
+        "description": "Get a single monitor by its id.",
+        "arguments": {
+            "monitor_id": {
+                "type": "string",
+                "description": "The unique id of the monitor."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the monitor object; on failure (monitor not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_monitor",
+        "description": "Create a new monitor.",
+        "arguments": {
+            "name": {
+                "type": "string",
+                "description": "The name of the monitor."
+            },
+            "type": {
+                "type": "string",
+                "description": "The monitor type (e.g. 'metric alert', 'service check')."
+            },
+            "query": {
+                "type": "string",
+                "description": "The monitor query expression."
+            },
+            "message": {
+                "type": "string",
+                "description": "Optional notification message for the monitor."
+            },
+            "priority": {
+                "type": "integer",
+                "description": "Optional priority level (default 3)."
+            },
+            "tags": {
+                "type": "array",
+                "description": "Optional list of tags for the monitor."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created monitor object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_monitor",
+        "description": "Update fields of an existing monitor by its id.",
+        "arguments": {
+            "monitor_id": {
+                "type": "string",
+                "description": "The unique id of the monitor to update."
+            },
+            "name": {
+                "type": "string",
+                "description": "Optional new name for the monitor."
+            },
+            "query": {
+                "type": "string",
+                "description": "Optional new query expression."
+            },
+            "message": {
+                "type": "string",
+                "description": "Optional new notification message."
+            },
+            "overall_state": {
+                "type": "string",
+                "description": "Optional new overall_state."
+            },
+            "priority": {
+                "type": "integer",
+                "description": "Optional new priority level."
+            },
+            "tags": {
+                "type": "array",
+                "description": "Optional new list of tags."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated monitor object; on failure (monitor not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_dashboards",
+        "description": "List all dashboards.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'dashboards' list; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_dashboard",
+        "description": "Get a single dashboard by its id.",
+        "arguments": {
+            "dashboard_id": {
+                "type": "string",
+                "description": "The unique id of the dashboard."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the dashboard object; on failure (dashboard not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_events",
+        "description": "List events, optionally filtered by a start/end unix-timestamp window, sorted most-recent first.",
+        "arguments": {
+            "start": {
+                "type": "integer",
+                "description": "Optional start unix timestamp; only events with date_happened >= start are returned."
+            },
+            "end": {
+                "type": "integer",
+                "description": "Optional end unix timestamp; only events with date_happened <= end are returned."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with an 'events' list; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_event",
+        "description": "Create a new event in the event stream.",
+        "arguments": {
+            "title": {
+                "type": "string",
+                "description": "The event title."
+            },
+            "text": {
+                "type": "string",
+                "description": "The event body text."
+            },
+            "alert_type": {
+                "type": "string",
+                "description": "Optional alert type (default 'info'; e.g. info, error, warning, success)."
+            },
+            "priority": {
+                "type": "string",
+                "description": "Optional priority (default 'normal'; e.g. normal, low)."
+            },
+            "host": {
+                "type": "string",
+                "description": "Optional host associated with the event."
+            },
+            "tags": {
+                "type": "array",
+                "description": "Optional list of tags for the event."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with status and the created event; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_hosts",
+        "description": "List all reporting hosts.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with a 'host_list' and 'total_returned'; on failure, output contains an error message."
+        }
+    }
+]

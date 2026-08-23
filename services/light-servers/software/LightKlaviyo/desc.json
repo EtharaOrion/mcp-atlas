@@ -1,0 +1,103 @@
+[
+    {
+        "tool_name": "list_profiles",
+        "description": "List profiles, optionally filtered by email address.",
+        "arguments": {
+            "email": {
+                "type": "string",
+                "description": "Optional email address to filter profiles by (case-insensitive exact match)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of JSON:API profile resource objects (type, id, attributes); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_profile",
+        "description": "Get a single profile by its id.",
+        "arguments": {
+            "profile_id": {
+                "type": "string",
+                "description": "The unique id of the profile."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the JSON:API profile resource object; on failure (profile not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_profile",
+        "description": "Create a new profile with an email and optional contact/location attributes.",
+        "arguments": {
+            "email": {
+                "type": "string",
+                "description": "The email address of the profile (required, must be unique)."
+            },
+            "first_name": {
+                "type": "string",
+                "description": "Optional first name of the profile."
+            },
+            "last_name": {
+                "type": "string",
+                "description": "Optional last name of the profile."
+            },
+            "phone_number": {
+                "type": "string",
+                "description": "Optional phone number of the profile."
+            },
+            "organization": {
+                "type": "string",
+                "description": "Optional organization the profile belongs to."
+            },
+            "title": {
+                "type": "string",
+                "description": "Optional job title of the profile."
+            },
+            "city": {
+                "type": "string",
+                "description": "Optional city of the profile's location."
+            },
+            "region": {
+                "type": "string",
+                "description": "Optional region/state of the profile's location."
+            },
+            "country": {
+                "type": "string",
+                "description": "Optional country of the profile's location."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created JSON:API profile resource object; on failure (missing email or duplicate profile), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_lists",
+        "description": "List all lists in the current Klaviyo session.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of JSON:API list resource objects (type, id, attributes including name and profile_count); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_campaigns",
+        "description": "List campaigns, optionally filtered by status and channel.",
+        "arguments": {
+            "status": {
+                "type": "string",
+                "description": "Optional status to filter campaigns by (e.g. 'Sent', 'Scheduled', 'Draft'; case-insensitive)."
+            },
+            "channel": {
+                "type": "string",
+                "description": "Optional channel to filter campaigns by (e.g. 'email', 'sms'; case-insensitive)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of JSON:API campaign resource objects (type, id, attributes, relationships); on failure, output contains an error message."
+        }
+    }
+]

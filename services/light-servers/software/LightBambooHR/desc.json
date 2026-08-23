@@ -1,0 +1,182 @@
+[
+    {
+        "tool_name": "get_company",
+        "description": "Get the company profile information.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the company object."
+        }
+    },
+    {
+        "tool_name": "employees_directory",
+        "description": "List all employees in the company directory with a compact field set.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with an 'employees' list."
+        }
+    },
+    {
+        "tool_name": "get_employee",
+        "description": "Get a single employee by id.",
+        "arguments": {
+            "employee_id": {
+                "type": "string",
+                "description": "The unique id of the employee."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the employee object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_employee",
+        "description": "Create a new employee record.",
+        "arguments": {
+            "firstName": {
+                "type": "string",
+                "description": "Employee first name (required)."
+            },
+            "lastName": {
+                "type": "string",
+                "description": "Employee last name (required)."
+            },
+            "workEmail": {
+                "type": "string",
+                "description": "Optional work email address."
+            },
+            "department": {
+                "type": "string",
+                "description": "Optional department name."
+            },
+            "jobTitle": {
+                "type": "string",
+                "description": "Optional job title."
+            },
+            "location": {
+                "type": "string",
+                "description": "Optional office location."
+            },
+            "hireDate": {
+                "type": "string",
+                "description": "Optional hire date in 'YYYY-MM-DD' format; defaults to today."
+            },
+            "supervisorId": {
+                "type": "string",
+                "description": "Optional id of the supervising employee."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created employee; on failure (missing name), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_time_off_requests",
+        "description": "List time-off requests, optionally filtered by status and employee.",
+        "arguments": {
+            "status": {
+                "type": "string",
+                "description": "Optional status filter (requested, approved, denied, canceled)."
+            },
+            "employeeId": {
+                "type": "string",
+                "description": "Optional employee id to filter requests by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of time-off request objects."
+        }
+    },
+    {
+        "tool_name": "create_time_off_request",
+        "description": "Create a new time-off request for an employee.",
+        "arguments": {
+            "employeeId": {
+                "type": "string",
+                "description": "The id of the employee requesting time off (required)."
+            },
+            "start": {
+                "type": "string",
+                "description": "Start date in 'YYYY-MM-DD' format (required)."
+            },
+            "end": {
+                "type": "string",
+                "description": "End date in 'YYYY-MM-DD' format (required)."
+            },
+            "type": {
+                "type": "string",
+                "description": "Time-off type (default 'Vacation')."
+            },
+            "amount": {
+                "type": "integer",
+                "description": "Amount of time off (default 1)."
+            },
+            "unit": {
+                "type": "string",
+                "description": "Unit for the amount (default 'days')."
+            },
+            "notes": {
+                "type": "string",
+                "description": "Optional free-text notes."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created request; on failure (employee not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_time_off_status",
+        "description": "Update the status of an existing time-off request.",
+        "arguments": {
+            "request_id": {
+                "type": "string",
+                "description": "The id of the time-off request to update."
+            },
+            "status": {
+                "type": "string",
+                "description": "New status; one of requested, approved, denied, canceled."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated request; on failure (not found or invalid status), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "whos_out",
+        "description": "List who is out of office, optionally within a date range.",
+        "arguments": {
+            "start": {
+                "type": "string",
+                "description": "Optional inclusive range start date (YYYY-MM-DD)."
+            },
+            "end": {
+                "type": "string",
+                "description": "Optional inclusive range end date (YYYY-MM-DD)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of who's-out entries."
+        }
+    },
+    {
+        "tool_name": "get_report",
+        "description": "Get a synthesized report by id (report 1 = headcount by department).",
+        "arguments": {
+            "report_id": {
+                "type": "string",
+                "description": "The report id; only '1' (headcount by department) is available."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the report object; on failure (report not found), output contains an error message."
+        }
+    }
+]

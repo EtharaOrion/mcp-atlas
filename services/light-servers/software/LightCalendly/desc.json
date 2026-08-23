@@ -1,0 +1,137 @@
+[
+    {
+        "tool_name": "get_me",
+        "description": "Get the currently authenticated Calendly user.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a dict with a 'resource' key holding the current user object (uri, name, slug, email, scheduling_url, timezone, current_organization, created_at, updated_at); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_event_types",
+        "description": "List event types, optionally filtered to a single owner user.",
+        "arguments": {
+            "user": {
+                "type": "string",
+                "description": "Optional user uuid or user URI to filter event types by owner."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a dict with 'collection' (list of event type objects) and 'pagination' (count, next_page); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_event_type",
+        "description": "Get a single event type by its uuid.",
+        "arguments": {
+            "uuid_": {
+                "type": "string",
+                "description": "The uuid (or full URI) of the event type."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a dict with a 'resource' key holding the event type object; on failure (event type not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_scheduled_events",
+        "description": "List scheduled events, optionally filtered by owner user and status.",
+        "arguments": {
+            "user": {
+                "type": "string",
+                "description": "Optional user uuid or user URI to filter scheduled events by owner."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional status to filter scheduled events by (e.g. 'active' or 'canceled')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a dict with 'collection' (list of scheduled event objects) and 'pagination' (count, next_page); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_scheduled_event",
+        "description": "Get a single scheduled event by its uuid.",
+        "arguments": {
+            "uuid_": {
+                "type": "string",
+                "description": "The uuid (or full URI) of the scheduled event."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a dict with a 'resource' key holding the scheduled event object; on failure (event not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_invitees",
+        "description": "List the invitees for a scheduled event.",
+        "arguments": {
+            "uuid_": {
+                "type": "string",
+                "description": "The uuid (or full URI) of the scheduled event whose invitees are listed."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a dict with 'collection' (list of invitee objects) and 'pagination' (count, next_page); on failure (event not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "book_event",
+        "description": "Book a new scheduled event for a given event type, optionally with an invitee.",
+        "arguments": {
+            "event_type": {
+                "type": "string",
+                "description": "The uuid (or full URI) of the event type to book."
+            },
+            "start_time": {
+                "type": "string",
+                "description": "Optional ISO start time; defaults to the current time when omitted."
+            },
+            "end_time": {
+                "type": "string",
+                "description": "Optional ISO end time; defaults to the current time when omitted."
+            },
+            "location_type": {
+                "type": "string",
+                "description": "The location type for the event (default 'zoom')."
+            },
+            "location": {
+                "type": "string",
+                "description": "The location value for the event (default empty string)."
+            },
+            "invitee": {
+                "type": "object",
+                "description": "Optional invitee object with keys name, email, and timezone; an invitee is created only when an email is provided."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a dict with a 'resource' key holding the created scheduled event object; on failure (event type not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "cancel_event",
+        "description": "Cancel a scheduled event by its uuid, cascading cancellation to its invitees.",
+        "arguments": {
+            "uuid_": {
+                "type": "string",
+                "description": "The uuid (or full URI) of the scheduled event to cancel."
+            },
+            "reason": {
+                "type": "string",
+                "description": "Optional cancellation reason; defaults to 'Canceled by host' when omitted."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a dict with a 'resource' key holding cancellation details (canceled_by, reason, canceler_type); on failure (event not found), output contains an error message."
+        }
+    }
+]

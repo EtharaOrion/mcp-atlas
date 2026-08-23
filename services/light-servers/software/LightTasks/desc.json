@@ -1,0 +1,159 @@
+[
+    {
+        "tool_name": "list_projects",
+        "description": "List all projects in LightTasks with their id, name, color, and description.",
+        "arguments": {},
+        "returns": {"type": "object", "description": "Object with status and a list of project records."}
+    },
+    {
+        "tool_name": "create_project",
+        "description": "Create a new project in LightTasks.",
+        "arguments": {
+            "name": {"type": "string", "description": "Display name of the project."},
+            "color": {"type": "string", "description": "Hex color code, e.g. #4285F4."},
+            "description": {"type": "string", "description": "Optional description of the project."}
+        },
+        "returns": {"type": "object", "description": "Object with status and the created project record."}
+    },
+    {
+        "tool_name": "delete_project",
+        "description": "Delete a project. Tasks belonging to the project are moved to reassign_to (defaults to proj_inbox).",
+        "arguments": {
+            "pid": {"type": "string", "description": "Project id to delete."},
+            "reassign_to": {"type": "string", "description": "Project id that receives the tasks (default proj_inbox)."}
+        },
+        "returns": {"type": "object", "description": "Object with status and the count of reassigned tasks."}
+    },
+    {
+        "tool_name": "list_tasks",
+        "description": "List tasks in LightTasks with optional filters by project, status, priority, tag, and assignee.",
+        "arguments": {
+            "project_id": {"type": "string", "description": "Restrict to a single project id."},
+            "status": {"type": "string", "description": "One of todo, in_progress, done, cancelled."},
+            "priority": {"type": "string", "description": "One of low, medium, high, critical."},
+            "tag": {"type": "string", "description": "Only tasks that contain this tag."},
+            "assignee": {"type": "string", "description": "Only tasks assigned to this user identifier."}
+        },
+        "returns": {"type": "object", "description": "Object with status and a list of task summaries."}
+    },
+    {
+        "tool_name": "get_task",
+        "description": "Fetch the full record for a single task by id.",
+        "arguments": {
+            "tid": {"type": "string", "description": "Task id."}
+        },
+        "returns": {"type": "object", "description": "Object with status and the full task record."}
+    },
+    {
+        "tool_name": "create_task",
+        "description": "Create a new task in a project.",
+        "arguments": {
+            "title": {"type": "string", "description": "Short title of the task."},
+            "project_id": {"type": "string", "description": "Project id (default proj_inbox)."},
+            "priority": {"type": "string", "description": "One of low, medium, high, critical."},
+            "due_date": {"type": "string", "description": "ISO date YYYY-MM-DD, or empty for no due date."},
+            "description": {"type": "string", "description": "Longer description."},
+            "tags": {"type": "array", "description": "List of tag strings."},
+            "assignee": {"type": "string", "description": "User identifier of the assignee."}
+        },
+        "returns": {"type": "object", "description": "Object with status and the created task summary."}
+    },
+    {
+        "tool_name": "update_task",
+        "description": "Update any subset of fields on a task. Only fields provided are changed.",
+        "arguments": {
+            "tid": {"type": "string", "description": "Task id."},
+            "title": {"type": "string", "description": "New title."},
+            "description": {"type": "string", "description": "New description."},
+            "status": {"type": "string", "description": "One of todo, in_progress, done, cancelled."},
+            "priority": {"type": "string", "description": "One of low, medium, high, critical."},
+            "due_date": {"type": "string", "description": "ISO date YYYY-MM-DD."},
+            "project_id": {"type": "string", "description": "Move task to this project id."},
+            "assignee": {"type": "string", "description": "Assignee user identifier."},
+            "tags": {"type": "array", "description": "Full replacement list of tags."}
+        },
+        "returns": {"type": "object", "description": "Object with status and the updated task summary."}
+    },
+    {
+        "tool_name": "delete_task",
+        "description": "Permanently delete a task by id.",
+        "arguments": {
+            "tid": {"type": "string", "description": "Task id."}
+        },
+        "returns": {"type": "object", "description": "Object with status and a deleted flag."}
+    },
+    {
+        "tool_name": "complete_task",
+        "description": "Mark a task as done. Shortcut for update_task(status=done).",
+        "arguments": {
+            "tid": {"type": "string", "description": "Task id."}
+        },
+        "returns": {"type": "object", "description": "Object with status and the updated task summary."}
+    },
+    {
+        "tool_name": "reopen_task",
+        "description": "Set a task back to todo. Shortcut for update_task(status=todo).",
+        "arguments": {
+            "tid": {"type": "string", "description": "Task id."}
+        },
+        "returns": {"type": "object", "description": "Object with status and the updated task summary."}
+    },
+    {
+        "tool_name": "move_task",
+        "description": "Move a task to a different project.",
+        "arguments": {
+            "tid": {"type": "string", "description": "Task id."},
+            "project_id": {"type": "string", "description": "Destination project id."}
+        },
+        "returns": {"type": "object", "description": "Object with status and the updated task summary."}
+    },
+    {
+        "tool_name": "add_tag",
+        "description": "Add a tag to a task. No-op if the tag is already present.",
+        "arguments": {
+            "tid": {"type": "string", "description": "Task id."},
+            "tag": {"type": "string", "description": "Tag string to add."}
+        },
+        "returns": {"type": "object", "description": "Object with status and the updated task summary."}
+    },
+    {
+        "tool_name": "remove_tag",
+        "description": "Remove a tag from a task. No-op if the tag is not present.",
+        "arguments": {
+            "tid": {"type": "string", "description": "Task id."},
+            "tag": {"type": "string", "description": "Tag string to remove."}
+        },
+        "returns": {"type": "object", "description": "Object with status and the updated task summary."}
+    },
+    {
+        "tool_name": "search_tasks",
+        "description": "Case-insensitive substring search across task titles, descriptions, and tags.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search text."}
+        },
+        "returns": {"type": "object", "description": "Object with status and a list of matching task summaries."}
+    },
+    {
+        "tool_name": "list_upcoming",
+        "description": "List not-done tasks with a due date between today and today+days.",
+        "arguments": {
+            "days": {"type": "integer", "description": "Number of days to look ahead (default 7)."},
+            "today": {"type": "string", "description": "Optional YYYY-MM-DD override of today."}
+        },
+        "returns": {"type": "object", "description": "Object with status and a list of task summaries."}
+    },
+    {
+        "tool_name": "list_overdue",
+        "description": "List not-done tasks whose due_date is strictly before today.",
+        "arguments": {
+            "today": {"type": "string", "description": "Optional YYYY-MM-DD override of today."}
+        },
+        "returns": {"type": "object", "description": "Object with status and a list of overdue task summaries."}
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Aggregate task counts grouped by status, priority, and project.",
+        "arguments": {},
+        "returns": {"type": "object", "description": "Object with status and aggregated counters."}
+    }
+]

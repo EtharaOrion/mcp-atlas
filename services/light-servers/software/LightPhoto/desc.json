@@ -1,0 +1,211 @@
+[
+    {
+        "tool_name": "list_albums",
+        "description": "List all albums sorted by name.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of album records."
+        }
+    },
+    {
+        "tool_name": "get_album",
+        "description": "Retrieve a single album with a computed photo_count field.",
+        "arguments": {
+            "alid": {"type": "string", "description": "Album identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the album record plus photo_count."
+        }
+    },
+    {
+        "tool_name": "create_album",
+        "description": "Create a new empty album.",
+        "arguments": {
+            "name": {"type": "string", "description": "Human-readable album name."},
+            "description": {"type": "string", "description": "Optional description."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new album record."
+        }
+    },
+    {
+        "tool_name": "delete_album",
+        "description": "Delete an album along with all its photos and share links.",
+        "arguments": {
+            "alid": {"type": "string", "description": "Album identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output reports removed_photos and removed_share_links counts."
+        }
+    },
+    {
+        "tool_name": "update_album",
+        "description": "Update selected fields on an album. Only supplied fields are changed.",
+        "arguments": {
+            "alid": {"type": "string", "description": "Album identifier."},
+            "name": {"type": "string", "description": "Optional new name."},
+            "description": {"type": "string", "description": "Optional new description."},
+            "cover_photo_id": {"type": "string", "description": "Optional new cover photo pid; must already belong to this album."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated album record."
+        }
+    },
+    {
+        "tool_name": "list_photos",
+        "description": "List photos, optionally filtered by album, tag, and/or face group. Sorted by taken_at descending.",
+        "arguments": {
+            "album_id": {"type": "string", "description": "Optional album filter."},
+            "tag": {"type": "string", "description": "Optional tag filter."},
+            "face_group_id": {"type": "string", "description": "Optional face group filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of photo summaries."
+        }
+    },
+    {
+        "tool_name": "get_photo",
+        "description": "Retrieve the full photo object including EXIF.",
+        "arguments": {
+            "pid": {"type": "string", "description": "Photo identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full photo record."
+        }
+    },
+    {
+        "tool_name": "add_photo",
+        "description": "Add a new photo to an existing album.",
+        "arguments": {
+            "album_id": {"type": "string", "description": "Target album identifier."},
+            "title": {"type": "string", "description": "Photo title."},
+            "filename": {"type": "string", "description": "Original filename."},
+            "taken_at": {"type": "string", "description": "Optional ISO datetime when the photo was taken."},
+            "tags": {"type": "array", "items": {"type": "string"}, "description": "Optional list of tags."},
+            "location": {"type": "string", "description": "Optional free-form location string."},
+            "exif": {"type": "object", "description": "Optional EXIF metadata dict {camera, iso, aperture, shutter, focal_length}."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new photo summary."
+        }
+    },
+    {
+        "tool_name": "delete_photo",
+        "description": "Delete a photo permanently and decrement any face group count.",
+        "arguments": {
+            "pid": {"type": "string", "description": "Photo identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {pid, deleted: true}."
+        }
+    },
+    {
+        "tool_name": "add_tag",
+        "description": "Add a tag to a photo. No-op if tag already present.",
+        "arguments": {
+            "pid": {"type": "string", "description": "Photo identifier."},
+            "tag": {"type": "string", "description": "Tag to add."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated photo summary."
+        }
+    },
+    {
+        "tool_name": "remove_tag",
+        "description": "Remove a tag from a photo.",
+        "arguments": {
+            "pid": {"type": "string", "description": "Photo identifier."},
+            "tag": {"type": "string", "description": "Tag to remove."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated photo summary."
+        }
+    },
+    {
+        "tool_name": "move_to_album",
+        "description": "Move a photo to a different album, updating cover photos as needed.",
+        "arguments": {
+            "pid": {"type": "string", "description": "Photo identifier."},
+            "album_id": {"type": "string", "description": "Destination album identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated photo summary."
+        }
+    },
+    {
+        "tool_name": "list_face_groups",
+        "description": "List all face groups sorted by name.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of face group records."
+        }
+    },
+    {
+        "tool_name": "create_face_group",
+        "description": "Create a new face group (e.g. for a person).",
+        "arguments": {
+            "name": {"type": "string", "description": "Face group name."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new face group record."
+        }
+    },
+    {
+        "tool_name": "assign_face",
+        "description": "Assign a photo to a face group; adjusts photo_count of old and new groups.",
+        "arguments": {
+            "pid": {"type": "string", "description": "Photo identifier."},
+            "fgid": {"type": "string", "description": "Face group identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated photo summary."
+        }
+    },
+    {
+        "tool_name": "create_share_link",
+        "description": "Create a shareable link for an album with an expiration timestamp; marks album as shared.",
+        "arguments": {
+            "album_id": {"type": "string", "description": "Album identifier."},
+            "expires_at": {"type": "string", "description": "ISO datetime when the share link expires."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new share link record."
+        }
+    },
+    {
+        "tool_name": "list_share_links",
+        "description": "List share links, optionally filtered by album.",
+        "arguments": {
+            "album_id": {"type": "string", "description": "Optional album identifier to filter by."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of share link records sorted by expires_at ascending."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Return aggregate stats: totals and per-album, per-tag counts.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output contains totals and breakdown maps."
+        }
+    }
+]

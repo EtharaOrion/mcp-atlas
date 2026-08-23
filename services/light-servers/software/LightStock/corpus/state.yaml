@@ -1,0 +1,12 @@
+# Source: world_data/LightStock.json (verbatim). Corpus-only authored world.
+user:
+  tier: Basic
+  trading_balance: 24651
+  savings_balance: 67496
+  frozen_margin: 0.0
+stocks:
+  portfolio: []
+  pending_orders: []
+  trade_history: []
+  watch_list: []
+  price_alerts: {}

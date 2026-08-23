@@ -1,0 +1,238 @@
+[
+    {
+        "tool_name": "list_posts",
+        "description": "List posts filtered by status, author, search, and category, ordered by newest.",
+        "arguments": {
+            "status": {
+                "type": "string",
+                "description": "Optional post status to filter by (defaults to 'publish')."
+            },
+            "author": {
+                "type": "integer",
+                "description": "Optional author id to filter posts by."
+            },
+            "search": {
+                "type": "string",
+                "description": "Optional case-insensitive search over post title and content."
+            },
+            "categories": {
+                "type": "integer",
+                "description": "Optional category id that returned posts must belong to."
+            },
+            "per_page": {
+                "type": "integer",
+                "description": "Maximum number of posts to return (default 10)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of post objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_post",
+        "description": "Create a new post with title, content, status, author, and taxonomy assignments.",
+        "arguments": {
+            "title": {
+                "type": "string",
+                "description": "The post title."
+            },
+            "content": {
+                "type": "string",
+                "description": "The post content (default empty)."
+            },
+            "status": {
+                "type": "string",
+                "description": "The post status (default 'draft')."
+            },
+            "author": {
+                "type": "integer",
+                "description": "The author user id (default 1)."
+            },
+            "excerpt": {
+                "type": "string",
+                "description": "Optional post excerpt (default empty)."
+            },
+            "categories": {
+                "type": "array",
+                "description": "Optional list of category ids to assign."
+            },
+            "tags": {
+                "type": "array",
+                "description": "Optional list of tag ids to assign."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created post object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_post",
+        "description": "Get a single post by its numeric id.",
+        "arguments": {
+            "post_id": {
+                "type": "integer",
+                "description": "The unique numeric id of the post."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the post object; on failure (post not found), output contains a WordPress error object."
+        }
+    },
+    {
+        "tool_name": "update_post",
+        "description": "Update fields of an existing post by its numeric id.",
+        "arguments": {
+            "post_id": {
+                "type": "integer",
+                "description": "The unique numeric id of the post to update."
+            },
+            "title": {
+                "type": "string",
+                "description": "Optional new title."
+            },
+            "content": {
+                "type": "string",
+                "description": "Optional new content."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional new status."
+            },
+            "excerpt": {
+                "type": "string",
+                "description": "Optional new excerpt."
+            },
+            "categories": {
+                "type": "array",
+                "description": "Optional new list of category ids."
+            },
+            "tags": {
+                "type": "array",
+                "description": "Optional new list of tag ids."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated post object; on failure (post not found), output contains a WordPress error object."
+        }
+    },
+    {
+        "tool_name": "delete_post",
+        "description": "Delete a post by its numeric id.",
+        "arguments": {
+            "post_id": {
+                "type": "integer",
+                "description": "The unique numeric id of the post to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms deletion with the removed post; on failure (post not found), output contains a WordPress error object."
+        }
+    },
+    {
+        "tool_name": "list_pages",
+        "description": "List pages filtered by status, ordered by newest.",
+        "arguments": {
+            "status": {
+                "type": "string",
+                "description": "Page status to filter by (default 'publish')."
+            },
+            "per_page": {
+                "type": "integer",
+                "description": "Maximum number of pages to return (default 10)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of page objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_categories",
+        "description": "List all post categories.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of category objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_tags",
+        "description": "List all post tags.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of tag objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_comments",
+        "description": "List comments filtered by post and status, ordered by date.",
+        "arguments": {
+            "post": {
+                "type": "integer",
+                "description": "Optional post id to filter comments by."
+            },
+            "status": {
+                "type": "string",
+                "description": "Comment status to filter by (default 'approved')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of comment objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_comment",
+        "description": "Create a new approved comment on a post.",
+        "arguments": {
+            "post": {
+                "type": "integer",
+                "description": "The id of the post being commented on."
+            },
+            "author_name": {
+                "type": "string",
+                "description": "The comment author's display name."
+            },
+            "author_email": {
+                "type": "string",
+                "description": "The comment author's email address."
+            },
+            "content": {
+                "type": "string",
+                "description": "The comment body text."
+            },
+            "parent": {
+                "type": "integer",
+                "description": "Optional parent comment id for threaded replies (default 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created comment object; on failure (post not found), output contains a WordPress error object."
+        }
+    },
+    {
+        "tool_name": "list_media",
+        "description": "List all media (attachment) items.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of media objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_users",
+        "description": "List all users (authors).",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of user objects; on failure, output contains an error message."
+        }
+    }
+]

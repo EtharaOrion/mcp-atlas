@@ -1,0 +1,181 @@
+[
+    {
+        "tool_name": "list_meetings",
+        "description": "List all meetings, optionally filtered by status.",
+        "arguments": {
+            "status": {"type": "string", "description": "Optional filter: scheduled, completed, or cancelled."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of meeting summaries sorted by start."
+        }
+    },
+    {
+        "tool_name": "get_meeting",
+        "description": "Retrieve the full meeting object by mid.",
+        "arguments": {
+            "mid": {"type": "string", "description": "Meeting identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full meeting including transcript and notes."
+        }
+    },
+    {
+        "tool_name": "create_meeting",
+        "description": "Create a new meeting.",
+        "arguments": {
+            "title": {"type": "string", "description": "Meeting title."},
+            "start": {"type": "string", "description": "ISO datetime start."},
+            "end": {"type": "string", "description": "ISO datetime end."},
+            "description": {"type": "string", "description": "Optional description."},
+            "host": {"type": "string", "description": "Host identifier or email."},
+            "participants": {"type": "array", "items": {"type": "string"}, "description": "Optional participant emails."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new meeting summary."
+        }
+    },
+    {
+        "tool_name": "update_meeting",
+        "description": "Update one or more fields on an existing meeting.",
+        "arguments": {
+            "mid": {"type": "string", "description": "Meeting identifier."},
+            "title": {"type": "string", "description": "Optional new title."},
+            "description": {"type": "string", "description": "Optional new description."},
+            "start": {"type": "string", "description": "Optional new ISO start."},
+            "end": {"type": "string", "description": "Optional new ISO end."},
+            "host": {"type": "string", "description": "Optional new host."},
+            "notes": {"type": "string", "description": "Optional meeting notes."},
+            "participants": {"type": "array", "items": {"type": "string"}, "description": "Optional replacement participants list."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated meeting summary."
+        }
+    },
+    {
+        "tool_name": "cancel_meeting",
+        "description": "Cancel a meeting (sets status to cancelled).",
+        "arguments": {
+            "mid": {"type": "string", "description": "Meeting identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated meeting summary."
+        }
+    },
+    {
+        "tool_name": "list_upcoming",
+        "description": "List scheduled meetings within the next N days from the anchor date.",
+        "arguments": {
+            "days": {"type": "integer", "description": "Horizon in days (default 7)."},
+            "today": {"type": "string", "description": "Optional ISO anchor; defaults to session's initial time."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of upcoming meeting summaries."
+        }
+    },
+    {
+        "tool_name": "list_today",
+        "description": "List all meetings starting today (or the supplied ISO date).",
+        "arguments": {
+            "today": {"type": "string", "description": "Optional ISO date (YYYY-MM-DD)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of meeting summaries starting on that day."
+        }
+    },
+    {
+        "tool_name": "list_past",
+        "description": "List meetings that have already ended.",
+        "arguments": {
+            "today": {"type": "string", "description": "Optional ISO datetime anchor."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of past meeting summaries (most recent first)."
+        }
+    },
+    {
+        "tool_name": "add_participant",
+        "description": "Add an email to the meeting's participant list.",
+        "arguments": {
+            "mid": {"type": "string", "description": "Meeting identifier."},
+            "email": {"type": "string", "description": "Participant email address."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated meeting summary."
+        }
+    },
+    {
+        "tool_name": "remove_participant",
+        "description": "Remove an email from the meeting's participant list.",
+        "arguments": {
+            "mid": {"type": "string", "description": "Meeting identifier."},
+            "email": {"type": "string", "description": "Participant email address."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated meeting summary."
+        }
+    },
+    {
+        "tool_name": "generate_recording_link",
+        "description": "Generate a recording URL for the meeting.",
+        "arguments": {
+            "mid": {"type": "string", "description": "Meeting identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output contains mid and recording_url."
+        }
+    },
+    {
+        "tool_name": "set_transcript",
+        "description": "Attach or replace the transcript text for a meeting.",
+        "arguments": {
+            "mid": {"type": "string", "description": "Meeting identifier."},
+            "text": {"type": "string", "description": "Full transcript text."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output contains mid and character count."
+        }
+    },
+    {
+        "tool_name": "get_transcript",
+        "description": "Retrieve the stored transcript text for a meeting.",
+        "arguments": {
+            "mid": {"type": "string", "description": "Meeting identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output contains mid and transcript_text."
+        }
+    },
+    {
+        "tool_name": "search_meetings",
+        "description": "Search meetings by keyword across title, description, notes, and transcript.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search keyword or phrase."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of matching meeting summaries."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Get aggregate meeting stats (total, by status, with recording, with transcript).",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a stats object."
+        }
+    }
+]

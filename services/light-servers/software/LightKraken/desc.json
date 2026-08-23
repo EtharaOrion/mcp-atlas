@@ -1,0 +1,71 @@
+[
+    {
+        "tool_name": "get_ticker",
+        "description": "Get ticker information for one or more asset pairs. When no pair is given, returns tickers for all known pairs.",
+        "arguments": {
+            "pair": {
+                "type": "string",
+                "description": "Optional comma-separated list of asset pairs (canonical name or altname, e.g. 'XBTUSD' or 'XBTUSD,ETHUSD'). When omitted, all pairs are returned."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output maps each canonical pair to its ticker data (ask, bid, last, volume, high, low, open); on failure (unknown asset pair), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_ohlc",
+        "description": "Get OHLC (open/high/low/close) candlestick data for a single asset pair.",
+        "arguments": {
+            "pair": {
+                "type": "string",
+                "description": "The asset pair (canonical name or altname, e.g. 'XBTUSD') to fetch candles for."
+            },
+            "interval": {
+                "type": "integer",
+                "description": "Optional candle interval in minutes (default 60)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output maps the canonical pair to a list of candle rows (time, open, high, low, close, vwap, volume, count) plus a 'last' timestamp; on failure (unknown asset pair), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_asset_pairs",
+        "description": "List tradable asset pairs and their trading parameters, optionally filtered by pair.",
+        "arguments": {
+            "pair": {
+                "type": "string",
+                "description": "Optional comma-separated list of asset pairs (canonical name or altname) to filter by. When omitted, all pairs are returned."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output maps each canonical pair to its details (altname, wsname, base, quote, pair_decimals, lot_decimals, ordermin, status); on failure (unknown asset pair), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_assets",
+        "description": "List asset (currency) reference information, optionally filtered by asset.",
+        "arguments": {
+            "asset": {
+                "type": "string",
+                "description": "Optional comma-separated list of assets (canonical name or altname, e.g. 'XBT,ETH') to filter by. When omitted, all assets are returned."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output maps each canonical asset to its details (aclass, altname, decimals, display_decimals); on failure (unknown asset), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_balance",
+        "description": "Get the current account balances for all held assets.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output maps each asset to its balance string."
+        }
+    }
+]

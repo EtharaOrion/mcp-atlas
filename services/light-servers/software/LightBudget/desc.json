@@ -1,0 +1,206 @@
+[
+    {
+        "tool_name": "list_categories",
+        "description": "List all spending/income categories.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of {catid, name, color, monthly_limit}."
+        }
+    },
+    {
+        "tool_name": "create_category",
+        "description": "Create a new category.",
+        "arguments": {
+            "name": {"type": "string", "description": "Human-readable category name."},
+            "color": {"type": "string", "description": "Optional hex color."},
+            "monthly_limit": {"type": "number", "description": "Optional monthly spending cap in the default currency."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new category record."
+        }
+    },
+    {
+        "tool_name": "delete_category",
+        "description": "Delete a category and cascade-remove its transactions and budgets.",
+        "arguments": {
+            "catid": {"type": "string", "description": "Category identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output reports catid, removed_transactions, removed_budgets."
+        }
+    },
+    {
+        "tool_name": "update_category",
+        "description": "Update the name, color, or monthly_limit of a category.",
+        "arguments": {
+            "catid": {"type": "string", "description": "Category identifier."},
+            "name": {"type": "string", "description": "Optional new name."},
+            "color": {"type": "string", "description": "Optional new hex color."},
+            "monthly_limit": {"type": "number", "description": "Optional new monthly limit."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated category."
+        }
+    },
+    {
+        "tool_name": "list_transactions",
+        "description": "List transactions with optional filters. Sorted by date ascending.",
+        "arguments": {
+            "category_id": {"type": "string", "description": "Optional category filter."},
+            "kind": {"type": "string", "description": "Optional kind filter (expense or income)."},
+            "start_date": {"type": "string", "description": "Optional inclusive lower-bound ISO date."},
+            "end_date": {"type": "string", "description": "Optional inclusive upper-bound ISO date."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of transaction summaries."
+        }
+    },
+    {
+        "tool_name": "get_transaction",
+        "description": "Retrieve a single transaction by txid.",
+        "arguments": {
+            "txid": {"type": "string", "description": "Transaction identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full transaction."
+        }
+    },
+    {
+        "tool_name": "create_transaction",
+        "description": "Record a new transaction. Budget spent totals are refreshed.",
+        "arguments": {
+            "category_id": {"type": "string", "description": "Category the transaction belongs to."},
+            "amount": {"type": "number", "description": "Positive amount in the given currency."},
+            "date": {"type": "string", "description": "ISO date YYYY-MM-DD."},
+            "description": {"type": "string", "description": "Optional free-text memo."},
+            "currency": {"type": "string", "description": "ISO currency code (default USD)."},
+            "kind": {"type": "string", "description": "Either expense or income."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new transaction summary."
+        }
+    },
+    {
+        "tool_name": "update_transaction",
+        "description": "Update fields on an existing transaction. Only provided fields are changed.",
+        "arguments": {
+            "txid": {"type": "string", "description": "Transaction identifier."},
+            "category_id": {"type": "string", "description": "Optional new category."},
+            "amount": {"type": "number", "description": "Optional new amount."},
+            "date": {"type": "string", "description": "Optional new ISO date."},
+            "description": {"type": "string", "description": "Optional new description."},
+            "currency": {"type": "string", "description": "Optional new currency."},
+            "kind": {"type": "string", "description": "Optional new kind (expense or income)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated transaction summary."
+        }
+    },
+    {
+        "tool_name": "delete_transaction",
+        "description": "Delete a transaction permanently and refresh budgets.",
+        "arguments": {
+            "txid": {"type": "string", "description": "Transaction identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {txid, deleted: true}."
+        }
+    },
+    {
+        "tool_name": "list_budgets",
+        "description": "List all budgets, optionally filtered by month (YYYY-MM).",
+        "arguments": {
+            "month": {"type": "string", "description": "Optional YYYY-MM filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of budget records."
+        }
+    },
+    {
+        "tool_name": "get_budget",
+        "description": "Fetch a specific budget by bid.",
+        "arguments": {
+            "bid": {"type": "string", "description": "Budget identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full budget record."
+        }
+    },
+    {
+        "tool_name": "set_budget",
+        "description": "Set or update the spending limit for a category in a given month; recomputes spent.",
+        "arguments": {
+            "month": {"type": "string", "description": "YYYY-MM month key."},
+            "category_id": {"type": "string", "description": "Category identifier."},
+            "limit": {"type": "number", "description": "New spending limit."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the created or updated budget."
+        }
+    },
+    {
+        "tool_name": "get_spending_by_category",
+        "description": "Aggregate expenses for a given month grouped by category.",
+        "arguments": {
+            "month": {"type": "string", "description": "YYYY-MM month key."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {month, by_category: {catid: amount}}."
+        }
+    },
+    {
+        "tool_name": "get_monthly_summary",
+        "description": "Compute total income, total expense, and net for a given month.",
+        "arguments": {
+            "month": {"type": "string", "description": "YYYY-MM month key."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {month, income, expense, net}."
+        }
+    },
+    {
+        "tool_name": "search_transactions",
+        "description": "Search transactions by keyword against description and category id.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search keyword."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of matching transaction summaries."
+        }
+    },
+    {
+        "tool_name": "get_savings_rate",
+        "description": "Compute (income - expense) / income for the given month.",
+        "arguments": {
+            "month": {"type": "string", "description": "YYYY-MM month key."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {month, income, expense, savings_rate}."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Return overall counts and totals across the budget.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output including totals by kind and category."
+        }
+    }
+]

@@ -1,0 +1,141 @@
+[
+    {
+        "tool_name": "get_me",
+        "description": "Get the authenticated member's own LinkedIn profile.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the profile object (id, name, headline, location, industry, summary, numConnections, etc.); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_connections",
+        "description": "List the authenticated member's first-degree connections, paginated.",
+        "arguments": {
+            "start": {
+                "type": "integer",
+                "description": "Zero-based offset of the first connection to return (default 0)."
+            },
+            "count": {
+                "type": "integer",
+                "description": "Maximum number of connections to return in the page (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has 'elements' (a list of connection objects) and 'paging' (start, count, total); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_posts",
+        "description": "List posts, optionally filtered by author, sorted newest first and paginated.",
+        "arguments": {
+            "author_id": {
+                "type": "string",
+                "description": "Optional author id (person or organization urn) to filter posts by."
+            },
+            "start": {
+                "type": "integer",
+                "description": "Zero-based offset of the first post to return (default 0)."
+            },
+            "count": {
+                "type": "integer",
+                "description": "Maximum number of posts to return in the page (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has 'elements' (a list of post objects) and 'paging' (start, count, total); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_post",
+        "description": "Get a single post by its id.",
+        "arguments": {
+            "post_id": {
+                "type": "string",
+                "description": "The unique id of the post."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the post object; on failure (post not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_post",
+        "description": "Create a new post authored by a member or organization.",
+        "arguments": {
+            "commentary": {
+                "type": "string",
+                "description": "The text body of the post."
+            },
+            "author_id": {
+                "type": "string",
+                "description": "Optional author id (person or organization urn); defaults to the authenticated member's id."
+            },
+            "visibility": {
+                "type": "string",
+                "description": "Post visibility, e.g. 'PUBLIC' or 'CONNECTIONS' (default 'PUBLIC')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created post object (id, author_id, commentary, visibility, created_at, socialDetail); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_organization",
+        "description": "Get a single organization by its id.",
+        "arguments": {
+            "org_id": {
+                "type": "string",
+                "description": "The unique id of the organization."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the organization object (id, name, industry, website, location, followerCount, etc.); on failure (organization not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "search_jobs",
+        "description": "Search job postings by keywords and/or location, sorted newest first and paginated.",
+        "arguments": {
+            "keywords": {
+                "type": "string",
+                "description": "Optional search term matched against job title, description, and keyword tags."
+            },
+            "location": {
+                "type": "string",
+                "description": "Optional location substring to filter jobs by."
+            },
+            "start": {
+                "type": "integer",
+                "description": "Zero-based offset of the first job to return (default 0)."
+            },
+            "count": {
+                "type": "integer",
+                "description": "Maximum number of jobs to return in the page (default 50)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has 'elements' (a list of job objects) and 'paging' (start, count, total); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_job",
+        "description": "Get a single job posting by its id.",
+        "arguments": {
+            "job_id": {
+                "type": "string",
+                "description": "The unique id of the job posting."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the job object (id, title, organizationId, location, employmentType, keywords, applicants, description, etc.); on failure (job not found), output contains an error message."
+        }
+    }
+]

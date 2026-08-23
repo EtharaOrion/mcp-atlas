@@ -1,0 +1,321 @@
+[
+    {
+        "tool_name": "list_filings",
+        "description": "List all tax filings, optionally filtered by status.",
+        "arguments": {
+            "status": {
+                "type": "string",
+                "description": "Filter by status (draft, filed, amended, accepted, rejected)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "Object with status and a list of filing records."
+        }
+    },
+    {
+        "tool_name": "get_filing",
+        "description": "Fetch a single filing by id.",
+        "arguments": {
+            "fid": {
+                "type": "string",
+                "description": "Filing id."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "Object with status and the full filing record."
+        }
+    },
+    {
+        "tool_name": "create_filing",
+        "description": "Create a new tax filing for a given tax year.",
+        "arguments": {
+            "tax_year": {
+                "type": "integer",
+                "description": "Tax year (e.g. 2025)."
+            },
+            "filing_status": {
+                "type": "string",
+                "description": "One of single, married_joint, married_separate, head_household."
+            },
+            "gross_income": {
+                "type": "number",
+                "description": "Gross income for the year."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "Object with status and the created filing record."
+        }
+    },
+    {
+        "tool_name": "update_filing",
+        "description": "Update fields on an existing filing.",
+        "arguments": {
+            "fid": {
+                "type": "string",
+                "description": "Filing id."
+            },
+            "filing_status": {
+                "type": "string",
+                "description": "New filing status."
+            },
+            "gross_income": {
+                "type": "number",
+                "description": "Updated gross income."
+            },
+            "tax_owed": {
+                "type": "number",
+                "description": "Computed tax owed."
+            },
+            "refund": {
+                "type": "number",
+                "description": "Refund amount."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "Object with status and the updated filing record."
+        }
+    },
+    {
+        "tool_name": "delete_filing",
+        "description": "Delete a filing by id.",
+        "arguments": {
+            "fid": {
+                "type": "string",
+                "description": "Filing id."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "Object with status and a deleted flag."
+        }
+    },
+    {
+        "tool_name": "submit_filing",
+        "description": "Submit a draft filing (transitions status to filed).",
+        "arguments": {
+            "fid": {
+                "type": "string",
+                "description": "Filing id."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "Object with status and the submitted filing record."
+        }
+    },
+    {
+        "tool_name": "amend_filing",
+        "description": "Amend a previously filed filing (transitions status to amended).",
+        "arguments": {
+            "fid": {
+                "type": "string",
+                "description": "Filing id."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "Object with status and the amended filing record."
+        }
+    },
+    {
+        "tool_name": "list_deductions",
+        "description": "List deductions across filings, optionally filtered by filing or category.",
+        "arguments": {
+            "filing_id": {
+                "type": "string",
+                "description": "Restrict to a single filing id."
+            },
+            "category": {
+                "type": "string",
+                "description": "Filter by deduction category."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "Object with status and a list of deduction records."
+        }
+    },
+    {
+        "tool_name": "add_deduction",
+        "description": "Add a new deduction to a filing.",
+        "arguments": {
+            "filing_id": {
+                "type": "string",
+                "description": "Target filing id."
+            },
+            "category": {
+                "type": "string",
+                "description": "Deduction category (e.g. medical, charity, mortgage)."
+            },
+            "amount": {
+                "type": "number",
+                "description": "Deduction amount."
+            },
+            "description": {
+                "type": "string",
+                "description": "Description of the deduction."
+            },
+            "date": {
+                "type": "string",
+                "description": "ISO date YYYY-MM-DD of the deduction."
+            },
+            "receipt_ref": {
+                "type": "string",
+                "description": "Reference to a receipt."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "Object with status and the created deduction record."
+        }
+    },
+    {
+        "tool_name": "update_deduction",
+        "description": "Update fields on a deduction.",
+        "arguments": {
+            "did": {
+                "type": "string",
+                "description": "Deduction id."
+            },
+            "category": {
+                "type": "string",
+                "description": "New category."
+            },
+            "amount": {
+                "type": "number",
+                "description": "New amount."
+            },
+            "description": {
+                "type": "string",
+                "description": "New description."
+            },
+            "date": {
+                "type": "string",
+                "description": "New ISO date."
+            },
+            "receipt_ref": {
+                "type": "string",
+                "description": "New receipt reference."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "Object with status and the updated deduction record."
+        }
+    },
+    {
+        "tool_name": "delete_deduction",
+        "description": "Delete a deduction by id.",
+        "arguments": {
+            "did": {
+                "type": "string",
+                "description": "Deduction id."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "Object with status and a deleted flag."
+        }
+    },
+    {
+        "tool_name": "list_income_sources",
+        "description": "List income sources, optionally filtered by filing id.",
+        "arguments": {
+            "filing_id": {
+                "type": "string",
+                "description": "Restrict to a single filing id."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "Object with status and a list of income source records."
+        }
+    },
+    {
+        "tool_name": "add_income_source",
+        "description": "Add an income source to a filing.",
+        "arguments": {
+            "filing_id": {
+                "type": "string",
+                "description": "Target filing id."
+            },
+            "source_type": {
+                "type": "string",
+                "description": "One of w2, 1099, dividend, capital_gain, other."
+            },
+            "employer_or_payer": {
+                "type": "string",
+                "description": "Name of employer or payer."
+            },
+            "amount": {
+                "type": "number",
+                "description": "Gross amount received."
+            },
+            "withheld": {
+                "type": "number",
+                "description": "Amount withheld."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "Object with status and the created income source record."
+        }
+    },
+    {
+        "tool_name": "update_income_source",
+        "description": "Update fields on an income source.",
+        "arguments": {
+            "isid": {
+                "type": "string",
+                "description": "Income source id."
+            },
+            "source_type": {
+                "type": "string",
+                "description": "New source type."
+            },
+            "employer_or_payer": {
+                "type": "string",
+                "description": "New employer/payer name."
+            },
+            "amount": {
+                "type": "number",
+                "description": "New amount."
+            },
+            "withheld": {
+                "type": "number",
+                "description": "New withheld amount."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "Object with status and the updated income source record."
+        }
+    },
+    {
+        "tool_name": "get_filing_summary",
+        "description": "Compute a summary for a filing: total income, total deductions, taxable income, estimated tax owed.",
+        "arguments": {
+            "fid": {
+                "type": "string",
+                "description": "Filing id."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "Object with status and the filing summary."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Aggregate statistics over all filings, deductions, and income sources.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "Object with status and aggregated counters."
+        }
+    }
+]

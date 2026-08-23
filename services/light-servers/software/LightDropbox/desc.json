@@ -1,0 +1,89 @@
+[
+    {
+        "tool_name": "get_current_account",
+        "description": "Get information about the current Dropbox account.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the account object (account_id, name, email, email_verified, country, locale, account_type, is_paired, disabled); on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_folder",
+        "description": "List the contents of a folder at the given path.",
+        "arguments": {
+            "path": {
+                "type": "string",
+                "description": "Optional folder path to list; empty or '/' lists the root."
+            },
+            "recursive": {
+                "type": "boolean",
+                "description": "Optional flag; when true, list all descendants recursively (default false)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has entries (file/folder metadata), cursor, and has_more; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "download_file",
+        "description": "Download the text content of a file at the given Dropbox path (or file id). Only text-like and PDF files are downloadable.",
+        "arguments": {
+            "path": {
+                "type": "string",
+                "description": "The Dropbox path (e.g. '/documents/roadmap.md') or file id to download."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output includes file_id, name, path_display, mime_type, size_bytes, and content (extracted text). On failure (not found, folder, unsupported mime, or PDF text unavailable), output contains an error object."
+        }
+    },
+    {
+        "tool_name": "get_metadata",
+        "description": "Get metadata for a file or folder by its path or id.",
+        "arguments": {
+            "path": {
+                "type": "string",
+                "description": "The path or id of the file or folder."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the file/folder metadata entry; on failure (path not found), output contains an error object."
+        }
+    },
+    {
+        "tool_name": "search_v2",
+        "description": "Search for files and folders by filename, optionally scoped to a path.",
+        "arguments": {
+            "query": {
+                "type": "string",
+                "description": "Optional search query matched against file names (case-insensitive substring)."
+            },
+            "path": {
+                "type": "string",
+                "description": "Optional path to scope the search to; empty searches the whole account."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has matches (each with match_type and metadata) and has_more; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_shared_links",
+        "description": "List shared links, optionally filtered to a single path.",
+        "arguments": {
+            "path": {
+                "type": "string",
+                "description": "Optional path to filter shared links by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has links (each with url, name, path_lower, link_permissions) and has_more; on failure, output contains an error message."
+        }
+    }
+]

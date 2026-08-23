@@ -1,0 +1,188 @@
+# Source: world_data/LightNews.json (verbatim). Corpus-only authored world.
+news:
+  Town Updates:
+  - nid: news_Y5tWNsM9f358mL4J8zXnGK
+    timestamp: '2026-05-20 10:49:51'
+    title: Midtown repaving enters second phase
+    abstract: Crews shift to the historic district stretch next week.
+    content: Crews shift to the historic district stretch next week. Full coverage from local reporters
+      follows with comments from residents and officials.
+  - nid: news_kfLrAf6dpwWaTJDcjpSH82
+    timestamp: '2026-05-20 15:49:50'
+    title: City council reviews venue district grants
+    abstract: Nonprofit arts venues among proposed recipients.
+    content: Nonprofit arts venues among proposed recipients. Full coverage from local reporters follows
+      with comments from residents and officials.
+  - nid: news_Zwntn4fTSRZ4h95566YNrp
+    timestamp: '2026-05-20 18:01:36'
+    title: Trolley line maintenance scheduled overnight
+    abstract: Riders should expect weekend detours.
+    content: Riders should expect weekend detours. Full coverage from local reporters follows with comments
+      from residents and officials.
+  - nid: news_krbn8KWVUBn8VYJs5cbFvm
+    timestamp: '2026-05-20 20:48:03'
+    title: New recycling pickup schedule announced
+    abstract: Midtown routes move to Thursday collection.
+    content: Midtown routes move to Thursday collection. Full coverage from local reporters follows with
+      comments from residents and officials.
+  - nid: news_JCnSf6aULEjqLaMSaEufW5
+    timestamp: '2026-05-20 21:21:06'
+    title: Riverfront lighting project nears completion
+    abstract: Final fixtures installed along the bluff walk.
+    content: Final fixtures installed along the bluff walk. Full coverage from local reporters follows
+      with comments from residents and officials.
+  School & Kids:
+  - nid: news_4X2UQkNuHb79Uy5nC2mxLH
+    timestamp: '2026-05-21 09:28:58'
+    title: East High seniors prep for spring showcase
+    abstract: Music program features student-led jazz combo.
+    content: Music program features student-led jazz combo. Full coverage from local reporters follows
+      with comments from residents and officials.
+  - nid: news_x9nKrnUui3XiTnLuL7sL5s
+    timestamp: '2026-05-21 14:07:22'
+    title: District expands after-school arts funding
+    abstract: Brass and strings programs gain new slots.
+    content: Brass and strings programs gain new slots. Full coverage from local reporters follows with
+      comments from residents and officials.
+  - nid: news_9UbCjAPL3Q66WwAw47NBgw
+    timestamp: '2026-05-21 18:01:38'
+    title: Youth ensemble auditions open next month
+    abstract: Directors encourage first-time players to apply.
+    content: Directors encourage first-time players to apply. Full coverage from local reporters follows
+      with comments from residents and officials.
+  - nid: news_Qab4vH4Sdv5vw4YLnHYbVH
+    timestamp: '2026-05-22 09:07:42'
+    title: Science fair winners announced
+    abstract: Middle school teams take top regional honors.
+    content: Middle school teams take top regional honors. Full coverage from local reporters follows
+      with comments from residents and officials.
+  - nid: news_RPn89KHZU8WcWbCuP2Mv8u
+    timestamp: '2026-05-22 12:54:53'
+    title: Library summer reading program returns
+    abstract: Sign-ups open at all branch locations.
+    content: Sign-ups open at all branch locations. Full coverage from local reporters follows with comments
+      from residents and officials.
+  Events & Happenings:
+  - nid: news_HF2EMteBuHURGTw3e5eVUj
+    timestamp: '2026-05-22 14:09:47'
+    title: Heritage music festival sets winter dates
+    abstract: Organizers confirm a week of anniversary programming.
+    content: Organizers confirm a week of anniversary programming. Full coverage from local reporters
+      follows with comments from residents and officials.
+  - nid: news_3zjhQxqjBFNdC2vttvRCau
+    timestamp: '2026-05-22 18:23:28'
+    title: Vinyl swap meet returns to the fairgrounds
+    abstract: Collectors expect rare jazz and soul pressings.
+    content: Collectors expect rare jazz and soul pressings. Full coverage from local reporters follows
+      with comments from residents and officials.
+  - nid: news_Euiy5nKQLnUXZp6CFJEGGB
+    timestamp: '2026-05-22 19:43:46'
+    title: BBQ cook-off registration fills early
+    abstract: Team slots gone in record time this season.
+    content: Team slots gone in record time this season. Full coverage from local reporters follows with
+      comments from residents and officials.
+  - nid: news_UUCwdVmd2R8aytz9MzY6aM
+    timestamp: '2026-05-22 20:55:25'
+    title: Gospel choir concert planned downtown
+    abstract: Area churches combine for a joint performance.
+    content: Area churches combine for a joint performance. Full coverage from local reporters follows
+      with comments from residents and officials.
+  - nid: news_NJybHZaaPchD9MRMXayuSC
+    timestamp: '2026-05-23 09:23:44'
+    title: Gallery night expands to new venues
+    abstract: Local artists open studios along the avenue.
+    content: Local artists open studios along the avenue. Full coverage from local reporters follows with
+      comments from residents and officials.
+  Local Business:
+  - nid: news_wfQe22woUnpTooLWXHv7ir
+    timestamp: '2026-05-23 12:13:57'
+    title: Neighborhood grocer marks 20 years
+    abstract: Longtime local staple celebrates with weekend specials.
+    content: Longtime local staple celebrates with weekend specials. Full coverage from local reporters
+      follows with comments from residents and officials.
+  - nid: news_gYbjKmhRM7viMHULyexvya
+    timestamp: '2026-05-23 13:22:53'
+    title: New bookshop cafe opens on the avenue
+    abstract: Owners plan author nights and listening sessions.
+    content: Owners plan author nights and listening sessions. Full coverage from local reporters follows
+      with comments from residents and officials.
+  - nid: news_PESxMAVzDC5FEQThnyviR3
+    timestamp: '2026-05-23 15:17:18'
+    title: Historic venue completes sound upgrade
+    abstract: Renovation keeps the room's vintage character.
+    content: Renovation keeps the room's vintage character. Full coverage from local reporters follows
+      with comments from residents and officials.
+  - nid: news_EbQ7AHZuSnD2r2mLGe4PE3
+    timestamp: '2026-05-23 18:40:31'
+    title: Hardware co-op adds grill supply aisle
+    abstract: Pitmasters get a dedicated local source.
+    content: Pitmasters get a dedicated local source. Full coverage from local reporters follows with
+      comments from residents and officials.
+  - nid: news_QEw9o6RnkAR4QHqS299HGw
+    timestamp: '2026-05-24 09:29:14'
+    title: Coffee roaster expands wholesale line
+    abstract: Local cafes pick up the new medium roast.
+    content: Local cafes pick up the new medium roast. Full coverage from local reporters follows with
+      comments from residents and officials.
+  Public Safety:
+  - nid: news_tXmu2i5SBBGDMa5Ln32r9s
+    timestamp: '2026-05-24 12:54:38'
+    title: Storm drainage work begins on side streets
+    abstract: Crews target flood-prone intersections first.
+    content: Crews target flood-prone intersections first. Full coverage from local reporters follows
+      with comments from residents and officials.
+  - nid: news_EZkHRMz7UKeHDBqawziQLa
+    timestamp: '2026-05-24 17:24:17'
+    title: Fire department hosts smoke alarm drive
+    abstract: Free installations offered for older homes.
+    content: Free installations offered for older homes. Full coverage from local reporters follows with
+      comments from residents and officials.
+  - nid: news_eaQRcz9jQi2M9gzfCvEK6u
+    timestamp: '2026-05-24 21:03:54'
+    title: Police add evening patrols near nightlife blocks
+    abstract: Business owners welcome the seasonal increase.
+    content: Business owners welcome the seasonal increase. Full coverage from local reporters follows
+      with comments from residents and officials.
+  - nid: news_aTsZg9Vi9hs5mpL8VQDR8F
+    timestamp: '2026-05-24 21:40:18'
+    title: Weather service urges storm kit checks
+    abstract: Spring squall season arrives early this year.
+    content: Spring squall season arrives early this year. Full coverage from local reporters follows
+      with comments from residents and officials.
+  - nid: news_MxvcReZXvZFpk7kKZSMNsM
+    timestamp: '2026-05-25 08:01:58'
+    title: Crosswalk upgrades finish near schools
+    abstract: New signals activate before fall semester.
+    content: New signals activate before fall semester. Full coverage from local reporters follows with
+      comments from residents and officials.
+  Sports:
+  - nid: news_yCS7eAhPLAYA6wvWPXeN3B
+    timestamp: '2026-05-25 12:41:34'
+    title: Home team clinches playoff spot
+    abstract: Sellout crowd carries the fourth-quarter run.
+    content: Sellout crowd carries the fourth-quarter run. Full coverage from local reporters follows
+      with comments from residents and officials.
+  - nid: news_dxoCb2BHjyeW9Xm6yVaqFv
+    timestamp: '2026-05-25 17:36:46'
+    title: High school hoops title game set
+    abstract: Crosstown rivals meet for the championship.
+    content: Crosstown rivals meet for the championship. Full coverage from local reporters follows with
+      comments from residents and officials.
+  - nid: news_MtKsEkDagf3PJdKCJstHAy
+    timestamp: '2026-05-25 20:38:02'
+    title: Riverside run registration opens
+    abstract: Spring 10K expects a record field.
+    content: Spring 10K expects a record field. Full coverage from local reporters follows with comments
+      from residents and officials.
+  - nid: news_52uP5jAHwMoz2EaREVPCVe
+    timestamp: '2026-05-26 08:49:55'
+    title: Minor league season opens next week
+    abstract: Home stand starts with a divisional series.
+    content: Home stand starts with a divisional series. Full coverage from local reporters follows with
+      comments from residents and officials.
+  - nid: news_mftKKgi5QAvCZ7eAVYvJzu
+    timestamp: '2026-05-26 10:25:22'
+    title: Local boxer advances to regional final
+    abstract: Gym credits new conditioning program.
+    content: Gym credits new conditioning program. Full coverage from local reporters follows with comments
+      from residents and officials.

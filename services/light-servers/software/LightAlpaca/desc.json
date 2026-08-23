@@ -1,0 +1,142 @@
+[
+    {
+        "tool_name": "get_account",
+        "description": "Get the trading account details (cash, buying power, equity, status).",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the account object."
+        }
+    },
+    {
+        "tool_name": "list_positions",
+        "description": "List all open positions in the account.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of position objects."
+        }
+    },
+    {
+        "tool_name": "get_position",
+        "description": "Get the open position for a single symbol.",
+        "arguments": {
+            "symbol": {
+                "type": "string",
+                "description": "The ticker symbol of the position."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the position object; on failure (no position), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_orders",
+        "description": "List orders, optionally filtered by status.",
+        "arguments": {
+            "status": {
+                "type": "string",
+                "description": "Optional status filter: 'open', 'closed', 'all', or a specific order status."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of order objects."
+        }
+    },
+    {
+        "tool_name": "get_order",
+        "description": "Get a single order by its id.",
+        "arguments": {
+            "order_id": {
+                "type": "string",
+                "description": "The id of the order."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the order object; on failure (order not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_order",
+        "description": "Submit a new buy or sell order; buys validate buying power, sells validate the held position.",
+        "arguments": {
+            "symbol": {
+                "type": "string",
+                "description": "The ticker symbol to trade."
+            },
+            "qty": {
+                "type": "number",
+                "description": "The quantity to trade (must be positive)."
+            },
+            "side": {
+                "type": "string",
+                "description": "Order side: 'buy' or 'sell'."
+            },
+            "type": {
+                "type": "string",
+                "description": "Order type (default 'market')."
+            },
+            "time_in_force": {
+                "type": "string",
+                "description": "Time in force (default 'day')."
+            },
+            "limit_price": {
+                "type": "number",
+                "description": "Optional limit price for limit orders."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created order object; on failure (validation error), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "cancel_order",
+        "description": "Cancel an open order by its id.",
+        "arguments": {
+            "order_id": {
+                "type": "string",
+                "description": "The id of the order to cancel."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output confirms the canceled order; on failure (not found or not cancelable), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_assets",
+        "description": "List tradable assets, optionally filtered by status and asset class.",
+        "arguments": {
+            "status": {
+                "type": "string",
+                "description": "Optional asset status filter (e.g. 'active')."
+            },
+            "asset_class": {
+                "type": "string",
+                "description": "Optional asset class filter (e.g. 'us_equity')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of asset objects."
+        }
+    },
+    {
+        "tool_name": "get_latest_quote",
+        "description": "Get the latest market quote for a symbol.",
+        "arguments": {
+            "symbol": {
+                "type": "string",
+                "description": "The ticker symbol to quote."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with the symbol and quote (bid/ask); on failure (no quote), output contains an error message."
+        }
+    }
+]

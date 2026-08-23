@@ -1,0 +1,138 @@
+[
+    {
+        "tool_name": "list_namespaces",
+        "description": "List all namespaces in the cluster.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a NamespaceList envelope whose items are Namespace objects; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_pods",
+        "description": "List the pods in a given namespace.",
+        "arguments": {
+            "namespace": {
+                "type": "string",
+                "description": "The namespace to list pods from."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a PodList envelope whose items are Pod objects; on failure (namespace not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_pod",
+        "description": "Get a single pod by name within a namespace.",
+        "arguments": {
+            "namespace": {
+                "type": "string",
+                "description": "The namespace the pod belongs to."
+            },
+            "name": {
+                "type": "string",
+                "description": "The name of the pod."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the Pod object; on failure (pod not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_pod",
+        "description": "Delete a pod by name within a namespace; the returned pod is marked Terminating.",
+        "arguments": {
+            "namespace": {
+                "type": "string",
+                "description": "The namespace the pod belongs to."
+            },
+            "name": {
+                "type": "string",
+                "description": "The name of the pod to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the deleted Pod object with phase Terminating; on failure (pod not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_deployments",
+        "description": "List the deployments in a given namespace.",
+        "arguments": {
+            "namespace": {
+                "type": "string",
+                "description": "The namespace to list deployments from."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a DeploymentList envelope whose items are Deployment objects; on failure (namespace not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_deployment",
+        "description": "Get a single deployment by name within a namespace.",
+        "arguments": {
+            "namespace": {
+                "type": "string",
+                "description": "The namespace the deployment belongs to."
+            },
+            "name": {
+                "type": "string",
+                "description": "The name of the deployment."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the Deployment object; on failure (deployment not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "scale_deployment",
+        "description": "Scale a deployment to a target replica count; available/ready/updated replicas converge to the requested count.",
+        "arguments": {
+            "namespace": {
+                "type": "string",
+                "description": "The namespace the deployment belongs to."
+            },
+            "name": {
+                "type": "string",
+                "description": "The name of the deployment to scale."
+            },
+            "replicas": {
+                "type": "integer",
+                "description": "The desired number of replicas (clamped to a minimum of 0)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a Scale object reflecting the new replica count; on failure (deployment not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_services",
+        "description": "List the services in a given namespace.",
+        "arguments": {
+            "namespace": {
+                "type": "string",
+                "description": "The namespace to list services from."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a ServiceList envelope whose items are Service objects; on failure (namespace not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_nodes",
+        "description": "List all nodes in the cluster.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a NodeList envelope whose items are Node objects; on failure, output contains an error message."
+        }
+    }
+]

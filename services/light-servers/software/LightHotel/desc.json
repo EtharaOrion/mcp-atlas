@@ -1,0 +1,194 @@
+[
+    {
+        "tool_name": "list_hotels",
+        "description": "List hotels, optionally filtered by city and/or star rating. Sorted by stars desc then price asc.",
+        "arguments": {
+            "city": {"type": "string", "description": "Optional city filter (case-insensitive)."},
+            "star_rating": {"type": "integer", "description": "Optional exact star rating filter (1..5)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of hotel objects."
+        }
+    },
+    {
+        "tool_name": "get_hotel",
+        "description": "Retrieve a full hotel object by hid.",
+        "arguments": {
+            "hid": {"type": "string", "description": "Hotel identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full hotel object."
+        }
+    },
+    {
+        "tool_name": "add_hotel",
+        "description": "Register a new hotel property in the catalog.",
+        "arguments": {
+            "name": {"type": "string", "description": "Hotel name."},
+            "city": {"type": "string", "description": "City the hotel is located in."},
+            "star_rating": {"type": "integer", "description": "Star rating (1..5)."},
+            "price_per_night": {"type": "number", "description": "Base price per night."},
+            "amenities": {"type": "array", "items": {"type": "string"}, "description": "Optional amenity tags."},
+            "currency": {"type": "string", "description": "Currency code (default USD)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new hotel object."
+        }
+    },
+    {
+        "tool_name": "list_reservations",
+        "description": "List reservations, optionally filtered by status and/or hotel_id. Sorted by check_in.",
+        "arguments": {
+            "status": {"type": "string", "description": "Optional status filter (booked, checked_in, checked_out, cancelled)."},
+            "hotel_id": {"type": "string", "description": "Optional hotel filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of reservation summaries."
+        }
+    },
+    {
+        "tool_name": "get_reservation",
+        "description": "Retrieve a full reservation object by resid.",
+        "arguments": {
+            "resid": {"type": "string", "description": "Reservation identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full reservation object."
+        }
+    },
+    {
+        "tool_name": "create_reservation",
+        "description": "Book a room at a hotel between check_in and check_out (ISO dates). Total price is nights * hotel rate.",
+        "arguments": {
+            "hotel_id": {"type": "string", "description": "Hotel identifier."},
+            "guest": {"type": "string", "description": "Guest name or identifier."},
+            "check_in": {"type": "string", "description": "ISO date (YYYY-MM-DD) of arrival."},
+            "check_out": {"type": "string", "description": "ISO date (YYYY-MM-DD) of departure."},
+            "room_type": {"type": "string", "description": "Room type (single, double, suite, family)."},
+            "guests_count": {"type": "integer", "description": "Number of guests."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new reservation summary."
+        }
+    },
+    {
+        "tool_name": "cancel_reservation",
+        "description": "Cancel a reservation that has not yet been checked out or cancelled.",
+        "arguments": {
+            "resid": {"type": "string", "description": "Reservation identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the cancelled reservation summary."
+        }
+    },
+    {
+        "tool_name": "check_in",
+        "description": "Check in to a booked reservation. Moves status from 'booked' to 'checked_in'.",
+        "arguments": {
+            "resid": {"type": "string", "description": "Reservation identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated reservation summary."
+        }
+    },
+    {
+        "tool_name": "check_out",
+        "description": "Check out of a checked-in reservation. Moves status from 'checked_in' to 'checked_out'.",
+        "arguments": {
+            "resid": {"type": "string", "description": "Reservation identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated reservation summary."
+        }
+    },
+    {
+        "tool_name": "list_reviews",
+        "description": "List reviews, optionally filtered by hotel_id. Sorted by date descending.",
+        "arguments": {
+            "hotel_id": {"type": "string", "description": "Optional hotel filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of review objects."
+        }
+    },
+    {
+        "tool_name": "add_review",
+        "description": "Attach a rated review (1..5) with a text comment to a hotel.",
+        "arguments": {
+            "hotel_id": {"type": "string", "description": "Hotel identifier."},
+            "guest": {"type": "string", "description": "Guest name or identifier."},
+            "rating": {"type": "integer", "description": "Integer rating 1..5."},
+            "comment": {"type": "string", "description": "Free-form review text."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new review object."
+        }
+    },
+    {
+        "tool_name": "get_average_rating",
+        "description": "Compute average rating and review count for a hotel.",
+        "arguments": {
+            "hid": {"type": "string", "description": "Hotel identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {hid, count, average}."
+        }
+    },
+    {
+        "tool_name": "search_hotels",
+        "description": "Search for hotels in a city that have no conflicting reservation between check_in and check_out.",
+        "arguments": {
+            "city": {"type": "string", "description": "City to search."},
+            "check_in": {"type": "string", "description": "ISO date of arrival."},
+            "check_out": {"type": "string", "description": "ISO date of departure."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of available hotel results with total_price."
+        }
+    },
+    {
+        "tool_name": "list_upcoming_stays",
+        "description": "List a guest's upcoming reservations (booked or checked_in with check_in >= today).",
+        "arguments": {
+            "guest": {"type": "string", "description": "Guest name or identifier."},
+            "today": {"type": "string", "description": "Optional ISO date anchor (defaults to session time)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of reservation summaries."
+        }
+    },
+    {
+        "tool_name": "get_amenities",
+        "description": "Return the amenities list for a hotel.",
+        "arguments": {
+            "hid": {"type": "string", "description": "Hotel identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {hid, amenities}."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Aggregate stats: hotel count, reservations by status, review count, and booked/completed revenue.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {hotels, reservations, by_status, reviews, booked_revenue}."
+        }
+    }
+]

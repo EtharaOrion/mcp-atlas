@@ -1,0 +1,349 @@
+[
+    {
+        "tool_name": "list_customers",
+        "description": "List customers, optionally filtered by email, with a result limit.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of customers to return (default 10)."
+            },
+            "email": {
+                "type": "string",
+                "description": "Optional email to filter customers by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a Stripe list envelope (object, url, has_more, data) of customer objects."
+        }
+    },
+    {
+        "tool_name": "get_customer",
+        "description": "Get a single customer by its id.",
+        "arguments": {
+            "customer_id": {
+                "type": "string",
+                "description": "The id of the customer (cus_ prefix)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the customer object; on failure (customer not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_customer",
+        "description": "Create a new customer.",
+        "arguments": {
+            "name": {
+                "type": "string",
+                "description": "Optional customer name."
+            },
+            "email": {
+                "type": "string",
+                "description": "Optional customer email."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional customer description."
+            },
+            "currency": {
+                "type": "string",
+                "description": "Default currency (default 'usd')."
+            },
+            "phone": {
+                "type": "string",
+                "description": "Optional customer phone number."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created customer object."
+        }
+    },
+    {
+        "tool_name": "list_products",
+        "description": "List products with a result limit.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of products to return (default 10)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a Stripe list envelope of product objects."
+        }
+    },
+    {
+        "tool_name": "list_prices",
+        "description": "List prices, optionally filtered by product, with a result limit.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of prices to return (default 10)."
+            },
+            "product": {
+                "type": "string",
+                "description": "Optional product id to filter prices by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a Stripe list envelope of price objects."
+        }
+    },
+    {
+        "tool_name": "create_payment_intent",
+        "description": "Create a payment intent (amount in integer cents), optionally confirming it immediately to record a charge.",
+        "arguments": {
+            "amount": {
+                "type": "integer",
+                "description": "Amount in integer cents; must be positive."
+            },
+            "currency": {
+                "type": "string",
+                "description": "Currency (default 'usd')."
+            },
+            "customer": {
+                "type": "string",
+                "description": "Optional customer id to attach."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional description."
+            },
+            "confirm": {
+                "type": "boolean",
+                "description": "If true, mark as succeeded and record a charge (default false)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the payment_intent object; on failure (invalid amount or unknown customer), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_payment_intent",
+        "description": "Get a single payment intent by its id.",
+        "arguments": {
+            "pi_id": {
+                "type": "string",
+                "description": "The id of the payment intent (pi_ prefix)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the payment_intent object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_charges",
+        "description": "List charges, optionally filtered by customer, with a result limit.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of charges to return (default 10)."
+            },
+            "customer": {
+                "type": "string",
+                "description": "Optional customer id to filter charges by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a Stripe list envelope of charge objects."
+        }
+    },
+    {
+        "tool_name": "get_charge",
+        "description": "Get a single charge by its id.",
+        "arguments": {
+            "charge_id": {
+                "type": "string",
+                "description": "The id of the charge (ch_ prefix)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the charge object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_charge",
+        "description": "Create a charge (amount in integer cents).",
+        "arguments": {
+            "amount": {
+                "type": "integer",
+                "description": "Amount in integer cents; must be positive."
+            },
+            "currency": {
+                "type": "string",
+                "description": "Currency (default 'usd')."
+            },
+            "customer": {
+                "type": "string",
+                "description": "Optional customer id to attach."
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional description."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created charge object; on failure (invalid amount or unknown customer), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_refund",
+        "description": "Refund all or part of a charge.",
+        "arguments": {
+            "charge": {
+                "type": "string",
+                "description": "The id of the charge to refund."
+            },
+            "amount": {
+                "type": "integer",
+                "description": "Optional amount in cents to refund; defaults to the full refundable amount."
+            },
+            "reason": {
+                "type": "string",
+                "description": "Optional refund reason (default 'requested_by_customer')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the refund object; on failure (unknown charge or invalid amount), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_invoices",
+        "description": "List invoices, optionally filtered by customer and status, with a result limit.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of invoices to return (default 10)."
+            },
+            "customer": {
+                "type": "string",
+                "description": "Optional customer id to filter invoices by."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional invoice status to filter by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a Stripe list envelope of invoice objects."
+        }
+    },
+    {
+        "tool_name": "get_invoice",
+        "description": "Get a single invoice by its id.",
+        "arguments": {
+            "invoice_id": {
+                "type": "string",
+                "description": "The id of the invoice (in_ prefix)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the invoice object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_invoice",
+        "description": "Create a draft invoice for a customer.",
+        "arguments": {
+            "customer": {
+                "type": "string",
+                "description": "The customer id the invoice is for."
+            },
+            "amount_due": {
+                "type": "integer",
+                "description": "Amount due in integer cents (default 0)."
+            },
+            "currency": {
+                "type": "string",
+                "description": "Currency (default 'usd')."
+            },
+            "subscription": {
+                "type": "string",
+                "description": "Optional subscription id to associate."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created invoice object; on failure (unknown customer), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_subscriptions",
+        "description": "List subscriptions, optionally filtered by customer and status, with a result limit.",
+        "arguments": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of subscriptions to return (default 10)."
+            },
+            "customer": {
+                "type": "string",
+                "description": "Optional customer id to filter subscriptions by."
+            },
+            "status": {
+                "type": "string",
+                "description": "Optional subscription status to filter by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a Stripe list envelope of subscription objects."
+        }
+    },
+    {
+        "tool_name": "get_subscription",
+        "description": "Get a single subscription by its id.",
+        "arguments": {
+            "sub_id": {
+                "type": "string",
+                "description": "The id of the subscription (sub_ prefix)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the subscription object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_subscription",
+        "description": "Create an active subscription for a customer on a given price.",
+        "arguments": {
+            "customer": {
+                "type": "string",
+                "description": "The customer id to subscribe."
+            },
+            "price": {
+                "type": "string",
+                "description": "The price id to subscribe to."
+            },
+            "quantity": {
+                "type": "integer",
+                "description": "Subscription quantity (default 1)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created subscription object; on failure (unknown customer or price), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_balance",
+        "description": "Get the current account balance.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the balance object (available, pending, connect_reserved)."
+        }
+    }
+]

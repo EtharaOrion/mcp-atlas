@@ -1,0 +1,1 @@
+{"state": {"stocks": {"pending_orders": [], "portfolio": [], "price_alerts": {}, "trade_history": [], "watch_list": []}, "user": {"frozen_margin": 0.0, "savings_balance": 137782, "tier": "VIP", "trading_balance": 23386}}, "uuid_err": "StockSession.uuid() missing 1 required positional argument: 'prefix'"}

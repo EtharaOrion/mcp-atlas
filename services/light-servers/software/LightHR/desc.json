@@ -1,0 +1,199 @@
+[
+    {
+        "tool_name": "list_employees",
+        "description": "List employees, optionally filtered by department. Sorted by name.",
+        "arguments": {
+            "department": {"type": "string", "description": "Optional department filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of employee summaries."
+        }
+    },
+    {
+        "tool_name": "get_employee",
+        "description": "Retrieve the full employee record by eid.",
+        "arguments": {
+            "eid": {"type": "string", "description": "Employee identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full employee record."
+        }
+    },
+    {
+        "tool_name": "create_employee",
+        "description": "Create a new employee record.",
+        "arguments": {
+            "name": {"type": "string", "description": "Full name."},
+            "email": {"type": "string", "description": "Corporate email address."},
+            "department": {"type": "string", "description": "Department (e.g. Engineering)."},
+            "role": {"type": "string", "description": "Job role/title."},
+            "hire_date": {"type": "string", "description": "Optional hire date (YYYY-MM-DD)."},
+            "manager_id": {"type": "string", "description": "Optional manager eid."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new employee summary."
+        }
+    },
+    {
+        "tool_name": "update_employee",
+        "description": "Update one or more fields on an existing employee.",
+        "arguments": {
+            "eid": {"type": "string", "description": "Employee identifier."},
+            "name": {"type": "string", "description": "Optional new name."},
+            "email": {"type": "string", "description": "Optional new email."},
+            "department": {"type": "string", "description": "Optional new department."},
+            "role": {"type": "string", "description": "Optional new role."},
+            "hire_date": {"type": "string", "description": "Optional new hire date."},
+            "manager_id": {"type": "string", "description": "Optional new manager eid."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated employee summary."
+        }
+    },
+    {
+        "tool_name": "terminate_employee",
+        "description": "Mark an employee as terminated (status: terminated).",
+        "arguments": {
+            "eid": {"type": "string", "description": "Employee identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated employee summary."
+        }
+    },
+    {
+        "tool_name": "list_leaves",
+        "description": "List leave requests, optionally filtered by employee and/or status.",
+        "arguments": {
+            "employee_id": {"type": "string", "description": "Optional employee eid filter."},
+            "status": {"type": "string", "description": "Optional status filter: pending, approved, rejected."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of leave summaries sorted by start_date."
+        }
+    },
+    {
+        "tool_name": "request_leave",
+        "description": "Create a new leave request in pending status.",
+        "arguments": {
+            "employee_id": {"type": "string", "description": "Employee eid."},
+            "type": {"type": "string", "description": "Leave type: vacation, sick, or personal."},
+            "start_date": {"type": "string", "description": "Start date (YYYY-MM-DD)."},
+            "end_date": {"type": "string", "description": "End date (YYYY-MM-DD)."},
+            "days": {"type": "number", "description": "Number of days requested."},
+            "reason": {"type": "string", "description": "Optional reason."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new leave summary."
+        }
+    },
+    {
+        "tool_name": "approve_leave",
+        "description": "Approve a pending leave request.",
+        "arguments": {
+            "lid": {"type": "string", "description": "Leave identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated leave summary."
+        }
+    },
+    {
+        "tool_name": "reject_leave",
+        "description": "Reject a pending leave request.",
+        "arguments": {
+            "lid": {"type": "string", "description": "Leave identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated leave summary."
+        }
+    },
+    {
+        "tool_name": "list_pending_leaves",
+        "description": "List all currently pending leave requests, sorted by start_date.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of pending leave summaries."
+        }
+    },
+    {
+        "tool_name": "list_timesheets",
+        "description": "List time entries, optionally filtered by employee and/or date range.",
+        "arguments": {
+            "employee_id": {"type": "string", "description": "Optional employee eid filter."},
+            "start_date": {"type": "string", "description": "Optional inclusive lower-bound date (YYYY-MM-DD)."},
+            "end_date": {"type": "string", "description": "Optional inclusive upper-bound date (YYYY-MM-DD)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of time entry summaries."
+        }
+    },
+    {
+        "tool_name": "log_time",
+        "description": "Log a new time entry for an employee.",
+        "arguments": {
+            "employee_id": {"type": "string", "description": "Employee eid."},
+            "date": {"type": "string", "description": "Entry date (YYYY-MM-DD)."},
+            "hours": {"type": "number", "description": "Hours worked (must be positive)."},
+            "project": {"type": "string", "description": "Project or client name."},
+            "description": {"type": "string", "description": "Optional description of the work."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new time entry summary."
+        }
+    },
+    {
+        "tool_name": "delete_time_entry",
+        "description": "Delete a time entry permanently.",
+        "arguments": {
+            "teid": {"type": "string", "description": "Time entry identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {teid, deleted: true}."
+        }
+    },
+    {
+        "tool_name": "get_employee_hours",
+        "description": "Aggregate an employee's total hours (optionally within a date range), broken down by project.",
+        "arguments": {
+            "employee_id": {"type": "string", "description": "Employee eid."},
+            "start_date": {"type": "string", "description": "Optional inclusive lower-bound date."},
+            "end_date": {"type": "string", "description": "Optional inclusive upper-bound date."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output contains employee_id, total_hours, and by_project."
+        }
+    },
+    {
+        "tool_name": "list_by_department",
+        "description": "List all employees in a given department (shortcut for list_employees).",
+        "arguments": {
+            "department": {"type": "string", "description": "Department name."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of employee summaries."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Aggregate HR stats: employee counts, department breakdown, leave counts by status, total hours logged.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a stats object."
+        }
+    }
+]

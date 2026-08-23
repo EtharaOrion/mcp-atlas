@@ -1,0 +1,196 @@
+[
+    {
+        "tool_name": "list_videos",
+        "description": "List all videos, optionally filtered by category and/or channel. Sorted by published_at descending.",
+        "arguments": {
+            "category": {"type": "string", "description": "Optional category filter (e.g. music, gaming, tech, education)."},
+            "channel": {"type": "string", "description": "Optional channel name filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of video summaries."
+        }
+    },
+    {
+        "tool_name": "get_video",
+        "description": "Retrieve the full video object by vid.",
+        "arguments": {
+            "vid": {"type": "string", "description": "Video identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full video record."
+        }
+    },
+    {
+        "tool_name": "search_videos",
+        "description": "Search videos by keyword across title, description, channel and category.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search keyword or phrase."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of matching video summaries sorted by views desc."
+        }
+    },
+    {
+        "tool_name": "list_playlists",
+        "description": "List all user playlists.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of {plid, name, video_ids, created_at}."
+        }
+    },
+    {
+        "tool_name": "get_playlist",
+        "description": "Retrieve a playlist with expanded video summaries.",
+        "arguments": {
+            "plid": {"type": "string", "description": "Playlist identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output contains playlist metadata and expanded videos list."
+        }
+    },
+    {
+        "tool_name": "create_playlist",
+        "description": "Create a new empty playlist.",
+        "arguments": {
+            "name": {"type": "string", "description": "Human-readable name for the playlist."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new playlist record."
+        }
+    },
+    {
+        "tool_name": "delete_playlist",
+        "description": "Delete a playlist by identifier.",
+        "arguments": {
+            "plid": {"type": "string", "description": "Playlist identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {plid, deleted: true}."
+        }
+    },
+    {
+        "tool_name": "add_to_playlist",
+        "description": "Append a video to a playlist. No-op if already present.",
+        "arguments": {
+            "plid": {"type": "string", "description": "Playlist identifier."},
+            "vid": {"type": "string", "description": "Video identifier to add."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated playlist record."
+        }
+    },
+    {
+        "tool_name": "remove_from_playlist",
+        "description": "Remove a video from a playlist.",
+        "arguments": {
+            "plid": {"type": "string", "description": "Playlist identifier."},
+            "vid": {"type": "string", "description": "Video identifier to remove."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated playlist record."
+        }
+    },
+    {
+        "tool_name": "list_watch_history",
+        "description": "List the user's recent watch history sorted by watched_at descending.",
+        "arguments": {
+            "limit": {"type": "integer", "description": "Maximum number of entries to return."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of watch history entries."
+        }
+    },
+    {
+        "tool_name": "record_watch",
+        "description": "Record a watch event for a video, appending it to history and bumping view count.",
+        "arguments": {
+            "vid": {"type": "string", "description": "Video identifier watched."},
+            "progress_seconds": {"type": "integer", "description": "How many seconds of the video were watched."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new watch history entry."
+        }
+    },
+    {
+        "tool_name": "clear_history",
+        "description": "Delete all watch history entries for the current user.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {cleared: n}."
+        }
+    },
+    {
+        "tool_name": "list_subscriptions",
+        "description": "List the user's channel subscriptions.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of {subid, channel}."
+        }
+    },
+    {
+        "tool_name": "subscribe",
+        "description": "Subscribe to a channel by name. Fails if already subscribed.",
+        "arguments": {
+            "channel": {"type": "string", "description": "Channel name to subscribe to."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new subscription record."
+        }
+    },
+    {
+        "tool_name": "unsubscribe",
+        "description": "Unsubscribe from a channel by name.",
+        "arguments": {
+            "channel": {"type": "string", "description": "Channel name to unsubscribe from."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {channel, unsubscribed: true}."
+        }
+    },
+    {
+        "tool_name": "like_video",
+        "description": "Increment the like count for a video.",
+        "arguments": {
+            "vid": {"type": "string", "description": "Video identifier to like."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated video summary."
+        }
+    },
+    {
+        "tool_name": "get_recommended",
+        "description": "Recommend videos from subscribed channels that the user has not watched, backfilling with popular unwatched videos.",
+        "arguments": {
+            "limit": {"type": "integer", "description": "Maximum number of recommendations to return."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of recommended video summaries."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Return aggregate stats: totals plus breakdowns by category and channel.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output contains totals and per-category/per-channel counts."
+        }
+    }
+]

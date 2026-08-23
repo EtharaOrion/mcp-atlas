@@ -1,0 +1,193 @@
+# Source: world_data 2/LightFitness.json (verbatim). Corpus-only authored world.
+exercises:
+  FUWyQXcr6sTiprh3yg2BuB:
+    exid: FUWyQXcr6sTiprh3yg2BuB
+    name: Morning Walk
+    muscle_group: cardio
+    kind: cardio
+  BU5HfDho9punjAt5MJrCdJ:
+    exid: BU5HfDho9punjAt5MJrCdJ
+    name: Brisk Walk
+    muscle_group: cardio
+    kind: cardio
+  mpceN2bujdDMzK33bWPQk5:
+    exid: mpceN2bujdDMzK33bWPQk5
+    name: Light Stretching
+    muscle_group: full_body
+    kind: flexibility
+  9Qmo29T4SirFdCmuLwQWUT:
+    exid: 9Qmo29T4SirFdCmuLwQWUT
+    name: Neighborhood Loop
+    muscle_group: cardio
+    kind: cardio
+  9bzZPmQZcqsJdrMajjexYo:
+    exid: 9bzZPmQZcqsJdrMajjexYo
+    name: Garden Work
+    muscle_group: full_body
+    kind: strength
+  kEKmyWqeuDYpmgyam5KnQZ:
+    exid: kEKmyWqeuDYpmgyam5KnQZ
+    name: Workshop Session
+    muscle_group: full_body
+    kind: strength
+  DXWpDqvcKKfqMY396R2Cfn:
+    exid: DXWpDqvcKKfqMY396R2Cfn
+    name: Stair Climb
+    muscle_group: legs
+    kind: cardio
+  WrRWHKDzwgmtn6aUUfcEtG:
+    exid: WrRWHKDzwgmtn6aUUfcEtG
+    name: Balance Drill
+    muscle_group: full_body
+    kind: flexibility
+workouts:
+  snY2BwBfgAb7hrZTtLCVew:
+    wkid: snY2BwBfgAb7hrZTtLCVew
+    name: Morning Walk
+    date: '2026-01-03'
+    duration_min: 48
+    notes: Per Dr. Fox's walking routine.
+    sets:
+    - exid: FUWyQXcr6sTiprh3yg2BuB
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 3.2
+      duration_sec: 3680
+    - exid: FUWyQXcr6sTiprh3yg2BuB
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 3.2
+      duration_sec: 3680
+    - exid: 9Qmo29T4SirFdCmuLwQWUT
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 3.2
+      duration_sec: 3680
+    - exid: 9Qmo29T4SirFdCmuLwQWUT
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 3.2
+      duration_sec: 3680
+  tjyJ4fHww6iuuHeStFvoXS:
+    wkid: tjyJ4fHww6iuuHeStFvoXS
+    name: Morning Walk
+    date: '2026-01-03'
+    duration_min: 60
+    notes: Per Dr. Fox's walking routine.
+    sets:
+    - exid: mpceN2bujdDMzK33bWPQk5
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 4.0
+      duration_sec: 4600
+    - exid: mpceN2bujdDMzK33bWPQk5
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 4.0
+      duration_sec: 4600
+    - exid: 9bzZPmQZcqsJdrMajjexYo
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 4.0
+      duration_sec: 4600
+    - exid: 9bzZPmQZcqsJdrMajjexYo
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 4.0
+      duration_sec: 4600
+    - exid: 9bzZPmQZcqsJdrMajjexYo
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 4.0
+      duration_sec: 4600
+  K8dPRxN5bWqhvp4y92qurJ:
+    wkid: K8dPRxN5bWqhvp4y92qurJ
+    name: Evening Stroll
+    date: '2026-01-04'
+    duration_min: 35
+    notes: Per Dr. Fox's walking routine.
+    sets:
+    - exid: BU5HfDho9punjAt5MJrCdJ
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 2.4
+      duration_sec: 2760
+    - exid: BU5HfDho9punjAt5MJrCdJ
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 2.4
+      duration_sec: 2760
+    - exid: BU5HfDho9punjAt5MJrCdJ
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 2.4
+      duration_sec: 2760
+    - exid: BU5HfDho9punjAt5MJrCdJ
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 2.4
+      duration_sec: 2760
+    - exid: WrRWHKDzwgmtn6aUUfcEtG
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 2.4
+      duration_sec: 2760
+    - exid: WrRWHKDzwgmtn6aUUfcEtG
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 2.4
+      duration_sec: 2760
+    - exid: WrRWHKDzwgmtn6aUUfcEtG
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 2.4
+      duration_sec: 2760
+  mcMS3KTCHYnKNW8DV947VP:
+    wkid: mcMS3KTCHYnKNW8DV947VP
+    name: Saturday Long Walk
+    date: '2026-01-05'
+    duration_min: 75
+    notes: Per Dr. Fox's walking routine.
+    sets:
+    - exid: kEKmyWqeuDYpmgyam5KnQZ
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 5.0
+      duration_sec: 5750
+    - exid: DXWpDqvcKKfqMY396R2Cfn
+      reps: 0
+      weight_kg: 0.0
+      distance_km: 5.0
+      duration_sec: 5750
+prs:
+  m5dQ36op4CByjPv3zekEXU:
+    prid: m5dQ36op4CByjPv3zekEXU
+    exid: FUWyQXcr6sTiprh3yg2BuB
+    kind: longest_distance
+    value: 5.0
+    achieved_at: 2026-01-05T07:40
+  u53GL7VoR7PkQdpUY7QhSK:
+    prid: u53GL7VoR7PkQdpUY7QhSK
+    exid: 9bzZPmQZcqsJdrMajjexYo
+    kind: longest_distance
+    value: 4.0
+    achieved_at: 2026-01-05T12:03
+  o8rxPpFzSP3q6DfZJTfNpp:
+    prid: o8rxPpFzSP3q6DfZJTfNpp
+    exid: kEKmyWqeuDYpmgyam5KnQZ
+    kind: longest_distance
+    value: 3.2
+    achieved_at: 2026-01-05T19:31
+weekly_stats:
+  vBMgrth9iHkCMSKpTeZTv7:
+    wsid: vBMgrth9iHkCMSKpTeZTv7
+    week_start_date: '2026-01-07'
+    total_workouts: 5
+    total_duration_min: 174
+    calories_estimate: 950
+  DHQmiHELkQLypdp5sGwjV2:
+    wsid: DHQmiHELkQLypdp5sGwjV2
+    week_start_date: '2026-01-08'
+    total_workouts: 5
+    total_duration_min: 263
+    calories_estimate: 950

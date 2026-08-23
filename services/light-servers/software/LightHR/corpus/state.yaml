@@ -1,0 +1,120 @@
+# Source: world_data 2/LightHR.json (verbatim). Corpus-only authored world.
+employees:
+  FLptCj8RhyAa7YLCTuQMzU:
+    eid: FLptCj8RhyAa7YLCTuQMzU
+    name: Amos Jeremiah Whitfield
+    email: director@shpa-savannah.org
+    department: Operations
+    role: Executive Director
+    hire_date: '2019-03-11'
+    manager_id: null
+    status: active
+  wpswsVuxtRw8JsQQdoNBVB:
+    eid: wpswsVuxtRw8JsQQdoNBVB
+    name: Lorraine Deveraux
+    email: lorraine.deveraux@shpa-savannah.org
+    department: Operations
+    role: Deputy Director
+    hire_date: '2024-12-01'
+    manager_id: FLptCj8RhyAa7YLCTuQMzU
+    status: active
+  RSKYzEhco2aA8zLEVudBd2:
+    eid: RSKYzEhco2aA8zLEVudBd2
+    name: Marcus Whitby
+    email: marcus.whitby@shpa-savannah.org
+    department: Development
+    role: Development Director
+    hire_date: '2024-07-24'
+    manager_id: FLptCj8RhyAa7YLCTuQMzU
+    status: active
+  PdqaXo7sQ8hqnFwYaXHTXP:
+    eid: PdqaXo7sQ8hqnFwYaXHTXP
+    name: Josephine Halloway
+    email: josephine.halloway@shpa-savannah.org
+    department: Programs
+    role: Programs Director
+    hire_date: '2024-03-16'
+    manager_id: FLptCj8RhyAa7YLCTuQMzU
+    status: active
+  sdTdepYZCnRt96sYADi8Uk:
+    eid: sdTdepYZCnRt96sYADi8Uk
+    name: Nathaniel Kessel
+    email: nathaniel.kessel@shpa-savannah.org
+    department: Communications
+    role: Communications Director
+    hire_date: '2023-11-07'
+    manager_id: FLptCj8RhyAa7YLCTuQMzU
+    status: active
+  XD7QvFZdun9xDLjkUVd5JL:
+    eid: XD7QvFZdun9xDLjkUVd5JL
+    name: Priscilla Everton
+    email: priscilla.everton@shpa-savannah.org
+    department: Finance
+    role: Finance & Administration Director
+    hire_date: '2023-06-30'
+    manager_id: FLptCj8RhyAa7YLCTuQMzU
+    status: active
+leaves:
+  vZyscTLWoHGYsorzqDdNrk:
+    lid: vZyscTLWoHGYsorzqDdNrk
+    employee_id: wpswsVuxtRw8JsQQdoNBVB
+    type: vacation
+    start_date: '2026-01-17'
+    end_date: '2026-01-21'
+    days: 5.0
+    status: approved
+    reason: Family trip out of town.
+  46Pwzy7k3w8nfLb6H4nUAN:
+    lid: 46Pwzy7k3w8nfLb6H4nUAN
+    employee_id: RSKYzEhco2aA8zLEVudBd2
+    type: sick
+    start_date: '2025-12-28'
+    end_date: '2025-12-29'
+    days: 2.0
+    status: approved
+    reason: Out with a cold.
+  EV3zyZ3ViDvtFPu7ps2cFd:
+    lid: EV3zyZ3ViDvtFPu7ps2cFd
+    employee_id: PdqaXo7sQ8hqnFwYaXHTXP
+    type: personal
+    start_date: '2026-01-30'
+    end_date: '2026-01-30'
+    days: 1.0
+    status: pending
+    reason: Appointment across town.
+timesheets:
+  GjrZLnHM9hnCc68QWLf4Rr:
+    teid: GjrZLnHM9hnCc68QWLf4Rr
+    employee_id: FLptCj8RhyAa7YLCTuQMzU
+    date: '2026-01-03'
+    hours: 4.0
+    project: General administration
+    description: Logged from the office.
+  k3JFcu3Gm2iycEyGBSMmqx:
+    teid: k3JFcu3Gm2iycEyGBSMmqx
+    employee_id: wpswsVuxtRw8JsQQdoNBVB
+    date: '2026-01-02'
+    hours: 7.0
+    project: Member outreach
+    description: Logged from the office.
+  bEfKohPHHVZ5vFzz8uKAKc:
+    teid: bEfKohPHHVZ5vFzz8uKAKc
+    employee_id: RSKYzEhco2aA8zLEVudBd2
+    date: '2026-01-01'
+    hours: 8.0
+    project: Annual event planning
+    description: Logged from the office.
+  dBhHJ7THv59WnzxVebPqNp:
+    teid: dBhHJ7THv59WnzxVebPqNp
+    employee_id: PdqaXo7sQ8hqnFwYaXHTXP
+    date: '2025-12-31'
+    hours: 6.0
+    project: Grant reporting
+    description: Logged from the office.
+  zWr4pEFTzsHMBBRW6zCiTb:
+    teid: zWr4pEFTzsHMBBRW6zCiTb
+    employee_id: sdTdepYZCnRt96sYADi8Uk
+    date: '2025-12-30'
+    hours: 6.0
+    project: General administration
+    description: Logged from the office.

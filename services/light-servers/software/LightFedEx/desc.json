@@ -1,0 +1,68 @@
+[
+    {
+        "tool_name": "get_rate_quote",
+        "description": "Get FedEx rate quotes for a shipment between two zip codes, optionally filtered by service type.",
+        "arguments": {
+            "origin_zip": {
+                "type": "string",
+                "description": "The origin postal (zip) code."
+            },
+            "dest_zip": {
+                "type": "string",
+                "description": "The destination postal (zip) code."
+            },
+            "weight_lb": {
+                "type": "number",
+                "description": "Package weight in pounds; used to scale the quoted charge (default 1.0)."
+            },
+            "service_type": {
+                "type": "string",
+                "description": "Optional FedEx service type to filter the quotes by (e.g. FEDEX_GROUND)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds rateReplyDetails and quoteDate; on failure (no matching rates), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_shipment",
+        "description": "Create a FedEx shipment (label) and register its initial tracking record.",
+        "arguments": {
+            "origin_zip": {
+                "type": "string",
+                "description": "The origin postal (zip) code."
+            },
+            "dest_zip": {
+                "type": "string",
+                "description": "The destination postal (zip) code."
+            },
+            "weight_lb": {
+                "type": "number",
+                "description": "Package weight in pounds (default 1.0)."
+            },
+            "service_type": {
+                "type": "string",
+                "description": "The FedEx service type for the shipment (default FEDEX_GROUND)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds transactionShipments with the new tracking number and label document; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "track",
+        "description": "Track a FedEx shipment by its tracking number.",
+        "arguments": {
+            "tracking_number": {
+                "type": "string",
+                "description": "The FedEx tracking number to look up."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output holds completeTrackResults with the latest status and scan events; on failure (tracking number not found), output contains an error message."
+        }
+    }
+]

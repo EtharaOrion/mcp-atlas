@@ -1,0 +1,176 @@
+[
+    {
+        "tool_name": "list_rides",
+        "description": "List rides, optionally filtered by status and/or rider. Sorted by requested_at descending.",
+        "arguments": {
+            "status": {"type": "string", "description": "Optional ride status filter (requested, accepted, in_progress, completed, cancelled)."},
+            "rider": {"type": "string", "description": "Optional rider name filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of ride summaries."
+        }
+    },
+    {
+        "tool_name": "get_ride",
+        "description": "Retrieve the full ride object by rid.",
+        "arguments": {
+            "rid": {"type": "string", "description": "Ride identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full ride including timestamps and rating."
+        }
+    },
+    {
+        "tool_name": "request_ride",
+        "description": "Request a new ride. Ride is created with status 'requested' and no assigned driver.",
+        "arguments": {
+            "rider": {"type": "string", "description": "Rider name or identifier."},
+            "pickup": {"type": "string", "description": "Pickup address."},
+            "dropoff": {"type": "string", "description": "Dropoff address."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new ride summary."
+        }
+    },
+    {
+        "tool_name": "accept_ride",
+        "description": "Driver accepts a requested ride. Marks driver as unavailable and ride as 'accepted'.",
+        "arguments": {
+            "rid": {"type": "string", "description": "Ride identifier."},
+            "did": {"type": "string", "description": "Driver identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated ride summary."
+        }
+    },
+    {
+        "tool_name": "start_ride",
+        "description": "Driver begins the trip. Ride must be in 'accepted' status; moves to 'in_progress' with started_at set.",
+        "arguments": {
+            "rid": {"type": "string", "description": "Ride identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated ride summary."
+        }
+    },
+    {
+        "tool_name": "complete_ride",
+        "description": "Complete an in-progress ride with a final fare. Marks driver available again.",
+        "arguments": {
+            "rid": {"type": "string", "description": "Ride identifier."},
+            "fare": {"type": "number", "description": "Final fare amount."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the completed ride summary."
+        }
+    },
+    {
+        "tool_name": "cancel_ride",
+        "description": "Cancel a ride that has not yet completed. Frees the assigned driver if any.",
+        "arguments": {
+            "rid": {"type": "string", "description": "Ride identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the cancelled ride summary."
+        }
+    },
+    {
+        "tool_name": "rate_ride",
+        "description": "Rate a completed ride (1..5). Fails if the ride is not yet completed.",
+        "arguments": {
+            "rid": {"type": "string", "description": "Ride identifier."},
+            "rating": {"type": "integer", "description": "Integer rating between 1 and 5."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the rated ride summary."
+        }
+    },
+    {
+        "tool_name": "list_drivers",
+        "description": "List drivers, optionally filtered by availability.",
+        "arguments": {
+            "is_available": {"type": "boolean", "description": "Optional filter for driver availability."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of driver objects."
+        }
+    },
+    {
+        "tool_name": "get_driver",
+        "description": "Retrieve a driver by did.",
+        "arguments": {
+            "did": {"type": "string", "description": "Driver identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the driver object."
+        }
+    },
+    {
+        "tool_name": "add_driver",
+        "description": "Onboard a new driver.",
+        "arguments": {
+            "name": {"type": "string", "description": "Driver full name."},
+            "car_model": {"type": "string", "description": "Vehicle make/model."},
+            "license_plate": {"type": "string", "description": "License plate string."},
+            "rating": {"type": "number", "description": "Optional starting rating (default 5.0)."},
+            "is_available": {"type": "boolean", "description": "Whether the driver is initially available."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new driver object."
+        }
+    },
+    {
+        "tool_name": "list_riders",
+        "description": "List all riders known to this session.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of rider objects."
+        }
+    },
+    {
+        "tool_name": "add_rider",
+        "description": "Register a new rider.",
+        "arguments": {
+            "name": {"type": "string", "description": "Rider name."},
+            "home_address": {"type": "string", "description": "Optional home address."},
+            "work_address": {"type": "string", "description": "Optional work address."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new rider object."
+        }
+    },
+    {
+        "tool_name": "add_saved_place",
+        "description": "Append a saved place (label + address) to an existing rider.",
+        "arguments": {
+            "ruid": {"type": "string", "description": "Rider identifier."},
+            "place": {"type": "string", "description": "Place description or address string to save."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated rider object."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Aggregate ride statistics: totals by status, completed fare sum, and average rating.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {total_rides, by_status, drivers, riders, total_completed_fare, avg_rating}."
+        }
+    }
+]

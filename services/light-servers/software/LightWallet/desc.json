@@ -1,0 +1,186 @@
+[
+    {
+        "tool_name": "list_wallets",
+        "description": "List all wallets, optionally filtered by kind (fiat or crypto).",
+        "arguments": {
+            "kind": {"type": "string", "description": "Optional filter: fiat or crypto."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of wallet records."
+        }
+    },
+    {
+        "tool_name": "get_wallet",
+        "description": "Fetch a wallet by wid.",
+        "arguments": {
+            "wid": {"type": "string", "description": "Wallet identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full wallet record."
+        }
+    },
+    {
+        "tool_name": "create_wallet",
+        "description": "Create a new wallet with an optional starting balance.",
+        "arguments": {
+            "name": {"type": "string", "description": "Human-readable wallet name."},
+            "currency": {"type": "string", "description": "Currency code (USD, EUR, BTC, ETH, ...)."},
+            "kind": {"type": "string", "description": "Wallet kind: fiat or crypto."},
+            "balance": {"type": "number", "description": "Optional starting balance."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new wallet record."
+        }
+    },
+    {
+        "tool_name": "delete_wallet",
+        "description": "Delete a wallet by wid.",
+        "arguments": {
+            "wid": {"type": "string", "description": "Wallet identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {wid, deleted: true}."
+        }
+    },
+    {
+        "tool_name": "deposit",
+        "description": "Increase a wallet's balance by amount.",
+        "arguments": {
+            "wid": {"type": "string", "description": "Wallet identifier."},
+            "amount": {"type": "number", "description": "Positive amount to add."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {wid, balance}."
+        }
+    },
+    {
+        "tool_name": "withdraw",
+        "description": "Decrease a wallet's balance by amount if sufficient funds exist.",
+        "arguments": {
+            "wid": {"type": "string", "description": "Wallet identifier."},
+            "amount": {"type": "number", "description": "Positive amount to remove."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {wid, balance}."
+        }
+    },
+    {
+        "tool_name": "transfer",
+        "description": "Move funds between two wallets of the same currency and record a completed Transfer.",
+        "arguments": {
+            "from_wid": {"type": "string", "description": "Source wallet id."},
+            "to_wid": {"type": "string", "description": "Destination wallet id."},
+            "amount": {"type": "number", "description": "Positive amount to transfer."},
+            "memo": {"type": "string", "description": "Optional memo for the transfer."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new transfer summary."
+        }
+    },
+    {
+        "tool_name": "get_balance",
+        "description": "Return the current balance for a wallet.",
+        "arguments": {
+            "wid": {"type": "string", "description": "Wallet identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {wid, currency, balance}."
+        }
+    },
+    {
+        "tool_name": "list_transfers",
+        "description": "List transfers, optionally filtered by wallet and/or status. Newest first.",
+        "arguments": {
+            "wid": {"type": "string", "description": "Optional wallet id (matches either side)."},
+            "status": {"type": "string", "description": "Optional status filter: pending, completed, or failed."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of transfer summaries."
+        }
+    },
+    {
+        "tool_name": "get_transfer",
+        "description": "Fetch a specific transfer by trid.",
+        "arguments": {
+            "trid": {"type": "string", "description": "Transfer identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full transfer record."
+        }
+    },
+    {
+        "tool_name": "cancel_transfer",
+        "description": "Cancel a pending transfer by marking it failed.",
+        "arguments": {
+            "trid": {"type": "string", "description": "Transfer identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated transfer summary."
+        }
+    },
+    {
+        "tool_name": "get_total_value_by_currency",
+        "description": "Sum balances across all wallets of a given currency.",
+        "arguments": {
+            "currency": {"type": "string", "description": "Currency code."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {currency, total}."
+        }
+    },
+    {
+        "tool_name": "list_by_currency",
+        "description": "List all wallets holding the given currency.",
+        "arguments": {
+            "currency": {"type": "string", "description": "Currency code."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of wallet records."
+        }
+    },
+    {
+        "tool_name": "search_transfers",
+        "description": "Search transfers by keyword across memo and wallet ids.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search keyword."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of matching transfer summaries."
+        }
+    },
+    {
+        "tool_name": "get_wallet_history",
+        "description": "Return the most recent transfers involving a wallet, limited to `limit` entries.",
+        "arguments": {
+            "wid": {"type": "string", "description": "Wallet identifier."},
+            "limit": {"type": "integer", "description": "Maximum number of transfers to return."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of transfer summaries."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Return aggregate counts and balances across wallets and transfers.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output containing counts by kind, balances by currency, and transfer status breakdown."
+        }
+    }
+]

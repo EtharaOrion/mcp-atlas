@@ -1,0 +1,162 @@
+[
+    {
+        "tool_name": "list_users",
+        "description": "List users, optionally filtered by status and/or a name/email query.",
+        "arguments": {
+            "status": {
+                "type": "string",
+                "description": "Optional status filter (e.g. ACTIVE, STAGED, SUSPENDED, DEPROVISIONED)."
+            },
+            "q": {
+                "type": "string",
+                "description": "Optional case-insensitive query matched against first name, last name, or email."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of serialized user objects."
+        }
+    },
+    {
+        "tool_name": "get_user",
+        "description": "Get a single user by id.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the user object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_user",
+        "description": "Create a new user, optionally activated immediately.",
+        "arguments": {
+            "first_name": {
+                "type": "string",
+                "description": "The user's first name."
+            },
+            "last_name": {
+                "type": "string",
+                "description": "The user's last name."
+            },
+            "email": {
+                "type": "string",
+                "description": "The user's email address."
+            },
+            "login": {
+                "type": "string",
+                "description": "Optional login; defaults to the email address."
+            },
+            "activate": {
+                "type": "boolean",
+                "description": "Whether to activate the user immediately (default true); otherwise created as STAGED."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created user object."
+        }
+    },
+    {
+        "tool_name": "activate_user",
+        "description": "Activate a staged, provisioned, or deprovisioned user.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user to activate."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated user; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "suspend_user",
+        "description": "Suspend an active user.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user to suspend."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated user; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "deactivate_user",
+        "description": "Deactivate (deprovision) a user.",
+        "arguments": {
+            "user_id": {
+                "type": "string",
+                "description": "The unique id of the user to deactivate."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated user; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_groups",
+        "description": "List groups, optionally filtered by a name query.",
+        "arguments": {
+            "q": {
+                "type": "string",
+                "description": "Optional case-insensitive query matched against the group name."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of serialized group objects."
+        }
+    },
+    {
+        "tool_name": "get_group",
+        "description": "Get a single group by id.",
+        "arguments": {
+            "group_id": {
+                "type": "string",
+                "description": "The unique id of the group."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the group object; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_group_users",
+        "description": "List the users that are members of a group.",
+        "arguments": {
+            "group_id": {
+                "type": "string",
+                "description": "The unique id of the group."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of member user objects; on failure (group not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_apps",
+        "description": "List applications, optionally filtered by status.",
+        "arguments": {
+            "status": {
+                "type": "string",
+                "description": "Optional status filter (e.g. ACTIVE, INACTIVE)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of serialized app objects."
+        }
+    }
+]

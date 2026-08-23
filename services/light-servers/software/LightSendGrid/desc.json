@@ -1,0 +1,145 @@
+[
+    {
+        "tool_name": "send_mail",
+        "description": "Send an email via one or more personalizations, optionally using a dynamic template. Each recipient is appended to the sent log with a queued status.",
+        "arguments": {
+            "personalizations": {
+                "type": "array",
+                "description": "List of personalization objects. Each object has a 'to' list of {email, name} recipients and optional 'subject' and 'dynamic_template_data'."
+            },
+            "from_email": {
+                "type": "string",
+                "description": "The sender email address (from.email)."
+            },
+            "subject": {
+                "type": "string",
+                "description": "Optional subject line; falls back to the template subject or the personalization subject."
+            },
+            "content": {
+                "type": "array",
+                "description": "Optional list of content parts (each a {type, value} object)."
+            },
+            "template_id": {
+                "type": "string",
+                "description": "Optional dynamic template id to send with; must reference an existing template."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {accepted, message_ids, status}; on failure (missing personalizations/from_email or unknown template), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_templates",
+        "description": "List email templates, optionally filtered by generation.",
+        "arguments": {
+            "generation": {
+                "type": "string",
+                "description": "Optional generation filter (e.g. 'dynamic' or 'legacy')."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {result: [template objects]}; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_template",
+        "description": "Get a single email template by its id.",
+        "arguments": {
+            "template_id": {
+                "type": "string",
+                "description": "The unique id of the template."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the serialized template object with its versions; on failure (template not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_template",
+        "description": "Create a new email template.",
+        "arguments": {
+            "name": {
+                "type": "string",
+                "description": "The name of the template."
+            },
+            "generation": {
+                "type": "string",
+                "description": "The template generation (default 'dynamic')."
+            },
+            "subject": {
+                "type": "string",
+                "description": "Optional subject line for the template version."
+            },
+            "html_content": {
+                "type": "string",
+                "description": "Optional HTML content for the template version."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created template object with its versions; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_contacts",
+        "description": "List marketing contacts, optionally filtered by email.",
+        "arguments": {
+            "email": {
+                "type": "string",
+                "description": "Optional email address to filter contacts by exact match."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {result: [contact objects], contact_count}; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "upsert_contacts",
+        "description": "Create or update marketing contacts by email, optionally adding them to lists.",
+        "arguments": {
+            "contacts": {
+                "type": "array",
+                "description": "List of contact objects with email and optional first_name, last_name, country."
+            },
+            "list_ids": {
+                "type": "array",
+                "description": "Optional list of list ids to add the contacts to."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {job_id, upserted, contact_ids}; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_lists",
+        "description": "List all marketing contact lists.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {result: [list objects]}; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Get email statistics for a date range, aggregated per day.",
+        "arguments": {
+            "start_date": {
+                "type": "string",
+                "description": "The inclusive start date (YYYY-MM-DD) to filter stats from."
+            },
+            "end_date": {
+                "type": "string",
+                "description": "Optional inclusive end date (YYYY-MM-DD) to filter stats to."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is a list of {date, stats: [{metrics}]} objects; on failure, output contains an error message."
+        }
+    }
+]

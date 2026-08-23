@@ -1,0 +1,94 @@
+[
+    {
+        "tool_name": "track",
+        "description": "Ingest a Segment 'track' event, recording a user action with optional properties.",
+        "arguments": {
+            "body": {
+                "type": "object",
+                "description": "The track event payload (may include messageId, userId, anonymousId, event, timestamp, properties/traits)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {success: true}."
+        }
+    },
+    {
+        "tool_name": "identify",
+        "description": "Ingest a Segment 'identify' event, associating traits with a user.",
+        "arguments": {
+            "body": {
+                "type": "object",
+                "description": "The identify event payload (may include messageId, userId, anonymousId, timestamp, traits/properties)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {success: true}."
+        }
+    },
+    {
+        "tool_name": "page",
+        "description": "Ingest a Segment 'page' event, recording a page view with optional name and properties.",
+        "arguments": {
+            "body": {
+                "type": "object",
+                "description": "The page event payload (may include messageId, userId, anonymousId, name, timestamp, properties)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {success: true}."
+        }
+    },
+    {
+        "tool_name": "batch",
+        "description": "Ingest a batch of Segment events in one call.",
+        "arguments": {
+            "body": {
+                "type": "object",
+                "description": "The batch payload containing a 'batch' list of event objects, each with an optional 'type' (defaults to track)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {success: true, ingested: <count>}."
+        }
+    },
+    {
+        "tool_name": "list_events",
+        "description": "List ingested events, optionally filtered by event type and user id.",
+        "arguments": {
+            "event_type": {
+                "type": "string",
+                "description": "Optional event type to filter by (e.g. track, identify, page)."
+            },
+            "user_id": {
+                "type": "string",
+                "description": "Optional user id to filter events by."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {events: [...], count: <n>}."
+        }
+    },
+    {
+        "tool_name": "list_sources",
+        "description": "List all configured Segment sources.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {sources: [...], count: <n>}."
+        }
+    },
+    {
+        "tool_name": "list_destinations",
+        "description": "List all configured Segment destinations.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {destinations: [...], count: <n>}."
+        }
+    }
+]

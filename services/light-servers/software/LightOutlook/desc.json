@@ -1,0 +1,74 @@
+[
+    {
+        "tool_name": "list_messages",
+        "description": "List the signed-in user's mail messages, optionally filtered by read state, newest first.",
+        "arguments": {
+            "is_read": {
+                "type": "boolean",
+                "description": "Optional read-state filter; when set, only messages with this isRead value are returned."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has a Graph-style value list of message resources."
+        }
+    },
+    {
+        "tool_name": "get_message",
+        "description": "Get a single mail message by its id.",
+        "arguments": {
+            "message_id": {
+                "type": "string",
+                "description": "The unique id of the message."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the message resource; on failure (not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "send_mail",
+        "description": "Send a mail message on behalf of the signed-in user.",
+        "arguments": {
+            "to_recipients": {
+                "type": "array",
+                "description": "List of recipient email addresses (the first is used as the primary recipient)."
+            },
+            "subject": {
+                "type": "string",
+                "description": "Optional message subject; defaults to '(no subject)'."
+            },
+            "content": {
+                "type": "string",
+                "description": "Optional message body content."
+            },
+            "content_type": {
+                "type": "string",
+                "description": "Optional body content type ('HTML' or 'Text'); default HTML."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has status 'accepted' and the new message id; on failure (no recipients), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_events",
+        "description": "List the signed-in user's calendar events, ordered by start time.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has a Graph-style value list of event resources."
+        }
+    },
+    {
+        "tool_name": "list_contacts",
+        "description": "List the signed-in user's contacts, ordered by display name.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has a Graph-style value list of contact resources."
+        }
+    }
+]

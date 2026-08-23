@@ -1,0 +1,196 @@
+[
+    {
+        "tool_name": "list_games",
+        "description": "List games in the library, optionally filtered by platform, genre, and/or is_installed. Sorted by title (case-insensitive).",
+        "arguments": {
+            "platform": {"type": "string", "description": "Optional platform (pc|playstation|xbox|switch|mobile)."},
+            "genre": {"type": "string", "description": "Optional genre (rpg|fps|strategy|puzzle|sports|action|adventure|simulation)."},
+            "is_installed": {"type": "boolean", "description": "Optional filter: only installed (true) or only uninstalled (false)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of game summaries."
+        }
+    },
+    {
+        "tool_name": "get_game",
+        "description": "Retrieve the full game record by gid.",
+        "arguments": {
+            "gid": {"type": "string", "description": "Game identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full game record."
+        }
+    },
+    {
+        "tool_name": "add_game",
+        "description": "Add a new game to the library.",
+        "arguments": {
+            "title": {"type": "string", "description": "Game title."},
+            "platform": {"type": "string", "description": "Platform (pc|playstation|xbox|switch|mobile)."},
+            "genre": {"type": "string", "description": "Genre (rpg|fps|strategy|puzzle|sports|action|adventure|simulation)."},
+            "is_installed": {"type": "boolean", "description": "Whether the game is currently installed."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new game summary."
+        }
+    },
+    {
+        "tool_name": "delete_game",
+        "description": "Delete a game from the library. Also removes its achievements and play sessions.",
+        "arguments": {
+            "gid": {"type": "string", "description": "Game identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {gid, deleted: true, removed_achievements, removed_play_sessions}."
+        }
+    },
+    {
+        "tool_name": "install_game",
+        "description": "Mark a game as installed.",
+        "arguments": {
+            "gid": {"type": "string", "description": "Game identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated game summary."
+        }
+    },
+    {
+        "tool_name": "uninstall_game",
+        "description": "Mark a game as uninstalled.",
+        "arguments": {
+            "gid": {"type": "string", "description": "Game identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated game summary."
+        }
+    },
+    {
+        "tool_name": "list_achievements",
+        "description": "List achievements, optionally filtered by game_id and/or unlock state. Sorted by (game_id, name).",
+        "arguments": {
+            "game_id": {"type": "string", "description": "Optional game identifier filter."},
+            "is_unlocked": {"type": "boolean", "description": "Optional filter for unlocked (true) or locked (false) achievements."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of achievement records."
+        }
+    },
+    {
+        "tool_name": "unlock_achievement",
+        "description": "Unlock an achievement. Fails if the achievement is already unlocked.",
+        "arguments": {
+            "achid": {"type": "string", "description": "Achievement identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated achievement record."
+        }
+    },
+    {
+        "tool_name": "list_play_sessions",
+        "description": "List play sessions, optionally filtered by game_id and/or ISO date range on started_at. Sorted by started_at ascending.",
+        "arguments": {
+            "game_id": {"type": "string", "description": "Optional game identifier filter."},
+            "start_date": {"type": "string", "description": "Optional inclusive lower bound ISO datetime."},
+            "end_date": {"type": "string", "description": "Optional inclusive upper bound ISO datetime."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of play session records."
+        }
+    },
+    {
+        "tool_name": "start_play",
+        "description": "Start a new play session for a game. Sets started_at to now and updates the game's last_played_at.",
+        "arguments": {
+            "game_id": {"type": "string", "description": "Game identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new play session record."
+        }
+    },
+    {
+        "tool_name": "end_play",
+        "description": "End an existing play session by supplying its duration in minutes. Updates the game's total playtime and last_played_at.",
+        "arguments": {
+            "psid": {"type": "string", "description": "Play session identifier."},
+            "duration_minutes": {"type": "integer", "description": "Duration of the session in minutes."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated play session record."
+        }
+    },
+    {
+        "tool_name": "get_total_playtime",
+        "description": "Return total playtime metrics for a game: both the stored game.playtime_minutes counter and the sum of its individual play sessions.",
+        "arguments": {
+            "game_id": {"type": "string", "description": "Game identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {gid, title, playtime_minutes, session_total_minutes}."
+        }
+    },
+    {
+        "tool_name": "list_wishlist",
+        "description": "List all wishlist items, sorted by added_at descending (most recent first).",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of wishlist records."
+        }
+    },
+    {
+        "tool_name": "add_to_wishlist",
+        "description": "Add a game to the wishlist.",
+        "arguments": {
+            "title": {"type": "string", "description": "Game title."},
+            "platform": {"type": "string", "description": "Platform (pc|playstation|xbox|switch|mobile)."},
+            "price": {"type": "number", "description": "Current price."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new wishlist record."
+        }
+    },
+    {
+        "tool_name": "remove_from_wishlist",
+        "description": "Remove an item from the wishlist by wlid.",
+        "arguments": {
+            "wlid": {"type": "string", "description": "Wishlist item identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {wlid, removed: true}."
+        }
+    },
+    {
+        "tool_name": "search_games",
+        "description": "Search games in the library by keyword across title, platform, and genre.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search keyword or phrase."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of matching game summaries."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Return game library statistics: totals for games, achievements, play sessions, wishlist, total playtime, unlocked/available achievement points, plus counts by platform and by genre.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a stats dictionary."
+        }
+    }
+]

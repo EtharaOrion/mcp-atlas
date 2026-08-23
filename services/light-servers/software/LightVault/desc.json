@@ -1,0 +1,192 @@
+[
+    {
+        "tool_name": "list_entries",
+        "description": "List password entries, optionally filtered by folder_id and/or tag. Sorted by title (case-insensitive).",
+        "arguments": {
+            "folder_id": {"type": "string", "description": "Optional folder identifier to filter by."},
+            "tag": {"type": "string", "description": "Optional tag to filter by."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of entry summaries {entid, title, username, url, folder_id, tags, strength, last_used_at}."
+        }
+    },
+    {
+        "tool_name": "get_entry",
+        "description": "Retrieve a single vault entry by entid. Password field is always returned masked (first char + '*'*len + last char).",
+        "arguments": {
+            "entid": {"type": "string", "description": "Entry identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full entry record with password_masked (never plaintext)."
+        }
+    },
+    {
+        "tool_name": "create_entry",
+        "description": "Create a new password entry. Plaintext password is accepted but only stored as first_char + '*' * (len-2) + last_char; strength is auto-computed by length.",
+        "arguments": {
+            "title": {"type": "string", "description": "Entry title (e.g. 'Gmail')."},
+            "username": {"type": "string", "description": "Account username or email."},
+            "password": {"type": "string", "description": "Plaintext password; stored only in masked form."},
+            "url": {"type": "string", "description": "Optional login URL."},
+            "notes": {"type": "string", "description": "Optional freeform notes."},
+            "tags": {"type": "array", "items": {"type": "string"}, "description": "Optional list of tags."},
+            "folder_id": {"type": "string", "description": "Folder to add the entry to (default fd_personal)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new entry summary."
+        }
+    },
+    {
+        "tool_name": "update_entry",
+        "description": "Update one or more fields on an existing entry. If password is supplied, it is masked and strength is re-computed.",
+        "arguments": {
+            "entid": {"type": "string", "description": "Entry identifier."},
+            "title": {"type": "string", "description": "Optional new title."},
+            "username": {"type": "string", "description": "Optional new username."},
+            "password": {"type": "string", "description": "Optional new plaintext password (stored masked)."},
+            "url": {"type": "string", "description": "Optional new URL."},
+            "notes": {"type": "string", "description": "Optional new notes."},
+            "tags": {"type": "array", "items": {"type": "string"}, "description": "Optional replacement tags list."},
+            "folder_id": {"type": "string", "description": "Optional folder to move the entry into."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated entry summary."
+        }
+    },
+    {
+        "tool_name": "delete_entry",
+        "description": "Delete a vault entry permanently. Any shares of this entry are also revoked.",
+        "arguments": {
+            "entid": {"type": "string", "description": "Entry identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {entid, deleted: true, removed_shares}."
+        }
+    },
+    {
+        "tool_name": "copy_password",
+        "description": "Simulate copying the masked password to clipboard. Updates last_used_at and appends an audit log.",
+        "arguments": {
+            "entid": {"type": "string", "description": "Entry identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {entid, password_masked, copied_at}."
+        }
+    },
+    {
+        "tool_name": "mark_used",
+        "description": "Mark an entry as used right now (updates last_used_at) without copying the password.",
+        "arguments": {
+            "entid": {"type": "string", "description": "Entry identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {entid, last_used_at}."
+        }
+    },
+    {
+        "tool_name": "list_folders",
+        "description": "List all folders in the vault.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of {fdid, name, color}."
+        }
+    },
+    {
+        "tool_name": "create_folder",
+        "description": "Create a new folder for organizing entries.",
+        "arguments": {
+            "name": {"type": "string", "description": "Folder display name."},
+            "color": {"type": "string", "description": "Optional hex color like #4285F4."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new {fdid, name, color}."
+        }
+    },
+    {
+        "tool_name": "delete_folder",
+        "description": "Delete a folder. Entries in the folder are reassigned (to fd_personal if it exists, otherwise the first remaining folder). At least one folder must remain.",
+        "arguments": {
+            "fdid": {"type": "string", "description": "Folder identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {fdid, moved, reassigned_to}."
+        }
+    },
+    {
+        "tool_name": "list_shares",
+        "description": "List shares, optionally filtered by entry_id. Sorted by shared_at ascending.",
+        "arguments": {
+            "entry_id": {"type": "string", "description": "Optional entry identifier to filter shares by."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of share records {shid, entry_id, shared_with, shared_at, expires_at, can_edit}."
+        }
+    },
+    {
+        "tool_name": "share_entry",
+        "description": "Share an entry with another user identifier (email or user id) with optional expiry and edit permission.",
+        "arguments": {
+            "entry_id": {"type": "string", "description": "Entry identifier to share."},
+            "shared_with": {"type": "string", "description": "Recipient identifier (email or user id)."},
+            "expires_at": {"type": "string", "description": "Optional ISO datetime after which the share expires."},
+            "can_edit": {"type": "boolean", "description": "Whether the recipient can edit the entry."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new share record."
+        }
+    },
+    {
+        "tool_name": "revoke_share",
+        "description": "Revoke an existing share by shid.",
+        "arguments": {
+            "shid": {"type": "string", "description": "Share identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {shid, revoked: true}."
+        }
+    },
+    {
+        "tool_name": "list_audit_logs",
+        "description": "List audit log events, optionally filtered by entry_id. Sorted by timestamp descending (most recent first).",
+        "arguments": {
+            "entry_id": {"type": "string", "description": "Optional entry identifier to filter by."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of audit records {audit_id, action, entry_id, actor, timestamp}."
+        }
+    },
+    {
+        "tool_name": "search_entries",
+        "description": "Search entries by keyword across title, username, url, notes, and tags.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search keyword or phrase."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of matching entry summaries sorted by title."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Return vault-wide statistics: totals for entries, folders, shares, audit logs, plus counts by folder and by password strength.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {total_entries, total_folders, total_shares, total_audit_logs, by_folder, by_strength}."
+        }
+    }
+]

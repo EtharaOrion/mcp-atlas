@@ -1,0 +1,634 @@
+# Source: world_data 2/LightQuickBooks.json (verbatim). Corpus-only authored world.
+customers:
+- Id: '0'
+  DisplayName: Multiple - See Batch Detail
+  PrimaryEmailAddr: null
+  Balance: 0
+  Active: true
+  Notes: 'Aggregate: Batch billing placeholder for multi-member invoices'
+- Id: '1'
+  DisplayName: Greer, Ruth Ann
+  PrimaryEmailAddr:
+    Address: ruthann.greer@Finthesiss.ai
+  Balance: 0
+  Active: true
+  Notes: Annual member since 2018. Neighbor on East Charlton.
+- Id: '2'
+  DisplayName: Burke, Calvin
+  PrimaryEmailAddr:
+    Address: calvin.burke@Finthesiss.ai
+  Balance: 95.0
+  Active: true
+  Notes: Annual member. Renewal invoice open.
+- Id: '3'
+  DisplayName: Odom, Patricia
+  PrimaryEmailAddr:
+    Address: patricia.odom@Finthesiss.ai
+  Balance: 0
+  Active: true
+  Notes: Patron member. Attorney - pro bono counsel on easements.
+- Id: '4'
+  DisplayName: Beaumont, Henry
+  PrimaryEmailAddr:
+    Address: henry.beaumont@Finthesiss.ai
+  Balance: 0
+  Active: true
+  Notes: Annual member since 2021.
+- Id: '5'
+  DisplayName: Simms, Loretta
+  PrimaryEmailAddr:
+    Address: loretta.simms@Finthesiss.ai
+  Balance: 25.0
+  Active: true
+  Notes: Member. Lecture ticket open.
+- Id: '6'
+  DisplayName: Barrington Family Fund
+  PrimaryEmailAddr:
+    Address: barrington.family@Finthesiss.ai
+  Balance: 0
+  Active: true
+  Notes: Legacy donor family. Facility rental for reunion.
+- Id: '7'
+  DisplayName: Trumbull, Anselm
+  PrimaryEmailAddr: null
+  Balance: 0
+  Active: true
+  Notes: Trustee. Annual patron membership.
+- Id: '8'
+  DisplayName: Cabrera, Yvonne
+  PrimaryEmailAddr: null
+  Balance: 0
+  Active: true
+  Notes: Trustee. Annual membership.
+- Id: '9'
+  DisplayName: Whitehall, Barrett
+  PrimaryEmailAddr: null
+  Balance: 0
+  Active: true
+  Notes: Trustee. Patron membership.
+- Id: '10'
+  DisplayName: Coastal Georgia Community Foundation
+  PrimaryEmailAddr: null
+  Balance: 0
+  Active: true
+  Notes: Grantor - docent program mini-grant.
+- Id: '11'
+  DisplayName: Renard-Whitcomb Residence
+  PrimaryEmailAddr: null
+  Balance: 0
+  Active: true
+  Notes: Preservation workshop attendees, Jones Street.
+vendors:
+- Id: '1'
+  DisplayName: Savannah Building Supply
+  PrimaryEmailAddr:
+    Address: wesley.farraday@Finthesiss.ai
+  PrimaryPhone:
+    FreeFormNumber: (912) 555-3320
+  Balance: 640.0
+  Active: true
+  Notes: Lumber and hardware for the Bull Street repairs. Account rep Wesley Farraday.
+- Id: '2'
+  DisplayName: Ashcroft Fine Hardwoods
+  PrimaryEmailAddr:
+    Address: ellis.marchand@ashcrofthardwoods.com
+  PrimaryPhone:
+    FreeFormNumber: (843) 555-0177
+  Balance: 0
+  Active: true
+  Notes: Specialty hardwood, Charleston SC. Contact Ellis Marchand.
+- Id: '3'
+  DisplayName: Halliwell CPA
+  PrimaryEmailAddr:
+    Address: corinne.lattimer@halliwell-cpa.com
+  PrimaryPhone:
+    FreeFormNumber: (912) 555-8800
+  Balance: 0
+  Active: true
+  Notes: Alliance audit and 990 preparation. Contact Corinne Lattimer.
+- Id: '4'
+  DisplayName: Southeastern Nonprofit Insurance
+  PrimaryEmailAddr:
+    Address: everett.petain@senonprofit.com
+  PrimaryPhone:
+    FreeFormNumber: (912) 555-6634
+  Balance: 0
+  Active: true
+  Notes: D&O and general liability. Contact Everett Petain.
+- Id: '5'
+  DisplayName: Bull Street Utilities
+  PrimaryEmailAddr: null
+  PrimaryPhone:
+    FreeFormNumber: (912) 555-2101
+  Balance: 320.0
+  Active: true
+  Notes: Electric and water for 45 Bull Street.
+- Id: '6'
+  DisplayName: Savannah Print & Sign
+  PrimaryEmailAddr: null
+  PrimaryPhone:
+    FreeFormNumber: (912) 555-4412
+  Balance: 0
+  Active: true
+  Notes: Member newsletter and event signage.
+- Id: '7'
+  DisplayName: Lowcountry Event Rentals
+  PrimaryEmailAddr: null
+  PrimaryPhone:
+    FreeFormNumber: (912) 555-5581
+  Balance: 0
+  Active: true
+  Notes: Chairs and staging for the lecture series.
+- Id: '8'
+  DisplayName: Yancey & Ballard CPA
+  PrimaryEmailAddr:
+    Address: delbert.yancey@yanceyballard-cpa.com
+  PrimaryPhone:
+    FreeFormNumber: (912) 555-1150
+  Balance: 0
+  Active: true
+  Notes: Woodworks LLC entity taxes - kept separate from Alliance books. Contact Delbert Yancey.
+items:
+- Id: '1'
+  Name: Annual Membership Dues
+  Description: Standard annual membership
+  Type: Service
+  UnitPrice: 95.0
+  IncomeAccountRef:
+    value: '1'
+    name: Membership Income
+  Active: true
+  Taxable: false
+  MetaData:
+    CreateTime: '2026-01-01 08:00:00'
+    LastUpdatedTime: '2026-01-01 08:00:00'
+  SyncToken: '0'
+- Id: '2'
+  Name: Patron Membership
+  Description: Patron-level annual membership
+  Type: Service
+  UnitPrice: 250.0
+  IncomeAccountRef:
+    value: '2'
+    name: Membership Income
+  Active: true
+  Taxable: false
+  MetaData:
+    CreateTime: '2026-01-01 08:00:00'
+    LastUpdatedTime: '2026-01-01 08:00:00'
+  SyncToken: '0'
+- Id: '3'
+  Name: Donation
+  Description: Unrestricted contribution
+  Type: Service
+  UnitPrice: 0.0
+  IncomeAccountRef:
+    value: '3'
+    name: Contribution Revenue
+  Active: true
+  Taxable: false
+  MetaData:
+    CreateTime: '2026-01-01 08:00:00'
+    LastUpdatedTime: '2026-01-01 08:00:00'
+  SyncToken: '0'
+- Id: '4'
+  Name: Anniversary Lecture Ticket
+  Description: Lecture series admission
+  Type: Service
+  UnitPrice: 25.0
+  IncomeAccountRef:
+    value: '4'
+    name: Program Revenue
+  Active: true
+  Taxable: false
+  MetaData:
+    CreateTime: '2026-01-01 08:00:00'
+    LastUpdatedTime: '2026-01-01 08:00:00'
+  SyncToken: '0'
+- Id: '5'
+  Name: Docent-Led Tour
+  Description: Historic district walking tour
+  Type: Service
+  UnitPrice: 15.0
+  IncomeAccountRef:
+    value: '5'
+    name: Program Revenue
+  Active: true
+  Taxable: false
+  MetaData:
+    CreateTime: '2026-01-01 08:00:00'
+    LastUpdatedTime: '2026-01-01 08:00:00'
+  SyncToken: '0'
+- Id: '6'
+  Name: Facility Rental - Meeting Hall
+  Description: Bull Street meeting hall, half day
+  Type: Service
+  UnitPrice: 400.0
+  IncomeAccountRef:
+    value: '6'
+    name: Facility Revenue
+  Active: true
+  Taxable: false
+  MetaData:
+    CreateTime: '2026-01-01 08:00:00'
+    LastUpdatedTime: '2026-01-01 08:00:00'
+  SyncToken: '0'
+- Id: '7'
+  Name: Preservation Workshop Fee
+  Description: Hands-on preservation workshop
+  Type: Service
+  UnitPrice: 45.0
+  IncomeAccountRef:
+    value: '7'
+    name: Program Revenue
+  Active: true
+  Taxable: false
+  MetaData:
+    CreateTime: '2026-01-01 08:00:00'
+    LastUpdatedTime: '2026-01-01 08:00:00'
+  SyncToken: '0'
+invoices:
+- Id: '5001'
+  DocNumber: INV-2026-0001
+  TxnDate: '2026-01-02'
+  DueDate: '2026-01-16'
+  CustomerRef:
+    value: '1'
+    name: Greer, Ruth Ann
+  Line:
+  - Amount: 95.0
+    Description: Annual membership renewal - 2026
+    SalesItemLineDetail:
+      ItemRef:
+        name: Annual Membership Dues
+  TotalAmt: 95.0
+  Balance: 0
+  Status: Paid
+- Id: '5002'
+  DocNumber: INV-2026-0002
+  TxnDate: '2026-01-02'
+  DueDate: '2026-01-16'
+  CustomerRef:
+    value: '2'
+    name: Burke, Calvin
+  Line:
+  - Amount: 95.0
+    Description: Annual membership renewal - 2026
+    SalesItemLineDetail:
+      ItemRef:
+        name: Annual Membership Dues
+  TotalAmt: 95.0
+  Balance: 95.0
+  Status: Open
+- Id: '5003'
+  DocNumber: INV-2026-0003
+  TxnDate: '2026-01-03'
+  DueDate: '2026-01-17'
+  CustomerRef:
+    value: '3'
+    name: Odom, Patricia
+  Line:
+  - Amount: 250.0
+    Description: Patron membership renewal - 2026
+    SalesItemLineDetail:
+      ItemRef:
+        name: Patron Membership
+  TotalAmt: 250.0
+  Balance: 0
+  Status: Paid
+- Id: '5004'
+  DocNumber: INV-2026-0004
+  TxnDate: '2026-01-03'
+  DueDate: '2026-01-17'
+  CustomerRef:
+    value: '7'
+    name: Trumbull, Anselm
+  Line:
+  - Amount: 250.0
+    Description: Patron membership renewal - 2026
+    SalesItemLineDetail:
+      ItemRef:
+        name: Patron Membership
+  TotalAmt: 250.0
+  Balance: 0
+  Status: Paid
+- Id: '5005'
+  DocNumber: INV-2026-0005
+  TxnDate: '2026-01-04'
+  DueDate: '2026-01-18'
+  CustomerRef:
+    value: '5'
+    name: Simms, Loretta
+  Line:
+  - Amount: 25.0
+    Description: Anniversary lecture ticket - spring series
+    SalesItemLineDetail:
+      ItemRef:
+        name: Anniversary Lecture Ticket
+  TotalAmt: 25.0
+  Balance: 25.0
+  Status: Open
+- Id: '5006'
+  DocNumber: INV-2026-0006
+  TxnDate: '2026-01-04'
+  DueDate: '2026-01-25'
+  CustomerRef:
+    value: '6'
+    name: Barrington Family Fund
+  Line:
+  - Amount: 400.0
+    Description: Meeting hall rental - family reunion, half day
+    SalesItemLineDetail:
+      ItemRef:
+        name: Facility Rental - Meeting Hall
+  TotalAmt: 400.0
+  Balance: 0
+  Status: Paid
+- Id: '5007'
+  DocNumber: INV-2026-0007
+  TxnDate: '2026-01-05'
+  DueDate: '2026-01-19'
+  CustomerRef:
+    value: '9'
+    name: Whitehall, Barrett
+  Line:
+  - Amount: 250.0
+    Description: Patron membership renewal - 2026
+    SalesItemLineDetail:
+      ItemRef:
+        name: Patron Membership
+  TotalAmt: 250.0
+  Balance: 0
+  Status: Paid
+- Id: '5008'
+  DocNumber: INV-2026-0008
+  TxnDate: '2026-01-05'
+  DueDate: '2026-01-19'
+  CustomerRef:
+    value: '8'
+    name: Cabrera, Yvonne
+  Line:
+  - Amount: 95.0
+    Description: Annual membership renewal - 2026
+    SalesItemLineDetail:
+      ItemRef:
+        name: Annual Membership Dues
+  TotalAmt: 95.0
+  Balance: 0
+  Status: Paid
+bills:
+- Id: '3001'
+  DocNumber: INS-2026-01
+  VendorRef:
+    value: '4'
+    name: Southeastern Nonprofit Insurance
+  TxnDate: '2026-01-02'
+  DueDate: '2026-01-15'
+  Line:
+  - Amount: 410.0
+    Description: D&O and general liability premium - January 2026
+    AccountBasedExpenseLineDetail:
+      AccountRef:
+        name: Insurance Expense
+        value: '7'
+  TotalAmt: 410.0
+  Balance: 0
+  PrivateNote: Paid by check.
+- Id: '3002'
+  DocNumber: SBS-8841
+  VendorRef:
+    value: '1'
+    name: Savannah Building Supply
+  TxnDate: '2026-01-03'
+  DueDate: '2026-01-20'
+  Line:
+  - Amount: 640.0
+    Description: Lumber and flashing - Bull Street roof repair (grant line)
+    AccountBasedExpenseLineDetail:
+      AccountRef:
+        name: Preservation Projects
+        value: '8'
+  TotalAmt: 640.0
+  Balance: 640.0
+  PrivateNote: Charge to restoration grant.
+- Id: '3003'
+  DocNumber: UTIL-2026-01
+  VendorRef:
+    value: '5'
+    name: Bull Street Utilities
+  TxnDate: '2026-01-03'
+  DueDate: '2026-01-18'
+  Line:
+  - Amount: 320.0
+    Description: Electric and water - 45 Bull Street, January
+    AccountBasedExpenseLineDetail:
+      AccountRef:
+        name: Utilities Expense
+        value: '9'
+  TotalAmt: 320.0
+  Balance: 320.0
+  PrivateNote: ''
+- Id: '3004'
+  DocNumber: HCPA-2026-Q1
+  VendorRef:
+    value: '3'
+    name: Halliwell CPA
+  TxnDate: '2026-01-04'
+  DueDate: '2026-02-03'
+  Line:
+  - Amount: 750.0
+    Description: Audit engagement retainer - Q1 2026
+    AccountBasedExpenseLineDetail:
+      AccountRef:
+        name: Professional Fees
+        value: '10'
+  TotalAmt: 750.0
+  Balance: 0
+  PrivateNote: Approved by finance committee.
+- Id: '3005'
+  DocNumber: SPS-2213
+  VendorRef:
+    value: '6'
+    name: Savannah Print & Sign
+  TxnDate: '2026-01-04'
+  DueDate: '2026-01-19'
+  Line:
+  - Amount: 185.0
+    Description: Member newsletter print run - January
+    AccountBasedExpenseLineDetail:
+      AccountRef:
+        name: Printing Expense
+        value: '11'
+  TotalAmt: 185.0
+  Balance: 0
+  PrivateNote: ''
+- Id: '3006'
+  DocNumber: LER-0450
+  VendorRef:
+    value: '7'
+    name: Lowcountry Event Rentals
+  TxnDate: '2026-01-05'
+  DueDate: '2026-01-26'
+  Line:
+  - Amount: 260.0
+    Description: Chairs and staging - spring lecture series deposit
+    AccountBasedExpenseLineDetail:
+      AccountRef:
+        name: Program Expense
+        value: '12'
+  TotalAmt: 260.0
+  Balance: 260.0
+  PrivateNote: Deposit for the second-Thursday dates.
+payments:
+- Id: '4001'
+  TxnDate: '2026-01-03'
+  CustomerRef:
+    value: '1'
+    name: Greer, Ruth Ann
+  TotalAmt: 95.0
+  Line:
+  - LinkedTxn:
+    - TxnId: '5001'
+      TxnType: Invoice
+    Amount: 95.0
+  PrivateNote: 'Check #2211'
+- Id: '4002'
+  TxnDate: '2026-01-04'
+  CustomerRef:
+    value: '3'
+    name: Odom, Patricia
+  TotalAmt: 250.0
+  Line:
+  - LinkedTxn:
+    - TxnId: '5003'
+      TxnType: Invoice
+    Amount: 250.0
+  PrivateNote: Card on file
+- Id: '4003'
+  TxnDate: '2026-01-04'
+  CustomerRef:
+    value: '7'
+    name: Trumbull, Anselm
+  TotalAmt: 250.0
+  Line:
+  - LinkedTxn:
+    - TxnId: '5004'
+      TxnType: Invoice
+    Amount: 250.0
+  PrivateNote: 'Check #0179'
+- Id: '4004'
+  TxnDate: '2026-01-05'
+  CustomerRef:
+    value: '6'
+    name: Barrington Family Fund
+  TotalAmt: 400.0
+  Line:
+  - LinkedTxn:
+    - TxnId: '5006'
+      TxnType: Invoice
+    Amount: 400.0
+  PrivateNote: ACH
+- Id: '4005'
+  TxnDate: '2026-01-05'
+  CustomerRef:
+    value: '9'
+    name: Whitehall, Barrett
+  TotalAmt: 250.0
+  Line:
+  - LinkedTxn:
+    - TxnId: '5007'
+      TxnType: Invoice
+    Amount: 250.0
+  PrivateNote: 'Check #4410'
+- Id: '4006'
+  TxnDate: '2026-01-05'
+  CustomerRef:
+    value: '8'
+    name: Cabrera, Yvonne
+  TotalAmt: 95.0
+  Line:
+  - LinkedTxn:
+    - TxnId: '5008'
+      TxnType: Invoice
+    Amount: 95.0
+  PrivateNote: Card on file
+estimates:
+- Id: '4001'
+  DocNumber: E-2026-001
+  TxnDate: '2026-01-03'
+  ExpirationDate: '2026-02-02'
+  CustomerRef:
+    value: '10'
+    name: Coastal Georgia Community Foundation
+  Line:
+  - Id: '1'
+    LineNum: 1
+    Amount: 360.0
+    DetailType: SalesItemLineDetail
+    Description: Docent workshop series - eight sessions
+    SalesItemLineDetail:
+      ItemRef:
+        value: '6'
+        name: Preservation Workshop Fee
+      UnitPrice: 45.0
+      Qty: 8
+  TotalAmt: 360.0
+  TxnStatus: Accepted
+  AcceptedDate: '2026-01-05'
+  MetaData:
+    CreateTime: '2026-01-01 08:00:00'
+    LastUpdatedTime: '2026-01-01 08:00:00'
+  SyncToken: '0'
+  LinkedTxn: []
+- Id: '4002'
+  DocNumber: E-2026-002
+  TxnDate: '2026-01-05'
+  ExpirationDate: '2026-02-04'
+  CustomerRef:
+    value: '11'
+    name: Renard-Whitcomb Residence
+  Line:
+  - Id: '1'
+    LineNum: 1
+    Amount: 800.0
+    DetailType: SalesItemLineDetail
+    Description: Meeting hall rental - two half days for neighborhood association
+    SalesItemLineDetail:
+      ItemRef:
+        value: '6'
+        name: Facility Rental - Meeting Hall
+      UnitPrice: 400.0
+      Qty: 2
+  TotalAmt: 800.0
+  TxnStatus: Pending
+  AcceptedDate: ''
+  MetaData:
+    CreateTime: '2026-01-01 08:00:00'
+    LastUpdatedTime: '2026-01-01 08:00:00'
+  SyncToken: '0'
+  LinkedTxn: []
+expenses:
+- Id: '5201'
+  TxnDate: '2026-01-02'
+  TotalAmt: 84.5
+  Line:
+  - Description: Docent program supplies - maps and lanyards
+    Amount: 84.5
+  MetaData:
+    CreateTime: '2026-01-02T09:00:00'
+- Id: '5202'
+  TxnDate: '2026-01-03'
+  TotalAmt: 132.0
+  Line:
+  - Description: Archive boxes and acid-free folders for the records room
+    Amount: 132.0
+  MetaData:
+    CreateTime: '2026-01-03T09:00:00'
+- Id: '5203'
+  TxnDate: '2026-01-05'
+  TotalAmt: 41.75
+  Line:
+  - Description: Mileage reimbursement - site visit to the Bull Street property
+    Amount: 41.75
+  MetaData:
+    CreateTime: '2026-01-05T09:00:00'

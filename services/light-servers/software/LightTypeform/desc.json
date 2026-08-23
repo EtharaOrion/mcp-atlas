@@ -1,0 +1,127 @@
+[
+    {
+        "tool_name": "list_forms",
+        "description": "List all forms with pagination metadata.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with total_items, page_count, and an items list of form summaries; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "get_form",
+        "description": "Get a single form (including its fields) by its id.",
+        "arguments": {
+            "form_id": {
+                "type": "string",
+                "description": "The unique id of the form."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the full form object; on failure (form not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "create_form",
+        "description": "Create a new form, optionally with an initial list of fields.",
+        "arguments": {
+            "title": {
+                "type": "string",
+                "description": "The title of the new form."
+            },
+            "workspace": {
+                "type": "string",
+                "description": "Optional workspace identifier (default 'ws-orbit-labs')."
+            },
+            "language": {
+                "type": "string",
+                "description": "Optional language code for the form (default 'en')."
+            },
+            "is_public": {
+                "type": "boolean",
+                "description": "Whether the form is public (default false)."
+            },
+            "fields": {
+                "type": "array",
+                "description": "Optional list of field definitions (each with title, type, ref, required, and properties.choices)."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the created form object; on failure, output contains an error message."
+        }
+    },
+    {
+        "tool_name": "update_form",
+        "description": "Update mutable fields (title, language, is_public) of an existing form.",
+        "arguments": {
+            "form_id": {
+                "type": "string",
+                "description": "The unique id of the form to update."
+            },
+            "title": {
+                "type": "string",
+                "description": "Optional new title."
+            },
+            "language": {
+                "type": "string",
+                "description": "Optional new language code."
+            },
+            "is_public": {
+                "type": "boolean",
+                "description": "Optional new public flag."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the updated form object; on failure (form not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "delete_form",
+        "description": "Delete a form and its associated fields, responses, and answers.",
+        "arguments": {
+            "form_id": {
+                "type": "string",
+                "description": "The unique id of the form to delete."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is {deleted: true, id: form_id}; on failure (form not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "list_responses",
+        "description": "List the responses submitted to a form, optionally filtered by completion state.",
+        "arguments": {
+            "form_id": {
+                "type": "string",
+                "description": "The unique id of the form."
+            },
+            "completed": {
+                "type": "boolean",
+                "description": "Optional completion filter; when set, only responses with this completed state are returned."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an object with total_items, page_count, and an items list of response objects; on failure (form not found), output contains an error message."
+        }
+    },
+    {
+        "tool_name": "insights_summary",
+        "description": "Get an insights summary for a form, including completion rate and per-field aggregates.",
+        "arguments": {
+            "form_id": {
+                "type": "string",
+                "description": "The unique id of the form."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is an insights object (total_responses, completed_responses, completion_rate, per-field summaries); on failure (form not found), output contains an error message."
+        }
+    }
+]

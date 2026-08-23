@@ -1,0 +1,397 @@
+# Source: world_data 2/LightMail.json (verbatim). Corpus-only authored world.
+user_email: amos.whitfield@Finthesiss.ai
+messages:
+  7g3sGUuA5Hsy4PGA5bmVoE:
+    mid: 7g3sGUuA5Hsy4PGA5bmVoE
+    sender_name: Denise Whitfield-Carter
+    sender_email: denise.carter@Finthesiss.ai
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Agenda for the next board meeting
+    body: Sharing the draft agenda ahead of our next board meeting. Please review the finance section
+      and send any additions by Friday.
+    timestamp: '2026-01-02T12:20:00'
+    read: false
+    starred: false
+    folder: inbox
+  oFj6fRwc3m66dM5MPiuwpE:
+    mid: oFj6fRwc3m66dM5MPiuwpE
+    sender_name: Terrence Carter
+    sender_email: terrence.carter@Finthesiss.ai
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Invoice attached for recent services
+    body: Please find the invoice for last month's services. Let me know if anything looks off before
+      I submit it for payment.
+    timestamp: '2026-01-02T14:36:00'
+    read: true
+    starred: false
+    folder: inbox
+  YztNkNgMFWKVkfkPmj7tnb:
+    mid: YztNkNgMFWKVkfkPmj7tnb
+    sender_name: Terrence Carter
+    sender_email: terrence.carter@Finthesiss.ai
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Confirming our appointment
+    body: Just confirming our appointment later this week. Reply if the time no longer works and we will
+      find another slot.
+    timestamp: '2026-01-02T15:51:00'
+    read: true
+    starred: false
+    folder: inbox
+  Ffith5MjNi2Xpp3g2JXwVD:
+    mid: Ffith5MjNi2Xpp3g2JXwVD
+    sender_name: Pastor James Holloway
+    sender_email: james.holloway@Finthesiss.ai
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Quick family check-in
+    body: Wanted to check in and see how the week is going. Give me a call when you have a free evening.
+    timestamp: '2026-01-02T22:18:00'
+    read: true
+    starred: false
+    folder: inbox
+  WN29Bp4qMmd7wRm225hUin:
+    mid: WN29Bp4qMmd7wRm225hUin
+    sender_name: Ruth Ann Greer
+    sender_email: ruthann.greer@Finthesiss.ai
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Schedule for the upcoming event
+    body: The schedule for the upcoming event is settled. Doors open at six and the program starts half
+      past.
+    timestamp: '2026-01-03T00:07:00'
+    read: false
+    starred: false
+    folder: inbox
+  hKYsFrdvaJvKxX2ZXF4KiV:
+    mid: hKYsFrdvaJvKxX2ZXF4KiV
+    sender_name: Calvin Burke
+    sender_email: calvin.burke@Finthesiss.ai
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Receipt for your recent order
+    body: Thanks for your order. Your receipt is below. Delivery is expected within five business days.
+    timestamp: '2026-01-03T06:45:00'
+    read: false
+    starred: false
+    folder: inbox
+  xgx4AbHLXpCrmFbhuaYS6V:
+    mid: xgx4AbHLXpCrmFbhuaYS6V
+    sender_name: Patricia Odom
+    sender_email: patricia.odom@Finthesiss.ai
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Notes from yesterday's committee call
+    body: Attaching my notes from yesterday's committee call. The action items are listed at the bottom.
+    timestamp: '2026-01-03T11:41:00'
+    read: false
+    starred: false
+    folder: inbox
+  3rMU5iZtrUH293y2WhroUe:
+    mid: 3rMU5iZtrUH293y2WhroUe
+    sender_name: Henry Beaumont
+    sender_email: henry.beaumont@Finthesiss.ai
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: 'Reminder: annual filing deadline'
+    body: A reminder that the annual filing deadline is coming up. Please gather the supporting documents
+      this month.
+    timestamp: '2026-01-03T13:00:00'
+    read: false
+    starred: false
+    folder: inbox
+  BfpSH8cexQuzaLQUq86YZm:
+    mid: BfpSH8cexQuzaLQUq86YZm
+    sender_name: Loretta Simms
+    sender_email: loretta.simms@Finthesiss.ai
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Volunteer sign-ups are open
+    body: Volunteer sign-ups for next month are open. Shifts fill quickly, so pick your slot early.
+    timestamp: '2026-01-03T15:07:00'
+    read: false
+    starred: false
+    folder: inbox
+  WEThdLfgQhthpS4qrhbTQn:
+    mid: WEThdLfgQhthpS4qrhbTQn
+    sender_name: Dr. Reginald Fox
+    sender_email: reginald.fox@Finthesiss.ai
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Follow-up on our conversation
+    body: Following up on our conversation from earlier. I checked the numbers and they support what we
+      discussed.
+    timestamp: '2026-01-03T18:00:00'
+    read: false
+    starred: false
+    folder: inbox
+  GKvxmCMcubErvh846y5WtD:
+    mid: GKvxmCMcubErvh846y5WtD
+    sender_name: Dr. Sarah Langston
+    sender_email: dr.langston@Finthesiss.ai
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Newsletter draft for review
+    body: The newsletter draft is ready for review. Send edits by end of week so we can go to print on
+      time.
+    timestamp: '2026-01-03T19:17:00'
+    read: false
+    starred: false
+    folder: inbox
+  Jy8xj5pUopNPLjnnXLjxAP:
+    mid: Jy8xj5pUopNPLjnnXLjxAP
+    sender_name: Cordelia Ashmore-Vance
+    sender_email: cordelia.ashmore.vance@shpa-savannah.org
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Thank you for your support
+    body: Thank you again for your support this season. It made a real difference and we are grateful.
+    timestamp: '2026-01-03T22:11:00'
+    read: false
+    starred: false
+    folder: inbox
+  7x6tfQvZhgnfKBZvsdC9td:
+    mid: 7x6tfQvZhgnfKBZvsdC9td
+    sender_name: Reginald Thackery
+    sender_email: reginald.thackery@shpa-savannah.org
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Agenda for the next board meeting
+    body: Sharing the draft agenda ahead of our next board meeting. Please review the finance section
+      and send any additions by Friday.
+    timestamp: '2026-01-03T22:51:00'
+    read: true
+    starred: false
+    folder: inbox
+  aCeJWTbyQuPh2y9VRhCe3L:
+    mid: aCeJWTbyQuPh2y9VRhCe3L
+    sender_name: Dr. Vivienne Boudreaux
+    sender_email: vivienne.boudreaux@shpa-savannah.org
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Invoice attached for recent services
+    body: Please find the invoice for last month's services. Let me know if anything looks off before
+      I submit it for payment.
+    timestamp: '2026-01-04T01:39:00'
+    read: false
+    starred: false
+    folder: inbox
+  evgBJ8n6QN5FRYFCT3Vtc9:
+    mid: evgBJ8n6QN5FRYFCT3Vtc9
+    sender_name: Odetta Sinclair
+    sender_email: odetta.sinclair@shpa-savannah.org
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Confirming our appointment
+    body: Just confirming our appointment later this week. Reply if the time no longer works and we will
+      find another slot.
+    timestamp: '2026-01-04T04:56:00'
+    read: false
+    starred: true
+    folder: inbox
+  aczZcBeycaCAbDSq36V5bg:
+    mid: aczZcBeycaCAbDSq36V5bg
+    sender_name: Barrett Whitehall
+    sender_email: barrett.whitehall@shpa-savannah.org
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Quick family check-in
+    body: Wanted to check in and see how the week is going. Give me a call when you have a free evening.
+    timestamp: '2026-01-04T10:03:00'
+    read: false
+    starred: false
+    folder: inbox
+  qhAdQhmQtMCHfwuVEjkVd6:
+    mid: qhAdQhmQtMCHfwuVEjkVd6
+    sender_name: Malcolm Kingsley
+    sender_email: malcolm.kingsley@shpa-savannah.org
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Schedule for the upcoming event
+    body: The schedule for the upcoming event is settled. Doors open at six and the program starts half
+      past.
+    timestamp: '2026-01-04T12:33:00'
+    read: true
+    starred: false
+    folder: inbox
+  G7G3rFasVuYoVjd2qqr3kz:
+    mid: G7G3rFasVuYoVjd2qqr3kz
+    sender_name: Rev. Delilah Hargrove
+    sender_email: delilah.hargrove@shpa-savannah.org
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Receipt for your recent order
+    body: Thanks for your order. Your receipt is below. Delivery is expected within five business days.
+    timestamp: '2026-01-04T15:19:00'
+    read: false
+    starred: false
+    folder: inbox
+  pZSQ6aFfTiX2bnRqhdTiL3:
+    mid: pZSQ6aFfTiX2bnRqhdTiL3
+    sender_name: Anselm Trumbull
+    sender_email: anselm.trumbull@shpa-savannah.org
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Notes from yesterday's committee call
+    body: Attaching my notes from yesterday's committee call. The action items are listed at the bottom.
+    timestamp: '2026-01-04T18:32:00'
+    read: true
+    starred: false
+    folder: inbox
+  eqKB4AgmymbhTzCty8mkRa:
+    mid: eqKB4AgmymbhTzCty8mkRa
+    sender_name: Yvonne Cabrera
+    sender_email: yvonne.cabrera@shpa-savannah.org
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: 'Reminder: annual filing deadline'
+    body: A reminder that the annual filing deadline is coming up. Please gather the supporting documents
+      this month.
+    timestamp: '2026-01-05T00:58:00'
+    read: false
+    starred: true
+    folder: inbox
+  Cjf5n8bJQcRTQ3tMDZBkQw:
+    mid: Cjf5n8bJQcRTQ3tMDZBkQw
+    sender_name: Lorraine Deveraux
+    sender_email: lorraine.deveraux@shpa-savannah.org
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Volunteer sign-ups are open
+    body: Volunteer sign-ups for next month are open. Shifts fill quickly, so pick your slot early.
+    timestamp: '2026-01-05T02:36:00'
+    read: false
+    starred: false
+    folder: inbox
+  qzgyMJux2Pr6RTzbckX6KT:
+    mid: qzgyMJux2Pr6RTzbckX6KT
+    sender_name: Marcus Whitby
+    sender_email: marcus.whitby@shpa-savannah.org
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Follow-up on our conversation
+    body: Following up on our conversation from earlier. I checked the numbers and they support what we
+      discussed.
+    timestamp: '2026-01-05T05:39:00'
+    read: false
+    starred: false
+    folder: inbox
+  HyZ5Hot5GpFhkraosxFqLH:
+    mid: HyZ5Hot5GpFhkraosxFqLH
+    sender_name: Josephine Halloway
+    sender_email: josephine.halloway@shpa-savannah.org
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Newsletter draft for review
+    body: The newsletter draft is ready for review. Send edits by end of week so we can go to print on
+      time.
+    timestamp: '2026-01-05T11:47:00'
+    read: false
+    starred: true
+    folder: inbox
+  B7y6AhtZ9peCLgttM5v4FV:
+    mid: B7y6AhtZ9peCLgttM5v4FV
+    sender_name: Nathaniel Kessel
+    sender_email: nathaniel.kessel@shpa-savannah.org
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Thank you for your support
+    body: Thank you again for your support this season. It made a real difference and we are grateful.
+    timestamp: '2026-01-05T12:50:00'
+    read: true
+    starred: false
+    folder: inbox
+  sFb6ws975ch2xNZ8jpw7TA:
+    mid: sFb6ws975ch2xNZ8jpw7TA
+    sender_name: Priscilla Everton
+    sender_email: priscilla.everton@shpa-savannah.org
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Agenda for the next board meeting
+    body: Sharing the draft agenda ahead of our next board meeting. Please review the finance section
+      and send any additions by Friday.
+    timestamp: '2026-01-05T16:55:00'
+    read: true
+    starred: false
+    folder: inbox
+  2pE7R37Uq3u7nXL7H9zTpr:
+    mid: 2pE7R37Uq3u7nXL7H9zTpr
+    sender_name: Grady Colton
+    sender_email: grady.colton@savingplaces.org
+    to:
+    - amos.whitfield@Finthesiss.ai
+    cc: []
+    subject: Invoice attached for recent services
+    body: Please find the invoice for last month's services. Let me know if anything looks off before
+      I submit it for payment.
+    timestamp: '2026-01-05T20:35:00'
+    read: true
+    starred: false
+    folder: inbox
+  xM9AWEAucU7kXXc6nzuWsv:
+    mid: xM9AWEAucU7kXXc6nzuWsv
+    sender_name: Me
+    sender_email: amos.whitfield@Finthesiss.ai
+    to:
+    - denise.carter@Finthesiss.ai
+    cc: []
+    subject: 'Re: Receipt for your recent order'
+    body: Thanks for your order. Your receipt is below. Delivery is expected within five business days.
+    timestamp: '2026-01-05T22:58:00'
+    read: true
+    starred: false
+    folder: sent
+  hUxtZ23VyoDzXwZbNaKmGB:
+    mid: hUxtZ23VyoDzXwZbNaKmGB
+    sender_name: Me
+    sender_email: amos.whitfield@Finthesiss.ai
+    to:
+    - james.holloway@Finthesiss.ai
+    cc: []
+    subject: 'Re: Notes from yesterday''s committee call'
+    body: Attaching my notes from yesterday's committee call. The action items are listed at the bottom.
+    timestamp: '2026-01-06T00:08:00'
+    read: true
+    starred: false
+    folder: sent
+  KxrewAXBV7d3NJiEvF4MTr:
+    mid: KxrewAXBV7d3NJiEvF4MTr
+    sender_name: Me
+    sender_email: amos.whitfield@Finthesiss.ai
+    to:
+    - patricia.odom@Finthesiss.ai
+    cc: []
+    subject: 'Re: Reminder: annual filing deadline'
+    body: A reminder that the annual filing deadline is coming up. Please gather the supporting documents
+      this month.
+    timestamp: '2026-01-06T05:31:00'
+    read: true
+    starred: false
+    folder: sent

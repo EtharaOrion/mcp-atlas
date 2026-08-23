@@ -1,0 +1,197 @@
+[
+    {
+        "tool_name": "list_documents",
+        "description": "List all documents, optionally filtered by status (draft|sent|partially_signed|completed|cancelled|expired). Sorted by uploaded_at descending.",
+        "arguments": {
+            "status": {"type": "string", "description": "Optional status filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of document summaries."
+        }
+    },
+    {
+        "tool_name": "get_document",
+        "description": "Retrieve the full document record by docid.",
+        "arguments": {
+            "docid": {"type": "string", "description": "Document identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full document record."
+        }
+    },
+    {
+        "tool_name": "upload_document",
+        "description": "Upload a new document. New documents start in the 'draft' status.",
+        "arguments": {
+            "title": {"type": "string", "description": "Human-readable document title."},
+            "filename": {"type": "string", "description": "Original filename (e.g. 'nda.pdf')."},
+            "page_count": {"type": "integer", "description": "Total pages (minimum 1)."},
+            "uploaded_by": {"type": "string", "description": "Uploader identifier (default 'self')."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new document summary."
+        }
+    },
+    {
+        "tool_name": "delete_document",
+        "description": "Permanently delete a document, all its signature requests, and any signatures on those requests.",
+        "arguments": {
+            "docid": {"type": "string", "description": "Document identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {docid, deleted: true, removed_requests, removed_signatures}."
+        }
+    },
+    {
+        "tool_name": "send_for_signature",
+        "description": "Send a document to one or more signers. Creates one pending SignatureRequest per signer and transitions the document to 'sent'.",
+        "arguments": {
+            "docid": {"type": "string", "description": "Document identifier (must be in draft or sent)."},
+            "signers": {"type": "array", "items": {"type": "string"}, "description": "List of signer identifiers (emails)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is {docid, requests: [...]}."
+        }
+    },
+    {
+        "tool_name": "cancel_document",
+        "description": "Cancel a document. Any still-pending signature requests are marked expired.",
+        "arguments": {
+            "docid": {"type": "string", "description": "Document identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated document summary."
+        }
+    },
+    {
+        "tool_name": "list_signature_requests",
+        "description": "List signature requests, optionally filtered by document_id and/or status. Sorted by sent_at ascending.",
+        "arguments": {
+            "document_id": {"type": "string", "description": "Optional document filter."},
+            "status": {"type": "string", "description": "Optional status filter (pending|signed|declined|expired)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of request summaries."
+        }
+    },
+    {
+        "tool_name": "get_signature_request",
+        "description": "Retrieve a signature request by srid.",
+        "arguments": {
+            "srid": {"type": "string", "description": "Signature request identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the full request record."
+        }
+    },
+    {
+        "tool_name": "sign_document",
+        "description": "Sign a pending signature request at (page, x, y) with a signature image hash. Auto-refreshes the document status to partially_signed or completed as appropriate.",
+        "arguments": {
+            "request_id": {"type": "string", "description": "Signature request identifier (must be pending)."},
+            "page": {"type": "integer", "description": "Page number where the signature is placed."},
+            "x": {"type": "integer", "description": "X coordinate of the signature."},
+            "y": {"type": "integer", "description": "Y coordinate of the signature."},
+            "image_hash": {"type": "string", "description": "Hash of the signature image blob."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new signature record."
+        }
+    },
+    {
+        "tool_name": "decline_signature",
+        "description": "Decline a pending signature request. The request transitions to 'declined'.",
+        "arguments": {
+            "request_id": {"type": "string", "description": "Signature request identifier."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the updated request summary."
+        }
+    },
+    {
+        "tool_name": "list_signatures",
+        "description": "List signature records, optionally filtered by document_id (all signatures on that doc's requests). Sorted by signed_at.",
+        "arguments": {
+            "document_id": {"type": "string", "description": "Optional document identifier filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of signature records."
+        }
+    },
+    {
+        "tool_name": "list_audit",
+        "description": "List audit events, optionally filtered by document_id. Sorted by timestamp ascending.",
+        "arguments": {
+            "document_id": {"type": "string", "description": "Optional document identifier filter."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of audit events."
+        }
+    },
+    {
+        "tool_name": "record_audit",
+        "description": "Manually record an audit event on a document (for arbitrary actions such as reminders or comments).",
+        "arguments": {
+            "document_id": {"type": "string", "description": "Document identifier."},
+            "actor": {"type": "string", "description": "Actor identifier (email or user id)."},
+            "action": {"type": "string", "description": "Short action code (e.g. 'reminded', 'viewed')."},
+            "details": {"type": "string", "description": "Optional human-readable details."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is the new audit event."
+        }
+    },
+    {
+        "tool_name": "list_pending_signatures",
+        "description": "List all signature requests currently pending for a specific signer.",
+        "arguments": {
+            "signer": {"type": "string", "description": "Signer identifier (email or user id)."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of pending request summaries for that signer."
+        }
+    },
+    {
+        "tool_name": "search_documents",
+        "description": "Search documents by keyword across title, filename, and uploaded_by.",
+        "arguments": {
+            "query": {"type": "string", "description": "Search keyword or phrase."}
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of matching document summaries."
+        }
+    },
+    {
+        "tool_name": "list_completed",
+        "description": "List all documents whose status is 'completed'.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a list of completed document summaries."
+        }
+    },
+    {
+        "tool_name": "get_stats",
+        "description": "Return e-signature statistics: totals for documents, requests, signatures, audit events, plus counts by document status and by request status.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary with status and output. On success, output is a stats dictionary."
+        }
+    }
+]

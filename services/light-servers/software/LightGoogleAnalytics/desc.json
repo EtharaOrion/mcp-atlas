@@ -1,0 +1,91 @@
+[
+    {
+        "tool_name": "run_report",
+        "description": "Run a GA4 aggregated report over the property's event data for the requested dimensions and metrics.",
+        "arguments": {
+            "property_id": {
+                "type": "string",
+                "description": "The GA4 property id to report on."
+            },
+            "dimensions": {
+                "type": "array",
+                "description": "Optional list of dimensions (each an object with a 'name', or a plain string). Valid names: date, country, pagePath, deviceCategory."
+            },
+            "metrics": {
+                "type": "array",
+                "description": "Optional list of metrics (each an object with a 'name', or a plain string). Valid names: sessions, activeUsers, screenPageViews, eventCount."
+            },
+            "date_ranges": {
+                "type": "array",
+                "description": "Optional list of date range objects (startDate, endDate, name); echoed back in report metadata."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the report with dimensionHeaders, metricHeaders, rows, rowCount and kind."
+        }
+    },
+    {
+        "tool_name": "run_realtime_report",
+        "description": "Run a GA4 realtime aggregated report over the property's realtime data.",
+        "arguments": {
+            "property_id": {
+                "type": "string",
+                "description": "The GA4 property id to report on."
+            },
+            "dimensions": {
+                "type": "array",
+                "description": "Optional list of realtime dimensions (each an object with a 'name', or a plain string). Valid names: country, deviceCategory, unifiedScreenName."
+            },
+            "metrics": {
+                "type": "array",
+                "description": "Optional list of realtime metrics (each an object with a 'name', or a plain string). Valid names: activeUsers, eventCount."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the realtime report with dimensionHeaders, metricHeaders, rows, rowCount and kind."
+        }
+    },
+    {
+        "tool_name": "batch_run_reports",
+        "description": "Run multiple aggregated reports for a property in a single batch request.",
+        "arguments": {
+            "property_id": {
+                "type": "string",
+                "description": "The GA4 property id to report on."
+            },
+            "requests": {
+                "type": "array",
+                "description": "Optional list of report request objects, each with dimensions, metrics and dateRanges."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has kind and a 'reports' list of aggregated report objects."
+        }
+    },
+    {
+        "tool_name": "get_metadata",
+        "description": "Get the dimension and metric metadata available for a property.",
+        "arguments": {
+            "property_id": {
+                "type": "string",
+                "description": "The GA4 property id."
+            }
+        },
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output has the metadata name plus dimensions and metrics descriptors."
+        }
+    },
+    {
+        "tool_name": "get_property",
+        "description": "Get the GA4 property details.",
+        "arguments": {},
+        "returns": {
+            "type": "object",
+            "description": "A dictionary containing status and output. On success, output is the property object."
+        }
+    }
+]
