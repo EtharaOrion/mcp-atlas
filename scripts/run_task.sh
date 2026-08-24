@@ -63,6 +63,7 @@ if [ -d "$TRAJ_DIR" ]; then
   cp -r "$TRAJ_DIR"/Run_* "$STASH_DIR/" 2>/dev/null || true
 fi
 
+rm -f "$OUTPUT_DIR/$JOB/lock.json"
 ARGS=(run -y --path "$TASK" --agent "$AGENT" --jobs-dir "$OUTPUT_DIR" --job-name "$JOB" \
       --environment-build-timeout-multiplier "$BUILD_MULT" --n-attempts "$N")
 [ "$AGENT" != "oracle" ] && ARGS+=(--model "$MODEL")
