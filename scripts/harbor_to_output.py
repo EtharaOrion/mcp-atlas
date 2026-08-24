@@ -68,6 +68,23 @@ def _dump(p: Path, obj) -> None:
     p.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+# Harbor artifacts we deliberately do not carry into output/. trial.log is a
+# byte-identical triplicate of the job-level job.log, and lock.json only records
+# the harbor invocation that produced the job — both are read during reshaping
+# and dropped afterwards, never shipped.
+PRUNE_FROM_OUTPUT = ("trial.log", "lock.json")
+
+
+def _prune(*paths: Path) -> None:
+    for pth in paths:
+        try:
+            pth.unlink()
+        except FileNotFoundError:
+            pass
+        except OSError as exc:
+            print(f"[output] could not prune {pth}: {exc}", file=sys.stderr)
+
+
 def _copy(src: Path, dst: Path) -> bool:
     if not src.exists():
         return False
@@ -283,7 +300,16 @@ def _enabled_tools(task_dir: Path | None) -> list[str]:
 # ---------------------------------------------------------------------------
 
 def classify_failure(passed: bool, traj_rows: list[dict], rubric_rows: list[dict],
-                     stream: dict, exception: dict | None) -> tuple[str, str]:
+                     stream: dict, exception: dict | None,
+                     rubric_expected: bool = False) -> tuple[str, str]:
+    """Name the reason a trial failed.
+
+    ``rubric_expected`` says the task ships a rubric. When it does but
+    ``rubric_rows`` is empty, the judge never produced verdicts, so nothing here
+    knows whether the answer was right -- say so instead of inferring quality
+    from an empty list. Without this guard an unmounted or crashed judge reads
+    as "answer correct", which is the opposite of what the evidence supports.
+    """
     if exception:
         return "infrastructure", f"{exception.get('exception_type')}: {str(exception.get('exception_message'))[:160]}"
     if passed:
@@ -298,6 +324,11 @@ def classify_failure(passed: bool, traj_rows: list[dict], rubric_rows: list[dict
                 if not (r.get("outcome") == "credited" if r.get("outcome") else r.get("satisfied"))]
     if penal:
         return "guard_violation", f"guard test(s) fired: {', '.join(penal)}"
+    if rubric_expected and not rubric_rows:
+        detail = f"; trajectory tests also missed: {', '.join(missed)}" if missed else ""
+        return "grader_incomplete", (
+            "rubric judge produced no verdicts (check verifier stdout for a missing "
+            "/harness/scoring mount or a judge error); answer quality is UNKNOWN" + detail)
     if missed and not rub_miss:
         return "tool_discipline", f"answer correct but required tool step(s) missing: {', '.join(missed)}"
     if rub_miss and not missed:
@@ -404,6 +435,12 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     detail = _load(ver / "detail.json", {}) or {}
     ctrf = _load(ver / "ctrf.json")
     breakdown = _load(ver / "rubric_breakdown.json", {}) or {}
+    # Rc/Rb from the task's state channel, written by tests/test_outputs.py.
+    # Absent when the task has no state channel, or when its dump could not run --
+    # in which case the values stay None rather than reading as a scored zero.
+    state_ch = _load(ver / "state_channel.json", {}) or {}
+    state_val = state_ch.get("completion") if state_ch.get("available") else None
+    state_mis = state_ch.get("misbehave") if state_ch.get("available") else None
     weights = _load(task_dir / "tests" / "test_weights.json", {}) if task_dir else {}
     threshold = (weights or {}).get("threshold", PASS_THRESHOLD_DEFAULT)
     if ctrf is None and (ver / "junit.xml").exists():
@@ -442,6 +479,11 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     if traj_val is None:
         traj_val = channel_a.get("completion_rate")
     tw_src = (weights.get("components") or {})
+
+    def _comp_w(name: str) -> float:
+        """Declared weight for a component, 0 when the task omits it."""
+        c = tw_src.get(name) or {}
+        return c.get("weight", 0) if c.get("graded", True) else 0
     if traj_w == 0 and tw_src.get("traj_tests"):
         traj_w = tw_src["traj_tests"].get("weight", 0)
     if rubric_w == 0 and tw_src.get("rubric"):
@@ -477,7 +519,8 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     test_entries = [{"name": r["name"], "weight": r.get("weight"), "passed": bool(r.get("raw_passed"))}
                     for r in traj_rows]
     n_pass = sum(1 for t in test_entries if t["passed"])
-    n_fail = len(test_entries) - n_pass
+    n_skip = sum(1 for r in traj_rows if r.get("outcome") == "skipped")
+    n_fail = len(test_entries) - n_pass - n_skip
     _key = lambda r: str(r.get("number") or r.get("id") or "")
     rubric_by_id = {_key(r): r for r in rubric_rows}
     bd_by_id = {_key(r): r for r in (breakdown.get("per_criterion") or breakdown.get("results") or [])}
@@ -513,7 +556,9 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     parts = [p for p in (test_pct, rubric_pct) if p is not None]
     final_reward = round(sum(parts) / len(parts), 2) if parts else None
 
-    failure_class, failure_reason = classify_failure(passed, traj_rows, rubric_rows, stream, exception)
+    failure_class, failure_reason = classify_failure(
+        passed, traj_rows, rubric_rows, stream, exception,
+        rubric_expected=bool(rubric_src))
 
     reward_txt_val = str(round(reward, 6)) if reward is not None else "0.0"
     detail_doc = _build_detail(ctrf, weights, breakdown, traj_val, rubric_val, traj_w, rubric_w)
@@ -531,15 +576,15 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     _copy(ag / "claude-code.txt", run_dir / "agent" / "claude-code.txt")
     _copy(ag / "oracle.txt", run_dir / "agent" / "oracle.txt")
     _copy(ag / "trajectory.json", run_dir / "agent" / "trajectory.json")
-    for f in ("config.json", "lock.json", "result.json"):
+    for f in ("config.json", "result.json"):
         _copy(trial_dir / f, run_dir / f)
     _copy(stream_path, run_dir / "logs" / "agent-stream.txt")
     _copy(ver / "ctrf.json", run_dir / "logs" / "verifier-ctrf.json")
     _copy(ver / "reward.txt", run_dir / "logs" / "verifier-reward.txt")
     _copy(ver / "test-stdout.txt", run_dir / "logs" / "verifier-stdout.txt")
-    _copy(trial_dir / "trial.log", run_dir / "logs" / "trial.log")
     for f in ("ctrf.json", "reward.txt", "reward.json", "test-stdout.txt", "detail.json",
-              "rubric_breakdown.json", "judge_tokens.json"):
+              "rubric_breakdown.json", "judge_tokens.json",
+              "state_channel.json", "end_env.json"):
         _copy(ver / f, run_dir / "verifier" / f)
     vdir = run_dir / "verifier"
     vdir.mkdir(parents=True, exist_ok=True)
@@ -557,7 +602,8 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         _dump(vdir / "detail.json", detail_doc)
     report = {
         "model": model, "run_index": run_no, "include_multimodal": False,
-        "pytest": {"passed": n_pass, "failed": n_fail, "exit_code": 0 if n_fail == 0 else 1,
+        "pytest": {"passed": n_pass, "failed": n_fail, "skipped": n_skip,
+                   "exit_code": 0 if n_fail == 0 else 1,
                    "reward": _r4(traj_val), "tests": test_entries},
         "rubric": rubric_entries,
         "final_reward": final_reward,
@@ -637,15 +683,23 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
                            "earned": _r4((traj_val or 0) * traj_w) if traj_val is not None else None},
             "rubric": {"weight": rubric_w, "value": _r4(rubric_val),
                        "earned": _r4((rubric_val or 0) * rubric_w) if rubric_val is not None else None},
-            "state_completion": {"weight": 0, "value": None, "earned": None},
-            "state_misbehave": {"weight": 0, "severity": None, "penalty": None},
-            "graph_plan": {"weight": 0, "value": None, "earned": None},
+            # Weights come from tests/test_weights.json rather than being pinned
+            # to 0 here. Nothing in this pipeline computes their values yet, so
+            # value/earned stay None; a task that declares them non-zero will at
+            # least surface the discrepancy instead of silently reading as 0.
+            "state_completion": {"weight": _comp_w("state_completion"), "value": _r4(state_val),
+                                 "earned": _r4((state_val or 0) * _comp_w("state_completion"))
+                                 if state_val is not None else None},
+            "state_misbehave": {"weight": _comp_w("state_misbehave"), "severity": _r4(state_mis),
+                                "penalty": _r4((state_mis or 0) * abs(_comp_w("state_misbehave")))
+                                if state_mis is not None else None},
+            "graph_plan": {"weight": _comp_w("graph_plan"), "value": None, "earned": None},
         },
         "basis": [k for k, w in (("traj_tests", traj_w), ("rubric", rubric_w)) if w],
         "recall": sum(1 for r in goal_rows if r.get("outcome") == "credited"),
         "total": len(goal_rows),
         "misbehave": sum(1 for r in traj_rows if r.get("outcome") == "penalized"),
-        "state": None, "plan": None,
+        "state": _r4(state_val), "plan": None,
         "traj_tests": {"recall": sum(1 for r in goal_rows if r.get("outcome") == "credited"),
                        "total": len(goal_rows),
                        "misbehave": sum(1 for r in traj_rows if r.get("outcome") == "penalized"),
@@ -671,6 +725,8 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     per_run = {"run_index": run_no, "include_multimodal": False,
                "test_weights_percentage": test_pct, "rubric_weights_percentage": rubric_pct,
                "combined_score": final_reward}
+    _prune(*(run_dir / f for f in PRUNE_FROM_OUTPUT),
+           *(run_dir / "logs" / f for f in PRUNE_FROM_OUTPUT))
     return {"episode": episode, "pair": pair, "per_run": per_run, "report": report,
             "failure": {"attempt": run_no, "failure_class": failure_class, "reason": failure_reason}}
 
@@ -796,7 +852,7 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
             shutil.rmtree(raw_trials)
         raw_trials.mkdir(parents=True, exist_ok=True)
 
-        for f in ("config.json", "lock.json", "result.json"):
+        for f in ("config.json", "result.json"):
             _copy(job_dir / f, out_task / f)
         # ground truth the task ships
         if task_dir:
@@ -942,6 +998,9 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
         for c_ in recs[0]["report"]["rubric"]:
             lines.append(f"| {c_['number']} | {c_['criterion']} | {'✓' if c_['passed'] else '✗'} |")
         (out_task / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        # Harbor writes lock.json straight into the job dir (which is out_task on
+        # in-place runs). Everything that needs it has been read by now.
+        _prune(*(out_task / f for f in PRUNE_FROM_OUTPUT))
         written.append(out_task)
         print(f"[output] {task_name}: {n} run(s), passed {c}/{n}, mean reward {_mean(rewards)} → {out_task}")
     return written

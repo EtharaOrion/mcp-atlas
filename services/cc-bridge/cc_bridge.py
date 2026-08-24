@@ -98,6 +98,43 @@ def resolve_model(requested: str) -> str:
     return mapped
 
 
+# The Messages API *requires* max_tokens — there is no "unlimited" value — so an
+# uncapped request means asking for the model's own maximum output. The Models
+# API is authoritative and self-updating (`max_tokens` on the model object), so
+# resolve from it once per model and cache; the table below is the offline
+# fallback. Unknown models fall back to 64000, which is <= every current model's
+# ceiling, so it can never 400 for being too large.
+_MODEL_MAX_OUTPUT_FALLBACK = {
+    "claude-opus-5": 128000,
+    "claude-fable-5": 128000,
+    "claude-mythos-5": 128000,
+    "claude-opus-4-8": 128000,
+    "claude-opus-4-7": 128000,
+    "claude-opus-4-6": 128000,
+    "claude-sonnet-5": 128000,
+    "claude-sonnet-4-6": 128000,
+    "claude-haiku-4-5": 64000,
+}
+_DEFAULT_MAX_OUTPUT = 64000
+_max_output_cache: dict[str, int] = {}
+
+
+def _model_max_output(client: Any, model: str) -> int:
+    """The model's own output ceiling — the largest max_tokens it will accept."""
+    cached = _max_output_cache.get(model)
+    if cached is not None:
+        return cached
+    ceiling = _MODEL_MAX_OUTPUT_FALLBACK.get(model, _DEFAULT_MAX_OUTPUT)
+    try:
+        reported = getattr(client.models.retrieve(model), "max_tokens", None)
+        if isinstance(reported, int) and reported > 0:
+            ceiling = reported
+    except Exception as exc:                      # offline / unknown id / old SDK
+        logger.info("Models API lookup failed for %s (%s); using %d", model, exc, ceiling)
+    _max_output_cache[model] = ceiling
+    return ceiling
+
+
 def _select_mode() -> str:
     forced = os.environ.get("CC_MODE")
     if forced in {"subscription", "api_key"}:
@@ -607,6 +644,19 @@ def _openai_tools_to_anthropic(tools: list[dict[str, Any]]) -> list[dict[str, An
     return out
 
 
+def _create_message(client: Any, **kwargs: Any) -> Any:
+    """Blocking Messages call, streamed.
+
+    Not messages.create(): at the model's full max_tokens the SDK refuses a
+    non-streaming request outright (ValueError — it estimates the call will
+    outlive the ~10 minute HTTP timeout), and an idle connection that long is
+    liable to drop anyway. get_final_message() returns the same Message object
+    create() would have, so everything downstream is unchanged.
+    """
+    with client.messages.stream(**kwargs) as stream:
+        return stream.get_final_message()
+
+
 async def handle_api_key(body: dict[str, Any]) -> dict[str, Any]:
     from anthropic import Anthropic
 
@@ -616,10 +666,15 @@ async def handle_api_key(body: dict[str, Any]) -> dict[str, Any]:
     system_prompt, anthropic_msgs = _openai_messages_to_anthropic(body.get("messages") or [])
     tools = _openai_tools_to_anthropic(body.get("tools") or [])
 
+    # Uncapped: default to the model's full output ceiling rather than a fixed
+    # number, and clamp a caller-supplied value to it so an over-large request
+    # is trimmed instead of 400ing.
+    ceiling = await asyncio.to_thread(_model_max_output, client, model)
+    requested_max = body.get("max_tokens")
     kwargs: dict[str, Any] = {
         "model": model,
         "messages": anthropic_msgs,
-        "max_tokens": int(body.get("max_tokens", 4096) or 4096),
+        "max_tokens": min(int(requested_max), ceiling) if requested_max else ceiling,
     }
     if system_prompt:
         kwargs["system"] = system_prompt
@@ -640,7 +695,7 @@ async def handle_api_key(body: dict[str, Any]) -> dict[str, Any]:
     if thinking_param:
         kwargs["thinking"] = thinking_param
 
-    resp = await asyncio.to_thread(client.messages.create, **kwargs)
+    resp = await asyncio.to_thread(_create_message, client, **kwargs)
 
     text_parts: list[str] = []
     thinking_parts: list[str] = []
