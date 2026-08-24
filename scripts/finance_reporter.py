@@ -19,13 +19,13 @@ Data sources (all already on disk when this runs):
 
 Environment (read from the process env, falling back to the repo .env):
     ODOO_URL           https://<odoo-instance>   (unset => skip, exit 0)
+    ODOO_AUTH_TOKEN    sent as "Authorization: Bearer <token>"
     FINANCE_PROJECT_ID       e.g. PRJ-512   (required to report)
     FINANCE_PROJECT_TYPE     default "Technical"
     FINANCE_TEAM_TYPE        default "Projects"
     FINANCE_BUDGET_TYPE      "RFP" or "Production"
-    FINANCE_RFP_SUB_TYPE     "Testing" | "Sampling"  (RFP only)
+    FINANCE_RFP_SUB_TYPE     "Testing" | "Sampling"        (RFP only)
     FINANCE_PRODUCTION_MODE  "Singlephase" | "Multiphase"  (Production only)
-    (is_phase_based is not sent — triggers a server-side schema error on current Odoo build)
 
 Exits 0 even when reporting fails: a finance outage must never fail a task run.
 Pass --strict to exit non-zero instead (useful in CI).
@@ -194,13 +194,13 @@ def budget_fields() -> dict:
         if sub not in RFP_SUB_TYPES:
             raise ValueError(f"FINANCE_RFP_SUB_TYPE must be one of {RFP_SUB_TYPES}, got {sub!r}")
         return {"budget_type": budget, "rfp_sub_type": sub,
-                "production_mode": ""}
+                "production_mode": "", "is_phase_based": False}
     mode = env("FINANCE_PRODUCTION_MODE")
     if mode not in PRODUCTION_MODES:
         raise ValueError(f"FINANCE_PRODUCTION_MODE must be one of {PRODUCTION_MODES} "
                          f"when FINANCE_BUDGET_TYPE=Production, got {mode!r}")
     return {"budget_type": budget, "rfp_sub_type": "",
-            "production_mode": mode}
+            "production_mode": mode, "is_phase_based": mode == "Multiphase"}
 
 
 def build_payload(run_dir: Path, task_id: str, account: dict) -> dict:
@@ -232,6 +232,11 @@ def build_payload(run_dir: Path, task_id: str, account: dict) -> dict:
 # ---------------------------------------------------------------------- http
 def headers() -> dict:
     hdrs = {"Content-Type": "application/json", "Accept": "application/json"}
+    token = env("ODOO_AUTH_TOKEN")
+    if token:
+        name = env("ODOO_AUTH_HEADER", "Authorization")
+        scheme = env("ODOO_AUTH_SCHEME", "Bearer")
+        hdrs[name] = f"{scheme} {token}".strip()
     extra = env("ODOO_EXTRA_HEADERS")
     if extra:
         try:
@@ -310,6 +315,9 @@ def main() -> int:
     if args.dry_run:
         print(json.dumps(payload, indent=2))
         return 0
+
+    if not env("ODOO_AUTH_TOKEN"):
+        log("warning: ODOO_AUTH_TOKEN is empty — sending unauthenticated", err=True)
 
     status, text = post(url, payload)
     ok = 200 <= status < 300
