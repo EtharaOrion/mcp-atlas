@@ -336,11 +336,19 @@ def _junit_to_ctrf(junit_path: Path, tw_comp: dict | None = None) -> dict | None
         if w is not None:
             entry["weight"] = w
         tests.append(entry)
+    # compute weighted score from positive tests (guards that "fail" = agent avoided = good)
+    earned_pos = sum(weights.get(t["name"], 0) for t in tests
+                     if t["status"] == "passed" and (weights.get(t["name"], 0) or 0) > 0)
+    total_pos = sum(w for n, w in weights.items() if isinstance(w, (int, float)) and w > 0
+                    and any(t["name"] == n and t["status"] != "skipped" for t in tests))
+    overall_score = round(earned_pos / total_pos, 6) if total_pos > 0 else 0.0
     return {
         "results": {
             "tool": {"name": "pytest"},
             "summary": {"tests": total, "passed": passed, "failed": failed,
-                        "pending": 0, "skipped": skipped, "other": 0},
+                        "pending": 0, "skipped": skipped, "other": 0,
+                        "overall_score": overall_score,
+                        "weighted_percentage": round(overall_score * 100, 2)},
             "tests": tests,
         }
     }
@@ -354,11 +362,15 @@ def _build_detail(ctrf: dict | None, weights: dict | None, breakdown: dict | Non
     traj_test_rows = []
     for t in tests:
         name = t["name"]
-        raw_passed = t["status"] == "passed"
+        status = t["status"]
+        raw_passed = status == "passed"
+        is_skipped = status == "skipped"
         w = tw_tests.get(name, 0)
         is_positive = isinstance(w, (int, float)) and w > 0
         is_negative = isinstance(w, (int, float)) and w < 0
-        if raw_passed and is_positive:
+        if is_skipped:
+            outcome = "skipped"
+        elif raw_passed and is_positive:
             outcome = "credited"
         elif not raw_passed and is_positive:
             outcome = "missed"
