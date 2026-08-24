@@ -1,0 +1,52 @@
+[
+ {
+  "tool": "LightEtsy_list_listings",
+  "args": {
+   "shop_id": 29457183
+  },
+  "purpose": "twenty listings across six repeated titles; exactly one, 1020, is in draft state - the prompt never names it"
+ },
+ {
+  "tool": "LightEtsy_get_listing",
+  "args": {
+   "listing_id": 1020
+  },
+  "purpose": "the draft: Cherry side table, tapered legs, price 40.0, quantity 0, and a materials field reading mahogany under a cherry title"
+ },
+ {
+  "tool": "LightGmail_list_messages",
+  "args": {},
+  "purpose": "open the mailbox to place the second wood on the invoice"
+ },
+ {
+  "tool": "LightGmail_get_message",
+  "args": {
+   "message_id": "msg-101"
+  },
+  "purpose": "Wesley Farraday confirms the Jan 2 order: 40 board feet quartersawn white oak. That pins the invoice's 40 bd ft oak line to a different job, not the side table."
+ },
+ {
+  "tool": "LightGmail_get_message",
+  "args": {
+   "message_id": "msg-105"
+  },
+  "purpose": "the Barrington Sheraton sideboard commission - the job the 40 bd ft of oak and its freight belong to, and the piece Cordelia wants listed publicly"
+ },
+ {
+  "tool": "LightGmail_get_message",
+  "args": {
+   "message_id": "msg-102"
+  },
+  "purpose": "Ellis's own quote for the Renard-Whitcomb Windsor chairs - that is the job the cherry seat blanks (58.20) belong to, so they are NOT the side table's cherry"
+ },
+ {
+  "tool": "LightEtsy_update_listing",
+  "args": {
+   "listing_id": 1020,
+   "price": 405.0,
+   "quantity": 1,
+   "state": "active"
+  },
+  "purpose": "allocated materials 96.40 + 14.25 + 11.80 + 12.00 = 134.45; x3 = 403.35; rounded to the nearest five = 405.00. One table, in stock, live. Title and description left exactly as they are."
+ }
+]
