@@ -294,7 +294,8 @@ def classify_failure(passed: bool, traj_rows: list[dict], rubric_rows: list[dict
         return "no_tool_use", "agent made no tool calls at all"
     missed = [r["name"] for r in traj_rows if r.get("outcome") == "missed"]
     penal = [r["name"] for r in traj_rows if r.get("outcome") == "penalized"]
-    rub_miss = [r.get("id") for r in rubric_rows if r.get("outcome") != "credited"]
+    rub_miss = [r.get("number") or r.get("id") for r in rubric_rows
+                if not (r.get("outcome") == "credited" if r.get("outcome") else r.get("satisfied"))]
     if penal:
         return "guard_violation", f"guard test(s) fired: {', '.join(penal)}"
     if missed and not rub_miss:
@@ -369,7 +370,7 @@ def _build_detail(ctrf: dict | None, weights: dict | None, breakdown: dict | Non
             outcome = "credited" if raw_passed else "missed"
         traj_test_rows.append({"name": name, "weight": w, "raw_passed": raw_passed,
                                 "outcome": outcome, "is_positive": is_positive})
-    rubric_rows = (breakdown.get("results") if breakdown else None) or []
+    rubric_rows = (breakdown.get("per_criterion") or breakdown.get("results") if breakdown else None) or []
     ledger = {
         "traj_tests": {"weight": traj_w, "value": _r4(traj_val),
                        "earned": _r4((traj_val or 0) * traj_w) if traj_val is not None else None},
@@ -397,6 +398,8 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         tw_comp = ((weights or {}).get("components") or {}).get("traj_tests")
         ctrf = _junit_to_ctrf(ver / "junit.xml", tw_comp)
     rubric_src_raw = _load(task_dir / "tests" / "rubric.json", []) if task_dir else []
+    if isinstance(rubric_src_raw, dict):
+        rubric_src_raw = rubric_src_raw.get("criteria") or []
     rubric_src = rubric_src_raw if isinstance(rubric_src_raw, list) else []
 
     reward = (tres.get("verifier_result") or {}).get("rewards", {}).get("reward")
@@ -413,7 +416,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
 
     ledger = detail.get("ledger") or {}
     traj_rows = detail.get("traj_test_rows") or []
-    rubric_rows = detail.get("rubric_rows") or []
+    rubric_rows = detail.get("rubric_rows") or (breakdown.get("per_criterion") or breakdown.get("results") or [])
     traj_val = (ledger.get("traj_tests") or {}).get("value")
     rubric_val = (ledger.get("rubric") or {}).get("value")
     if rubric_val is None and breakdown.get("score") is not None:
@@ -433,6 +436,10 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         rubric_w = tw_src["rubric"].get("weight", 0)
     if rubric_val is None and rubric_w > 0:
         rubric_val = 0.0
+
+    if not traj_rows and ctrf is not None:
+        _fresh = _build_detail(ctrf, weights, breakdown, traj_val, rubric_val, traj_w, rubric_w)
+        traj_rows = _fresh["traj_test_rows"]
 
     # ---- tokens / usage ---------------------------------------------------
     ar = tres.get("agent_result") or {}
@@ -459,30 +466,34 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
                     for r in traj_rows]
     n_pass = sum(1 for t in test_entries if t["passed"])
     n_fail = len(test_entries) - n_pass
-    rubric_by_id = {str(r.get("id")): r for r in rubric_rows}
-    bd_by_id = {str(r.get("id")): r for r in (breakdown.get("results") or [])}
+    _key = lambda r: str(r.get("number") or r.get("id") or "")
+    rubric_by_id = {_key(r): r for r in rubric_rows}
+    bd_by_id = {_key(r): r for r in (breakdown.get("per_criterion") or breakdown.get("results") or [])}
     rubric_entries = []
-    if not rubric_src and breakdown.get("results"):
-        # Plain (non --weighted) bundles ship no tests/rubric.json; the judge's
-        # own breakdown is then the only record of the claims it graded.
-        rubric_src = [{"id": r.get("id", str(i)), "text": r.get("title") or r.get("description") or "",
-                       "weight": r.get("score", 1) if isinstance(r.get("score"), (int, float)) and r.get("score") not in (0, 1) else 1,
-                       "is_positive": True}
-                      for i, r in enumerate(breakdown["results"], 1)]
+    if not rubric_src and (breakdown.get("per_criterion") or breakdown.get("results")):
+        _bd_list = breakdown.get("per_criterion") or breakdown.get("results") or []
+        rubric_src = [{"number": r.get("number") or r.get("id") or str(i),
+                       "criterion": r.get("criterion") or r.get("title") or r.get("text") or r.get("description") or "",
+                       "score": r.get("score", 1) if isinstance(r.get("score"), (int, float)) and r.get("score") not in (0, 1) else 1,
+                       "is_positive": r.get("is_positive", True)}
+                      for i, r in enumerate(_bd_list, 1)]
     for i, c in enumerate(rubric_src, 1):
         if isinstance(c, str):
-            c = {"text": c}
+            c = {"criterion": c}
         elif not isinstance(c, dict):
             c = {}
-        cid = str(c.get("id", i))
+        cid = str(c.get("number") or c.get("id") or str(i))
         row = rubric_by_id.get(cid, {})
         bd = bd_by_id.get(cid, {})
-        ok = row.get("outcome") == "credited" if row else bool(bd.get("result"))
+        ok = row.get("outcome") == "credited" if row.get("outcome") else bool(bd.get("satisfied") if bd else row.get("satisfied") or row.get("result"))
+        w = c.get("score") or c.get("weight") or 1
         rubric_entries.append({
-            "number": str(i), "id": cid, "criterion": c.get("text", ""),
-            "type": "claim_coverage", "evaluation_target": "final_answer",
-            "importance": "critical" if c.get("weight", 1) >= 1 else "minor",
-            "score": c.get("weight", 1), "is_positive": c.get("is_positive", True),
+            "number": c.get("number") or str(i), "id": cid,
+            "criterion": c.get("criterion") or c.get("text", ""),
+            "type": c.get("type", "claim_coverage"),
+            "evaluation_target": c.get("evaluation_target", "final_answer"),
+            "importance": c.get("importance", "critical" if w >= 3 else "minor"),
+            "score": w, "is_positive": c.get("is_positive", True),
             "passed": ok, "satisfied": ok, "justification": bd.get("justification", ""),
         })
     test_pct = _pct(traj_val)
