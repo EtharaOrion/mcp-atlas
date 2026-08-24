@@ -83,5 +83,10 @@ harbor-output: # reshape an existing Harbor job into output/<task>/ without re-r
 	@test -n "$(JOB)" || { echo "usage: make harbor-output JOB=jobs/<job>"; exit 2; }
 	python3 scripts/harbor_to_output.py $(JOB) --output-dir output $(if $(COPY_TO),--copy-to $(COPY_TO),)
 
+# make finance-usage RUN=output/<task>/trajectory/Run_1 [DRY=1]
+finance-usage: # POST one run's token/cost usage to the Finance API
+	@test -n "$(RUN)" || { echo "usage: make finance-usage RUN=output/<task>/trajectory/Run_N [DRY=1]"; exit 2; }
+	python3 scripts/finance_reporter.py --run-dir $(RUN) $(if $(DRY),--dry-run,)
+
 build-light-servers: # build light-servers Docker image (all software + utility servers bundled in services/light-servers/)
 	docker build -t light-servers:latest services/light-servers/

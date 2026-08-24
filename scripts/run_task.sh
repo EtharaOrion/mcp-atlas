@@ -86,4 +86,18 @@ if [ -n "$STASH_DIR" ] && [ -d "$STASH_DIR" ]; then
   rm -rf "$STASH_DIR"
 fi
 
+# --- finance API: report trajectory usage (after the runs are done) -----------
+# Skips itself when ODOO_URL is unset; never fails the task run.
+# ODOO_URL normally lives in .env, which this script does not source, so read it
+# from there when the environment doesn't already provide it.
+if [ -z "${ODOO_URL:-}" ] && [ -f .env ]; then
+  ODOO_URL="$(grep -E '^ODOO_URL=' .env | tail -1 | cut -d= -f2- \
+              | sed 's/[[:space:]]*#.*$//' | tr -d '[:space:]' || true)"
+fi
+if [ -n "${ODOO_URL:-}" ]; then
+  python3 scripts/finance_reporter.py \
+    --run-dir "$OUTPUT_DIR/$JOB/trajectory/Run_$((RUN_OFFSET+1))" \
+    --task-id "$SLUG" || echo "[finance] WARNING: reporting failed (non-fatal)"
+fi
+
 echo "[run_task] done → $OUTPUT_DIR/$SLUG"

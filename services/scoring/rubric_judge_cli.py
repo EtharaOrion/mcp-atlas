@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 _out_path: Path | None = None
+_token_out: Path | None = None
 
 
 def _load_criteria(rubric_path: Path) -> list[dict]:
@@ -104,21 +105,97 @@ async def _run_judge(criteria: list[dict], traj_ctx: str, final_ctx: str, model:
         async for msg in client.receive_response():
             messages.append(msg)
 
+    _record_usage(messages, model)
+
+    
+    seen: list[str] = []
     for msg in reversed(messages):
         if hasattr(msg, "structured_output") and msg.structured_output:
             raw = msg.structured_output
-            parsed = json.loads(raw) if isinstance(raw, str) else raw
-            return parsed.get("results", []) if isinstance(parsed, dict) else []
+            try:
+                parsed = json.loads(raw) if isinstance(raw, str) else raw
+            except (ValueError, TypeError):
+                seen.append(f"structured_output: {str(raw)[:400]}")
+                parsed = None
+            if isinstance(parsed, dict) and "results" in parsed:
+                return parsed.get("results", [])
         if hasattr(msg, "result") and msg.result:
-            text = msg.result.strip()
-            if text.startswith("```"):
-                lines = text.split("\n")[1:]
-                if lines and lines[-1].strip() == "```":
-                    lines = lines[:-1]
-                text = "\n".join(lines)
-            parsed = json.loads(text)
-            return parsed.get("results", []) if isinstance(parsed, dict) else []
-    return []
+            parsed = _parse_judge_json(str(msg.result))
+            if isinstance(parsed, dict) and "results" in parsed:
+                return parsed.get("results", [])
+            seen.append(f"result: {str(msg.result)[:400]}")
+
+    raise JudgeResponseError(
+        "judge returned no parseable JSON"
+        + (f"; last responses: {' | '.join(seen[:3])}" if seen else " (no response at all)")
+    )
+
+
+class JudgeResponseError(RuntimeError):
+    """The judge ran but its answer could not be read as rubric JSON."""
+
+
+def _parse_judge_json(text: str):
+    """Best-effort JSON out of a model reply: bare, fenced, or embedded in prose."""
+    text = text.strip()
+    if not text:
+        return None
+    if text.startswith("```"):
+        lines = text.split("\n")[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        text = "\n".join(lines).strip()
+    try:
+        return json.loads(text)
+    except ValueError:
+        pass
+    start, end = text.find("{"), text.rfind("}")      # JSON wrapped in prose
+    if 0 <= start < end:
+        try:
+            return json.loads(text[start:end + 1])
+        except ValueError:
+            pass
+    return None
+
+
+def _record_usage(messages: list, model: str) -> None:
+    """Write the judge's own token usage to --token-output.
+
+    scripts/finance_reporter.py reads this file to fill the finance API's
+    judge_lines, so the keys are already the API's field names. Written even
+    when the judge failed, so the reporter always sees the cost that was
+    incurred. Best-effort: never raises, never blocks grading.
+    """
+    if _token_out is None:
+        return
+
+    line = {
+        "model_name": model or os.getenv("JUDGE_MODEL", ""),
+        "judge_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "judge_input_cache_tokens": 0,
+        "judge_output_cache_tokens": 0,
+        "judge_cost_usd": 0.0,
+    }
+    try:
+        for msg in reversed(messages):
+            usage = getattr(msg, "usage", None)
+            cost = getattr(msg, "total_cost_usd", None)
+            if not isinstance(usage, dict) and cost is None:
+                continue
+            if isinstance(usage, dict):
+                # SDK usage buckets are disjoint: input_tokens excludes cache.
+                line["judge_input_tokens"] = usage.get("input_tokens", 0) or 0
+                line["judge_output_tokens"] = usage.get("output_tokens", 0) or 0
+                line["judge_input_cache_tokens"] = usage.get("cache_read_input_tokens", 0) or 0
+                line["judge_output_cache_tokens"] = usage.get("cache_creation_input_tokens", 0) or 0
+            line["judge_cost_usd"] = cost or 0.0
+            break
+        _token_out.parent.mkdir(parents=True, exist_ok=True)
+        _token_out.write_text(json.dumps(line, indent=2))
+        print(f"[judge] token usage → {_token_out}")
+    except Exception as exc:                      # usage is a nice-to-have only
+        print(f"[judge] could not record usage: {exc}", file=sys.stderr)
 
 
 def _compute_scores(criteria: list[dict], results: list[dict]) -> dict:
@@ -168,16 +245,20 @@ def _compute_scores(criteria: list[dict], results: list[dict]) -> dict:
 
 
 def main() -> None:
-    global _out_path
+    global _out_path, _token_out
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--rubric", required=True)
     ap.add_argument("--trajectory", required=True)
     ap.add_argument("--output", required=True)
+    ap.add_argument("--token-output", default=None,
+                    help="write the judge's own token usage here, in the finance "
+                         "API's judge_lines shape (read by scripts/finance_reporter.py)")
     ap.add_argument("--model", default=os.getenv("JUDGE_MODEL", "claude-sonnet-4-6"))
     a = ap.parse_args()
 
     _out_path = Path(a.output)
+    _token_out = Path(a.token_output) if a.token_output else None
     rubric_path = Path(a.rubric)
     traj_path = Path(a.trajectory)
 

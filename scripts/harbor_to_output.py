@@ -538,7 +538,8 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     _copy(ver / "reward.txt", run_dir / "logs" / "verifier-reward.txt")
     _copy(ver / "test-stdout.txt", run_dir / "logs" / "verifier-stdout.txt")
     _copy(trial_dir / "trial.log", run_dir / "logs" / "trial.log")
-    for f in ("ctrf.json", "reward.txt", "reward.json", "test-stdout.txt", "detail.json", "rubric_breakdown.json"):
+    for f in ("ctrf.json", "reward.txt", "reward.json", "test-stdout.txt", "detail.json",
+              "rubric_breakdown.json", "judge_tokens.json"):
         _copy(ver / f, run_dir / "verifier" / f)
     vdir = run_dir / "verifier"
     vdir.mkdir(parents=True, exist_ok=True)
