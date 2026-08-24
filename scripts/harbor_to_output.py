@@ -431,6 +431,8 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         traj_w = tw_src["traj_tests"].get("weight", 0)
     if rubric_w == 0 and tw_src.get("rubric"):
         rubric_w = tw_src["rubric"].get("weight", 0)
+    if rubric_val is None and rubric_w > 0:
+        rubric_val = 0.0
 
     # ---- tokens / usage ---------------------------------------------------
     ar = tres.get("agent_result") or {}

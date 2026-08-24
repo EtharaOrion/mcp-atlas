@@ -53,11 +53,16 @@ if [ -n "$IMAGE" ] && ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
 fi
 
 # --- run (job dir = output/<task>/) ------------------------------------------
+TRAJ_DIR="$OUTPUT_DIR/$JOB/trajectory"
 RUN_OFFSET=0
-if [ -d "$OUTPUT_DIR/$JOB/trajectory" ]; then
-  LAST_RUN="$(ls "$OUTPUT_DIR/$JOB/trajectory" 2>/dev/null | grep -E '^Run_[0-9]+$' | sed 's/Run_//' | sort -n | tail -1 || true)"
+STASH_DIR=""
+if [ -d "$TRAJ_DIR" ]; then
+  LAST_RUN="$(ls "$TRAJ_DIR" 2>/dev/null | grep -E '^Run_[0-9]+$' | sed 's/Run_//' | sort -n | tail -1 || true)"
   [ -n "$LAST_RUN" ] && RUN_OFFSET="$LAST_RUN"
+  STASH_DIR="$(mktemp -d /tmp/harbor-traj-XXXXXX)"
+  cp -r "$TRAJ_DIR"/Run_* "$STASH_DIR/" 2>/dev/null || true
 fi
+
 ARGS=(run -y --path "$TASK" --agent "$AGENT" --jobs-dir "$OUTPUT_DIR" --job-name "$JOB" \
       --environment-build-timeout-multiplier "$BUILD_MULT" --n-attempts "$N")
 [ "$AGENT" != "oracle" ] && ARGS+=(--model "$MODEL")
@@ -68,4 +73,16 @@ HARBOR_OUTPUT_OFF=1 command harbor "${ARGS[@]}" || echo "[run_task] harbor exite
 CONV=(python3 scripts/harbor_to_output.py "$OUTPUT_DIR/$JOB" --output-dir "$OUTPUT_DIR" --at "$AT" --run-offset "$RUN_OFFSET")
 [ -n "${COPY_TO:-}" ] && CONV+=(--copy-to "$COPY_TO")
 "${CONV[@]}"
+
+# restore prior Run_* dirs that harbor may have wiped
+if [ -n "$STASH_DIR" ] && [ -d "$STASH_DIR" ]; then
+  mkdir -p "$TRAJ_DIR"
+  for run_dir in "$STASH_DIR"/Run_*; do
+    [ -d "$run_dir" ] || continue
+    run_name="$(basename "$run_dir")"
+    [ -d "$TRAJ_DIR/$run_name" ] || cp -r "$run_dir" "$TRAJ_DIR/$run_name"
+  done
+  rm -rf "$STASH_DIR"
+fi
+
 echo "[run_task] done → $OUTPUT_DIR/$SLUG"
