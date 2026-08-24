@@ -33,6 +33,7 @@ import json
 import re
 import shutil
 import sys
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -305,6 +306,79 @@ def classify_failure(passed: bool, traj_rows: list[dict], rubric_rows: list[dict
     return "unknown", "no rule matched; inspect trajectory manually"
 
 
+def _junit_to_ctrf(junit_path: Path, tw_comp: dict | None = None) -> dict | None:
+    if not junit_path.exists():
+        return None
+    weights = (tw_comp or {}).get("tests") or {}
+    try:
+        tree = ET.parse(junit_path)
+    except Exception:
+        return None
+    root = tree.getroot()
+    suite = root.find("testsuite") if root.tag == "testsuites" else root
+    if suite is None:
+        suite = root
+    tests = []
+    total = passed = failed = skipped = 0
+    for tc in suite.findall("testcase"):
+        name = tc.get("name", "")
+        duration = int(float(tc.get("time") or 0) * 1000)
+        if tc.find("skipped") is not None:
+            status = "skipped"; skipped += 1
+        elif tc.find("failure") is not None or tc.find("error") is not None:
+            status = "failed"; failed += 1
+        else:
+            status = "passed"; passed += 1
+        total += 1
+        entry: dict = {"name": name, "status": status, "duration": duration}
+        w = weights.get(name)
+        if w is not None:
+            entry["weight"] = w
+        tests.append(entry)
+    return {
+        "results": {
+            "tool": {"name": "pytest"},
+            "summary": {"tests": total, "passed": passed, "failed": failed,
+                        "pending": 0, "skipped": skipped, "other": 0},
+            "tests": tests,
+        }
+    }
+
+
+def _build_detail(ctrf: dict | None, weights: dict | None, breakdown: dict | None,
+                  traj_val: float | None, rubric_val: float | None,
+                  traj_w: float, rubric_w: float) -> dict:
+    tests = ((ctrf or {}).get("results") or {}).get("tests") or []
+    tw_tests = (((weights or {}).get("components") or {}).get("traj_tests") or {}).get("tests") or {}
+    traj_test_rows = []
+    for t in tests:
+        name = t["name"]
+        raw_passed = t["status"] == "passed"
+        w = tw_tests.get(name, 0)
+        is_positive = isinstance(w, (int, float)) and w > 0
+        is_negative = isinstance(w, (int, float)) and w < 0
+        if raw_passed and is_positive:
+            outcome = "credited"
+        elif not raw_passed and is_positive:
+            outcome = "missed"
+        elif raw_passed and is_negative:
+            outcome = "penalized"
+        elif not raw_passed and is_negative:
+            outcome = "avoided"
+        else:
+            outcome = "credited" if raw_passed else "missed"
+        traj_test_rows.append({"name": name, "weight": w, "raw_passed": raw_passed,
+                                "outcome": outcome, "is_positive": is_positive})
+    rubric_rows = (breakdown.get("results") if breakdown else None) or []
+    ledger = {
+        "traj_tests": {"weight": traj_w, "value": _r4(traj_val),
+                       "earned": _r4((traj_val or 0) * traj_w) if traj_val is not None else None},
+        "rubric": {"weight": rubric_w, "value": _r4(rubric_val),
+                   "earned": _r4((rubric_val or 0) * rubric_w) if rubric_val is not None else None},
+    }
+    return {"ledger": ledger, "traj_test_rows": traj_test_rows, "rubric_rows": rubric_rows}
+
+
 def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: Path,
                   model: str, task_name: str, task_dir: Path | None, job_id: str,
                   agent_name: str = "agent") -> dict:
@@ -319,7 +393,11 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     breakdown = _load(ver / "rubric_breakdown.json", {}) or {}
     weights = _load(task_dir / "tests" / "test_weights.json", {}) if task_dir else {}
     threshold = (weights or {}).get("threshold", PASS_THRESHOLD_DEFAULT)
-    rubric_src = _load(task_dir / "tests" / "rubric.json", []) if task_dir else []
+    if ctrf is None and (ver / "junit.xml").exists():
+        tw_comp = ((weights or {}).get("components") or {}).get("traj_tests")
+        ctrf = _junit_to_ctrf(ver / "junit.xml", tw_comp)
+    rubric_src_raw = _load(task_dir / "tests" / "rubric.json", []) if task_dir else []
+    rubric_src = rubric_src_raw if isinstance(rubric_src_raw, list) else []
 
     reward = (tres.get("verifier_result") or {}).get("rewards", {}).get("reward")
     if reward is None:
@@ -342,6 +420,17 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         rubric_val = breakdown["score"]
     traj_w = (ledger.get("traj_tests") or {}).get("weight", 0)
     rubric_w = (ledger.get("rubric") or {}).get("weight", 0)
+    vr_rewards = (tres.get("verifier_result") or {}).get("rewards", {})
+    if traj_val is None:
+        traj_val = vr_rewards.get("completion_rate")
+    channel_a = _load(ver / "reward_channel_a.json", {}) or {}
+    if traj_val is None:
+        traj_val = channel_a.get("completion_rate")
+    tw_src = (weights.get("components") or {})
+    if traj_w == 0 and tw_src.get("traj_tests"):
+        traj_w = tw_src["traj_tests"].get("weight", 0)
+    if rubric_w == 0 and tw_src.get("rubric"):
+        rubric_w = tw_src["rubric"].get("weight", 0)
 
     # ---- tokens / usage ---------------------------------------------------
     ar = tres.get("agent_result") or {}
@@ -401,6 +490,9 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
 
     failure_class, failure_reason = classify_failure(passed, traj_rows, rubric_rows, stream, exception)
 
+    reward_txt_val = str(round(reward, 6)) if reward is not None else "0.0"
+    detail_doc = _build_detail(ctrf, weights, breakdown, traj_val, rubric_val, traj_w, rubric_w)
+
     if not (ag / "trajectory.json").exists() and stream["messages"]:
         # Harbor's oracle agent (and any agent that only streams a .txt) writes
         # no ATIF trajectory.json; synthesize one from the parsed stream so the
@@ -423,6 +515,20 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     _copy(trial_dir / "trial.log", run_dir / "logs" / "trial.log")
     for f in ("ctrf.json", "reward.txt", "reward.json", "test-stdout.txt", "detail.json", "rubric_breakdown.json"):
         _copy(ver / f, run_dir / "verifier" / f)
+    vdir = run_dir / "verifier"
+    vdir.mkdir(parents=True, exist_ok=True)
+    ldir = run_dir / "logs"
+    ldir.mkdir(parents=True, exist_ok=True)
+    if ctrf is not None and not (vdir / "ctrf.json").exists():
+        _dump(vdir / "ctrf.json", ctrf)
+    if ctrf is not None and not (ldir / "verifier-ctrf.json").exists():
+        _dump(ldir / "verifier-ctrf.json", ctrf)
+    if not (vdir / "reward.txt").exists():
+        (vdir / "reward.txt").write_text(reward_txt_val + "\n", encoding="utf-8")
+    if not (ldir / "verifier-reward.txt").exists():
+        (ldir / "verifier-reward.txt").write_text(reward_txt_val + "\n", encoding="utf-8")
+    if not (vdir / "detail.json").exists():
+        _dump(vdir / "detail.json", detail_doc)
     report = {
         "model": model, "run_index": run_no, "include_multimodal": False,
         "pytest": {"passed": n_pass, "failed": n_fail, "exit_code": 0 if n_fail == 0 else 1,
@@ -447,6 +553,20 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     for f in ("ctrf.json", "detail.json", "reward.json", "reward.txt"):
         _copy(ver / f, raw_run / f)
     _copy(ver, raw_run / "verifier")
+    rver = raw_run / "verifier"
+    rver.mkdir(parents=True, exist_ok=True)
+    if ctrf is not None and not (raw_run / "ctrf.json").exists():
+        _dump(raw_run / "ctrf.json", ctrf)
+    if ctrf is not None and not (rver / "ctrf.json").exists():
+        _dump(rver / "ctrf.json", ctrf)
+    if not (raw_run / "reward.txt").exists():
+        (raw_run / "reward.txt").write_text(reward_txt_val + "\n", encoding="utf-8")
+    if not (rver / "reward.txt").exists():
+        (rver / "reward.txt").write_text(reward_txt_val + "\n", encoding="utf-8")
+    if not (raw_run / "detail.json").exists():
+        _dump(raw_run / "detail.json", detail_doc)
+    if not (rver / "detail.json").exists():
+        _dump(rver / "detail.json", detail_doc)
     _dump(raw_run / "rubric.json", {"format": "criteria", "rubric_score": _r4(rubric_val), "per_criterion": rubric_entries})
     with (raw_run / "trace.jsonl").open("w", encoding="utf-8") as fh:
         for r in stream["trace"]:
@@ -571,7 +691,7 @@ def _mean(vals):
     return round(sum(vals) / len(vals), 6) if vals else 0.0
 
 
-def convert_job(job_dir: Path, output_root: Path, *, ks: list[int]) -> list[Path]:
+def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: int = 0) -> list[Path]:
     job_cfg = _load(job_dir / "config.json", {}) or {}
     job_res = _load(job_dir / "result.json", {}) or {}
     job_lock = _load(job_dir / "lock.json", {}) or {}
@@ -597,8 +717,10 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int]) -> list[Path
                     if p.is_dir() and p.name not in ("trajectory", ".raw") and (p / "config.json").exists())
     traj_root = job_dir / "trajectory"
     if traj_root.is_dir():
-        trials += sorted((p for p in traj_root.iterdir() if p.is_dir() and (p / "config.json").exists()),
-                         key=lambda p: int(p.name.split("_")[-1]) if p.name.split("_")[-1].isdigit() else 0)
+        trials += sorted(
+            (p for p in traj_root.iterdir()
+             if p.is_dir() and (p / "config.json").exists() and not re.match(r'^Run_\d+$', p.name)),
+            key=lambda p: int(p.name.split("_")[-1]) if p.name.split("_")[-1].isdigit() else 0)
     by_task: dict[str, list[Path]] = {}
     for t in trials:
         cfg = _load(t / "config.json", {}) or {}
@@ -631,7 +753,7 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int]) -> list[Path
             # each trial dir becomes trajectory/Run_N, nothing is copied twice.
             moved = []
             for i, t in enumerate(tdirs):
-                dst = out_task / "trajectory" / f"Run_{i + 1}"
+                dst = out_task / "trajectory" / f"Run_{i + 1 + run_offset}"
                 if t.resolve() != dst.resolve():
                     dst.parent.mkdir(parents=True, exist_ok=True)
                     if dst.exists():
@@ -644,28 +766,34 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int]) -> list[Path
                 shutil.rmtree(out_task)
             out_task.mkdir(parents=True)
         raw_trials = out_task / ".raw" / f"trials_{slug}"
-        if raw_trials.exists():
+        if raw_trials.exists() and run_offset == 0:
             shutil.rmtree(raw_trials)
-        raw_trials.mkdir(parents=True)
+        raw_trials.mkdir(parents=True, exist_ok=True)
 
         for f in ("config.json", "lock.json", "result.json"):
             _copy(job_dir / f, out_task / f)
         # ground truth the task ships
         if task_dir:
-            for f in ("rubric.json", "gold_plan.json", "efs.json", "test_weights.json", "test_outputs.py"):
+            for f in ("rubric.json", "gold_plan.json", "efs.json", "test_weights.json", "test_outputs.py", "gt_env.json"):
                 _copy(task_dir / "tests" / f, raw_trials / "ground_truth" / f)
             _copy(task_dir / "instruction.md", raw_trials / "ground_truth" / "instruction.md")
             _copy(task_dir / "environment" / "enabled_tools.txt", raw_trials / "ground_truth" / "enabled_tools.txt")
 
-        recs = [reshape_trial(t, i + 1, out_task=out_task, raw_trials=raw_trials, model=model,
+        recs = [reshape_trial(t, i + 1 + run_offset, out_task=out_task, raw_trials=raw_trials, model=model,
                               task_name=task_name, task_dir=task_dir, job_id=job_id, agent_name=agent_name)
                 for i, t in enumerate(tdirs)]
         eps = [r["episode"] for r in recs]
-        n = len(eps)
-        c = sum(1 for e in eps if e["passed"])
-        rewards = [e["judge"]["reward"] for e in eps]
+        if run_offset > 0:
+            prev_summary = _load(out_task / "summary.json", {}) or {}
+            prev_eps = prev_summary.get("episodes") or []
+            all_eps = prev_eps + eps
+        else:
+            all_eps = eps
+        n = len(all_eps)
+        c = sum(1 for e in all_eps if e["passed"])
+        rewards = [e["judge"]["reward"] for e in all_eps]
         hist: dict[str, int] = {}
-        for e in eps:
+        for e in all_eps:
             hist[e["failure_class"]] = hist.get(e["failure_class"], 0) + 1
         stamp = _now()
 
@@ -677,30 +805,33 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int]) -> list[Path
                        "image": _load_image(task_dir), "episodes": n,
                        "harbor_job": str(job_dir)},
             "metrics": {
-                "accuracy": _mean([1.0 if e["passed"] else 0.0 for e in eps]),
+                "accuracy": _mean([1.0 if e["passed"] else 0.0 for e in all_eps]),
                 "avg_reward": _mean(rewards),
-                "avg_completion_rate": _mean([e["judge"]["rubric_score"] for e in eps]),
-                "avg_traj_tests": _mean([e["judge"]["components"]["traj_tests"]["value"] for e in eps]),
+                "avg_completion_rate": _mean([e["judge"]["rubric_score"] for e in all_eps]),
+                "avg_traj_tests": _mean([e["judge"]["components"]["traj_tests"]["value"] for e in all_eps]),
                 "avg_misbehave_rate": _mean([
-                    (e["judge"]["misbehave"] / max(1, len(e["judge"]["traj_tests"]["passed_tests"]))) for e in eps]),
-                "avg_valid_tool_calls": _mean([e["valid_tool_calls"] for e in eps]),
-                "avg_invalid_tool_calls": _mean([e["invalid_tool_calls"] for e in eps]),
-                "avg_error_tool_calls": _mean([e["error_tool_calls"] for e in eps]),
-                "avg_prompt_tokens": _mean([e["tokens"]["prompt"] for e in eps]),
-                "avg_llm_tokens": _mean([e["tokens"]["llm"] for e in eps]),
-                "avg_tool_tokens": _mean([e["tokens"]["tool"] for e in eps]),
+                    (e["judge"]["misbehave"] / max(1, len(e["judge"]["traj_tests"]["passed_tests"]))) for e in all_eps]),
+                "avg_valid_tool_calls": _mean([e["valid_tool_calls"] for e in all_eps]),
+                "avg_invalid_tool_calls": _mean([e["invalid_tool_calls"] for e in all_eps]),
+                "avg_error_tool_calls": _mean([e["error_tool_calls"] for e in all_eps]),
+                "avg_prompt_tokens": _mean([e["tokens"]["prompt"] for e in all_eps]),
+                "avg_llm_tokens": _mean([e["tokens"]["llm"] for e in all_eps]),
+                "avg_tool_tokens": _mean([e["tokens"]["tool"] for e in all_eps]),
             },
-            "episodes": eps,
+            "episodes": all_eps,
         }
         _dump(out_task / "summary.json", summary)
 
         # pass_summary.json
         per_run = [r["per_run"] for r in recs]
+        if run_offset > 0:
+            prev_ps = _load(out_task / "pass_summary.json", {}) or {}
+            per_run = (prev_ps.get("per_run") or []) + per_run
         pass_summary = {
             "model": model, "runs": n,
             "average_combined_score": _mean([p["combined_score"] for p in per_run]),
             "average_test_weights_percentage": _mean([p["test_weights_percentage"] for p in per_run]),
-            "average_rubric_weights_percentage": _mean([p["rubric_weights_percentage"] for p in per_run]),
+            "average_rubric_weights_percentage": (_mean(_rp) if (_rp := [p["rubric_weights_percentage"] for p in per_run if p["rubric_weights_percentage"] is not None]) else None),
             "per_run": per_run,
         }
         _dump(out_task / "pass_summary.json", pass_summary)
@@ -817,12 +948,14 @@ def main(argv=None) -> int:
     ap.add_argument("--copy-to", type=Path, default=None,
                     help="Also mirror each output/<task>/ dir into this directory.")
     ap.add_argument("--at", default="1", help="comma-separated k values for pass@k (default 1)")
+    ap.add_argument("--run-offset", type=int, default=0, dest="run_offset",
+                    help="number of already-written Run_N dirs to skip when numbering new runs")
     a = ap.parse_args(argv)
     ks = [int(x) for x in a.at.split(",") if x.strip()]
     if not a.job_dir.exists():
         print(f"job dir not found: {a.job_dir}", file=sys.stderr)
         return 2
-    written = convert_job(a.job_dir, a.output_dir, ks=ks)
+    written = convert_job(a.job_dir, a.output_dir, ks=ks, run_offset=a.run_offset)
     if a.copy_to:
         for w in written:
             dst = a.copy_to / w.name

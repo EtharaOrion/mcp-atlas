@@ -52,11 +52,11 @@ if [ -n "$IMAGE" ] && ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
   docker pull "$IMAGE"
 fi
 
-# --- run (job dir = output/<task>/; previous run archived) -------------------
-if [ -d "$OUTPUT_DIR/$JOB" ]; then
-  mkdir -p "$OUTPUT_DIR/.history"; STAMP="$(date +%Y%m%d-%H%M%S)"
-  mv "$OUTPUT_DIR/$JOB" "$OUTPUT_DIR/.history/${JOB}__${STAMP}"
-  echo "[run_task] previous run moved to $OUTPUT_DIR/.history/${JOB}__${STAMP}"
+# --- run (job dir = output/<task>/) ------------------------------------------
+RUN_OFFSET=0
+if [ -d "$OUTPUT_DIR/$JOB/trajectory" ]; then
+  LAST_RUN="$(ls "$OUTPUT_DIR/$JOB/trajectory" 2>/dev/null | grep -E '^Run_[0-9]+$' | sed 's/Run_//' | sort -n | tail -1 || true)"
+  [ -n "$LAST_RUN" ] && RUN_OFFSET="$LAST_RUN"
 fi
 ARGS=(run -y --path "$TASK" --agent "$AGENT" --jobs-dir "$OUTPUT_DIR" --job-name "$JOB" \
       --environment-build-timeout-multiplier "$BUILD_MULT" --n-attempts "$N")
@@ -65,7 +65,7 @@ echo "[run_task] harbor ${ARGS[*]}"
 HARBOR_OUTPUT_OFF=1 command harbor "${ARGS[@]}" || echo "[run_task] harbor exited non-zero; reshaping whatever landed" >&2
 
 # --- reshape in place ---------------------------------------------------------
-CONV=(python3 scripts/harbor_to_output.py "$OUTPUT_DIR/$JOB" --output-dir "$OUTPUT_DIR" --at "$AT")
+CONV=(python3 scripts/harbor_to_output.py "$OUTPUT_DIR/$JOB" --output-dir "$OUTPUT_DIR" --at "$AT" --run-offset "$RUN_OFFSET")
 [ -n "${COPY_TO:-}" ] && CONV+=(--copy-to "$COPY_TO")
 "${CONV[@]}"
 echo "[run_task] done → $OUTPUT_DIR/$SLUG"
