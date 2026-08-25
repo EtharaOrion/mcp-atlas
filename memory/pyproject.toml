@@ -1,0 +1,45 @@
+[project]
+name = "engram-harness"
+version = "0.1.0"
+description = "ENGRAM harness for the yuji harness submodule: memory daemon per trinity/ENGRAM.md"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Ethara.AI" }]
+
+dependencies = [
+  "pyyaml>=6.0",
+  "click>=8.1",
+  "cryptography>=42.0",
+  "in-toto>=2.2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+  "ruff>=0.5",
+]
+
+[project.scripts]
+engram = "engram.__main__:main"
+
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["engram"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra --strict-markers"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = []

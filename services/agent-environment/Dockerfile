@@ -1,10 +1,12 @@
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-RUN apt-get update && apt-get install -y npm bash git procps curl gettext-base && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends npm bash git procps curl gettext-base && rm -rf /var/lib/apt/lists/*
 
 # Need to install nodejs from elsewhere, because bookworm-slim is based on debian, and the available version of nodejs is 18, which is too old
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get update
-RUN apt-get install -y nodejs && rm -rf /var/lib/apt/lists/*
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
 
 # Pre-install all MCP server packages (NPX and UVX), saves approx 1 minute of startup time
 COPY dev_scripts/install_mcp_packages.sh /
@@ -39,6 +41,9 @@ RUN rm -rf /agent-environment/dev_scripts
 RUN uv sync
 
 EXPOSE 1984
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -fsS http://localhost:1984/health || exit 1
 
 # Set the entrypoint (this always runs to generate mcp_server_config.json from template)
 ENTRYPOINT ["/agent-environment/entrypoint.sh"]

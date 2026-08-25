@@ -9,6 +9,7 @@ Usage:
 """
 
 import pandas as pd
+import ast
 import sys
 import json
 from collections import defaultdict
@@ -48,7 +49,7 @@ def analyze_error_distribution(csv_path):
         if errors and errors != '[]':
             try:
                 # Parse errors (handle both string and actual list)
-                error_list = eval(errors) if isinstance(errors, str) else errors
+                error_list = ast.literal_eval(errors) if isinstance(errors, str) else errors
 
                 if error_list:
                     tasks_with_errors += 1
