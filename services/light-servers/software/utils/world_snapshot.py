@@ -37,7 +37,9 @@ A4 reconciliation -- seed vs. content, two different guarantees:
 """
 from __future__ import annotations
 
+import hashlib
 import inspect
+import json
 import logging
 import os
 import pickle
@@ -105,6 +107,69 @@ def resolve_seed(seed=None) -> int:
     return 42
 
 
+_DIGESTS_PATH = Path(__file__).resolve().parent / "world_snapshot_digests.json"
+_SOFTWARE_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _sha256(path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _snapshot_key(path) -> str:
+    """Manifest key for `path`: its location relative to software/."""
+    resolved = Path(path).resolve()
+    try:
+        return resolved.relative_to(_SOFTWARE_ROOT).as_posix()
+    except ValueError:
+        return resolved.as_posix()
+
+
+def _load_digests() -> dict:
+    if not _DIGESTS_PATH.is_file():
+        return {}
+    try:
+        with open(_DIGESTS_PATH, "r", encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError) as exc:
+        raise RuntimeError(
+            f"world snapshot digest manifest unreadable at {_DIGESTS_PATH}: {exc}"
+        ) from exc
+
+
+def _verify_snapshot(path) -> None:
+    """Refuse to unpickle a snapshot whose bytes are not the recorded ones.
+
+    Unpickling executes arbitrary code, so an unrecorded or altered snapshot
+    is a code-execution channel. Fail closed rather than load it.
+    """
+    key = _snapshot_key(path)
+    expected = _load_digests().get(key)
+    if expected is None:
+        raise RuntimeError(
+            f"world snapshot {key} is absent from {_DIGESTS_PATH.name}; "
+            "refusing to unpickle an unrecorded snapshot"
+        )
+    actual = _sha256(path)
+    if actual != expected:
+        raise RuntimeError(
+            f"world snapshot {key} failed its integrity check; refusing to "
+            f"unpickle (expected {expected}, got {actual})"
+        )
+
+
+def _record_snapshot(path) -> None:
+    """Record `path`'s digest after a bake so restore_into will accept it."""
+    digests = _load_digests()
+    digests[_snapshot_key(path)] = _sha256(path)
+    with open(_DIGESTS_PATH, "w", encoding="utf-8") as fh:
+        json.dump(digests, fh, indent=2, sort_keys=True)
+        fh.write("\n")
+
+
 def bake_session(core, path) -> None:
     """Pickle `core`'s world to `path`, minus its live connection attrs."""
     stash = {k: getattr(core, k) for k in _LIVE_ATTRS if hasattr(core, k)}
@@ -113,6 +178,7 @@ def bake_session(core, path) -> None:
     try:
         with open(path, "wb") as fh:
             pickle.dump(core, fh, protocol=pickle.HIGHEST_PROTOCOL)
+        _record_snapshot(path)
     finally:
         for k, v in stash.items():
             setattr(core, k, v)
@@ -125,6 +191,7 @@ def restore_into(target, path):
     responsible for (re)attaching live connection attrs (e.g. `target.os`)
     afterwards. Returns `target`.
     """
+    _verify_snapshot(path)
     with open(path, "rb") as fh:
         loaded = pickle.load(fh)
     target.__dict__.update(loaded.__dict__)
