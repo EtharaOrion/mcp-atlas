@@ -64,20 +64,22 @@ PYEOF
 fi
 
 sect "Harbor"
-if command -v harbor &>/dev/null; then
-    CFG=$(harbor run --print-config --path "$TASK" 2>/dev/null || true)
-    if echo "$CFG" | python3 -c "
-import sys, json
-data = sys.stdin.read().strip()
-c = json.loads(data) if data else {}
-sys.exit(0 if len(c.get('tasks', [])) > 0 else 1)
-" 2>/dev/null; then
-        ok "Harbor classifies as task"
-    else
-        fail "Harbor sees this as a dataset — check task.toml (name must be org/name, schema_version required)"
-    fi
+# Harbor distinguishes a task from a dataset by which manifest the directory
+# carries: dataset.toml (harbor/models/dataset/paths.py: MANIFEST_FILENAME)
+# marks a dataset, task.toml marks a task. Check that structurally — there is
+# no cheap CLI probe for it. `harbor check` exists but spawns an LLM evaluator
+# against a rubric, which is too slow and costly for a pre-flight script.
+if [[ -f "$TASK/dataset.toml" ]]; then
+    fail "dataset.toml present — Harbor will classify this as a dataset, not a task"
+elif [[ -f "$TASK/task.toml" ]]; then
+    ok "Harbor classifies as task (task.toml, no dataset.toml)"
 else
-    warn "harbor CLI not found — skipping Harbor classification check"
+    fail "neither task.toml nor dataset.toml — Harbor cannot classify this directory"
+fi
+if command -v harbor &>/dev/null; then
+    ok "harbor CLI available ($(harbor --version 2>/dev/null | tr -d '\n'))"
+else
+    warn "harbor CLI not found — task cannot be run locally"
 fi
 
 sect "Docker images"

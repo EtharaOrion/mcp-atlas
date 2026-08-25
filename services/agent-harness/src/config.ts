@@ -20,11 +20,13 @@ export const config = {
   // Logging configuration
   logLevel: process.env.LOG_LEVEL || 'info',
 
-  // Request timeouts (ms). Raise these for slow / heavy-reasoning models so long
-  // thinking calls and large tool payloads aren't cut off mid-run.
-  toolCallTimeoutMs: Number(process.env.TOOL_CALL_TIMEOUT_MS) || 60_000,
-  listToolsTimeoutMs: Number(process.env.LIST_TOOLS_TIMEOUT_MS) || 180_000,
-  llmTimeoutMs: Number(process.env.LLM_TIMEOUT_MS) || 600_000,
+  // Request timeouts (ms). Uncapped by default so heavy-reasoning models and
+  // large tool payloads are never cut off mid-run. 0 means no timeout — for
+  // axios that is its native "wait forever", and promiseWithTimeout skips the
+  // race entirely. Set a positive value to reimpose a cap.
+  toolCallTimeoutMs: Number(process.env.TOOL_CALL_TIMEOUT_MS) || 0,
+  listToolsTimeoutMs: Number(process.env.LIST_TOOLS_TIMEOUT_MS) || 0,
+  llmTimeoutMs: Number(process.env.LLM_TIMEOUT_MS) || 0,
 }
 
 // Validate required environment variables

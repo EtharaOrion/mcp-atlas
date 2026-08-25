@@ -9,6 +9,13 @@ type StatsCollector = {
 };
 
 export function promiseWithTimeout<T>(promise: Promise<T>, timeout: number): Promise<T> {
+  // No cap: await the promise directly. Racing a setTimeout here would be worse
+  // than useless — Node clamps delays above 2^31-1 ms down to 1, so passing
+  // Infinity or MAX_SAFE_INTEGER would fire the rejection immediately.
+  if (!Number.isFinite(timeout) || timeout <= 0) {
+    return promise;
+  }
+
   return Promise.race([
     promise,
     new Promise<T>((_, reject) =>
