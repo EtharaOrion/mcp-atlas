@@ -10,6 +10,7 @@ and complex-mcp task runs land in one consistent shape:
     │   ├── agent/{claude-code.txt, trajectory.json}
     │   ├── logs/{agent-stream.txt, verifier-ctrf.json, verifier-reward.txt, verifier-stdout.txt}
     │   ├── verifier/{ctrf.json, reward.txt, test-stdout.txt, reward.json, detail.json, rubric_breakdown.json}
+    │   ├── artifacts/{<files the agent produced>, manifest.json, index.json}
     │   ├── config.json  lock.json  result.json  report.json
     └── .raw/trials_<slug>/                          (flat analysis tree)
         ├── summary.json  pairs.jsonl  failure_analysis.json
@@ -74,6 +75,12 @@ def _dump(p: Path, obj) -> None:
 # and dropped afterwards, never shipped.
 PRUNE_FROM_OUTPUT = ("trial.log", "lock.json")
 
+# junit.xml is read during reshaping (legacy jobs whose CTRF has no other
+# source, see _junit_to_ctrf) and dropped afterwards. Tasks now emit
+# verifier/ctrf.json directly via services/scoring/ctrf_pytest_plugin.py, so no
+# new run produces this file at all — the prune only catches older job dirs.
+PRUNE_FROM_VERIFIER = ("junit.xml",)
+
 
 def _prune(*paths: Path) -> None:
     for pth in paths:
@@ -96,6 +103,50 @@ def _copy(src: Path, dst: Path) -> bool:
     else:
         shutil.copy2(src, dst)
     return True
+
+
+def _flatten_artifacts(run_dir: Path) -> None:
+    """Lift the agent's produced files to ``Run_N/artifacts/`` and index them.
+
+    Harbor mirrors its convention publish dir onto the host at
+    ``artifacts/logs/artifacts/`` (the container path, verbatim). One level of
+    nesting per run is noise, so the files are lifted to ``artifacts/`` and the
+    emptied ``logs/`` subtree removed.
+
+    Harbor's own ``manifest.json`` — the record of what collection attempted —
+    is left exactly as written; it is provenance, and Harbor reserves the name.
+    Alongside it goes ``index.json``: path/size/sha256 per shipped file, so a
+    consumer can verify the bundle without opening it.
+    """
+    import hashlib
+
+    art = run_dir / "artifacts"
+    art.mkdir(parents=True, exist_ok=True)
+    nested = art / "logs" / "artifacts"
+    if nested.is_dir():
+        for child in sorted(nested.iterdir()):
+            dst = art / child.name
+            if dst.exists():
+                # Never clobber Harbor's manifest.json (or a file already
+                # lifted): keep the agent's file under a suffixed name rather
+                # than dropping it silently.
+                dst = art / f"{child.stem}_artifact{child.suffix}"
+            shutil.move(str(child), str(dst))
+        shutil.rmtree(art / "logs", ignore_errors=True)
+
+    entries = []
+    for f in sorted(p for p in art.rglob("*") if p.is_file()):
+        if f.name in ("manifest.json", "index.json") and f.parent == art:
+            continue
+        try:
+            data = f.read_bytes()
+        except OSError as exc:
+            print(f"[output] could not index {f}: {exc}", file=sys.stderr)
+            continue
+        entries.append({"path": f.relative_to(art).as_posix(), "size": len(data),
+                        "sha256": hashlib.sha256(data).hexdigest()})
+    _dump(art / "index.json", {"files": entries, "count": len(entries),
+                               "total_bytes": sum(e["size"] for e in entries)})
 
 
 def _r4(x):
@@ -578,6 +629,8 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     _copy(ag / "trajectory.json", run_dir / "agent" / "trajectory.json")
     for f in ("config.json", "result.json"):
         _copy(trial_dir / f, run_dir / f)
+    _copy(trial_dir / "artifacts", run_dir / "artifacts")
+    _flatten_artifacts(run_dir)
     _copy(stream_path, run_dir / "logs" / "agent-stream.txt")
     _copy(ver / "ctrf.json", run_dir / "logs" / "verifier-ctrf.json")
     _copy(ver / "reward.txt", run_dir / "logs" / "verifier-reward.txt")
@@ -725,8 +778,13 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     per_run = {"run_index": run_no, "include_multimodal": False,
                "test_weights_percentage": test_pct, "rubric_weights_percentage": rubric_pct,
                "combined_score": final_reward}
+    # Safe here: ctrf was resolved at the top of this function, so a legacy
+    # XML-only job still reshapes correctly — it just does not ship the XML.
     _prune(*(run_dir / f for f in PRUNE_FROM_OUTPUT),
-           *(run_dir / "logs" / f for f in PRUNE_FROM_OUTPUT))
+           *(run_dir / "logs" / f for f in PRUNE_FROM_OUTPUT),
+           *(run_dir / "verifier" / f for f in PRUNE_FROM_VERIFIER),
+           *(raw_run / "verifier" / f for f in PRUNE_FROM_VERIFIER),
+           *(raw_run / f for f in PRUNE_FROM_VERIFIER))
     return {"episode": episode, "pair": pair, "per_run": per_run, "report": report,
             "failure": {"attempt": run_no, "failure_class": failure_class, "reason": failure_reason}}
 
