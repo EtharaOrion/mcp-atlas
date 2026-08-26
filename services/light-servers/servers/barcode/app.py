@@ -55,7 +55,7 @@ async def ean13_validate(digits13: str) -> bool:
 @mcp.tool
 async def ean13_generate(digits12: str) -> str:
     """Return the full 13-digit EAN-13 code built from a 12-digit prefix."""
-    return digits12 + str(await ean13_checksum.__wrapped__(digits12))
+    return digits12 + str(await ean13_checksum(digits12))
 
 
 @mcp.tool
@@ -93,7 +93,7 @@ async def upc_validate(digits12: str) -> bool:
 @mcp.tool
 async def upc_generate(digits11: str) -> str:
     """Return the full 12-digit UPC-A code built from an 11-digit prefix."""
-    return digits11 + str(await upc_checksum.__wrapped__(digits11))
+    return digits11 + str(await upc_checksum(digits11))
 
 
 @mcp.tool
@@ -120,13 +120,13 @@ async def isbn10_validate(isbn: str) -> bool:
 @mcp.tool
 async def isbn13_checksum(digits12: str) -> int:
     """Compute the ISBN-13 check digit (identical algorithm to EAN-13)."""
-    return await ean13_checksum.__wrapped__(digits12)
+    return await ean13_checksum(digits12)
 
 
 @mcp.tool
 async def isbn13_validate(isbn: str) -> bool:
     """Return True if a 13-digit ISBN-13 has a valid check digit."""
-    return await ean13_validate.__wrapped__(isbn.replace("-", "").replace(" ", ""))
+    return await ean13_validate(isbn.replace("-", "").replace(" ", ""))
 
 
 @mcp.tool
@@ -136,7 +136,7 @@ async def isbn10_to_isbn13(isbn10: str) -> str:
     if len(isbn10) != 10:
         raise ValueError("expected 10-char ISBN-10")
     prefix = "978" + isbn10[:9]
-    return prefix + str(await ean13_checksum.__wrapped__(prefix))
+    return prefix + str(await ean13_checksum(prefix))
 
 
 @mcp.tool
@@ -200,7 +200,7 @@ async def gtin14_validate(digits14: str) -> bool:
     """Return True if a 14-digit GTIN-14 code has a valid check digit."""
     if len(digits14) != 14 or not _only_digits(digits14):
         return False
-    return await gtin14_checksum.__wrapped__(digits14[:13]) == int(digits14[13])
+    return await gtin14_checksum(digits14[:13]) == int(digits14[13])
 
 
 @mcp.tool
@@ -248,7 +248,7 @@ async def qr_encode_text_meta(text: str, ecc_level: str = "M") -> Dict:
         "bytes": n,
         "mode": mode,
         "ecc_level": ecc_level.upper(),
-        "recommended_version": await qr_recommend_version.__wrapped__(text, ecc_level),
+        "recommended_version": await qr_recommend_version(text, ecc_level),
     }
 
 

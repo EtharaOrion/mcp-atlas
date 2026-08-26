@@ -176,7 +176,7 @@ async def shortest_path_unweighted(adj: dict, source) -> dict:
 @mcp.tool
 async def path_exists(adj: dict, a, b) -> bool:
     """Return True if there exists a path from node `a` to node `b` in `adj`."""
-    return b in bfs.__wrapped__(adj, a)
+    return b in bfs(adj, a)
 
 
 @mcp.tool
@@ -199,7 +199,7 @@ async def adjacency_matrix(adj: dict, nodes: list) -> list[list[int]]:
 async def adjacency_list_to_matrix(adj: dict) -> list:
     """Convert adjacency list mapping to an adjacency matrix using the list of keys as nodes."""
     nodes = list(adj.keys())
-    return await adjacency_matrix.__wrapped__(adj, nodes)
+    return await adjacency_matrix(adj, nodes)
 
 
 @mcp.tool
@@ -214,7 +214,7 @@ async def is_connected(adj: dict) -> bool:
     if not adj:
         return True
     start = next(iter(adj))
-    comp = bfs.__wrapped__(adj, start)
+    comp = bfs(adj, start)
     return len(comp) == len(adj)
 
 

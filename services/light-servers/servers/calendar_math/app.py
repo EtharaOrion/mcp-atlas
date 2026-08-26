@@ -55,13 +55,13 @@ async def is_business_day(date_str: str, holidays: Optional[List[str]] = None) -
 @mcp.tool
 async def next_business_day(date_str: str, holidays: Optional[List[str]] = None) -> str:
     """Return the next business day strictly after `date_str`."""
-    return await add_business_days.__wrapped__(date_str, 1, holidays)
+    return await add_business_days(date_str, 1, holidays)
 
 
 @mcp.tool
 async def previous_business_day(date_str: str, holidays: Optional[List[str]] = None) -> str:
     """Return the previous business day strictly before `date_str`."""
-    return await add_business_days.__wrapped__(date_str, -1, holidays)
+    return await add_business_days(date_str, -1, holidays)
 
 
 @mcp.tool

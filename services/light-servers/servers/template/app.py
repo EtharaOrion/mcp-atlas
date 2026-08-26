@@ -2,7 +2,8 @@ from fastmcp import FastMCP
 from typing import Any, Dict, List
 from string import Template
 import re
-from jinja2 import Environment, StrictUndefined, TemplateSyntaxError, meta
+from jinja2 import StrictUndefined, TemplateSyntaxError, meta
+from jinja2.sandbox import SandboxedEnvironment
 
 mcp = FastMCP("TemplateServer")
 
@@ -11,14 +12,18 @@ mcp = FastMCP("TemplateServer")
 # is for: it renders arbitrary text templates (JSON, YAML, plain prose), and
 # HTML-escaping them would corrupt every non-HTML target. B701 describes an
 # XSS risk that does not apply to a tool whose declared product is the raw
-# rendered string.
+# rendered string, so that rule stays suppressed here.
 #
-# The real exposure at this site is a different one that B701 does not
-# describe: render_jinja passes an agent-supplied template into a plain
-# Environment, not a SandboxedEnvironment, so a template can reach Python
-# attributes and execute code. Recorded as D-TEMPLATE-SSTI in VERDICT.md
-# rather than suppressed here.
-_jinja_env = Environment(autoescape=False)  # nosec B701
+# The environment is sandboxed. A plain Environment lets a rendered template
+# walk Python attributes (''.__class__.__mro__ and onward) into arbitrary
+# execution inside this process, and this process also holds the per-session
+# world registries that the verifier reads back and grades against ground
+# truth. That made the template tools a write primitive on the graded state
+# channel rather than a rendering service. SandboxedEnvironment blocks the
+# attribute traversal that primitive depends on while leaving ordinary
+# template syntax (variables, filters, loops, conditionals) unchanged.
+# Recorded as D-TEMPLATE-SSTI and composed as D-GRADED-STATE-CHANNEL-WRITABLE.
+_jinja_env = SandboxedEnvironment(autoescape=False)  # nosec B701
 
 
 @mcp.tool
@@ -30,9 +35,9 @@ async def render_jinja(template: str, context: Dict[str, Any]) -> str:
 @mcp.tool
 async def render_jinja_strict(template: str, context: Dict[str, Any]) -> str:
     """Render Jinja2 with StrictUndefined: raises on undefined variables."""
-    # See the note on _jinja_env above: unescaped output is the product, and
-    # the sandbox question is tracked as D-TEMPLATE-SSTI, not by B701.
-    env = Environment(autoescape=False, undefined=StrictUndefined)  # nosec B701
+    # Same sandboxing rationale as _jinja_env above. StrictUndefined only
+    # changes undefined-variable behaviour; it is not an isolation control.
+    env = SandboxedEnvironment(autoescape=False, undefined=StrictUndefined)  # nosec B701
     return env.from_string(template).render(**context)
 
 
@@ -134,7 +139,7 @@ async def render_batch(template: str, contexts: List[Dict[str, Any]], syntax: st
         compiled = _jinja_env.from_string(template)
         return [compiled.render(**c) for c in contexts]
     if s == "mustache":
-        return [await render_mustache.__wrapped__(template, c) for c in contexts]
+        return [await render_mustache(template, c) for c in contexts]
     if s == "format":
         return [template.format(**c) for c in contexts]
     if s == "dollar":
@@ -151,7 +156,7 @@ async def escape_jinja(text: str) -> str:
 @mcp.tool
 async def count_placeholders(template: str, syntax: str = "jinja") -> int:
     """Return the count of distinct placeholder occurrences in `template`."""
-    variables = await extract_variables.__wrapped__(template, syntax)
+    variables = await extract_variables(template, syntax)
     return len(variables)
 
 
@@ -171,7 +176,7 @@ async def preview(template: str, syntax: str = "jinja") -> Dict:
         "syntax": syntax,
         "length": len(template),
         "lines": template.count("\n") + 1,
-        "variables": await extract_variables.__wrapped__(template, syntax),
+        "variables": await extract_variables(template, syntax),
     }
 
 

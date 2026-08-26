@@ -78,13 +78,13 @@ async def get_rate(from_currency: str, to_currency: str, date: Optional[str] = N
 @mcp.tool
 async def historical_rate(from_currency: str, to_currency: str, date: str) -> float:
     """Return the exchange rate on a specific `date` snapshot (falls back to latest)."""
-    return await get_rate.__wrapped__(from_currency, to_currency, date)
+    return await get_rate(from_currency, to_currency, date)
 
 
 @mcp.tool
 async def inverse_rate(from_currency: str, to_currency: str, date: Optional[str] = None) -> float:
     """Return the inverse of the exchange rate from `from_currency` to `to_currency`."""
-    return 1.0 / await get_rate.__wrapped__(from_currency, to_currency, date)
+    return 1.0 / await get_rate(from_currency, to_currency, date)
 
 
 @mcp.tool
@@ -105,22 +105,22 @@ async def currency_info(code: str) -> Dict[str, str]:
 @mcp.tool
 async def format_amount(amount: float, code: str, decimals: int = 2) -> str:
     """Format `amount` with `code`'s symbol and grouping (naive: en-US style)."""
-    info = await currency_info.__wrapped__(code)
+    info = await currency_info(code)
     return f"{info['symbol']}{amount:,.{decimals}f}"
 
 
 @mcp.tool
 async def add_amounts(a: float, code_a: str, b: float, code_b: str, target: str, date: Optional[str] = None) -> float:
     """Convert both amounts to `target` currency and return the sum."""
-    left = await convert.__wrapped__(a, code_a, target, date)
-    right = await convert.__wrapped__(b, code_b, target, date)
+    left = await convert(a, code_a, target, date)
+    right = await convert(b, code_b, target, date)
     return left + right
 
 
 @mcp.tool
 async def convert_batch(amounts: List[float], from_currency: str, to_currency: str, date: Optional[str] = None) -> List[float]:
     """Convert a list of amounts from `from_currency` to `to_currency` in one call."""
-    rate = await get_rate.__wrapped__(from_currency, to_currency, date)
+    rate = await get_rate(from_currency, to_currency, date)
     return [a * rate for a in amounts]
 
 
@@ -139,7 +139,7 @@ async def major_currencies() -> List[str]:
 @mcp.tool
 async def convert_to_usd(amount: float, from_currency: str, date: Optional[str] = None) -> float:
     """Convenience: convert `amount` in `from_currency` to USD."""
-    return await convert.__wrapped__(amount, from_currency, "USD", date)
+    return await convert(amount, from_currency, "USD", date)
 
 
 @mcp.tool
@@ -154,5 +154,5 @@ async def compare_pair(pair: str, date: Optional[str] = None) -> Dict:
     if "/" not in pair:
         raise ValueError("pair must be like BASE/QUOTE")
     base, quote = pair.upper().split("/")
-    rate = await get_rate.__wrapped__(base, quote, date)
+    rate = await get_rate(base, quote, date)
     return {"pair": f"{base}/{quote}", "rate": rate, "inverse": 1.0 / rate, "date": date or "latest"}

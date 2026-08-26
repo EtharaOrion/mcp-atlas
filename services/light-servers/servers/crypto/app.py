@@ -119,7 +119,7 @@ async def timing_safe_compare(a: str, b: str) -> bool:
 @mcp.tool
 async def derive_key(password: str, salt: str, iterations: int = 100000) -> str:
     """Convenience wrapper returning a PBKDF2-derived key hex string for `password` and `salt`."""
-    return pbkdf2_hex.__wrapped__(password, salt, iterations)
+    return pbkdf2_hex(password, salt, iterations)
 
 
 @mcp.tool
@@ -178,7 +178,7 @@ async def hmac_sign_hex(key: str, message: str) -> str:
 @mcp.tool
 async def hmac_verify_hex(key: str, message: str, signature: str) -> bool:
     """Verify that `signature` matches HMAC-SHA256(message,key) in a timing-safe way."""
-    expected = hmac_sign_hex.__wrapped__(key, message)
+    expected = hmac_sign_hex(key, message)
     return hmac.compare_digest(expected, signature)
 
 

@@ -104,8 +104,8 @@ async def relative_luminance(hex_str: str) -> float:
 @mcp.tool
 async def contrast_ratio(hex_a: str, hex_b: str) -> float:
     """Return the WCAG contrast ratio between two colors (1.0 to 21.0)."""
-    la = await relative_luminance.__wrapped__(hex_a)
-    lb = await relative_luminance.__wrapped__(hex_b)
+    la = await relative_luminance(hex_a)
+    lb = await relative_luminance(hex_b)
     hi, lo = max(la, lb), min(la, lb)
     return (hi + 0.05) / (lo + 0.05)
 
@@ -113,7 +113,7 @@ async def contrast_ratio(hex_a: str, hex_b: str) -> float:
 @mcp.tool
 async def wcag_check(hex_fg: str, hex_bg: str) -> Dict[str, bool]:
     """Report which WCAG levels the fg/bg pair passes: AA/AAA for normal/large text."""
-    ratio = await contrast_ratio.__wrapped__(hex_fg, hex_bg)
+    ratio = await contrast_ratio(hex_fg, hex_bg)
     return {
         "ratio": ratio,
         "AA_normal": ratio >= 4.5,
@@ -126,29 +126,29 @@ async def wcag_check(hex_fg: str, hex_bg: str) -> Dict[str, bool]:
 @mcp.tool
 async def lighten(hex_str: str, amount: float = 0.1) -> str:
     """Return `hex_str` lightened by `amount` (0-1) in HSL space."""
-    h, s, l = await hex_to_hsl.__wrapped__(hex_str)
-    return await hsl_to_hex.__wrapped__(h, s, min(1.0, l + amount))
+    h, s, l = await hex_to_hsl(hex_str)
+    return await hsl_to_hex(h, s, min(1.0, l + amount))
 
 
 @mcp.tool
 async def darken(hex_str: str, amount: float = 0.1) -> str:
     """Return `hex_str` darkened by `amount` (0-1) in HSL space."""
-    h, s, l = await hex_to_hsl.__wrapped__(hex_str)
-    return await hsl_to_hex.__wrapped__(h, s, max(0.0, l - amount))
+    h, s, l = await hex_to_hsl(hex_str)
+    return await hsl_to_hex(h, s, max(0.0, l - amount))
 
 
 @mcp.tool
 async def saturate(hex_str: str, amount: float = 0.1) -> str:
     """Return `hex_str` with saturation increased by `amount` (0-1) in HSL space."""
-    h, s, l = await hex_to_hsl.__wrapped__(hex_str)
-    return await hsl_to_hex.__wrapped__(h, min(1.0, s + amount), l)
+    h, s, l = await hex_to_hsl(hex_str)
+    return await hsl_to_hex(h, min(1.0, s + amount), l)
 
 
 @mcp.tool
 async def desaturate(hex_str: str, amount: float = 0.1) -> str:
     """Return `hex_str` with saturation decreased by `amount` (0-1) in HSL space."""
-    h, s, l = await hex_to_hsl.__wrapped__(hex_str)
-    return await hsl_to_hex.__wrapped__(h, max(0.0, s - amount), l)
+    h, s, l = await hex_to_hsl(hex_str)
+    return await hsl_to_hex(h, max(0.0, s - amount), l)
 
 
 @mcp.tool
@@ -161,47 +161,47 @@ async def invert(hex_str: str) -> str:
 @mcp.tool
 async def complementary(hex_str: str) -> str:
     """Return the complementary color (hue rotated 180 degrees)."""
-    h, s, l = await hex_to_hsl.__wrapped__(hex_str)
-    return await hsl_to_hex.__wrapped__((h + 180) % 360, s, l)
+    h, s, l = await hex_to_hsl(hex_str)
+    return await hsl_to_hex((h + 180) % 360, s, l)
 
 
 @mcp.tool
 async def triad(hex_str: str) -> List[str]:
     """Return a triadic color scheme (base + 2 hues 120 degrees apart)."""
-    h, s, l = await hex_to_hsl.__wrapped__(hex_str)
+    h, s, l = await hex_to_hsl(hex_str)
     return [
-        await hsl_to_hex.__wrapped__(h, s, l),
-        await hsl_to_hex.__wrapped__((h + 120) % 360, s, l),
-        await hsl_to_hex.__wrapped__((h + 240) % 360, s, l),
+        await hsl_to_hex(h, s, l),
+        await hsl_to_hex((h + 120) % 360, s, l),
+        await hsl_to_hex((h + 240) % 360, s, l),
     ]
 
 
 @mcp.tool
 async def tetrad(hex_str: str) -> List[str]:
     """Return a tetradic color scheme (base + 3 hues 90 degrees apart)."""
-    h, s, l = await hex_to_hsl.__wrapped__(hex_str)
-    return [await hsl_to_hex.__wrapped__((h + i * 90) % 360, s, l) for i in range(4)]
+    h, s, l = await hex_to_hsl(hex_str)
+    return [await hsl_to_hex((h + i * 90) % 360, s, l) for i in range(4)]
 
 
 @mcp.tool
 async def analogous(hex_str: str, n: int = 5, spread: float = 30.0) -> List[str]:
     """Return `n` analogous colors spread across `spread` degrees of hue centered on the base."""
-    h, s, l = await hex_to_hsl.__wrapped__(hex_str)
+    h, s, l = await hex_to_hsl(hex_str)
     if n <= 1:
-        return [await hsl_to_hex.__wrapped__(h, s, l)]
+        return [await hsl_to_hex(h, s, l)]
     step = spread / (n - 1)
     start = h - spread / 2
-    return [await hsl_to_hex.__wrapped__((start + i * step) % 360, s, l) for i in range(n)]
+    return [await hsl_to_hex((start + i * step) % 360, s, l) for i in range(n)]
 
 
 @mcp.tool
 async def palette(hex_str: str, n: int = 5) -> List[str]:
     """Return a monochrome palette of `n` shades varying lightness from the base."""
-    h, s, l = await hex_to_hsl.__wrapped__(hex_str)
+    h, s, l = await hex_to_hsl(hex_str)
     if n <= 1:
-        return [await hsl_to_hex.__wrapped__(h, s, l)]
+        return [await hsl_to_hex(h, s, l)]
     step = 1.0 / (n + 1)
-    return [await hsl_to_hex.__wrapped__(h, s, step * (i + 1)) for i in range(n)]
+    return [await hsl_to_hex(h, s, step * (i + 1)) for i in range(n)]
 
 
 @mcp.tool
@@ -233,13 +233,13 @@ async def blend(hex_a: str, hex_b: str, ratio: float = 0.5) -> str:
 @mcp.tool
 async def is_dark(hex_str: str) -> bool:
     """Return True if `hex_str` is a 'dark' color by relative luminance (<0.5)."""
-    return (await relative_luminance.__wrapped__(hex_str)) < 0.5
+    return (await relative_luminance(hex_str)) < 0.5
 
 
 @mcp.tool
 async def best_text_color(bg_hex: str) -> str:
     """Return '#000000' or '#FFFFFF' whichever has better contrast against `bg_hex`."""
-    lum = await relative_luminance.__wrapped__(bg_hex)
+    lum = await relative_luminance(bg_hex)
     return "#000000" if lum > 0.5 else "#FFFFFF"
 
 

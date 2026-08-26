@@ -58,7 +58,7 @@ async def filter_rows(text: str, column: str, value: str, delimiter: str = ",") 
     """Return CSV containing only rows where `column` equals `value`."""
     rows = list(_dict_reader(text, delimiter))
     kept = [r for r in rows if r.get(column) == value]
-    return await to_csv.__wrapped__(kept, list(rows[0].keys()) if rows else None, delimiter)
+    return await to_csv(kept, list(rows[0].keys()) if rows else None, delimiter)
 
 
 @mcp.tool
@@ -66,7 +66,7 @@ async def select_columns(text: str, columns: List[str], delimiter: str = ",") ->
     """Return CSV containing only the named `columns`, in the given order."""
     rows = list(_dict_reader(text, delimiter))
     projected = [{c: r.get(c, "") for c in columns} for r in rows]
-    return await to_csv.__wrapped__(projected, columns, delimiter)
+    return await to_csv(projected, columns, delimiter)
 
 
 @mcp.tool
@@ -153,21 +153,21 @@ async def sort_rows(text: str, column: str, ascending: bool = True, delimiter: s
         except ValueError:
             return (1, v)
     rows.sort(key=key, reverse=not ascending)
-    return await to_csv.__wrapped__(rows, list(rows[0].keys()) if rows else None, delimiter)
+    return await to_csv(rows, list(rows[0].keys()) if rows else None, delimiter)
 
 
 @mcp.tool
 async def head(text: str, n: int = 5, delimiter: str = ",") -> str:
     """Return CSV with only the first `n` data rows (header preserved)."""
     rows = list(_dict_reader(text, delimiter))
-    return await to_csv.__wrapped__(rows[:n], list(rows[0].keys()) if rows else None, delimiter)
+    return await to_csv(rows[:n], list(rows[0].keys()) if rows else None, delimiter)
 
 
 @mcp.tool
 async def tail(text: str, n: int = 5, delimiter: str = ",") -> str:
     """Return CSV with only the last `n` data rows (header preserved)."""
     rows = list(_dict_reader(text, delimiter))
-    return await to_csv.__wrapped__(rows[-n:], list(rows[0].keys()) if rows else None, delimiter)
+    return await to_csv(rows[-n:], list(rows[0].keys()) if rows else None, delimiter)
 
 
 @mcp.tool
