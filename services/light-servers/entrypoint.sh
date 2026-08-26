@@ -184,7 +184,16 @@ SERVER_CMDS["LightZoom"]="fastmcp run /app/software/LightZoom/app.py --transport
 
 if [ -z "${ENABLED_SERVERS:-}" ]; then
     echo "Starting all ${#SERVER_CMDS[@]} servers..."
+    if [ -n "${SERVER_CMDS[LightQuickBooks]:-}" ]; then
+        eval "${SERVER_CMDS[LightQuickBooks]}" &
+        PIDS+=($!)
+        for _i in $(seq 1 60); do
+            python3 -c "import socket; socket.create_connection(('localhost',9110),timeout=2).close()" 2>/dev/null && break
+            sleep 2
+        done
+    fi
     for name in "${!SERVER_CMDS[@]}"; do
+        [ "$name" = "LightQuickBooks" ] && continue
         eval "${SERVER_CMDS[$name]}" &
         PIDS+=($!)
     done
