@@ -72,14 +72,31 @@ def parse_rubric(raw: Any) -> list[RubricCriterion]:
     in the module docstring."""
     if not raw:
         return []
+    # A bundle rubric.json is an object wrapping the criteria list alongside
+    # metadata keys such as _canary and _note. Enumerating that mapping yields
+    # its key names, so every caller that passed the parsed file straight in
+    # was building criteria literally called "_canary", "_note", and
+    # "criteria" while the authored criteria were never read. Unwrapping here
+    # rather than at each call site fixes score_weighted, smoke_test, and
+    # convert_tasks_to_harbor together, and matches what
+    # rubric_judge_cli._load_criteria already does.
+    if isinstance(raw, dict):
+        raw = raw.get("criteria") or []
     out: list[RubricCriterion] = []
     for i, item in enumerate(raw):
         if isinstance(item, str):
             out.append(RubricCriterion(id=f"claim_{i:03d}", text=item))
         elif isinstance(item, dict):
-            text = item.get("text") or item.get("description") or item.get("title") or ""
+            # `criterion` and `number` are the bundle shape; `text` and `id`
+            # are the legacy shape adapters emit. Both are accepted so neither
+            # producer has to change.
+            text = (
+                item.get("text") or item.get("criterion") or item.get("description")
+                or item.get("title") or ""
+            )
+            identifier = item.get("id") or item.get("number") or f"claim_{i:03d}"
             out.append(RubricCriterion(
-                id=str(item.get("id", f"claim_{i:03d}")),
+                id=str(identifier),
                 text=text,
                 weight=abs(float(item.get("weight", 1.0))),
                 is_positive=bool(item.get("is_positive", True)),
