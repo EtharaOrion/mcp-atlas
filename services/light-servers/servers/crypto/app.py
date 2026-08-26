@@ -19,13 +19,13 @@ async def sha256(text: str) -> str:
 @mcp.tool
 async def sha1(text: str) -> str:
     """Return the SHA-1 hex digest of the given `text`."""
-    return hashlib.sha1(text.encode("utf-8")).hexdigest()
+    return hashlib.sha1(text.encode("utf-8"), usedforsecurity=False).hexdigest()
 
 
 @mcp.tool
 async def md5(text: str) -> str:
     """Return the MD5 hex digest of the given `text` (legacy/compatibility)."""
-    return hashlib.md5(text.encode("utf-8")).hexdigest()
+    return hashlib.md5(text.encode("utf-8"), usedforsecurity=False).hexdigest()
 
 
 @mcp.tool

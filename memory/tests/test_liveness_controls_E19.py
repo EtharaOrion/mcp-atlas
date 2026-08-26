@@ -27,13 +27,30 @@ carve-out.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
+
+from engram import freshener
 
 
 SCAFFOLD_REASON = (
     "E19 liveness controls are scaffolded but not yet implemented; "
     "see trinity/ENGRAM.md invariant E19 and memory/TODO.md"
 )
+
+
+def _freshener_fixture(tmp_path: Path, levers: list[dict]) -> dict:
+    """Write a frozen ledger + config and return the freshener state vector.
+
+    The freshener is a pure function of these bytes, so this is a real
+    accepting-path control on frozen fixtures, not a mock."""
+    ledger = tmp_path / "ledger.yaml"
+    config = tmp_path / "freshness.yaml"
+    ledger.write_text(json.dumps({"levers": levers}), encoding="utf-8")
+    config.write_text(json.dumps({"freshness_horizon_days": 90}), encoding="utf-8")
+    return freshener.compute_state_vector(ledger, config)
 
 
 @pytest.mark.skip(reason=SCAFFOLD_REASON)
@@ -48,22 +65,30 @@ def test_ingestor_births_one_cfer_from_positive_control() -> None:
     raise NotImplementedError
 
 
-@pytest.mark.skip(reason=SCAFFOLD_REASON)
-def test_freshener_reaches_active_state() -> None:
+def test_freshener_reaches_active_state(tmp_path: Path) -> None:
     """Freshener must reach ACTIVE at least once across its fixtures."""
-    raise NotImplementedError
+    sv = _freshener_fixture(tmp_path, [
+        {"id": "lever-active", "fresh": True, "verified": True,
+         "below_defeat_floor": True},
+    ])
+    assert sv["lever-active"]["state"] == "ACTIVE"
 
 
-@pytest.mark.skip(reason=SCAFFOLD_REASON)
-def test_freshener_reaches_watch_state() -> None:
+def test_freshener_reaches_watch_state(tmp_path: Path) -> None:
     """Freshener must reach WATCH at least once across its fixtures."""
-    raise NotImplementedError
+    sv = _freshener_fixture(tmp_path, [
+        {"id": "lever-watch", "fresh": True, "verified": True,
+         "below_defeat_floor": True, "narrowed": True},
+    ])
+    assert sv["lever-watch"]["state"] == "WATCH"
 
 
-@pytest.mark.skip(reason=SCAFFOLD_REASON)
-def test_freshener_reaches_expired_state() -> None:
+def test_freshener_reaches_expired_state(tmp_path: Path) -> None:
     """Freshener must reach EXPIRED at least once across its fixtures."""
-    raise NotImplementedError
+    sv = _freshener_fixture(tmp_path, [
+        {"id": "lever-expired", "over_horizon": True},
+    ])
+    assert sv["lever-expired"]["state"] == "EXPIRED"
 
 
 @pytest.mark.skip(reason=SCAFFOLD_REASON)

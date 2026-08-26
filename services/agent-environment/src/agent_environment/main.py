@@ -133,7 +133,14 @@ def generate_cache_key(tool_name: str, tool_args: dict) -> str:
     """Generate consistent cache key from tool call parameters."""
     cache_data = {"tool_name": tool_name, "tool_args": tool_args}
     cache_str = json.dumps(cache_data, sort_keys=True)
-    return hashlib.md5(cache_str.encode()).hexdigest()
+    # Cache addressing only: the digest is never an authentication or
+    # integrity claim, so MD5's collision weakness is not a security
+    # property here. It is still a correctness one -- two colliding
+    # cache_str values would serve one tool call's result to another --
+    # but that needs a crafted collision in agent-supplied tool args, and
+    # the blast radius is a wrong cached response inside one task run.
+    # Switch to sha256 if the cache ever spans trust boundaries.
+    return hashlib.md5(cache_str.encode(), usedforsecurity=False).hexdigest()
 
 
 @app.post("/call-tool")

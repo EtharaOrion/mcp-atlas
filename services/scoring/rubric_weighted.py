@@ -133,7 +133,13 @@ def score_verdicts(
         if outcome is None and "score" in result:
             outcome = "fulfilled" if float(result.get("score") or 0.0) >= 1.0 else "not_fulfilled"
         outcome = outcome or "not_fulfilled"
-        scale = _SCALE.get(outcome, 0.0)
+        if outcome not in _SCALE:
+            raise ValueError(
+                f"judge returned coverage_outcome {outcome!r}, outside the declared "
+                f"vocabulary {sorted(_SCALE)}; refusing rather than silently scoring it "
+                "as not_fulfilled"
+            )
+        scale = _SCALE[outcome]
         contribution = c.weight * scale
         if c.is_positive:
             pos_total += c.weight

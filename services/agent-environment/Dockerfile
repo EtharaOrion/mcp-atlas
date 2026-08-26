@@ -40,6 +40,24 @@ RUN rm -rf /agent-environment/dev_scripts
 # Sync project dependencies (requires pyproject.toml and uv.lock from COPY)
 RUN uv sync
 
+# Run as a non-root user. Everything above this line is build-time and stays
+# root, so the apt, npm, uvx and uv sync steps are unaffected. The uid matches
+# the one light-servers and the bundle images use, so a shared workspace volume
+# stays writable across all of them.
+#
+# Three paths have to be writable at runtime rather than only at build time:
+# /agent-environment because entrypoint.sh renders mcp_server_config.json into
+# src/ and uv resolves .venv there, /data because the code-executor workspace
+# is used as a scratch area, and HOME because the npx- and uvx-spawned MCP
+# servers write their own caches.
+RUN useradd --system --create-home --uid 10001 app \
+    && chown -R app:app /agent-environment /data
+ENV HOME=/home/app \
+    UV_CACHE_DIR=/home/app/.cache/uv \
+    XDG_CACHE_HOME=/home/app/.cache \
+    NPM_CONFIG_CACHE=/home/app/.npm
+USER app
+
 EXPOSE 1984
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \

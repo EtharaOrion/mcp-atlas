@@ -37,12 +37,14 @@ A4 reconciliation -- seed vs. content, two different guarantees:
 """
 from __future__ import annotations
 
+import functools
 import hashlib
 import inspect
 import json
 import logging
 import os
 import pickle
+import sys
 from pathlib import Path
 
 _log = logging.getLogger("complexmcp.world_snapshot")
@@ -140,11 +142,129 @@ def _load_digests() -> dict:
         ) from exc
 
 
+# What a world snapshot is allowed to construct.
+#
+# Two layers guard this file and they fail independently. _verify_snapshot
+# checks that a snapshot's bytes are the recorded ones, and the manifest it
+# checks against is rewritten by _record_snapshot on every bake, so a writer
+# who can replace a .pkl can also replace its digest in the same commit. That
+# layer therefore assumes the writer is honest. This one does not: it bounds
+# what a snapshot can construct even when its digest checks out, which is what
+# actually closes the arbitrary-code-execution channel unpickling opens.
+#
+# The rule is by module origin rather than by class name. A snapshot holds an
+# arbitrary object graph of the app's own dataclasses, so enumerating class
+# names would need editing every time an app gains a field type, and would
+# fail at load time rather than review time when someone forgot. Origin is
+# the property that actually matters: a class defined by this repository's own
+# world model is fine, and `os.system` or `subprocess.Popen` is not, whatever
+# either is called.
+# Builtins are enumerated one by one rather than allowed as a module, because
+# `builtins` is where the classic pickle escapes live. Every name here is an
+# inert container or scalar type. `eval`, `exec`, `open`, `getattr`,
+# `__import__`, and `type` are deliberately absent: the first five are the
+# standard gadget set, and `type` would let a payload build new classes.
+_BUILTIN_TYPES = frozenset(
+    {
+        "list", "dict", "set", "frozenset", "tuple", "str", "bytes",
+        "bytearray", "int", "float", "bool", "complex", "object",
+    }
+)
+
+_STDLIB_ALLOWED = frozenset(
+    {("builtins", n) for n in _BUILTIN_TYPES}
+    | {
+        ("random", "Random"),
+        ("datetime", "datetime"),
+        ("datetime", "date"),
+        ("datetime", "time"),
+        ("datetime", "timedelta"),
+        ("datetime", "timezone"),
+        ("collections", "OrderedDict"),
+        ("collections", "defaultdict"),
+    }
+)
+
+
+@functools.lru_cache(maxsize=1)
+def _software_module_names() -> frozenset:
+    """Every module name that exists as a file under software/.
+
+    Derived from the filesystem, never from the payload, so a crafted snapshot
+    cannot widen it. Apps are imported under their bare stem, for example
+    software/LightAuction/auction.py as `auction`, so both the bare stem and
+    the dotted path are recorded.
+    """
+    names = set()
+    for path in _SOFTWARE_ROOT.rglob("*.py"):
+        if path.name == "__init__.py":
+            continue
+        names.add(path.stem)
+        try:
+            rel = path.relative_to(_SOFTWARE_ROOT.parent)
+        except ValueError:
+            continue
+        names.add(rel.with_suffix("").as_posix().replace("/", "."))
+    return frozenset(names)
+
+
+def _defined_under_software(obj) -> bool:
+    """Whether `obj` was defined by a file inside software/."""
+    origin = sys.modules.get(getattr(obj, "__module__", None))
+    file = getattr(origin, "__file__", None)
+    if not file:
+        return False
+    try:
+        Path(file).resolve().relative_to(_SOFTWARE_ROOT)
+    except ValueError:
+        return False
+    return True
+
+
+class _WorldUnpickler(pickle.Unpickler):
+    """Unpickler that constructs only this repository's own world classes.
+
+    `pickle` treats a payload as a program: a crafted snapshot can name any
+    importable callable and have it invoked during load. Overriding find_class
+    is the supported way to bound that, and it is consulted for every class a
+    payload names, so there is no way around it short of a CPython bug.
+
+    The module name is checked before anything is imported, because importing
+    a module the payload chose would already run its top-level code. Only once
+    the name is known to belong to software/ is the import allowed to happen,
+    and the result is then confirmed to be a class that software/ really
+    defines, which closes the case where a stem under software/ shadows a
+    stdlib module of the same name.
+    """
+
+    def find_class(self, module, name):
+        if (module, name) in _STDLIB_ALLOWED:
+            return super().find_class(module, name)
+        if module not in _software_module_names():
+            raise pickle.UnpicklingError(
+                f"world snapshot names {module}.{name}; {module} is not a "
+                "world-model module, so it will not be imported"
+            )
+        obj = super().find_class(module, name)
+        if not isinstance(obj, type):
+            raise pickle.UnpicklingError(
+                f"world snapshot names {module}.{name}, which is not a class; "
+                "refusing to construct it"
+            )
+        if not _defined_under_software(obj):
+            raise pickle.UnpicklingError(
+                f"world snapshot names {module}.{name}, which resolves outside "
+                "software/; refusing to construct it"
+            )
+        return obj
+
+
 def _verify_snapshot(path) -> None:
     """Refuse to unpickle a snapshot whose bytes are not the recorded ones.
 
     Unpickling executes arbitrary code, so an unrecorded or altered snapshot
-    is a code-execution channel. Fail closed rather than load it.
+    is a code-execution channel. Fail closed rather than load it. This is the
+    first of two independent layers; see _WorldUnpickler for the second.
     """
     key = _snapshot_key(path)
     expected = _load_digests().get(key)
@@ -193,6 +313,6 @@ def restore_into(target, path):
     """
     _verify_snapshot(path)
     with open(path, "rb") as fh:
-        loaded = pickle.load(fh)
+        loaded = _WorldUnpickler(fh).load()
     target.__dict__.update(loaded.__dict__)
     return target

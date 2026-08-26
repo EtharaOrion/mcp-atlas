@@ -171,3 +171,101 @@ def test_run_twice_does_not_leak_state(tmp_path):
     second = wj._run_traj_pytest(other_trajectory, test_file)
     assert first["test_used_arxiv_search"] is True
     assert second["test_used_arxiv_search"] is False
+
+
+# ---------------------------------------------------------------------------
+# Scorer closure (CRUCIBLE P-SCORER-NO-CLOSURE)
+#
+# The suite under test is authored by the task bundle and pytest executes it at
+# collection time. While it ran in the grading process, a planted test reached
+# every object the grader reached -- including the functions about to score it
+# and the file about to record its reward -- and still earned its weight.
+#
+# These are two-sided: each plants the attack and asserts it did not land. A
+# planted test that cannot even observe the grader is the whole guarantee, so
+# the marker below records what the payload could see rather than trusting the
+# boundary to be there.
+# ---------------------------------------------------------------------------
+
+PLANTED_REACH_PY = '''
+import os
+import sys
+
+def test_planted_looks_for_the_grader():
+    """Always passes. The marker records what the payload could reach."""
+    found = "isolated"
+    for name, mod in list(sys.modules.items()):
+        if getattr(mod, "score_traj_tests", None) and getattr(mod, "combine_ledger", None):
+            found = name
+            break
+    with open(os.environ["PLANTED_MARKER"], "w", encoding="utf-8") as fh:
+        fh.write(found)
+    assert True
+'''
+
+PLANTED_REBIND_PY = '''
+import sys
+
+def test_planted_rebinds_the_scorer():
+    for mod in list(sys.modules.values()):
+        if getattr(mod, "score_traj_tests", None) is not None:
+            mod.score_traj_tests = lambda results, weights: 1.0
+            mod.combine_ledger = lambda ledger: 1.0
+    assert True
+'''
+
+
+def test_planted_test_cannot_reach_the_grader_process(tmp_path, monkeypatch):
+    marker = tmp_path / "marker.txt"
+    test_file = tmp_path / "test_planted.py"
+    test_file.write_text(PLANTED_REACH_PY, encoding="utf-8")
+    monkeypatch.setenv("PLANTED_MARKER", str(marker))
+
+    results = wj._run_traj_pytest(TRAJECTORY, test_file)
+
+    # The suite still runs and is still scored -- isolation is not refusal.
+    assert results == {"test_planted_looks_for_the_grader": True}
+    assert marker.read_text(encoding="utf-8") == "isolated", (
+        "a bundle-authored test located the grading module in its own "
+        "interpreter, so the scorer's closure includes the grader again"
+    )
+
+
+def test_planted_test_cannot_rebind_the_scorer(tmp_path):
+    original = wj.score_traj_tests
+    test_file = tmp_path / "test_rebind.py"
+    test_file.write_text(PLANTED_REBIND_PY, encoding="utf-8")
+
+    wj._run_traj_pytest(TRAJECTORY, test_file)
+
+    assert wj.score_traj_tests is original
+    # Not just identity: the live function must still score a failure as a
+    # failure. Rebinding it to `lambda *_: 1.0` is the payload's whole goal.
+    assert wj.score_traj_tests({"a": False}, {"a": 1.0}) == 0.0
+    assert wj.score_traj_tests({"a": True}, {"a": 1.0}) == 1.0
+
+
+def test_hanging_suite_times_out_and_credits_nothing(tmp_path, monkeypatch):
+    """A suite that never returns must not hang the grader, and must not be
+    rewarded for it. Timing out yields no results, which scores 0 -- no goal
+    is earned and no guard is dodged into a credit."""
+    test_file = tmp_path / "test_hang.py"
+    test_file.write_text(
+        "import time\n\n\ndef test_hangs():\n    time.sleep(120)\n", encoding="utf-8"
+    )
+    monkeypatch.setenv("MCPATLAS_GRADER_TIMEOUT", "3")
+
+    results = wj._run_traj_pytest(TRAJECTORY, test_file)
+
+    assert results == {}
+    assert wj.score_traj_tests(results, {"test_hangs": 1.0}) == 0.0
+    assert wj.traj_test_rows(results, {"test_hangs": 1.0})[0]["outcome"] == "not_run"
+
+
+def test_grader_env_is_not_mutated_by_a_grading_run(tmp_path):
+    """The trajectory path is passed to the child, never exported here, so
+    two graders in one process cannot race each other over it."""
+    import os as _os
+    before = _os.environ.get(wj._ENV_VAR)
+    wj._run_traj_pytest(TRAJECTORY, _write_test_file(tmp_path))
+    assert _os.environ.get(wj._ENV_VAR) == before

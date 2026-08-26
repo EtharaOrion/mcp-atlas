@@ -42,14 +42,14 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
+import subprocess
 import sys
 import tempfile
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-
-import pytest
 
 _SCORING_DIR = Path(__file__).resolve().parent
 if str(_SCORING_DIR) not in sys.path:
@@ -121,72 +121,147 @@ def load_weights(path: str | Path | None) -> Weights:
     )
 
 
-class _Collector:
-    """pytest plugin: records pass/fail per test function, ignoring
-    setup/teardown-only phases unless they themselves failed (a fixture
-    error means the test's body never ran, which counts as a fail)."""
+# Source of the pytest plugin that runs inside the grading subprocess.
+#
+# Embedded as text rather than shipped as a file because this module is copied
+# verbatim into every task bundle as tests/weighted_judge.py, so it has to stay
+# self-contained. The recording rule is the one this grader has always used:
+# a test's verdict is its call phase, and a setup or teardown failure counts as
+# a fail because the body never ran.
+_COLLECTOR_PLUGIN = '''\
+import json
+import os
 
-    def __init__(self) -> None:
-        self.results: dict[str, bool] = {}
-
-    def pytest_runtest_logreport(self, report: Any) -> None:
-        name = report.nodeid.rsplit("::", 1)[-1]
-        if report.when == "call":
-            self.results[name] = report.outcome == "passed"
-        elif report.when in ("setup", "teardown") and report.outcome == "failed":
-            self.results[name] = False
+_OUT = os.environ["MCPATLAS_GRADER_RESULTS"]
+_results = {}
 
 
-def _purge_module_cache(test_file: Path) -> None:
-    """Drop any previously-imported module backed by this exact file, so a
-    task's test_outputs.py doesn't leak module-level state (or stale
-    trajectory data) across repeated grading calls in the same process."""
-    test_file = test_file.resolve()
-    stale = [
-        name for name, mod in list(sys.modules.items())
-        if getattr(mod, "__file__", None) and Path(mod.__file__).resolve() == test_file
-    ]
-    for name in stale:
-        del sys.modules[name]
+def pytest_runtest_logreport(report):
+    name = report.nodeid.rsplit("::", 1)[-1]
+    if report.when == "call":
+        _results[name] = report.outcome == "passed"
+    elif report.when in ("setup", "teardown") and report.outcome == "failed":
+        _results[name] = False
+
+
+def pytest_sessionfinish(session, exitstatus):
+    with open(_OUT, "w", encoding="utf-8") as fh:
+        json.dump(_results, fh)
+'''
+
+_RESULTS_VAR = "MCPATLAS_GRADER_RESULTS"
+_TIMEOUT_VAR = "MCPATLAS_GRADER_TIMEOUT"
+_SANDBOX_VAR = "MCPATLAS_SANDBOX"
+_DEFAULT_TIMEOUT = 300.0
+
+
+def _grader_timeout() -> float:
+    """Wall-clock ceiling for one graded suite.
+
+    A bundle-authored test that never returns would otherwise hang the
+    grader indefinitely. Timing out scores the task 0 rather than crediting
+    it, so there is nothing to gain by hanging: a suite that never reports
+    earns no goal and triggers no guard, and score_traj_tests floors at 0.
+    """
+    raw = os.environ.get(_TIMEOUT_VAR, "").strip()
+    if not raw:
+        return _DEFAULT_TIMEOUT
+    try:
+        value = float(raw)
+    except ValueError:
+        return _DEFAULT_TIMEOUT
+    return value if value > 0 else _DEFAULT_TIMEOUT
+
+
+def _sandbox_prefix() -> list[str]:
+    """Optional argv prefix that confines the grading subprocess.
+
+    The subprocess boundary below stops a bundle test from reaching the
+    grader's own objects, which is the channel that let a planted test
+    rebind the scoring functions that were about to score it. It does not
+    stop that test from reaching the filesystem the grading user can reach.
+
+    Closing that needs a real sandbox, and which one is correct depends on
+    where the grader runs -- in Harbor the suite is already inside a task
+    container, on a developer box it is not. So the choice is bound by the
+    operator here rather than picked in this module. Set MCPATLAS_SANDBOX to
+    the command that should wrap the interpreter, for example:
+
+        MCPATLAS_SANDBOX="bwrap --ro-bind /usr /usr --dev /dev --unshare-all"
+    """
+    raw = os.environ.get(_SANDBOX_VAR, "").strip()
+    return shlex.split(raw) if raw else []
 
 
 def _run_traj_pytest(trajectory: dict | list, test_file: str | Path) -> dict[str, bool]:
     """Run `test_file` under pytest against `trajectory`, return
-    {test_function_name: passed}. Stages `trajectory` to a temp JSON file and
-    points MCPATLAS_TRAJECTORY at it for the duration of the run only."""
+    {test_function_name: passed}.
+
+    The suite runs in a separate interpreter, and that is the point rather
+    than an implementation detail. `test_file` is supplied by the task
+    bundle and pytest executes it at collection time, so running it in this
+    process put task-authored code inside the process that computes and
+    writes the reward that code is being scored by -- close enough to rebind
+    score_traj_tests, edit the ledger, or write reward.json outright. A
+    subprocess makes the grader's own state unreachable from the graded
+    code.
+
+    Two limits worth stating rather than implying. The boundary is a process
+    boundary, not a filesystem one: a test can still read and write whatever
+    the grading user can, and MCPATLAS_SANDBOX exists to close that (see
+    _sandbox_prefix). And a run that dies or times out returns whatever the
+    plugin recorded, usually nothing, which scores 0 rather than crediting
+    anything.
+
+    `trajectory` is staged to a temp file that MCPATLAS_TRAJECTORY points at
+    for the life of the subprocess only; this process's own environment is
+    never mutated, so concurrent graders no longer race each other over it.
+    """
     test_file = Path(test_file)
     if not test_file.exists():
         return {}
 
     traj_asserts.reset_cache()
-    _purge_module_cache(test_file)
 
-    fd, tmp_path = tempfile.mkstemp(prefix="mcpatlas-traj-", suffix=".json")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(trajectory, f)
+    with tempfile.TemporaryDirectory(prefix="mcpatlas-grade-") as workdir:
+        work = Path(workdir)
+        traj_path = work / "trajectory.json"
+        traj_path.write_text(json.dumps(trajectory), encoding="utf-8")
+        results_path = work / "results.json"
+        (work / "mcpatlas_grader_collect.py").write_text(_COLLECTOR_PLUGIN, encoding="utf-8")
 
-        prev = os.environ.get(_ENV_VAR)
-        os.environ[_ENV_VAR] = tmp_path
+        env = dict(os.environ)
+        env[_ENV_VAR] = str(traj_path)
+        env[_RESULTS_VAR] = str(results_path)
+        env["PYTHONDONTWRITEBYTECODE"] = "1"
+        env["PYTHONPATH"] = os.pathsep.join(
+            part for part in (str(work), str(_SCORING_DIR), os.environ.get("PYTHONPATH", ""))
+            if part
+        )
+
+        argv = [
+            *_sandbox_prefix(),
+            sys.executable, "-m", "pytest", str(test_file),
+            "-q", "-p", "no:cacheprovider", "--import-mode=importlib",
+            "-p", "mcpatlas_grader_collect",
+        ]
         try:
-            collector = _Collector()
-            pytest.main(
-                [str(test_file), "-q", "-p", "no:cacheprovider", "--import-mode=importlib"],
-                plugins=[collector],
+            subprocess.run(
+                argv, env=env, capture_output=True, timeout=_grader_timeout(), check=False
             )
-            return dict(collector.results)
-        finally:
-            if prev is None:
-                os.environ.pop(_ENV_VAR, None)
-            else:
-                os.environ[_ENV_VAR] = prev
-            traj_asserts.reset_cache()
-            _purge_module_cache(test_file)
-    finally:
+        except (subprocess.TimeoutExpired, OSError):
+            return {}
+
+        if not results_path.is_file():
+            return {}
         try:
-            os.unlink(tmp_path)
-        except OSError:
-            pass
+            loaded = json.loads(results_path.read_text(encoding="utf-8"))
+        except ValueError:
+            return {}
+
+    if not isinstance(loaded, dict):
+        return {}
+    return {str(name): bool(passed) for name, passed in loaded.items()}
 
 
 def traj_test_rows(results: dict[str, bool], weights: dict[str, float]) -> list[dict[str, Any]]:

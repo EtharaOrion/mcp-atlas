@@ -69,7 +69,13 @@ class MailchimpSession:
         return ''.join(self.rng.choices(alphabet, k=10))
 
     def _subscriber_hash(self, email: str) -> str:
-        return hashlib.md5(email.strip().lower().encode("utf-8")).hexdigest()
+        # MD5 is mandated by the upstream Mailchimp API: subscriber_hash is
+        # defined as the MD5 of the lowercased email address. The algorithm is
+        # a wire-format requirement of the surface being emulated, not a
+        # security choice, so it is fixed here and flagged as non-security.
+        return hashlib.md5(
+            email.strip().lower().encode("utf-8"), usedforsecurity=False
+        ).hexdigest()
 
     def _get_list(self, list_id):
         for lst in self.lists:

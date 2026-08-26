@@ -13,13 +13,13 @@ mcp = FastMCP("HashServer")
 @mcp.tool
 async def md5(text: str) -> str:
     """Return the MD5 hex digest of `text`."""
-    return hashlib.md5(text.encode("utf-8")).hexdigest()
+    return hashlib.md5(text.encode("utf-8"), usedforsecurity=False).hexdigest()
 
 
 @mcp.tool
 async def sha1(text: str) -> str:
     """Return the SHA-1 hex digest of `text`."""
-    return hashlib.sha1(text.encode("utf-8")).hexdigest()
+    return hashlib.sha1(text.encode("utf-8"), usedforsecurity=False).hexdigest()
 
 
 @mcp.tool
@@ -83,8 +83,8 @@ async def multi_hash(text: str) -> Dict[str, str]:
     """Return a dict of common hex digests (md5, sha1, sha256, sha512, blake2b) for `text`."""
     b = text.encode("utf-8")
     return {
-        "md5": hashlib.md5(b).hexdigest(),
-        "sha1": hashlib.sha1(b).hexdigest(),
+        "md5": hashlib.md5(b, usedforsecurity=False).hexdigest(),
+        "sha1": hashlib.sha1(b, usedforsecurity=False).hexdigest(),
         "sha256": hashlib.sha256(b).hexdigest(),
         "sha512": hashlib.sha512(b).hexdigest(),
         "blake2b": hashlib.blake2b(b).hexdigest(),

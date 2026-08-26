@@ -7,7 +7,18 @@ from jinja2 import Environment, StrictUndefined, TemplateSyntaxError, meta
 mcp = FastMCP("TemplateServer")
 
 
-_jinja_env = Environment(autoescape=False)
+# autoescape stays off because emitting unescaped output is what this tool
+# is for: it renders arbitrary text templates (JSON, YAML, plain prose), and
+# HTML-escaping them would corrupt every non-HTML target. B701 describes an
+# XSS risk that does not apply to a tool whose declared product is the raw
+# rendered string.
+#
+# The real exposure at this site is a different one that B701 does not
+# describe: render_jinja passes an agent-supplied template into a plain
+# Environment, not a SandboxedEnvironment, so a template can reach Python
+# attributes and execute code. Recorded as D-TEMPLATE-SSTI in VERDICT.md
+# rather than suppressed here.
+_jinja_env = Environment(autoescape=False)  # nosec B701
 
 
 @mcp.tool
@@ -19,7 +30,9 @@ async def render_jinja(template: str, context: Dict[str, Any]) -> str:
 @mcp.tool
 async def render_jinja_strict(template: str, context: Dict[str, Any]) -> str:
     """Render Jinja2 with StrictUndefined: raises on undefined variables."""
-    env = Environment(autoescape=False, undefined=StrictUndefined)
+    # See the note on _jinja_env above: unescaped output is the product, and
+    # the sandbox question is tracked as D-TEMPLATE-SSTI, not by B701.
+    env = Environment(autoescape=False, undefined=StrictUndefined)  # nosec B701
     return env.from_string(template).render(**context)
 
 
