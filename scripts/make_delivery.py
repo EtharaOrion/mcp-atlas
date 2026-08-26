@@ -1,0 +1,166 @@
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import shutil
+import sys
+from pathlib import Path
+
+
+def _load(path: Path, default=None):
+    try:
+        return json.loads(path.read_bytes())
+    except Exception:
+        return default
+
+
+def _dump(path: Path, data) -> None:
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+
+
+def _short_model(name: str) -> str:
+    short = name.removeprefix("claude-")
+    return re.sub(r"-(\d+)$", r".\1", short)
+
+
+def _run_label(dir_name: str) -> str:
+    return dir_name.replace("_", " ", 1)
+
+
+def _rubric_cleared(item: dict) -> bool:
+    positive = item.get("is_positive", True)
+    passed = bool(item.get("passed"))
+    return passed if positive else not passed
+
+
+def _build_judge_usage(tokens: dict) -> dict:
+    return {
+        "input_tokens": tokens.get("judge_input_tokens", 0),
+        "cache_read_input_tokens": tokens.get("judge_input_cache_tokens", 0),
+        "cache_creation_input_tokens": tokens.get("judge_output_cache_tokens", 0),
+        "output_tokens": tokens.get("judge_output_tokens", 0),
+        "cost_usd": tokens.get("judge_cost_usd", 0),
+    }
+
+
+def make_delivery(
+    task_slug: str,
+    output_dir: Path,
+    tasks_dir: Path,
+    delivery_dir: Path,
+) -> None:
+    src = output_dir / task_slug
+    if not src.exists():
+        sys.exit(f"Error: output dir not found: {src}")
+
+    dst = delivery_dir / task_slug
+    if dst.exists():
+        shutil.rmtree(dst)
+    dst.mkdir(parents=True)
+
+    task_src = tasks_dir / task_slug
+    if task_src.exists():
+        shutil.copytree(
+            task_src,
+            dst / "data",
+            ignore=shutil.ignore_patterns("__pycache__", ".pytest_cache", "*.pyc", "*.pyo"),
+        )
+    else:
+        print(f"Warning: task dir not found: {task_src}", file=sys.stderr)
+        (dst / "data").mkdir()
+
+    traj_src = src / "trajectory"
+    traj_dst = dst / "trajectory"
+    traj_dst.mkdir()
+
+    pass_sum = _load(src / "pass_summary.json", {})
+    per_run_clean = [
+        {k: v for k, v in run.items() if k != "include_multimodal"}
+        for run in (pass_sum.get("per_run") or [])
+    ]
+    delivery_pass = {k: v for k, v in pass_sum.items() if k != "per_run"}
+    delivery_pass["per_run"] = per_run_clean
+    _dump(traj_dst / "pass_summary.json", delivery_pass)
+
+    model_name: str = pass_sum.get("model", "")
+    model_dst = traj_dst / _short_model(model_name)
+
+    for run_dir in sorted(traj_src.glob("Run_*")):
+        dst_run = model_dst / _run_label(run_dir.name)
+        dst_run.mkdir(parents=True)
+
+        (dst_run / "agent").mkdir()
+        src_traj = run_dir / "agent" / "trajectory.json"
+        if src_traj.exists():
+            shutil.copy2(src_traj, dst_run / "agent" / "trajectory.json")
+
+        arts_src = run_dir / "artifacts"
+        if arts_src.exists():
+            shutil.copytree(arts_src, dst_run / "artifacts")
+        else:
+            (dst_run / "artifacts").mkdir()
+
+        if (run_dir / "config.json").exists():
+            shutil.copy2(run_dir / "config.json", dst_run / "config.json")
+
+        report = _load(run_dir / "report.json", {})
+        judge_tokens = _load(run_dir / "verifier" / "judge_tokens.json", {})
+        report.pop("include_multimodal", None)
+        report["judge_model"] = judge_tokens.get("model_name", "")
+        report["judge_usage"] = _build_judge_usage(judge_tokens)
+        _dump(dst_run / "report.json", report)
+
+        if (run_dir / "result.json").exists():
+            shutil.copy2(run_dir / "result.json", dst_run / "result.json")
+
+        ver_src = run_dir / "verifier"
+        ver_dst = dst_run / "verifier"
+        ver_dst.mkdir()
+
+        for fname in ("ctrf.json", "test-stdout.txt"):
+            if (ver_src / fname).exists():
+                shutil.copy2(ver_src / fname, ver_dst / fname)
+
+        reward_val = (_load(ver_src / "reward.json", {}) or {}).get("reward", 0)
+        _dump(ver_dst / "reward.json", {"reward": reward_val})
+
+        rubric = report.get("rubric", [])
+        score_data = {
+            "model": report.get("model", model_name),
+            "run_index": report.get("run_index", 1),
+            "rubric_weights_percentage": report.get("rubric_weights_percentage", 0),
+            "total": len(rubric),
+            "passed": sum(1 for r in rubric if _rubric_cleared(r)),
+            "failed": sum(1 for r in rubric if not _rubric_cleared(r)),
+            "reward": round(report.get("rubric_weights_percentage", 0) / 100, 4),
+            "rubric": rubric,
+            "judge_model": judge_tokens.get("model_name", ""),
+            "judge_usage": report.get("judge_usage", {}),
+        }
+        _dump(ver_dst / "score.json", score_data)
+
+    print(f"Done: {dst}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Reformat output/<task>/ into delivery_output/<task>/"
+    )
+    parser.add_argument("task_slug", help="Task slug, e.g. bull-street-lot-expense-claim")
+    parser.add_argument("--output-dir", default="output")
+    parser.add_argument("--tasks-dir", default="tasks")
+    parser.add_argument("--delivery-dir", default="delivery_output")
+    args = parser.parse_args()
+
+    base = Path(__file__).resolve().parent.parent
+    make_delivery(
+        task_slug=args.task_slug,
+        output_dir=base / args.output_dir,
+        tasks_dir=base / args.tasks_dir,
+        delivery_dir=base / args.delivery_dir,
+    )
+
+
+if __name__ == "__main__":
+    main()

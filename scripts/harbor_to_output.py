@@ -79,7 +79,7 @@ PRUNE_FROM_OUTPUT = ("trial.log", "lock.json")
 # source, see _junit_to_ctrf) and dropped afterwards. Tasks now emit
 # verifier/ctrf.json directly via services/scoring/ctrf_pytest_plugin.py, so no
 # new run produces this file at all — the prune only catches older job dirs.
-PRUNE_FROM_VERIFIER = ("junit.xml",)
+PRUNE_FROM_VERIFIER = ("junit.xml", "reward_channel_a.json")
 
 
 def _prune(*paths: Path) -> None:
@@ -606,12 +606,22 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     rubric_pct = _pct(rubric_val)
     parts = [p for p in (test_pct, rubric_pct) if p is not None]
     final_reward = round(sum(parts) / len(parts), 2) if parts else None
+    try:
+        _orig_rew = json.loads((ver / "reward.json").read_bytes())
+    except Exception:
+        _orig_rew = {}
+    reward_pct_doc = {
+        **_orig_rew,
+        "reward": final_reward,
+        "completion_rate": round((_orig_rew.get("completion_rate") or 0) * 100, 2),
+        "misbehave_rate": round((_orig_rew.get("misbehave_rate") or 0) * 100, 2),
+    }
 
     failure_class, failure_reason = classify_failure(
         passed, traj_rows, rubric_rows, stream, exception,
         rubric_expected=bool(rubric_src))
 
-    reward_txt_val = str(round(reward, 6)) if reward is not None else "0.0"
+    reward_txt_val = str(round(final_reward, 6)) if final_reward is not None else "0.0"
     detail_doc = _build_detail(ctrf, weights, breakdown, traj_val, rubric_val, traj_w, rubric_w)
 
     if not (ag / "trajectory.json").exists() and stream["messages"]:
@@ -629,13 +639,19 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     _copy(ag / "trajectory.json", run_dir / "agent" / "trajectory.json")
     for f in ("config.json", "result.json"):
         _copy(trial_dir / f, run_dir / f)
+    _trun_res = _load(run_dir / "result.json", {}) or {}
+    if isinstance((_trun_res.get("verifier_result") or {}).get("rewards"), dict):
+        _trun_res["verifier_result"]["rewards"]["reward"] = reward_pct_doc.get("reward", final_reward)
+        _trun_res["verifier_result"]["rewards"]["completion_rate"] = reward_pct_doc.get("completion_rate", 0.0)
+        _trun_res["verifier_result"]["rewards"]["misbehave_rate"] = reward_pct_doc.get("misbehave_rate", 0.0)
+        _dump(run_dir / "result.json", _trun_res)
     _copy(trial_dir / "artifacts", run_dir / "artifacts")
     _flatten_artifacts(run_dir)
     _copy(stream_path, run_dir / "logs" / "agent-stream.txt")
     _copy(ver / "ctrf.json", run_dir / "logs" / "verifier-ctrf.json")
     _copy(ver / "reward.txt", run_dir / "logs" / "verifier-reward.txt")
     _copy(ver / "test-stdout.txt", run_dir / "logs" / "verifier-stdout.txt")
-    for f in ("ctrf.json", "reward.txt", "reward.json", "test-stdout.txt", "detail.json",
+    for f in ("ctrf.json", "reward.json", "test-stdout.txt", "detail.json",
               "rubric_breakdown.json", "judge_tokens.json",
               "state_channel.json", "end_env.json"):
         _copy(ver / f, run_dir / "verifier" / f)
@@ -647,17 +663,21 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         _dump(vdir / "ctrf.json", ctrf)
     if ctrf is not None and not (ldir / "verifier-ctrf.json").exists():
         _dump(ldir / "verifier-ctrf.json", ctrf)
-    if not (vdir / "reward.txt").exists():
-        (vdir / "reward.txt").write_text(reward_txt_val + "\n", encoding="utf-8")
     if not (ldir / "verifier-reward.txt").exists():
         (ldir / "verifier-reward.txt").write_text(reward_txt_val + "\n", encoding="utf-8")
     if not (vdir / "detail.json").exists():
         _dump(vdir / "detail.json", detail_doc)
+    _dump(vdir / "reward.json", reward_pct_doc)
+    _rbd = _load(vdir / "rubric_breakdown.json", {}) or {}
+    if _rbd:
+        for _k in ("score", "rc", "rb"):
+            _rbd.pop(_k, None)
+        _dump(vdir / "rubric_breakdown.json", _rbd)
     report = {
         "model": model, "run_index": run_no, "include_multimodal": False,
         "pytest": {"passed": n_pass, "failed": n_fail, "skipped": n_skip,
                    "exit_code": 0 if n_fail == 0 else 1,
-                   "reward": _r4(traj_val), "tests": test_entries},
+                   "reward": _pct(traj_val), "tests": test_entries},
         "rubric": rubric_entries,
         "final_reward": final_reward,
         "test_weights_percentage": test_pct,
@@ -675,7 +695,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         "messages": stream["messages"],
     })
     _copy(stream_path, raw_run / "agent.log")
-    for f in ("ctrf.json", "detail.json", "reward.json", "reward.txt"):
+    for f in ("ctrf.json", "detail.json", "reward.json"):
         _copy(ver / f, raw_run / f)
     _copy(ver, raw_run / "verifier")
     rver = raw_run / "verifier"
@@ -684,14 +704,12 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         _dump(raw_run / "ctrf.json", ctrf)
     if ctrf is not None and not (rver / "ctrf.json").exists():
         _dump(rver / "ctrf.json", ctrf)
-    if not (raw_run / "reward.txt").exists():
-        (raw_run / "reward.txt").write_text(reward_txt_val + "\n", encoding="utf-8")
-    if not (rver / "reward.txt").exists():
-        (rver / "reward.txt").write_text(reward_txt_val + "\n", encoding="utf-8")
+
     if not (raw_run / "detail.json").exists():
         _dump(raw_run / "detail.json", detail_doc)
     if not (rver / "detail.json").exists():
         _dump(rver / "detail.json", detail_doc)
+    _dump(rver / "reward.json", reward_pct_doc)
     _dump(raw_run / "rubric.json", {"format": "criteria", "rubric_score": _r4(rubric_val), "per_criterion": rubric_entries})
     with (raw_run / "trace.jsonl").open("w", encoding="utf-8") as fh:
         for r in stream["trace"]:
@@ -713,7 +731,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         "task": task_name, "model": model, "seed": None, "attempt": run_no,
         "passed": passed, "reward": final_reward, "final_score": final_reward,
         "final_score_basis": "weighted(traj_tests+rubric)" if (traj_w or rubric_w) else "rubric",
-        "completion_rate": _r4(rubric_val), "misbehaving_rate": None,
+        "completion_rate": _pct(rubric_val), "misbehaving_rate": None,
         "channel_a_present": bool(traj_rows),
         "test_weights_percentage": test_pct, "rubric_weights_percentage": rubric_pct,
         "rubric_rc": _r4(rubric_val), "rubric_rb": None,
@@ -732,15 +750,15 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         "reward": final_reward, "passed": passed,
         "quadrant": "PASSED" if passed else "FAILED", "threshold": threshold,
         "components": {
-            "traj_tests": {"weight": traj_w, "value": _r4(traj_val),
+            "traj_tests": {"weight": traj_w, "value": _pct(traj_val),
                            "earned": _r4((traj_val or 0) * traj_w) if traj_val is not None else None},
-            "rubric": {"weight": rubric_w, "value": _r4(rubric_val),
+            "rubric": {"weight": rubric_w, "value": _pct(rubric_val),
                        "earned": _r4((rubric_val or 0) * rubric_w) if rubric_val is not None else None},
             # Weights come from tests/test_weights.json rather than being pinned
             # to 0 here. Nothing in this pipeline computes their values yet, so
             # value/earned stay None; a task that declares them non-zero will at
             # least surface the discrepancy instead of silently reading as 0.
-            "state_completion": {"weight": _comp_w("state_completion"), "value": _r4(state_val),
+            "state_completion": {"weight": _comp_w("state_completion"), "value": _pct(state_val),
                                  "earned": _r4((state_val or 0) * _comp_w("state_completion"))
                                  if state_val is not None else None},
             "state_misbehave": {"weight": _comp_w("state_misbehave"), "severity": _r4(state_mis),
@@ -752,12 +770,12 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         "recall": sum(1 for r in goal_rows if r.get("outcome") == "credited"),
         "total": len(goal_rows),
         "misbehave": sum(1 for r in traj_rows if r.get("outcome") == "penalized"),
-        "state": _r4(state_val), "plan": None,
+        "state": _pct(state_val), "plan": None,
         "traj_tests": {"recall": sum(1 for r in goal_rows if r.get("outcome") == "credited"),
                        "total": len(goal_rows),
                        "misbehave": sum(1 for r in traj_rows if r.get("outcome") == "penalized"),
                        "passed_tests": {r["name"]: bool(r.get("raw_passed")) for r in traj_rows}},
-        "rubric_score": _r4(rubric_val),
+        "rubric_score": _pct(rubric_val),
         "rubric_per_criterion": rubric_entries,
         "grader": "weighted(" + "+".join(k for k, w in (("traj_tests", traj_w), ("rubric", rubric_w)) if w) + ")",
     }
@@ -961,6 +979,24 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
             "episodes": all_eps,
         }
         _dump(out_task / "summary.json", summary)
+        _top_res = _load(out_task / "result.json", {}) or {}
+        _evals = ((_top_res.get("stats") or {}).get("evals") or {})
+        if _evals and all_eps:
+            for _eval_data in _evals.values():
+                _metrics = _eval_data.get("metrics") or []
+                for _i, _ep in enumerate(all_eps):
+                    if _i < len(_metrics):
+                        _metrics[_i]["reward"] = _ep["judge"]["reward"]
+                        _metrics[_i]["completion_rate"] = _ep["judge"]["components"]["traj_tests"]["value"]
+                _new_rstats: dict = {"reward": {}, "completion_rate": {}, "misbehave_rate": {}}
+                for _i, _ep in enumerate(all_eps):
+                    _tname = _ep.get("trial_name") or f"trial_{_i}"
+                    if _i < len(_metrics):
+                        for _fld in ("reward", "completion_rate", "misbehave_rate"):
+                            _v = str(_metrics[_i].get(_fld, 0))
+                            _new_rstats[_fld].setdefault(_v, []).append(_tname)
+                _eval_data["reward_stats"] = _new_rstats
+            _dump(out_task / "result.json", _top_res)
 
         # pass_summary.json
         per_run = [r["per_run"] for r in recs]
@@ -1106,6 +1142,16 @@ def main(argv=None) -> int:
                 shutil.rmtree(dst)
             shutil.copytree(w, dst)
             print(f"[output] mirrored → {dst}")
+    _md_script = Path(__file__).parent / "make_delivery.py"
+    if _md_script.exists() and written:
+        import importlib.util as _ilu
+        _spec = _ilu.spec_from_file_location("make_delivery", _md_script)
+        _mod = _ilu.module_from_spec(_spec)
+        _spec.loader.exec_module(_mod)
+        _delivery_dir = a.output_dir.parent / "delivery_output"
+        for w in written:
+            _mod.make_delivery(w.name, a.output_dir, REPO / "tasks", _delivery_dir)
+            print(f"[delivery] {w.name} → {_delivery_dir / w.name}")
     return 0
 
 

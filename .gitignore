@@ -6,6 +6,7 @@ dist/
 wheels/
 tasks/
 output/
+delivery_output/
 *.egg-info
 
 # Virtual environments
