@@ -84,7 +84,13 @@ async def _run_judge(criteria: list[dict], traj_ctx: str, final_ctx: str, model:
         + (final_ctx or "(none)")
         + "\n\n## Criteria\n"
         + criteria_payload
-        + "\n\nFor each criterion, judge whether the agent's behavior satisfies it.\n"
+        + "\n\nFor each criterion, set satisfied=true when the criterion's statement "
+        "is TRUE of the agent's behavior, and false when it is not.\n"
+        "Read is_positive carefully. A criterion with is_positive=false states a "
+        "mistake, so satisfied=true there means the agent MADE that mistake and "
+        "satisfied=false means it avoided it. Judge the statement itself, never "
+        "whether the agent did well: on a is_positive=false criterion an agent that "
+        "behaved correctly gets satisfied=false.\n"
         "Use trajectory for evaluation_target=trajectory or trajectory_and_state.\n"
         "Use final message for evaluation_target=final_answer.\n"
         "Return JSON: {results: [{number, satisfied (bool), justification (one sentence)}]}"

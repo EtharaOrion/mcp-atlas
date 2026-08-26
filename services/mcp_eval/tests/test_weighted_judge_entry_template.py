@@ -217,3 +217,77 @@ def test_openai_dialect_also_strips_mcp_prefix(tmp_path):
     module = _load_entry_module(tests_dir)
     messages, _ = module.load_flat_messages_and_response(str(agent_dir / "trajectory.txt"))
     assert messages[0]["tool_calls"][0]["function"]["name"] == "search"
+
+
+def _rubric_bundle(tests_dir: Path, out_dir: Path, breakdown: dict) -> None:
+    """A rubric-only bundle: traj_tests inert, Channel B carrying all the weight."""
+    (tests_dir / "rubric_weighted.py").write_text(
+        _read_scoring_module_source("rubric_weighted.py"), encoding="utf-8"
+    )
+    (tests_dir / "test_weights.json").write_text(json.dumps({
+        "components": {"traj_tests": {"weight": 0, "tests": {}}, "rubric": {"weight": 1}}
+    }), encoding="utf-8")
+    (tests_dir / "test_outputs.py").write_text("# unused\n", encoding="utf-8")
+    (tests_dir / "rubric.json").write_text(json.dumps({"criteria": [
+        {"number": 1, "criterion": "did the good thing", "weight": 2, "is_positive": True},
+        {"number": 2, "criterion": "did the other good thing", "weight": 2, "is_positive": True},
+        {"number": 3, "criterion": "fell into the trap", "weight": 1, "is_positive": False},
+    ]}), encoding="utf-8")
+    (out_dir / "reward.json").write_text(json.dumps({"reward": 0.0}), encoding="utf-8")
+    (out_dir / "rubric_breakdown.json").write_text(json.dumps(breakdown), encoding="utf-8")
+
+
+def _run_rubric(tmp_path: Path, breakdown: dict) -> float:
+    tests_dir = tmp_path / "tests"
+    tests_dir.mkdir(parents=True)
+    agent_dir = tmp_path / "logs" / "agent"
+    out_dir = tmp_path / "logs" / "verifier"
+    out_dir.mkdir(parents=True)
+    _rubric_bundle(tests_dir, out_dir, breakdown)
+    _write_trajectory(agent_dir)
+    module = _load_entry_module(tests_dir)
+    module.main(agent_dir=agent_dir, out_dir=out_dir, tests_dir=tests_dir)
+    return json.loads((out_dir / "reward.json").read_text())["reward"]
+
+
+# One judge pass, written under either writer's schema, must score the same.
+# rubric_judge_cli emits per_criterion/number/satisfied; the harbor entry
+# template emits results/id/score. Reading only the latter sent every
+# rubric_judge_cli run to the all-or-nothing fallback, so criterion 1 below --
+# genuinely satisfied, and already paid for in judge tokens -- scored zero.
+_TEMPLATE_SCHEMA = {"score": 0.5, "results": [
+    {"id": "1", "score": 1.0}, {"id": "2", "score": 0.0}, {"id": "3", "score": 0.0},
+]}
+_JUDGE_CLI_SCHEMA = {"rubric_passed": False, "per_criterion": [
+    {"number": 1, "satisfied": True}, {"number": 2, "satisfied": False},
+    {"number": 3, "satisfied": False},
+]}
+
+
+def test_rubric_breakdown_schemas_agree(tmp_path):
+    """Both writers' schemas reach the weighted branch and land on one value."""
+    template = _run_rubric(tmp_path / "a", _TEMPLATE_SCHEMA)
+    judge_cli = _run_rubric(tmp_path / "b", _JUDGE_CLI_SCHEMA)
+    assert template == judge_cli
+
+
+def test_rubric_per_criterion_schema_earns_partial_credit(tmp_path):
+    """The half that regressed: one of two positive criteria met, no trap hit.
+
+    Pinned rather than compared, so a future change that makes both schemas
+    agree on the wrong number still fails. 2 of 4 positive weight, no penalty.
+    """
+    assert _run_rubric(tmp_path, _JUDGE_CLI_SCHEMA) == 0.5
+
+
+def test_rubric_negative_criterion_penalises_only_when_hit(tmp_path):
+    """satisfied=true on an is_positive=false criterion means the trap was hit.
+
+    The judge prompt now states this explicitly. An agent that avoided the trap
+    must not be penalised for it, which is what scored a clean run to zero.
+    """
+    hit = dict(_JUDGE_CLI_SCHEMA, per_criterion=[
+        {"number": 1, "satisfied": True}, {"number": 2, "satisfied": False},
+        {"number": 3, "satisfied": True},
+    ])
+    assert _run_rubric(tmp_path, hit) < _run_rubric(tmp_path / "clean", _JUDGE_CLI_SCHEMA)

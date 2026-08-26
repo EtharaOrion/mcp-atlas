@@ -316,7 +316,15 @@ def main(
         rubric_file = tests_dir / "rubric.json"
         if weights.rubric.weight and breakdown_path.exists():
             breakdown = json.loads(breakdown_path.read_text())
-            per_criterion = breakdown.get("results", [])
+            # Two writers produce this file under two different schemas. The
+            # harbor entry template emits {"score", "results"}; rubric_judge_cli
+            # emits {"score", "rc", "rb", "rubric_passed", "per_criterion"}.
+            # Reading only "results" made every rubric_judge_cli run fall
+            # through to the all-or-nothing branch below, discarding a judge
+            # pass that had already been paid for.
+            per_criterion = (
+                breakdown.get("results") or breakdown.get("per_criterion") or []
+            )
             if rubric_file.exists() and per_criterion:
                 # Weighted Channel B: agent_judge.py already judged every
                 # criterion, so reuse its per-criterion verdicts and apply
@@ -327,8 +335,27 @@ def main(
                 import rubric_weighted as rw
 
                 criteria = rw.parse_rubric(json.loads(rubric_file.read_text()))
-                by_id = {str(r.get("id")): r for r in per_criterion}
-                verdicts = [by_id.get(c.id, {"score": 0.0}) for c in criteria]
+                # Identity and verdict shape both vary by writer. The template
+                # keys criteria as "id" and states a numeric "score";
+                # rubric_judge_cli keys them as "number" and states a boolean
+                # "satisfied". score_verdicts reads coverage_outcome or score
+                # and treats anything else as not_fulfilled, so an unmapped
+                # "satisfied" scores every criterion zero however it was judged.
+                by_id = {
+                    str(r["id"] if r.get("id") is not None else r.get("number")): r
+                    for r in per_criterion
+                }
+                verdicts = []
+                for c in criteria:
+                    row = by_id.get(str(c.id))
+                    if row is None:
+                        verdicts.append({"score": 0.0})
+                    elif "coverage_outcome" in row or "score" in row:
+                        verdicts.append(row)
+                    else:
+                        verdicts.append(
+                            {**row, "score": 1.0 if row.get("satisfied") else 0.0}
+                        )
                 scored = rw.score_verdicts(criteria, verdicts)
                 rubric_value = scored["value"]
                 rubric_rows = scored["rows"]
@@ -824,6 +851,12 @@ def render_task(
         )
         (task_dir / "tests" / "weighted_judge.py").write_text(
             _read_scoring_module_source("weighted_judge.py"), encoding="utf-8"
+        )
+        # weighted_judge_entry.py imports this when a bundle ships a rubric.json.
+        # It went unshipped for as long as that branch was unreachable, so the
+        # missing dependency stayed invisible rather than raising.
+        (task_dir / "tests" / "rubric_weighted.py").write_text(
+            _read_scoring_module_source("rubric_weighted.py"), encoding="utf-8"
         )
         (task_dir / "tests" / "weighted_judge_entry.py").write_text(
             WEIGHTED_JUDGE_ENTRY_TEMPLATE, encoding="utf-8"

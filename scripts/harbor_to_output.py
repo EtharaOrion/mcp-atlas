@@ -965,7 +965,16 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
             "metrics": {
                 "accuracy": _mean([1.0 if e["passed"] else 0.0 for e in all_eps]),
                 "avg_reward": _mean(rewards),
-                "avg_completion_rate": _mean([e["judge"]["rubric_score"] for e in all_eps]),
+                # avg_completion_rate averages the same quantity the per-trial
+                # completion_rate carries, which is the Channel A traj_tests value.
+                # It previously averaged rubric_score while result.json's per-trial
+                # completion_rate carried traj_tests, so one name held two different
+                # quantities and the aggregate could never reconcile against the
+                # record beside it. The rubric mean is not lost: it moves to
+                # avg_rubric_score below, under a name that says what it is.
+                "avg_completion_rate": _mean(
+                    [e["judge"]["components"]["traj_tests"]["value"] for e in all_eps]),
+                "avg_rubric_score": _mean([e["judge"]["rubric_score"] for e in all_eps]),
                 "avg_traj_tests": _mean([e["judge"]["components"]["traj_tests"]["value"] for e in all_eps]),
                 "avg_misbehave_rate": _mean([
                     (e["judge"]["misbehave"] / max(1, len(e["judge"]["traj_tests"]["passed_tests"]))) for e in all_eps]),
@@ -984,10 +993,16 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
         if _evals and all_eps:
             for _eval_data in _evals.values():
                 _metrics = _eval_data.get("metrics") or []
+                # Extend rather than truncate. The incoming metrics list can be
+                # shorter than the episode list, and the previous guard silently
+                # dropped every episode past its end, so a two-trial run recorded
+                # one per-trial block and no aggregate could be re-derived from it.
+                while len(_metrics) < len(all_eps):
+                    _metrics.append({})
+                _eval_data["metrics"] = _metrics
                 for _i, _ep in enumerate(all_eps):
-                    if _i < len(_metrics):
-                        _metrics[_i]["reward"] = _ep["judge"]["reward"]
-                        _metrics[_i]["completion_rate"] = _ep["judge"]["components"]["traj_tests"]["value"]
+                    _metrics[_i]["reward"] = _ep["judge"]["reward"]
+                    _metrics[_i]["completion_rate"] = _ep["judge"]["components"]["traj_tests"]["value"]
                 _new_rstats: dict = {"reward": {}, "completion_rate": {}, "misbehave_rate": {}}
                 for _i, _ep in enumerate(all_eps):
                     _tname = _ep.get("trial_name") or f"trial_{_i}"
@@ -1041,7 +1056,8 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
                         "pass@k": per_task[0]["pass@k"], "pass^k": per_task[0]["pass^k"],
                         "failure_breakdown": hist},
             "attempts": [{"attempt": e["index"], "passed": e["passed"], "reward": e["judge"]["reward"],
-                          "completion_rate": e["judge"]["rubric_score"],
+                          "completion_rate": e["judge"]["components"]["traj_tests"]["value"],
+                          "rubric_score": e["judge"]["rubric_score"],
                           "traj_tests": e["judge"]["components"]["traj_tests"]["value"],
                           "failure_class": e["failure_class"]} for e in eps],
         })
@@ -1060,7 +1076,7 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
             "## Aggregate metrics", "", "| Metric | Value |", "|---|---|",
             f"| Accuracy (reward ≥ threshold) | {m['accuracy']:.4f} |",
             f"| Avg reward | {m['avg_reward']:.4f} |",
-            f"| Avg rubric (Channel B) | {m['avg_completion_rate']:.4f} |",
+            f"| Avg rubric (Channel B) | {m['avg_rubric_score']:.4f} |",
             f"| Avg traj_tests (Channel A) | {m['avg_traj_tests']:.4f} |",
             f"| Avg misbehave rate | {m['avg_misbehave_rate']:.4f} |",
             f"| Avg valid tool calls / episode | {m['avg_valid_tool_calls']:.4f} |",
