@@ -606,6 +606,16 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     rubric_pct = _pct(rubric_val)
     parts = [p for p in (test_pct, rubric_pct) if p is not None]
     final_reward = round(sum(parts) / len(parts), 2) if parts else None
+    try:
+        _orig_rew = json.loads((ver / "reward.json").read_bytes())
+    except Exception:
+        _orig_rew = {}
+    reward_pct_doc = {
+        **_orig_rew,
+        "reward": final_reward,
+        "completion_rate": round((_orig_rew.get("completion_rate") or 0) * 100, 2),
+        "misbehave_rate": round((_orig_rew.get("misbehave_rate") or 0) * 100, 2),
+    }
 
     failure_class, failure_reason = classify_failure(
         passed, traj_rows, rubric_rows, stream, exception,
@@ -653,6 +663,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         (ldir / "verifier-reward.txt").write_text(reward_txt_val + "\n", encoding="utf-8")
     if not (vdir / "detail.json").exists():
         _dump(vdir / "detail.json", detail_doc)
+    _dump(vdir / "reward.json", reward_pct_doc)
     report = {
         "model": model, "run_index": run_no, "include_multimodal": False,
         "pytest": {"passed": n_pass, "failed": n_fail, "skipped": n_skip,
@@ -692,6 +703,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         _dump(raw_run / "detail.json", detail_doc)
     if not (rver / "detail.json").exists():
         _dump(rver / "detail.json", detail_doc)
+    _dump(rver / "reward.json", reward_pct_doc)
     _dump(raw_run / "rubric.json", {"format": "criteria", "rubric_score": _r4(rubric_val), "per_criterion": rubric_entries})
     with (raw_run / "trace.jsonl").open("w", encoding="utf-8") as fh:
         for r in stream["trace"]:
