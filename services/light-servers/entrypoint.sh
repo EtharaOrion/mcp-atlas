@@ -184,20 +184,7 @@ SERVER_CMDS["LightZoom"]="fastmcp run /app/software/LightZoom/app.py --transport
 
 if [ -z "${ENABLED_SERVERS:-}" ]; then
     echo "Starting all ${#SERVER_CMDS[@]} servers..."
-    # Start health-check target (LightQuickBooks, port 9110) first and wait for it
-    # before launching the rest, so the Docker health check always passes in time.
-    if [ -n "${SERVER_CMDS[LightQuickBooks]:-}" ]; then
-        echo "Starting LightQuickBooks (health-check target) first..."
-        eval "${SERVER_CMDS[LightQuickBooks]}" &
-        PIDS+=($!)
-        for i in $(seq 1 60); do
-            python3 -c "import socket; socket.create_connection(('localhost',9110),timeout=2).close()" 2>/dev/null && break
-            sleep 2
-        done
-        echo "LightQuickBooks ready. Starting remaining servers..."
-    fi
     for name in "${!SERVER_CMDS[@]}"; do
-        [ "$name" = "LightQuickBooks" ] && continue
         eval "${SERVER_CMDS[$name]}" &
         PIDS+=($!)
     done
