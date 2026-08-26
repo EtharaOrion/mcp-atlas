@@ -711,7 +711,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     _dump(raw_run / "diagnosis.json", diagnosis)
     raw_report = {
         "task": task_name, "model": model, "seed": None, "attempt": run_no,
-        "passed": passed, "reward": reward, "final_score": reward,
+        "passed": passed, "reward": final_reward, "final_score": final_reward,
         "final_score_basis": "weighted(traj_tests+rubric)" if (traj_w or rubric_w) else "rubric",
         "completion_rate": _r4(rubric_val), "misbehaving_rate": None,
         "channel_a_present": bool(traj_rows),
@@ -729,7 +729,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     # ---- episode record for summary.json ----------------------------------
     goal_rows = [r for r in traj_rows if (r.get("weight") or 0) > 0]
     judge = {
-        "reward": reward, "passed": passed,
+        "reward": final_reward, "passed": passed,
         "quadrant": "PASSED" if passed else "FAILED", "threshold": threshold,
         "components": {
             "traj_tests": {"weight": traj_w, "value": _r4(traj_val),
@@ -774,7 +774,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     }
     pair = {"task": task_name, "seed": None, "attempt": run_no,
             "instruction": stream["instruction"] or ((task_dir / "instruction.md").read_text() if task_dir and (task_dir / "instruction.md").exists() else None),
-            "final_answer": stream["final_answer"], "reward": reward, "passed": passed}
+            "final_answer": stream["final_answer"], "reward": final_reward, "passed": passed}
     per_run = {"run_index": run_no, "include_multimodal": False,
                "test_weights_percentage": test_pct, "rubric_weights_percentage": rubric_pct,
                "combined_score": final_reward}
