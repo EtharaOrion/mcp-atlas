@@ -1,4 +1,4 @@
-fastmcp==2.13.3
+fastmcp==3.4.7
 colorlog
 shortuuid==1.0.13
 pyyaml

@@ -115,7 +115,7 @@ def search_records(
     Matching is case-insensitive: exact match for non-string fields, substring
     match for strings. Nested fields can be addressed with dots (a.b.c).
     """
-    records = _iter_records(get_service_data.fn(service, collection))
+    records = _iter_records(get_service_data(service, collection))
     needle = value.lower()
     matches = []
     for record in records:

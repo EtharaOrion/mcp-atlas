@@ -157,39 +157,39 @@ def add_seconds_iso(t: str, seconds: int):
 if __name__ == "__main__":
     # 1) days_diff
     print("days_diff examples:")
-    print(days_diff.fn("1989-06-04", "2026-01-14"))
-    print(days_diff.fn("2026-01-01", "2026-01-14"))
-    print(days_diff.fn("2026-01-14", "2026-01-01"))  # negative result
+    print(days_diff("1989-06-04", "2026-01-14"))
+    print(days_diff("2026-01-01", "2026-01-14"))
+    print(days_diff("2026-01-14", "2026-01-01"))  # negative result
     print()
 
     # 2) date_to_weekday
     print("date_to_weekday examples:")
-    print(date_to_weekday.fn("2026-01-14"))                 # full name
-    print(date_to_weekday.fn("2026-01-14", short=True))     # abbreviated
-    print(date_to_weekday.fn("1989-06-04"))
+    print(date_to_weekday("2026-01-14"))                 # full name
+    print(date_to_weekday("2026-01-14", short=True))     # abbreviated
+    print(date_to_weekday("1989-06-04"))
     print()
 
     # 3) iso_seconds_diff
     print("iso_seconds_diff examples:")
-    print(iso_seconds_diff.fn("2026-01-14T00:00:00", "2026-01-14T00:00:10"))
-    print(iso_seconds_diff.fn("2026-01-14T00:00:00Z", "2026-01-14T00:01:00Z"))
-    print(iso_seconds_diff.fn("2026-01-14T00:00:00+08:00", "2026-01-14T00:00:30+08:00"))
-    print(iso_seconds_diff.fn("2026-01-14T00:00:00+00:00", "2026-01-14T08:00:00+08:00"))  # same instant
+    print(iso_seconds_diff("2026-01-14T00:00:00", "2026-01-14T00:00:10"))
+    print(iso_seconds_diff("2026-01-14T00:00:00Z", "2026-01-14T00:01:00Z"))
+    print(iso_seconds_diff("2026-01-14T00:00:00+08:00", "2026-01-14T00:00:30+08:00"))
+    print(iso_seconds_diff("2026-01-14T00:00:00+00:00", "2026-01-14T08:00:00+08:00"))  # same instant
     print()
 
     # 4) convert_time_units
     print("convert_time_units examples:")
-    print(convert_time_units.fn(1500, "ms", "s"))
-    print(convert_time_units.fn(2, "h", "min"))
-    print(convert_time_units.fn(3, "d", "h"))
-    print(convert_time_units.fn(1, "w", "d"))
-    print(convert_time_units.fn(120, "s", "ms"))
+    print(convert_time_units(1500, "ms", "s"))
+    print(convert_time_units(2, "h", "min"))
+    print(convert_time_units(3, "d", "h"))
+    print(convert_time_units(1, "w", "d"))
+    print(convert_time_units(120, "s", "ms"))
     print()
 
     # 5) add_seconds_iso
     print("add_seconds_iso examples:")
-    print(add_seconds_iso.fn("2026-01-14T00:00:00", 90))
-    print(add_seconds_iso.fn("2026-01-14T00:00:00Z", 90))
-    print(add_seconds_iso.fn("2026-01-14T23:59:30+00:00", 90))  # crosses day boundary
-    print(add_seconds_iso.fn("2026-01-14T00:00:30+08:00", -60))  # subtract seconds
+    print(add_seconds_iso("2026-01-14T00:00:00", 90))
+    print(add_seconds_iso("2026-01-14T00:00:00Z", 90))
+    print(add_seconds_iso("2026-01-14T23:59:30+00:00", 90))  # crosses day boundary
+    print(add_seconds_iso("2026-01-14T00:00:30+08:00", -60))  # subtract seconds
 

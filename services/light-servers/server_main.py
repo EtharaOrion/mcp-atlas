@@ -8,7 +8,11 @@ from fastmcp import FastMCP
 from filesystem_server import mcp as filesystem_mcp
 
 main = FastMCP("light-servers")
-main.mount("filesystem", filesystem_mcp)
+# fastmcp 3 takes the server first and the namespace second. The 2.x order
+# was mount(prefix, server). Passing the 2.x order to 3.x does not raise at
+# call time: it binds a str where the server is expected and only fails when
+# the lifespan starts, as 'str' object has no attribute '_lifespan'.
+main.mount(filesystem_mcp, "filesystem")
 
 _SERVERS_DIR = Path("/app/servers")
 for _app_path in sorted(_SERVERS_DIR.glob("*/app.py")):
@@ -17,7 +21,7 @@ for _app_path in sorted(_SERVERS_DIR.glob("*/app.py")):
         _mod = importlib.import_module(f"servers.{_name}.app")
         _sub = getattr(_mod, "mcp", None)
         if _sub is not None:
-            main.mount(_name, _sub)
+            main.mount(_sub, _name)
     except Exception as _e:
         print(f"[light-servers] skip servers/{_name}: {_e}", flush=True)
 
@@ -28,7 +32,7 @@ for _app_path in sorted(_SOFTWARE_DIR.glob("Light*/app.py")):
         _mod = importlib.import_module(f"software.{_name}.app")
         _sub = getattr(_mod, "mcp", None)
         if _sub is not None:
-            main.mount(_name.lower(), _sub)
+            main.mount(_sub, _name.lower())
     except Exception as _e:
         print(f"[light-servers] skip software/{_name}: {_e}", flush=True)
 
