@@ -118,8 +118,7 @@ class CtrfReporter:
                 "duration": int(entry["duration"] * 1000),
             }
             weight = self.weights.get(name)
-            if weight is not None:
-                row["weight"] = weight
+            row["weight"] = weight if weight is not None else 0
             tests.append(row)
 
         # Positive-weighted tests only: guards are negative-weighted and a
@@ -146,7 +145,16 @@ class CtrfReporter:
         # Reporting only -- a write failure here must never fail the verifier.
         try:
             self.out_path.parent.mkdir(parents=True, exist_ok=True)
-            self.out_path.write_text(json.dumps(self.build(), indent=2), encoding="utf-8")
+            doc = self.build()
+            # test_write_reward_json (a pytest test) runs before sessionfinish, so reward_channel_a.json is already present.
+            ra_path = self.out_path.parent / "reward_channel_a.json"
+            if ra_path.exists():
+                try:
+                    ra = json.loads(ra_path.read_text(encoding="utf-8"))
+                    doc["results"]["summary"]["final_reward"] = ra.get("reward")
+                except (OSError, json.JSONDecodeError, KeyError):
+                    pass
+            self.out_path.write_text(json.dumps(doc, indent=2), encoding="utf-8")
         except OSError as exc:
             print(f"[ctrf] could not write {self.out_path}: {exc}")
         else:

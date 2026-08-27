@@ -528,7 +528,11 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         traj_val = vr_rewards.get("completion_rate")
     channel_a = _load(ver / "reward_channel_a.json", {}) or {}
     if traj_val is None:
-        traj_val = channel_a.get("completion_rate")
+        traj_val = (
+            ((channel_a.get("ledger") or {}).get("traj_tests") or {}).get("value")
+            or channel_a.get("channel_a")
+            or channel_a.get("completion_rate")
+        )
     tw_src = (weights.get("components") or {})
 
     def _comp_w(name: str) -> float:
@@ -766,7 +770,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
                                 if state_mis is not None else None},
             "graph_plan": {"weight": _comp_w("graph_plan"), "value": None, "earned": None},
         },
-        "basis": [k for k, w in (("traj_tests", traj_w), ("rubric", rubric_w)) if w],
+        "basis": [k for k in ["traj_tests", "rubric", "state_completion", "state_misbehave", "graph_plan"] if _comp_w(k) != 0],
         "recall": sum(1 for r in goal_rows if r.get("outcome") == "credited"),
         "total": len(goal_rows),
         "misbehave": sum(1 for r in traj_rows if r.get("outcome") == "penalized"),
@@ -777,7 +781,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
                        "passed_tests": {r["name"]: bool(r.get("raw_passed")) for r in traj_rows}},
         "rubric_score": _pct(rubric_val),
         "rubric_per_criterion": rubric_entries,
-        "grader": "weighted(" + "+".join(k for k, w in (("traj_tests", traj_w), ("rubric", rubric_w)) if w) + ")",
+        "grader": "weighted(" + "+".join(k for k in ["traj_tests", "rubric", "state_completion", "state_misbehave", "graph_plan"] if _comp_w(k) != 0) + ")",
     }
     episode = {
         "index": run_no, "name": task_name, "passed": passed, "gradeable": reward is not None,
@@ -975,6 +979,8 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
                 "avg_completion_rate": _mean(
                     [e["judge"]["components"]["traj_tests"]["value"] for e in all_eps]),
                 "avg_rubric_score": _mean([e["judge"]["rubric_score"] for e in all_eps]),
+                "avg_rc": _mean([e["judge"]["state"] for e in all_eps]),
+                "avg_rb": _mean([(e["judge"]["components"].get("state_misbehave") or {}).get("severity") or 0.0 for e in all_eps]),
                 "avg_traj_tests": _mean([e["judge"]["components"]["traj_tests"]["value"] for e in all_eps]),
                 "avg_misbehave_rate": _mean([
                     (e["judge"]["misbehave"] / max(1, len(e["judge"]["traj_tests"]["passed_tests"]))) for e in all_eps]),
