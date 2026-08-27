@@ -524,14 +524,11 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     traj_w = (ledger.get("traj_tests") or {}).get("weight", 0)
     rubric_w = (ledger.get("rubric") or {}).get("weight", 0)
     vr_rewards = (tres.get("verifier_result") or {}).get("rewards", {})
-    if traj_val is None:
-        traj_val = vr_rewards.get("completion_rate")
     channel_a = _load(ver / "reward_channel_a.json", {}) or {}
     if traj_val is None:
         traj_val = (
             ((channel_a.get("ledger") or {}).get("traj_tests") or {}).get("value")
             or channel_a.get("channel_a")
-            or channel_a.get("completion_rate")
         )
     tw_src = (weights.get("components") or {})
 
@@ -617,8 +614,6 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     reward_pct_doc = {
         **_orig_rew,
         "reward": final_reward,
-        "completion_rate": round((_orig_rew.get("completion_rate") or 0) * 100, 2),
-        "misbehave_rate": round((_orig_rew.get("misbehave_rate") or 0) * 100, 2),
     }
 
     failure_class, failure_reason = classify_failure(
@@ -646,8 +641,6 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     _trun_res = _load(run_dir / "result.json", {}) or {}
     if isinstance((_trun_res.get("verifier_result") or {}).get("rewards"), dict):
         _trun_res["verifier_result"]["rewards"]["reward"] = reward_pct_doc.get("reward", final_reward)
-        _trun_res["verifier_result"]["rewards"]["completion_rate"] = reward_pct_doc.get("completion_rate", 0.0)
-        _trun_res["verifier_result"]["rewards"]["misbehave_rate"] = reward_pct_doc.get("misbehave_rate", 0.0)
         _dump(run_dir / "result.json", _trun_res)
     _copy(trial_dir / "artifacts", run_dir / "artifacts")
     _flatten_artifacts(run_dir)
@@ -735,7 +728,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         "task": task_name, "model": model, "seed": None, "attempt": run_no,
         "passed": passed, "reward": final_reward, "final_score": final_reward,
         "final_score_basis": "weighted(traj_tests+rubric)" if (traj_w or rubric_w) else "rubric",
-        "completion_rate": _pct(rubric_val), "misbehaving_rate": None,
+
         "channel_a_present": bool(traj_rows),
         "test_weights_percentage": test_pct, "rubric_weights_percentage": rubric_pct,
         "rubric_rc": _r4(rubric_val), "rubric_rb": None,
@@ -1008,12 +1001,11 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
                 _eval_data["metrics"] = _metrics
                 for _i, _ep in enumerate(all_eps):
                     _metrics[_i]["reward"] = _ep["judge"]["reward"]
-                    _metrics[_i]["completion_rate"] = _ep["judge"]["components"]["traj_tests"]["value"]
-                _new_rstats: dict = {"reward": {}, "completion_rate": {}, "misbehave_rate": {}}
+                _new_rstats: dict = {"reward": {}}
                 for _i, _ep in enumerate(all_eps):
                     _tname = _ep.get("trial_name") or f"trial_{_i}"
                     if _i < len(_metrics):
-                        for _fld in ("reward", "completion_rate", "misbehave_rate"):
+                        for _fld in ("reward",):
                             _v = str(_metrics[_i].get(_fld, 0))
                             _new_rstats[_fld].setdefault(_v, []).append(_tname)
                 _eval_data["reward_stats"] = _new_rstats
@@ -1062,7 +1054,6 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
                         "pass@k": per_task[0]["pass@k"], "pass^k": per_task[0]["pass^k"],
                         "failure_breakdown": hist},
             "attempts": [{"attempt": e["index"], "passed": e["passed"], "reward": e["judge"]["reward"],
-                          "completion_rate": e["judge"]["components"]["traj_tests"]["value"],
                           "rubric_score": e["judge"]["rubric_score"],
                           "traj_tests": e["judge"]["components"]["traj_tests"]["value"],
                           "failure_class": e["failure_class"]} for e in eps],
