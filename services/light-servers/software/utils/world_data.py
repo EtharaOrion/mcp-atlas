@@ -131,7 +131,7 @@ def load_state(session, app_name: str) -> bool:
         override = os.path.join(d, f"{app_name}.json")
         if os.path.isfile(override):
             with open(override) as fh:
-                _apply_shape_specs(session, json.load(fh), shape)
+                _apply_shape_specs(session, json.load(fh), shape, mode="append")
     return True
 
 
@@ -492,13 +492,49 @@ def hydrate(session, app_name: str) -> bool:
     path = _resolve_world_path(session, app_name)
     if path is None:
         return False
+    # Which of the two tiers answered decides the semantics. The app's own
+    # software/<App>/world.json IS the app's world, so it replaces. A file from
+    # $COMPLEXMCP_WORLD_DATA is user-supplied, so it APPENDS -- its rows land
+    # alongside what the app already holds instead of discarding it.
+    d = active_dir()
+    from_override = bool(d) and os.path.abspath(path).startswith(os.path.abspath(d) + os.sep)
     with open(path) as fh:
         data = json.load(fh)
-    _apply(session, app_name, data)
+    _apply(session, app_name, data, mode="append" if from_override else "replace")
     return True
 
 
-def _apply_shape_specs(session, data: dict, shape: dict) -> None:
+def _merge_onto(session, attr_name, new_value, *, mode: str) -> None:
+    """Assign ``new_value`` to ``session.attr_name``.
+
+    ``mode="replace"`` is the base-corpus path: the attribute becomes the value,
+    because there is nothing to append to yet.
+
+    ``mode="append"`` is the user-provided path (``$COMPLEXMCP_WORLD_DATA``).
+    The supplied rows land ALONGSIDE what the corpus already loaded rather than
+    discarding it -- so the served world is corpus + supplied, not supplied
+    alone. A new container is built rather than the existing one mutated, so
+    nothing already holding a reference sees the change underneath it.
+
+    Scalars fall back to replace: appending to one has no meaning.
+    """
+    if mode != "append":
+        setattr(session, attr_name, new_value)
+        return
+    existing = getattr(session, attr_name, None)
+    if isinstance(existing, list) and isinstance(new_value, list):
+        setattr(session, attr_name, list(existing) + list(new_value))
+    elif isinstance(existing, dict) and isinstance(new_value, dict):
+        merged = dict(existing)
+        merged.update(new_value)
+        setattr(session, attr_name, merged)
+    elif isinstance(existing, set) and isinstance(new_value, (set, list, tuple)):
+        setattr(session, attr_name, set(existing) | set(new_value))
+    else:
+        setattr(session, attr_name, new_value)
+
+
+def _apply_shape_specs(session, data: dict, shape: dict, *, mode: str = "replace") -> None:
     """setattr each key of ``data`` onto ``session``, routing keys that carry a
     ``shape`` spec through their declared reshaping (skip/fn/scalar/dict/list)
     and copying the rest verbatim. Shared by ``_apply`` (auto-shape + _SHAPES)
@@ -506,7 +542,7 @@ def _apply_shape_specs(session, data: dict, shape: dict) -> None:
     for key, value in data.items():
         spec = shape.get(key)
         if spec is None:
-            setattr(session, key, value)  # no declared shape: raw JSON as-is
+            _merge_onto(session, key, value, mode=mode)  # no declared shape
             continue
         kind = spec[0]
         if kind == "skip":
@@ -521,14 +557,14 @@ def _apply_shape_specs(session, data: dict, shape: dict) -> None:
         cls = spec[1]
         attr_name = spec[2] if len(spec) > 2 else key
         if kind == "dict" and isinstance(value, dict):
-            setattr(session, attr_name, {k: _coerce(cls, v) for k, v in value.items()})
+            _merge_onto(session, attr_name, {k: _coerce(cls, v) for k, v in value.items()}, mode=mode)
         elif kind == "list" and isinstance(value, list):
-            setattr(session, attr_name, [_coerce(cls, v) for v in value])
+            _merge_onto(session, attr_name, [_coerce(cls, v) for v in value], mode=mode)
         else:
-            setattr(session, attr_name, value)
+            _merge_onto(session, attr_name, value, mode=mode)
 
 
-def _apply(session, app_name: str, data: dict) -> None:
+def _apply(session, app_name: str, data: dict, *, mode: str = "replace") -> None:
     """Apply a data dict onto ``session``: coerce each key that has a declared
     shape (rebuilding dataclasses, dict/list containers, scalars, aggregates),
     and setattr the rest verbatim. Runs the app's post-hydrate hook, if any."""
@@ -540,7 +576,7 @@ def _apply(session, app_name: str, data: dict) -> None:
     if shape_fn:
         shape.update(shape_fn())
 
-    _apply_shape_specs(session, data, shape)
+    _apply_shape_specs(session, data, shape, mode=mode)
 
     post_fn = _POST_HYDRATE.get(app_name)
     if post_fn:
@@ -570,5 +606,6 @@ def load_typed_state(session, app_name: str) -> bool:
         override = os.path.join(d, f"{app_name}.json")
         if os.path.isfile(override):
             with open(override) as fh:
-                _apply(session, app_name, json.load(fh))
+                # APPEND -- see load_state.
+                _apply(session, app_name, json.load(fh), mode="append")
     return True
