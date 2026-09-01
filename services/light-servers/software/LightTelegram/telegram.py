@@ -1,7 +1,6 @@
 import random
 from typing import Dict, List, Any
 from pathlib import Path
-import yaml
 import sys
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -10,6 +9,7 @@ WORK_DIR = Path('.').__str__()
 if WORK_DIR not in sys.path:
     sys.path.append(WORK_DIR)
 
+from software.utils import corpus_registry
 from software.utils.core import OSConnector, DummyOSConnector
 from software.utils.world_snapshot import restore_into, seed_mode, resolve_seed
 from software.utils.time import TimeMachine
@@ -53,8 +53,7 @@ class TelegramSession:
             self.os = OSConnector(session_id=os_cfg["session_id"], url=os_cfg["url"]) if os_cfg else DummyOSConnector()
             self.time_machine = TimeMachine(rng=self.rng)
 
-            with open(CORPUS_PATH / "telegram.yaml") as f:
-                info = yaml.safe_load(f)
+            info = corpus_registry.load(CORPUS_PATH / "telegram.yaml")
 
             self.bot: Dict[str, Any] = dict(info.get("bot", {}))
             self.users: List[Dict[str, Any]] = [

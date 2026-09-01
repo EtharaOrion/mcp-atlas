@@ -78,11 +78,20 @@ def _corpus_base(mod_file):
 
 
 def _read_corpus(path):
-    """Load a corpus data file (json or yaml) into a plain dict."""
+    """Load a corpus data file (json or yaml) into a plain dict.
+
+    YAML is routed through ``corpus_registry`` -- the one seam the additions
+    layer hooks, and the reason each call gets its own fresh object graph
+    (invariant I1) rather than a shared parse. This single edit covers every
+    app whose world lives in ``corpus/state.yaml``.
+
+    JSON is read directly: exactly one app ships ``corpus/state.json``, and the
+    additions contract is YAML-only.
+    """
+    if path.endswith((".yaml", ".yml")):
+        from software.utils import corpus_registry
+        return corpus_registry.load(path) or {}
     with open(path) as fh:
-        if path.endswith((".yaml", ".yml")):
-            import yaml
-            return yaml.safe_load(fh) or {}
         return json.load(fh)
 
 

@@ -2,7 +2,6 @@ from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Any, Set, Tuple, Literal
 from collections import defaultdict
 import random
-import yaml
 from pathlib import Path
 import sys
 
@@ -10,6 +9,7 @@ WORK_DIR = Path('.')
 if WORK_DIR not in sys.path:
     sys.path.append(WORK_DIR.__str__())
 
+from software.utils import corpus_registry
 from software.utils.time import TimeMachine
 from software.utils.core import OSConnector, DummyOSConnector, uuid_rng
 from software.utils.world_snapshot import restore_into, seed_mode, resolve_seed
@@ -148,24 +148,23 @@ class StockSession:
 
     def init_stocks(self):
         stocks: Dict[str, Stock] = {}
-        with open(CORPUS_PATH / "stock.yaml") as f:
-            _stocks = yaml.safe_load(f)["stocks"]
-            for _stock in _stocks:
-                ticker = _stock["ticker"]
-                name = _stock["name"]
-                price = round(_stock["price"] * self.rng.uniform(0.8, 1.6), 2)
-                sector = _stock["sector"]
-                description = _stock["description"]
-                pe_ratio = round(_stock["pe_ratio"] * self.rng.uniform(0.9, 1.1), 2)
-                market_cap = round(float(_stock["market_cap"][:-1]) * self.rng.uniform(0.9, 1.4), 2).__str__() + _stock["market_cap"][-1]
+        _stocks = corpus_registry.load(CORPUS_PATH / "stock.yaml")["stocks"]
+        for _stock in _stocks:
+            ticker = _stock["ticker"]
+            name = _stock["name"]
+            price = round(_stock["price"] * self.rng.uniform(0.8, 1.6), 2)
+            sector = _stock["sector"]
+            description = _stock["description"]
+            pe_ratio = round(_stock["pe_ratio"] * self.rng.uniform(0.9, 1.1), 2)
+            market_cap = round(float(_stock["market_cap"][:-1]) * self.rng.uniform(0.9, 1.4), 2).__str__() + _stock["market_cap"][-1]
 
-                stock = Stock(
-                    ticker=ticker, name=name, price=price, sector=sector,
-                    description=description, pe_ratio=pe_ratio,
-                    market_cap=market_cap
-                )
+            stock = Stock(
+                ticker=ticker, name=name, price=price, sector=sector,
+                description=description, pe_ratio=pe_ratio,
+                market_cap=market_cap
+            )
 
-                stocks[ticker] = stock
+            stocks[ticker] = stock
         
         return stocks
 

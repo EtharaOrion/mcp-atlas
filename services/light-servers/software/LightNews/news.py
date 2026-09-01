@@ -2,7 +2,6 @@ from typing import Dict, List
 from pathlib import Path
 import random
 import sys
-import yaml
 from dataclasses import dataclass, asdict
 from datetime import datetime
 
@@ -10,6 +9,7 @@ WORK_DIR = Path('.').__str__()
 if WORK_DIR not in sys.path:
     sys.path.append(WORK_DIR)
 
+from software.utils import corpus_registry
 from software.utils.core import OSConnector, DummyOSConnector
 from software.utils.world_snapshot import restore_into, seed_mode, resolve_seed
 
@@ -44,8 +44,7 @@ class NewsSession:
             ]
             # World data loaded verbatim from corpus/state.yaml (no cooking):
             # authored news is rebuilt into NewsItem objects the tools expect.
-            with open(CORPUS_PATH / "state.yaml") as _f:
-                _news_data = (yaml.safe_load(_f) or {}).get("news", {})
+            _news_data = (corpus_registry.load(CORPUS_PATH / "state.yaml") or {}).get("news", {})
             self._news: Dict[str, List[NewsItem]] = {
                 sec: [NewsItem(**d) for d in _news_data.get(sec, [])]
                 for sec in self.sections
@@ -77,24 +76,23 @@ class NewsSession:
         news: Dict[str, List[NewsItem]] = {}
         news_dict: Dict[str, NewsItem] = {}
         for section, file in files.items():
-            with open(CORPUS_PATH / file) as f:
-                news_list = yaml.safe_load(f)
-                news_cnt = self.rng.randint(40, 60)
-                sel_news_list = self.rng.sample(news_list, k=news_cnt)
-                timestamps = self.os.gen_past(start_year=2025, k=news_cnt)
-                news_item_list = []
+            news_list = corpus_registry.load(CORPUS_PATH / file)
+            news_cnt = self.rng.randint(40, 60)
+            sel_news_list = self.rng.sample(news_list, k=news_cnt)
+            timestamps = self.os.gen_past(start_year=2025, k=news_cnt)
+            news_item_list = []
 
-                for timestamp, news_info in zip(timestamps, sel_news_list):
-                    news_item = NewsItem(
-                        nid=f"news_{self.uuid()}",
-                        timestamp=timestamp,
-                        title=news_info["title"],
-                        abstract=news_info["abstract"],
-                        content=news_info["content"]
-                    )
-                    news_item_list.append(news_item)
-                    news_dict[news_item.nid] = news_item
-                news[section] = news_item_list
+            for timestamp, news_info in zip(timestamps, sel_news_list):
+                news_item = NewsItem(
+                    nid=f"news_{self.uuid()}",
+                    timestamp=timestamp,
+                    title=news_info["title"],
+                    abstract=news_info["abstract"],
+                    content=news_info["content"]
+                )
+                news_item_list.append(news_item)
+                news_dict[news_item.nid] = news_item
+            news[section] = news_item_list
         
         return news, news_dict
 

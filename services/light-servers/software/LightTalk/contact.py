@@ -54,13 +54,13 @@ class Group:
     read_new_message: bool = field(default=True)
 
 from pathlib import Path
-import yaml
 import sys
 
 WORK_DIR = Path('.')
 if WORK_DIR not in sys.path:
     sys.path.append(WORK_DIR.__str__())
 
+from software.utils import corpus_registry
 from software.utils.time import TimeMachine
 from software.utils.core import OSConnector, DummyOSConnector, uuid_rng
 from software.utils.world_snapshot import restore_into, seed_mode, resolve_seed
@@ -135,8 +135,7 @@ class ContactSession:
 
 
     def __mock_moments(self):
-        with open(corpus_path / "moment.yaml") as f:
-            moments = yaml.safe_load(f)["moments"]
+        moments = corpus_registry.load(corpus_path / "moment.yaml")["moments"]
         for contact in self.contacts_dict.values():
             moment_cnt = self.rng.choices([0, 1, 2, 3, 4, 5], weights=[0.5, 0.2, 0.1, 0.1, 0.05, 0.05])[0]
             contact_moments = self.draw_without_replacement(moments, min(moment_cnt, len(moments)))
@@ -167,8 +166,7 @@ class ContactSession:
 
 
     def __mock_chat_history(self):
-        with open(corpus_path / "message.yaml") as f:
-            message_info = yaml.safe_load(f)
+        message_info = corpus_registry.load(corpus_path / "message.yaml")
         messages = message_info["messages"]
         attacks = message_info["attacks"]
 

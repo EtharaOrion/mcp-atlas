@@ -13,6 +13,7 @@ WORK_DIR = Path('.').__str__()
 if WORK_DIR not in sys.path:
     sys.path.append(WORK_DIR)
 
+from software.utils import corpus_registry
 from software.utils.time import TimeMachine
 from software.utils.core import OSConnector, DummyOSConnector, uuid_rng
 from software.utils.world_snapshot import restore_into, seed_mode, resolve_seed
@@ -122,32 +123,30 @@ class FlightSession:
         airports_in_cities = defaultdict(list)
         if not (CORPUS_PATH / "airports.yaml").is_file():
             return airports_list, dict(airports_in_cities)
-        with open(CORPUS_PATH / "airports.yaml") as f:
-            airports = yaml.safe_load(f)["airports"]
-            for airport in airports:
-                aid = airport["aid"]
-                name = airport["name"]
-                city = airport["city"]
-                code = airport["code"]
-                _coord = airport["_coord"]
+        airports = corpus_registry.load(CORPUS_PATH / "airports.yaml")["airports"]
+        for airport in airports:
+            aid = airport["aid"]
+            name = airport["name"]
+            city = airport["city"]
+            code = airport["code"]
+            _coord = airport["_coord"]
 
-                airport_item = Airport(
-                    aid=aid,
-                    name=name,
-                    city=city,
-                    code=code,
-                    _coord=_coord
-                )
-                airports_list.append(airport_item)
-                airports_in_cities[city].append(name)
+            airport_item = Airport(
+                aid=aid,
+                name=name,
+                city=city,
+                code=code,
+                _coord=_coord
+            )
+            airports_list.append(airport_item)
+            airports_in_cities[city].append(name)
         
         return airports_list, airports_in_cities
 
     def init_flights(self) -> Tuple[Dict[str, Flight], Dict[str, List[Flight]], Dict[str, List[Flight]]]:
         _authored = CORPUS_PATH / "flights.yaml"
         if _authored.is_file():
-            with open(_authored) as _f:
-                _raw = (yaml.safe_load(_f) or {}).get("flights", [])
+            _raw = (corpus_registry.load(_authored) or {}).get("flights", [])
             flights: Dict[str, Flight] = {}
             flights_by_arrival: Dict[str, List[Flight]] = defaultdict(list)
             flights_by_departure: Dict[str, List[Flight]] = defaultdict(list)

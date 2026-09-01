@@ -2,7 +2,6 @@ from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Any
 from collections import defaultdict
 import random
-import yaml
 
 import sys
 from pathlib import Path
@@ -11,6 +10,7 @@ WORK_DIR = Path('.').__str__()
 if WORK_DIR not in sys.path:
     sys.path.append(WORK_DIR)
 
+from software.utils import corpus_registry
 from software.utils.time import TimeMachine
 from software.utils.dist import lev_sim
 
@@ -92,8 +92,7 @@ class ShopSession:
     def init_shops(self):
         mock_shops_path = Path("software") / "LightShop" / "corpus" / "shop.yaml"
         shops: Dict[str, Shop] = {}
-        with open(mock_shops_path) as f:
-            mock_shops = yaml.safe_load(f)
+        mock_shops = corpus_registry.load(mock_shops_path)
         for shop_cfg in mock_shops["shops"]:
             cnt_of_cate: int = self.rng.randint(0, 3)
             category: str = shop_cfg["category"]

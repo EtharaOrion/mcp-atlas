@@ -1,7 +1,6 @@
 import random
 from typing import Dict, List, Any
 from pathlib import Path
-import yaml
 import sys
 from datetime import datetime
 
@@ -9,6 +8,7 @@ WORK_DIR = Path('.').__str__()
 if WORK_DIR not in sys.path:
     sys.path.append(WORK_DIR)
 
+from software.utils import corpus_registry
 from software.utils.core import OSConnector, DummyOSConnector
 from software.utils.world_snapshot import restore_into, seed_mode, resolve_seed
 from software.utils.time import TimeMachine
@@ -36,8 +36,7 @@ class GoogleCalendarSession:
             self.os = OSConnector(session_id=os_cfg["session_id"], url=os_cfg["url"]) if os_cfg else DummyOSConnector()
             self.time_machine = TimeMachine(rng=self.rng)
 
-            with open(CORPUS_PATH / "google_calendar.yaml") as f:
-                info = yaml.safe_load(f)
+            info = corpus_registry.load(CORPUS_PATH / "google_calendar.yaml")
 
             self.calendars: List[Dict[str, Any]] = [
                 {**c, "primary": _to_bool(c.get("primary", False))} for c in info.get("calendars", [])
