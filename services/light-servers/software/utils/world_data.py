@@ -200,7 +200,8 @@ def _coerce(tp, value):
 #   ("list", ElementCls[, attr_name])   -- json_key's list elements are ElementCls
 #   ("scalar", coerce_fn, attr_name)    -- json_key's scalar value needs a
 #                                           type conversion and/or a rename
-#   ("fn", callable)                    -- json_key's value doesn't map onto
+#   ("fn", callable)                    -- callable(session, value, mode);
+#                                          json_key's value doesn't map onto
 #                                           a single attribute at all (e.g. it
 #                                           aggregates several); callable(session, value)
 #                                           does the assignment itself.
@@ -274,30 +275,35 @@ def _flight_shape():
     }
 
 
-def _stock_user_fn(session, value):
+def _stock_user_fn(session, value, mode="replace"):
+    # All four are scalars; appending to a balance has no meaning, so these
+    # replace under either mode.
     session.user_tier = value.get("tier", session.user_tier)
     session.trading_balance = value.get("trading_balance", session.trading_balance)
     session.savings_balance = value.get("savings_balance", session.savings_balance)
     session.frozen_margin = value.get("frozen_margin", session.frozen_margin)
 
 
-def _stock_stocks_fn(session, value):
+def _stock_stocks_fn(session, value, mode="replace"):
     from software.LightStock.stock import Position, PendingOrder, StockTransaction
     portfolio = value.get("portfolio")
     if portfolio is not None:
-        session.portfolio = {p["ticker"]: _coerce(Position, p) for p in portfolio}
+        _merge_onto(session, "portfolio",
+                    {p["ticker"]: _coerce(Position, p) for p in portfolio}, mode=mode)
     pending = value.get("pending_orders")
     if pending is not None:
-        session.pending_orders = [_coerce(PendingOrder, p) for p in pending]
+        _merge_onto(session, "pending_orders",
+                    [_coerce(PendingOrder, p) for p in pending], mode=mode)
     history = value.get("trade_history")
     if history is not None:
-        session.trade_history = [_coerce(StockTransaction, p) for p in history]
+        _merge_onto(session, "trade_history",
+                    [_coerce(StockTransaction, p) for p in history], mode=mode)
     watch = value.get("watch_list")
     if watch is not None:
-        session.watchlist = set(watch)
+        _merge_onto(session, "watchlist", set(watch), mode=mode)
     alerts = value.get("price_alerts")
     if alerts is not None:
-        session.price_alerts = dict(alerts)
+        _merge_onto(session, "price_alerts", dict(alerts), mode=mode)
 
 
 def _stock_shape():
@@ -307,7 +313,7 @@ def _stock_shape():
     }
 
 
-def _weather_alerts_fn(session, value):
+def _weather_alerts_fn(session, value, mode="replace"):
     # self.alerts is Dict[aid -> plain dict] (alerts aren't a dataclass), but
     # get_session_dict() dumps it as list(self.alerts.values()), so the JSON
     # round-trips as a list. Auto-derivation can't recover the dict key from
@@ -316,9 +322,9 @@ def _weather_alerts_fn(session, value):
     # store the already-keyed dict, while per-task world_data overrides ship
     # the dumped list -- both must resolve to a dict here.
     items = value.values() if isinstance(value, dict) else value
-    session.alerts = {
-        a["aid"]: a for a in items if isinstance(a, dict) and "aid" in a
-    }
+    _merge_onto(session, "alerts",
+                {a["aid"]: a for a in items if isinstance(a, dict) and "aid" in a},
+                mode=mode)
 
 
 def _weather_shape():
@@ -548,11 +554,18 @@ def _apply_shape_specs(session, data: dict, shape: dict, *, mode: str = "replace
         if kind == "skip":
             continue
         if kind == "fn":
-            spec[1](session, value)
+            # These assign several attributes themselves, so they take the mode
+            # and route each one through _merge_onto rather than setattr.
+            spec[1](session, value, mode)
             continue
         if kind == "scalar":
+            # "scalar" is also what _auto_shape assigns to a raw-passthrough
+            # attribute, which is frequently a plain list of dicts (LightStripe
+            # dumps self.charges directly rather than through a comprehension).
+            # Route it through _merge_onto, which decides by the runtime types:
+            # list+list appends, a genuine scalar still replaces.
             _, coerce_fn, attr_name = spec
-            setattr(session, attr_name, coerce_fn(value))
+            _merge_onto(session, attr_name, coerce_fn(value), mode=mode)
             continue
         cls = spec[1]
         attr_name = spec[2] if len(spec) > 2 else key
