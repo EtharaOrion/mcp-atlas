@@ -527,17 +527,34 @@ def _merge_onto(session, attr_name, new_value, *, mode: str) -> None:
     if mode != "append":
         setattr(session, attr_name, new_value)
         return
-    existing = getattr(session, attr_name, None)
-    if isinstance(existing, list) and isinstance(new_value, list):
-        setattr(session, attr_name, list(existing) + list(new_value))
-    elif isinstance(existing, dict) and isinstance(new_value, dict):
+    setattr(session, attr_name, _merge_value(getattr(session, attr_name, None), new_value))
+
+
+def _merge_value(existing, new):
+    """Merge ``new`` onto ``existing``, recursing through nested containers.
+
+    The recursion is the point. Several apps dump a container of containers --
+    LightAirtable's ``{table_id: [record, ...]}``, LightSalesforce's
+    ``{object: [row, ...]}``, LightRing's ``{kind: [device, ...]}``. Merging
+    only the outer level would replace a whole table's row list the moment a
+    task supplied one extra row for it, which is the collapse this exists to
+    prevent: 8 records in, 1 record served, no error anywhere.
+
+    Leaves replace, which is what identity demands -- a supplied row carrying
+    an id the corpus already uses overwrites that one entity rather than
+    duplicating it. New containers are built throughout, so nothing already
+    holding a reference sees rows appear underneath it.
+    """
+    if isinstance(existing, list) and isinstance(new, list):
+        return list(existing) + list(new)
+    if isinstance(existing, dict) and isinstance(new, dict):
         merged = dict(existing)
-        merged.update(new_value)
-        setattr(session, attr_name, merged)
-    elif isinstance(existing, set) and isinstance(new_value, (set, list, tuple)):
-        setattr(session, attr_name, set(existing) | set(new_value))
-    else:
-        setattr(session, attr_name, new_value)
+        for k, v in new.items():
+            merged[k] = _merge_value(merged[k], v) if k in merged else v
+        return merged
+    if isinstance(existing, set) and isinstance(new, (set, list, tuple)):
+        return set(existing) | set(new)
+    return new  # scalar, dataclass leaf, or container-type mismatch
 
 
 def _apply_shape_specs(session, data: dict, shape: dict, *, mode: str = "replace") -> None:
