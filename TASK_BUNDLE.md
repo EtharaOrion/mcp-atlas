@@ -519,7 +519,11 @@ Drawn from defects found in real runs. Each line is a failure that actually happ
 - [ ] No `__pycache__/`, `.pytest_cache/`, or `.DS_Store` shipped.
 
 **After changing the shared corpus**
-- [ ] Rebuild `light-servers:latest`. The compose files reference the image by tag with no `build:`
-      section, so corpus edits on disk do **not** reach a run until the image is rebuilt.
+- [ ] Nothing. `scripts/run_task.sh --stage preflight` builds `light-servers:latest` when it is
+      absent and re-runs `docker build` when it is present, so edits under `services/light-servers/`
+      always reach the run — the compose files pin the image by tag with no `build:` section, so
+      without that they never would, and nothing errors when they don't. The refresh is fully cached
+      (about a second) when nothing changed. `SKIP_IMAGE_REFRESH=1` opts out of the refresh, never
+      out of the build-when-missing.
 - [ ] Confirm `COMPLEXMCP_SEED_MODE` is `seed`. Under `seedless` the corpus is ignored entirely and
       your edit will never appear.

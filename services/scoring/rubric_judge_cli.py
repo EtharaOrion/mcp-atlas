@@ -180,10 +180,22 @@ def _record_usage(messages: list, model: str) -> None:
         "judge_input_tokens": 0,
         "judge_output_tokens": 0,
         "judge_input_cache_tokens": 0,
-        "judge_output_cache_tokens": 0,
+        # Cache WRITES, which are input-side. The old name for this key was
+        # `judge_output_cache_tokens`, which read as if outputs were cached --
+        # they never are -- and invited the 1.25x write rate to be costed at the
+        # 0.10x read rate, a 12.5x error. Both keys are emitted so existing
+        # readers keep working; see the compatibility note below.
+        "judge_cache_write_tokens": 0,
+        "judge_turns": 0,
         "judge_cost_usd": 0.0,
     }
     try:
+        # DO NOT SUM ACROSS MESSAGES. `messages` holds every AssistantMessage
+        # plus the closing ResultMessage, and ResultMessage.usage is ALREADY the
+        # session total -- adding the per-message figures to it double-counts.
+        # Walking from the end and stopping at the first message that carries
+        # usage or cost lands on that ResultMessage, so tokens and
+        # `total_cost_usd` describe the same scope.
         for msg in reversed(messages):
             usage = getattr(msg, "usage", None)
             cost = getattr(msg, "total_cost_usd", None)
@@ -194,9 +206,12 @@ def _record_usage(messages: list, model: str) -> None:
                 line["judge_input_tokens"] = usage.get("input_tokens", 0) or 0
                 line["judge_output_tokens"] = usage.get("output_tokens", 0) or 0
                 line["judge_input_cache_tokens"] = usage.get("cache_read_input_tokens", 0) or 0
-                line["judge_output_cache_tokens"] = usage.get("cache_creation_input_tokens", 0) or 0
+                line["judge_cache_write_tokens"] = usage.get("cache_creation_input_tokens", 0) or 0
+            line["judge_turns"] = getattr(msg, "num_turns", 0) or 0
             line["judge_cost_usd"] = cost or 0.0
             break
+        # Compatibility: readers keyed on the old name still resolve.
+        line["judge_output_cache_tokens"] = line["judge_cache_write_tokens"]
         _token_out.parent.mkdir(parents=True, exist_ok=True)
         _token_out.write_text(json.dumps(line, indent=2))
         print(f"[judge] token usage → {_token_out}")

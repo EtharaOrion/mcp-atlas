@@ -35,7 +35,6 @@ and a Run_N counter. ``--concurrency`` only fans out across different tasks.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import signal
@@ -78,36 +77,6 @@ def _git_commit() -> str:
         return out.stdout.strip() if out.returncode == 0 else ""
     except (OSError, subprocess.SubprocessError):
         return ""
-
-
-def additions_digest(tasks: Iterable[Path]) -> dict[str, str]:
-    """SHA-256 of every corpus-additions file each task would run against.
-
-    Additions are deliberately outside the bundle and `.gitignore`d, so neither
-    ``tasks`` (names only) nor ``harness_commit`` covers them. Without this, the
-    sequence "pause a batch, edit an additions file, resume" produces early
-    units run against one world and later units against another, both rolled
-    into the same passk_summary.json with no signal anywhere.
-
-    A task with no additions is recorded as an explicit empty marker rather than
-    omitted, so REMOVING additions is a fingerprint change too -- otherwise
-    deleting the directory mid-batch would silently match.
-    """
-    out: dict[str, str] = {}
-    for task in sorted(tasks, key=lambda t: t.name):
-        d = REPO / "corpus_additions" / task.name
-        files = sorted(d.glob("*.yaml")) if d.is_dir() else []
-        if not files:
-            out[task.name] = "none"
-            continue
-        h = hashlib.sha256()
-        for f in files:
-            h.update(f.name.encode())
-            h.update(b"\0")
-            h.update(f.read_bytes())
-            h.update(b"\0")
-        out[task.name] = f"{len(files)}:{h.hexdigest()}"
-    return out
 
 
 def _existing_runs(traj_dir: Path) -> int:
@@ -199,11 +168,6 @@ def run_stage(stage: str, unit: dict[str, Any], args: argparse.Namespace,
         "AT": str(args.at),
         "BUILD_MULT": str(args.build_mult),
         "RUN_OFFSET": str(unit["run_offset"]),
-        # Pinned per unit, never inherited. run_task.sh defaults this to a
-        # slug-keyed path, but --concurrency runs several tasks from one
-        # environment: an ambient ADDITIONS_DIR export would otherwise hand one
-        # task's rows to every other task in the batch.
-        "ADDITIONS_DIR": str(REPO / "corpus_additions" / unit["task_slug"]),
     })
     if args.copy_to:
         env["COPY_TO"] = args.copy_to
@@ -431,17 +395,11 @@ def main(argv: list[str] | None = None) -> int:
 
     tasks = discover_tasks(args)
     batch_dir = _batch_dir(args)
-    adds = additions_digest(tasks)
-    if any(v != "none" for v in adds.values()):
-        _log("corpus additions in play: "
-             + ", ".join(f"{k}={v}" for k, v in adds.items() if v != "none"))
     fingerprint = ckpt.fingerprint_of({
         "agent": args.agent, "model": args.model, "n": args.n, "at": args.at,
         "build_mult": args.build_mult, "output_dir": str(Path(args.output_dir).resolve()),
         "tasks": sorted(t.name for t in tasks),
         "harness_commit": _git_commit(),
-        # The world the units actually run against. See additions_digest().
-        "corpus_additions": adds,
     })
 
     try:
@@ -449,11 +407,8 @@ def main(argv: list[str] | None = None) -> int:
             batch_dir,
             batch_id=batch_dir.name,
             steps=STEPS,
-            # corpus_additions rides along in the invocation record so a
-            # delivered batch states which world it ran against, not just that
-            # the fingerprint happened to match.
             invocation={"argv": sys.argv, "cwd": os.getcwd(),
-                        "git_commit": _git_commit(), "corpus_additions": adds},
+                        "git_commit": _git_commit()},
             fingerprint=fingerprint,
             force=args.force,
             # A preview opens read-only: every write below (planning, reconcile,

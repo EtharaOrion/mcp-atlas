@@ -37,11 +37,4 @@ for _app_path in sorted(_SOFTWARE_DIR.glob("Light*/app.py")):
         print(f"[light-servers] skip software/{_name}: {_e}", flush=True)
 
 if __name__ == "__main__":
-    # Invariant I2: validate the corpus-additions layer before accepting any
-    # connection. entrypoint.sh runs the same gate for the per-app topology;
-    # this covers the aggregated single-process one.
-    from software.utils import corpus_boot as _corpus_boot
-    _rc = _corpus_boot.main()
-    if _rc:
-        raise SystemExit(_rc)
     main.run(transport="streamable-http", port=9000, host="0.0.0.0")

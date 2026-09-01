@@ -204,7 +204,13 @@ def parse_stream(path: Path) -> dict:
         if not isinstance(ev, dict):
             continue
         et = ev.get("type")
-        msg = ev.get("message") or {}
+        msg = ev.get("message")
+        if not isinstance(msg, dict):
+            # Some agents emit `message` as a bare string. Every dereference
+            # below assumes a mapping, so one such event used to take down the
+            # whole reshape -- after the run had already been paid for, with the
+            # agent's work and its score both already on disk.
+            msg = {}
         content = msg.get("content")
         if et == "assistant" and isinstance(content, list):
             texts, tcs = [], []

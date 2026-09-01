@@ -130,7 +130,15 @@ def _model_max_output(client: Any, model: str) -> int:
         if isinstance(reported, int) and reported > 0:
             ceiling = reported
     except Exception as exc:                      # offline / unknown id / old SDK
-        logger.info("Models API lookup failed for %s (%s); using %d", model, exc, ceiling)
+        # DO NOT CACHE A FALLBACK WE NEVER CONFIRMED. A single transient failure
+        # at process start would otherwise pin this model to the fallback
+        # ceiling for the life of the bridge, silently capping max_tokens on
+        # every later request even after the network came back. Returning
+        # uncached costs one extra lookup per call while the API is down, and
+        # self-heals on the first call that succeeds.
+        logger.info("Models API lookup failed for %s (%s); using %d uncached",
+                    model, exc, ceiling)
+        return ceiling
     _max_output_cache[model] = ceiling
     return ceiling
 

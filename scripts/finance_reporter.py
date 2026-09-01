@@ -138,6 +138,13 @@ def judge_lines(run_dir: Path) -> list[dict]:
         if isinstance(rec, dict):
             line = {"model_name": str(rec.get("model_name") or "")}
             line.update({k: num(rec.get(k, 0)) for k in keys})
+            # Cache WRITES, input-side, billed at 1.25x -- not output tokens.
+            # `judge_output_cache_tokens` is the pre-rename name and is still
+            # accepted so runs recorded before the rename keep reporting.
+            line["judge_cache_write_tokens"] = num(
+                rec.get("judge_cache_write_tokens",
+                        rec.get("judge_output_cache_tokens", 0)))
+            line["judge_turns"] = num(rec.get("judge_turns", 0))
             out.append(line)
     return out
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Re-derive a task's grading baselines against the world the servers will
-actually serve -- including any corpus additions.
+actually serve.
 
 Why this is a prerequisite and not a follow-up
 ----------------------------------------------
@@ -29,7 +29,6 @@ Usage
 -----
     scripts/rederive_env.py tasks/<task>                     # dry run, prints the delta
     scripts/rederive_env.py tasks/<task> --write             # rewrite both baselines
-    scripts/rederive_env.py tasks/<task> --additions <dir> --write
 """
 from __future__ import annotations
 
@@ -111,7 +110,12 @@ def _entities(env: dict) -> dict:
     exactly a difference the state channel would score."""
     flat = {}
     for app, blob in (env or {}).items():
-        for coll, rows in ((blob or {}).get("output") or {}).items():
+        # The baselines carry a `_canary` string alongside the per-app blobs;
+        # every other value here is a {"status", "output"} mapping. Without this
+        # the canary reaches .get() and takes the whole report down.
+        if not isinstance(blob, dict):
+            continue
+        for coll, rows in (blob.get("output") or {}).items():
             if not isinstance(rows, list):
                 continue
             for row in rows:
@@ -150,8 +154,8 @@ def _report(name: str, derived: dict, committed: dict) -> bool:
 def _world_data_dir(task_dir: Path):
     """The host path the task's compose maps to ``COMPLEXMCP_WORLD_DATA``.
 
-    Some bundles build their world with the pre-existing world_data overlay
-    (``hydrate()`` / ``load_state()``) rather than corpus additions. Dropping
+    Bundles build their world with the world_data overlay
+    (``hydrate()`` / ``load_state()``). Dropping
     that env var re-derives the STOCK world, which differs from the served
     world in every entity the overlay supplies -- so the diff reports the
     baselines as stale when they are correct, and ``--write`` would replace
@@ -176,8 +180,6 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("task_dir", type=Path)
-    ap.add_argument("--additions", type=Path, default=None,
-                    help="corpus-additions directory to apply (default: $COMPLEXMCP_CORPUS_ADDITIONS)")
     ap.add_argument("--write", action="store_true", help="rewrite the baselines in place")
     a = ap.parse_args(argv)
 
@@ -194,8 +196,6 @@ def main(argv=None) -> int:
 
     os.environ["COMPLEXMCP_SEED"] = str(seed)
     os.environ["COMPLEXMCP_SEED_MODE"] = "seed"
-    if a.additions:
-        os.environ["COMPLEXMCP_CORPUS_ADDITIONS"] = str(a.additions.resolve())
     _wd = _world_data_dir(a.task_dir.resolve())
     if _wd and _wd.is_dir():
         os.environ["COMPLEXMCP_WORLD_DATA"] = str(_wd)
@@ -206,17 +206,6 @@ def main(argv=None) -> int:
 
     os.chdir(LIGHT_SERVERS)
     sys.path.insert(0, str(LIGHT_SERVERS))
-
-    # The same gate the server runs. Baselines must never be derived against a
-    # configuration the server would refuse to boot on.
-    from software.utils import corpus_registry
-    try:
-        touched = corpus_registry.validate_all(LIGHT_SERVERS / "software", enabled=apps)
-    except corpus_registry.CorpusAdditionsError as e:
-        print(f"[rederive] REFUSING: {e}", file=sys.stderr)
-        return 2
-    if touched:
-        print(f"[rederive] additions applied to: {', '.join(touched)}")
 
     old_env, gt_env = {}, {}
     for app in apps:

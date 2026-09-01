@@ -7,6 +7,13 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import mcp.types
 from .mcp_client import client, config
+from .cache_policy import (
+    bump_generation,
+    generate_cache_key,
+    is_mutating_tool,
+    server_of,
+    should_cache_tool,
+)
 from .logger import create_logger
 from cacheout import Cache
 import json
@@ -36,47 +43,6 @@ TOOL_NAME_MAPPINGS = {
     "MongoDB_list-collections": "mongodb_list-collections",
     "MongoDB_list-databases": "mongodb_list-databases",
 }
-
-# Cache whitelist - only these servers will have their responses cached
-CACHEABLE_SERVERS = {
-    "airtable",
-    "alchemy",
-    # "arxiv",
-    "brave-search",
-    "calculator",
-    # "cli-mcp-server",
-    "clinicaltrialsgov-mcp-server",
-    "context7",
-    "ddg-search",
-    "desktop-commander",
-    "e2b-server",
-    "exa",
-    "fetch",
-    # "filesystem",
-    # "git",
-    "github",
-    "google-maps",
-    "google-workspace",
-    "lara-translate",
-    "mcp-code-executor",
-    "mcp-server-code-runner",
-    "memory",
-    "met-museum",
-    "mongodb",
-    "national-parks",
-    "notion",
-    "open-library",
-    "osm-mcp-server",
-    "oxylabs",
-    "pubmed",
-    "slack",
-    "twelvedata",
-    "weather",
-    "weather-data",
-    "whois",
-    "wikipedia",
-}
-
 
 class CallToolRequest(BaseModel):
     tool_name: str
@@ -123,26 +89,6 @@ async def list_tools() -> list[mcp.types.Tool]:
             )
 
 
-def should_cache_tool(tool_name: str) -> bool:
-    """Check if tool should be cached based on server whitelist."""
-    server_name = tool_name.split("_", 1)[0]
-    return server_name in CACHEABLE_SERVERS
-
-
-def generate_cache_key(tool_name: str, tool_args: dict) -> str:
-    """Generate consistent cache key from tool call parameters."""
-    cache_data = {"tool_name": tool_name, "tool_args": tool_args}
-    cache_str = json.dumps(cache_data, sort_keys=True)
-    # Cache addressing only: the digest is never an authentication or
-    # integrity claim, so MD5's collision weakness is not a security
-    # property here. It is still a correctness one -- two colliding
-    # cache_str values would serve one tool call's result to another --
-    # but that needs a crafted collision in agent-supplied tool args, and
-    # the blast radius is a wrong cached response inside one task run.
-    # Switch to sha256 if the cache ever spans trust boundaries.
-    return hashlib.md5(cache_str.encode(), usedforsecurity=False).hexdigest()
-
-
 @app.post("/call-tool")
 async def call_tool(
     request: CallToolRequest,
@@ -154,15 +100,13 @@ async def call_tool(
     # Generate cache key
     cache_key = generate_cache_key(mapped_tool_name, request.tool_args)
 
-    # Check cache first
-    cached_result = tool_cache.get(cache_key)
-    if (
-        cached_result is not None
-        and request.use_cache
-        and should_cache_tool(mapped_tool_name)
-    ):
-        logger.info(f"Returning cached result for tool '{request.tool_name}'")
-        return cached_result
+    # Check cache first. The cheap predicates are tested before the lookup so a
+    # use_cache=False request does no cache work at all.
+    if request.use_cache and should_cache_tool(mapped_tool_name):
+        cached_result = tool_cache.get(cache_key)
+        if cached_result is not None:
+            logger.info(f"Returning cached result for tool '{request.tool_name}'")
+            return cached_result
 
     async with client:
         try:
@@ -180,8 +124,21 @@ async def call_tool(
                     detail=f"Tool '{request.tool_name}' execution failed: {error_msg}",
                 )
 
-            # Cache the successful result only for cacheable tools
             content_blocks = result.content
+
+            # A write just landed: retire every read cached against this server
+            # before it. Done by bumping the generation rather than deleting
+            # keys, so it is O(1) and cannot miss an entry.
+            if is_mutating_tool(mapped_tool_name):
+                srv = server_of(mapped_tool_name)
+                gen = bump_generation(mapped_tool_name)
+                logger.info(
+                    "Mutating call '%s' invalidated cached reads for server '%s' "
+                    "(generation %d)",
+                    mapped_tool_name, srv, gen,
+                )
+
+            # Cache the successful result only for cacheable tools
             if should_cache_tool(mapped_tool_name) and cache_key is not None:
                 # TTL is 70-100% of default TTL, to avoid all items expiring at the same time
                 random_ttl = int(CACHE_TTL_HOURS * 60 * 60 * random.uniform(0.7, 1.0))

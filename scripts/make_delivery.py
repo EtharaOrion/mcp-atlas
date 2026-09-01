@@ -38,7 +38,12 @@ def _build_judge_usage(tokens: dict) -> dict:
     return {
         "input_tokens": tokens.get("judge_input_tokens", 0),
         "cache_read_input_tokens": tokens.get("judge_input_cache_tokens", 0),
-        "cache_creation_input_tokens": tokens.get("judge_output_cache_tokens", 0),
+        # `judge_cache_write_tokens` is the current name; `judge_output_cache_tokens`
+        # is the old one and is still read so artifacts written before the rename
+        # keep costing correctly. Both hold cache CREATION, which is input-side.
+        "cache_creation_input_tokens": tokens.get(
+            "judge_cache_write_tokens",
+            tokens.get("judge_output_cache_tokens", 0)),
         "output_tokens": tokens.get("judge_output_tokens", 0),
         "cost_usd": tokens.get("judge_cost_usd", 0),
     }

@@ -7,13 +7,6 @@ export COMPLEXMCP_SEED=${COMPLEXMCP_SEED:-42}
 
 mkdir -p "$WORKSPACE_ROOT"
 
-# Corpus-additions boot gate (invariant I2). Every ambiguity in the additions
-# layer fails HERE, before a single server binds a port -- a failure raised
-# later, inside a login call, would become a tool error the agent swallows
-# while the run continues against the wrong world. Exits non-zero and names
-# the offending app and key. No-op when COMPLEXMCP_CORPUS_ADDITIONS is unset.
-python -m software.utils.corpus_boot
-
 PIDS=()
 
 cleanup() {

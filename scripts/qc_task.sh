@@ -6,6 +6,7 @@ set -uo pipefail
 TASK="${1:?Usage: scripts/qc_task.sh <task-dir>}"
 TASK="$(cd "$TASK" && pwd)"
 SLUG="$(basename "$TASK")"
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
 FAIL=0
 
 ok()   { printf "  [PASS] %s\n" "$*"; }
@@ -91,7 +92,15 @@ if [[ -f "$COMPOSE" ]]; then
         if docker image inspect "$img" &>/dev/null; then
             ok "Image present: $img"
         else
-            fail "Image NOT found locally: $img  →  docker pull $img"
+            # Images built out of this checkout are in no registry, so the
+            # remedy is a build, not a pull -- `docker pull light-servers:latest`
+            # only ever answers "repository does not exist".
+            ctx="$REPO/services/${img%%:*}"
+            if [[ -f "$ctx/Dockerfile" ]]; then
+                warn "Image not built yet: $img  →  run_task.sh preflight builds it from $ctx"
+            else
+                warn "Image NOT found locally: $img  →  run_task.sh preflight pulls it"
+            fi
         fi
     done < <(grep -E '^\s+image\s*:' "$COMPOSE" | sed 's/.*image\s*:\s*//')
 fi

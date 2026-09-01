@@ -20,7 +20,7 @@
 # re-run the agent, so scripts/run_batch.py drives them one at a time and
 # checkpoints in between.
 #
-#   preflight  auth, docker, image pull                     (idempotent)
+#   preflight  auth, docker, image build/pull               (idempotent)
 #   harbor     harbor run -> output/<job>/                  (NOT idempotent: makes a trial)
 #   reshape    harbor_to_output.py -> trajectory/Run_N/      (idempotent)
 #   finance    finance_reporter.py -> Odoo                  (NOT idempotent: external POST)
@@ -72,44 +72,6 @@ BUILD_MULT="${BUILD_MULT:-3}"
 OUTPUT_DIR="${OUTPUT_DIR:-$REPO/output}"
 AT="${AT:-1}"
 JOB="${JOB:-$SLUG}"   # job dir == output/<task>/ (reshaped in place by the converter)
-
-# World data appended to the light-servers corpus at boot, mounted read-only
-# into the light-servers container. Absolute, because compose resolves relative
-# bind sources against the compose file's directory, not the caller's cwd -- and
-# a wrong relative path does not error: Docker creates the missing host dir and
-# mounts it EMPTY, which boots clean and serves the stock world.
-#
-# Keyed by $SLUG, never global. `run_batch.py --concurrency` fans out across
-# different tasks against one checkout, so a shared corpus_additions/ would hand
-# LightGmail rows to every concurrent task that happens to use LightGmail,
-# including the ones that never asked for them.
-#
-# An empty or absent directory means the feature is off; corpus_boot treats that
-# as "not configured" and the stock world is served. Kept outside the bundle so
-# task_hash is unaffected.
-ADDITIONS_DIR="${ADDITIONS_DIR:-$REPO/corpus_additions/$SLUG}"
-mkdir -p "$ADDITIONS_DIR"
-export ADDITIONS_DIR
-
-# The env var the container reads, set ONLY when the host directory actually
-# holds additions. This is what keeps "feature off" and "mount mis-resolved to
-# empty" distinguishable, which they otherwise are not:
-#
-#   dir has *.yaml  -> COMPLEXMCP_CORPUS_ADDITIONS=/corpus_additions, and an
-#                      empty mount inside the container is then a hard refusal,
-#                      because we know the files were there on the host.
-#   dir is empty    -> env var empty, validate_all() returns [] at line 1, stock
-#                      world served. No refusal, because nothing was asked for.
-#
-# Setting the env var unconditionally would make every ordinary run refuse to
-# boot, since the default directory is empty.
-if compgen -G "$ADDITIONS_DIR/*.yaml" >/dev/null 2>&1; then
-  CORPUS_ADDITIONS_MOUNT="/corpus_additions"
-  echo "[run_task] corpus additions: $(ls "$ADDITIONS_DIR"/*.yaml | wc -l | tr -d ' ') file(s) from $ADDITIONS_DIR"
-else
-  CORPUS_ADDITIONS_MOUNT=""
-fi
-export CORPUS_ADDITIONS_MOUNT
 
 # The absolute pin the compose comment has always claimed existed. Without it,
 # compose falls through to ${SCORING_DIR:-../../../services/scoring}, which is
@@ -184,6 +146,120 @@ resolve_auth() {
   fi
 }
 
+# --- images -------------------------------------------------------------------
+# Nothing below ever asks the operator to have run `docker pull` or
+# `make build-light-servers` first. Preflight is the cheap idempotent stage
+# run_batch.py re-runs on every resume, so it is the right place to make the
+# world match what the bundle declares.
+
+# A python that can parse YAML. The repo venv has pyyaml; a bare system python3
+# usually does not. Empty when nothing on the host can.
+python_with_yaml() {
+  local c
+  for c in "$REPO/.venv/bin/python" python3 python; do
+    if command -v "$c" >/dev/null 2>&1 && "$c" -c 'import yaml' >/dev/null 2>&1; then
+      echo "$c"; return 0
+    fi
+  done
+}
+
+# Images the bundle needs that NOTHING in the run will produce on its own: a
+# compose service carrying an `image:` and no `build:`. `main` has a build:
+# section, so compose builds it and it is deliberately not listed here.
+compose_unbuilt_images() {
+  local compose="$1" py
+  [ -f "$compose" ] || return 0
+  py="$(python_with_yaml)"
+  if [ -n "$py" ]; then
+    "$py" -c '
+import sys, yaml
+doc = yaml.safe_load(open(sys.argv[1])) or {}
+for svc in (doc.get("services") or {}).values():
+    if isinstance(svc, dict) and svc.get("image") and not svc.get("build"):
+        print(svc["image"])
+' "$compose" && return 0
+  fi
+  # No pyyaml anywhere on the host. Fall back to a structural scan: service keys
+  # sit at exactly two spaces and their fields deeper, which holds for every
+  # bundle in this repo. Depth is what keeps `depends_on:`'s nested
+  # `light-servers:` from being read as a service of its own.
+  awk '
+    /^services:[[:space:]]*$/ { in_s = 1; next }
+    in_s && /^[^[:space:]#]/  { in_s = 0 }
+    in_s && /^  [A-Za-z0-9_.-]+:[[:space:]]*$/ {
+      if (img != "" && !built) print img
+      img = ""; built = 0; next
+    }
+    in_s && /^[[:space:]]+build:/ { built = 1 }
+    in_s && /^[[:space:]]+image:[[:space:]]*/ {
+      v = $0
+      sub(/^[[:space:]]+image:[[:space:]]*/, "", v)
+      sub(/[[:space:]]*#.*$/, "", v)
+      gsub(/["'"'"']/, "", v)
+      img = v
+    }
+    END { if (img != "" && !built) print img }
+  ' "$compose"
+}
+
+# How to obtain an image the local daemon does not have. Images built out of
+# this checkout are in NO registry -- `docker pull light-servers:latest` 404s --
+# so a pull-only preflight cannot fix the one image every bundle here needs.
+# Anything not named is treated as a registry image and pulled.
+image_build_context() {
+  case "${1%%:*}" in
+    light-servers)     echo "$REPO/services/light-servers" ;;
+    agent-environment) echo "$REPO/services/agent-environment" ;;
+  esac
+}
+
+# Make one image usable, however it has to be obtained. Never asks the operator
+# to have run `docker pull` or `make build-light-servers` first, which is what a
+# fresh clone otherwise required: light-servers:latest is declared only in
+# compose, with no build: section, so nothing in the run produces it and the
+# compose up inside harbor_run dies on
+# "pull access denied for light-servers, repository does not exist" -- minutes
+# into the one stage that must never be re-run.
+#
+# For images built out of this checkout the refresh is an unconditional
+# `docker build`, not a timestamp comparison, because there is nothing on the
+# image to compare against: BuildKit does NOT advance .Created when every layer
+# is cached (the config blob is byte-identical, so it is reused as-is). An
+# mtime-vs-.Created check therefore never converges -- it reports stale,
+# rebuilds, sees the same old .Created, and rebuilds again on every single run.
+# BuildKit's own cache already answers the real question exactly, and answers it
+# in about a second when nothing changed.
+ensure_image() {
+  local img="$1" ctx
+  ctx="$(image_build_context "$img")"
+
+  # Registry image: presence is the entire question.
+  if [ -z "$ctx" ]; then
+    docker image inspect "$img" >/dev/null 2>&1 && return 0
+    echo "[run_task] $img is not present locally — pulling"
+    docker pull "$img" || { echo "[run_task] failed to pull $img" >&2; exit 3; }
+    return 0
+  fi
+
+  # First build on this machine -- the fresh-clone case. Minutes, with nothing
+  # cached, so let the build print its own progress.
+  if ! docker image inspect "$img" >/dev/null 2>&1; then
+    echo "[run_task] $img is not present locally — building from $ctx"
+    docker build -t "$img" "$ctx" \
+      || { echo "[run_task] failed to build $img from $ctx" >&2; exit 3; }
+    return 0
+  fi
+
+  # Present. Rebuild anyway so edits under $ctx reach the run: compose pins the
+  # image by tag, so without this they simply do not, and nothing errors -- the
+  # container boots clean, serves the previous world, and the agent is graded
+  # against a bundle that no longer exists on disk. Quiet, because the common
+  # case is fully cached and prints one line.
+  [ -z "${SKIP_IMAGE_REFRESH:-}" ] || return 0
+  docker build -q -t "$img" "$ctx" >/dev/null \
+    || { echo "[run_task] failed to refresh $img from $ctx" >&2; exit 3; }
+}
+
 stage_preflight() {
   if ! docker info >/dev/null 2>&1; then
     echo "[run_task] docker not running — starting OrbStack/Docker"
@@ -191,53 +267,20 @@ stage_preflight() {
     for _ in $(seq 1 60); do docker info >/dev/null 2>&1 && break; sleep 2; done
     docker info >/dev/null 2>&1 || { echo "[run_task] docker still down" >&2; exit 3; }
   fi
-  IMAGE="$(grep -E '^image *= *"' "$TASK/task.toml" 2>/dev/null | head -1 | sed -E 's/.*"([^"]+)".*/\1/' || true)"
-  if [ -n "$IMAGE" ] && ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
-    echo "[run_task] pulling $IMAGE"
-    docker pull "$IMAGE"
-  fi
+  # Every image this bundle needs, from both places one can be declared: the
+  # (rare) top-level `image =` in task.toml, and the compose services that pin
+  # an image with no build: section. No task.toml in this repo sets the former,
+  # which is why the task.toml-only grep this replaces pulled nothing, ever --
+  # while light-servers:latest, the image every bundle here actually depends on,
+  # is declared only in compose and had to be built by hand before each run.
+  for _img in \
+    "$(grep -E '^image *= *"' "$TASK/task.toml" 2>/dev/null | head -1 | sed -E 's/.*"([^"]+)".*/\1/' || true)" \
+    $(compose_unbuilt_images "$TASK/environment/docker-compose.yaml")
+  do
+    [ -n "$_img" ] || continue
+    ensure_image "$_img"
+  done
 
-  # Validate corpus additions HERE, on the cheap idempotent step, rather than
-  # letting the container-boot gate be the first to see them. corpus_boot runs
-  # inside harbor_run, which checkpoint.py describes as "never re-run once any
-  # evidence is on disk; minutes-and-money" -- so a typo, a duplicate id or a
-  # missing canary header would otherwise burn an environment build before
-  # anyone hears about it.
-  #
-  # One validator, two call sites. The container gate stays the authority; this
-  # is an early mirror, and stage_preflight is free, so run_batch.py re-runs it
-  # on every resume at no cost.
-  if [ -n "${CORPUS_ADDITIONS_MOUNT:-}" ]; then
-    _cb="$REPO/services/light-servers/software/utils/corpus_boot.py"
-    # corpus_boot resolves software_dir from its own file location, so it is
-    # correct on the host and in the container alike -- no argument needed.
-    _py=""
-    for _cand in "$REPO/.venv/bin/python" python3 python; do
-      if command -v "$_cand" >/dev/null 2>&1 && "$_cand" -c 'import yaml' >/dev/null 2>&1; then
-        _py="$_cand"; break
-      fi
-    done
-    if [ -z "$_py" ]; then
-      # Cannot validate is NOT the same as invalid: refusing the run because the
-      # host lacks pyyaml would be worse than deferring to the container gate.
-      echo "[run_task] WARNING: no python with pyyaml on the host; corpus additions" >&2
-      echo "[run_task]          will only be validated at container boot" >&2
-    else
-      # Mirror the container's own env so the host check is exactly as strict:
-      # ENABLED_SERVERS is what makes "additions for an app this task never
-      # starts" a refusal rather than a silent no-op, and the compose file is
-      # where the host can learn it.
-      _compose="$TASK/environment/docker-compose.yaml"
-      _enabled="$(sed -n 's/.*ENABLED_SERVERS: *"\([^"]*\)".*/\1/p' "$_compose" 2>/dev/null | head -1)"
-      _seedmode="$(sed -n 's/.*COMPLEXMCP_SEED_MODE: *"\([^"]*\)".*/\1/p' "$_compose" 2>/dev/null | head -1)"
-      COMPLEXMCP_CORPUS_ADDITIONS="$ADDITIONS_DIR" \
-      COMPLEXMCP_SEED_MODE="${_seedmode:-seed}" \
-      ENABLED_SERVERS="$_enabled" \
-      COMPLEXMCP_WORLD_DATA="" \
-        "$_py" "$_cb" \
-        || { echo "[run_task] corpus additions rejected — fix before the agent phase" >&2; exit 4; }
-    fi
-  fi
 }
 
 stage_harbor() {
