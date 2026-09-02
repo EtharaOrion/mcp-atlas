@@ -1,3 +1,41 @@
 # Source: world_data 2/LightAlpaca.json (verbatim). Authored world for LightAlpaca.
-orders: []
-positions: []
+account: {}
+positions:
+  - asset_id: null
+    symbol: null
+    qty: null
+    avg_entry_price: null
+    current_price: null
+    side: null
+    market_value: null
+    cost_basis: null
+    unrealized_pl: null
+orders:
+  - id: null
+    client_order_id: null
+    symbol: null
+    qty: null
+    filled_qty: null
+    side: null
+    type: null
+    time_in_force: null
+    limit_price: null
+    status: null
+    filled_avg_price: null
+    submitted_at: null
+    filled_at: null
+assets:
+  - id: null
+    symbol: null
+    name: null
+    exchange: null
+    asset_class: null
+    tradable: null
+    fractionable: null
+quotes:
+  - symbol: null
+    timestamp: null
+    bid_price: null
+    bid_size: null
+    ask_price: null
+    ask_size: null

@@ -82,3 +82,19 @@ async def list_members(address: str, session_id: str, subscribed: bool | None = 
 	if err:
 		return err
 	return session.mailgun_session.list_members(address, subscribed)
+
+
+@mcp.tool
+async def add_member(address: str, member_address: str, session_id: str, member_name: str = "", subscribed: bool = True):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.mailgun_session.add_member(address, member_address, member_name, subscribed)
+
+
+@mcp.tool
+async def delete_member(address: str, member_address: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.mailgun_session.delete_member(address, member_address)

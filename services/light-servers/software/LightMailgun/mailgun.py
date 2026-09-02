@@ -147,6 +147,42 @@ class MailgunSession:
         return {"status": "ok", "output": {"items": items, "total_count": len(items)}}
 
 
+
+    def add_member(self, address: str, member_address: str, member_name: str = "",
+                   subscribed: bool = True) -> Dict[str, Any]:
+        existing = next(
+            (m for m in self.members
+             if m["list_address"].lower() == address.lower()
+             and m["address"].lower() == member_address.lower()),
+            None,
+        )
+        if existing:
+            return {"status": "failed", "output": f"{member_address} is already a member of {address}"}
+        member = {
+            "list_address": address,
+            "address": member_address,
+            "name": member_name or "",
+            "subscribed": bool(subscribed),
+            "vars": {},
+        }
+        self.members.append(member)
+        return {"status": "ok", "output": {
+            "message": "Mailing list member has been created",
+            "member": {"address": member_address, "name": member_name or "", "subscribed": bool(subscribed), "vars": {}},
+        }}
+
+    def delete_member(self, address: str, member_address: str) -> Dict[str, Any]:
+        idx = next(
+            (i for i, m in enumerate(self.members)
+             if m["list_address"].lower() == address.lower()
+             and m["address"].lower() == member_address.lower()),
+            None,
+        )
+        if idx is None:
+            return {"status": "failed", "output": f"{member_address} is not a member of {address}"}
+        self.members.pop(idx)
+        return {"status": "ok", "output": {"message": "Mailing list member has been deleted"}}
+
 if __name__ == "__main__":
     s = MailgunSession(seed=12)
     print(s.get_events("sandbox.mailgun.org"))

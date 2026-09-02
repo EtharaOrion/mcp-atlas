@@ -90,3 +90,19 @@ async def list_campaigns(session_id: str, status: str | None = None, channel: st
 	if err:
 		return err
 	return session.klaviyo_session.list_campaigns(status, channel)
+
+
+@mcp.tool
+async def update_profile(profile_id: str, session_id: str, email: str | None = None, first_name: str | None = None, last_name: str | None = None, phone_number: str | None = None, organization: str | None = None, title: str | None = None, city: str | None = None, region: str | None = None, country: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.klaviyo_session.update_profile(profile_id, email, first_name, last_name, phone_number, organization, title, city, region, country)
+
+
+@mcp.tool
+async def delete_profile(profile_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.klaviyo_session.delete_profile(profile_id)

@@ -205,6 +205,21 @@ class FigmaSession:
         }}
 
 
+
+    def update_comment(self, comment_id: str, message: str) -> Dict[str, Any]:
+        c = next((x for x in self.comments if x["comment_id"] == comment_id), None)
+        if not c:
+            return {"status": "failed", "output": f"Comment {comment_id} not found"}
+        c["message"] = message
+        return {"status": "ok", "output": self._comment_view(c)}
+
+    def delete_comment(self, comment_id: str) -> Dict[str, Any]:
+        idx = next((i for i, x in enumerate(self.comments) if x["comment_id"] == comment_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Comment {comment_id} not found"}
+        self.comments.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = FigmaSession(seed=12)
     print(s.get_me())

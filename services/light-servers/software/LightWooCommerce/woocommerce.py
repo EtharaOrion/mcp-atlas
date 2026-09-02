@@ -270,6 +270,32 @@ class WoocommerceSession:
         return {"status": "ok", "output": [self._serialize_customer(c) for c in page_items]}
 
 
+
+    def update_order(self, order_id: int, status: str | None = None,
+                     payment_method: str | None = None,
+                     payment_method_title: str | None = None) -> Dict[str, Any]:
+        o = next((x for x in self.orders if x["id"] == int(order_id)), None)
+        if not o:
+            return {"status": "failed", "output": {
+                "error": "woocommerce_rest_shop_order_invalid_id", "status": 404,
+                "message": f"Invalid order ID: {order_id}"}}
+        if status is not None:
+            o["status"] = status
+        if payment_method is not None:
+            o["payment_method"] = payment_method
+        if payment_method_title is not None:
+            o["payment_method_title"] = payment_method_title
+        return {"status": "ok", "output": self._serialize_order(o)}
+
+    def delete_order(self, order_id: int) -> Dict[str, Any]:
+        idx = next((i for i, x in enumerate(self.orders) if x["id"] == int(order_id)), None)
+        if idx is None:
+            return {"status": "failed", "output": {
+                "error": "woocommerce_rest_shop_order_invalid_id", "status": 404,
+                "message": f"Invalid order ID: {order_id}"}}
+        self.orders.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = WoocommerceSession(seed=12)
     print(s.list_products())

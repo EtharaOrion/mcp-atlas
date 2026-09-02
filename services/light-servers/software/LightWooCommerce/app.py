@@ -98,3 +98,19 @@ async def list_customers(session_id: str, search: str | None = None, email: str 
 	if err:
 		return err
 	return session.woocommerce_session.list_customers(search, email, page, per_page)
+
+
+@mcp.tool
+async def update_order(order_id: int, session_id: str, status: str | None = None, payment_method: str | None = None, payment_method_title: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.woocommerce_session.update_order(order_id, status, payment_method, payment_method_title)
+
+
+@mcp.tool
+async def delete_order(order_id: int, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.woocommerce_session.delete_order(order_id)

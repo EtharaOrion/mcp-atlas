@@ -1,2 +1,40 @@
 # Source: world_data 2/LightBigCommerce.json (verbatim). Authored world for LightBigCommerce.
-orders: []
+products:
+  - id: null
+    name: null
+    sku: null
+    type: null
+    price: null
+    sale_price: null
+    cost_price: null
+    weight: null
+    inventory_level: null
+    inventory_tracking: null
+    is_visible: null
+    brand_id: null
+    categories: null
+    description: null
+    date_created: null
+customers:
+  - id: null
+    first_name: null
+    last_name: null
+    email: null
+    company: null
+    phone: null
+    customer_group_id: null
+    date_created: null
+orders:
+  - id: null
+    customer_id: null
+    status_id: null
+    status: null
+    total_inc_tax: null
+    subtotal_inc_tax: null
+    currency_code: null
+    payment_method: null
+    items_total: null
+    date_created: null
+    billing_first_name: null
+    billing_last_name: null
+    billing_email: null

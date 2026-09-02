@@ -114,3 +114,19 @@ async def get_stats(start_date: str, session_id: str, end_date: str | None = Non
 	if err:
 		return err
 	return session.sendgrid_session.get_stats(start_date, end_date)
+
+
+@mcp.tool
+async def update_template(template_id: str, session_id: str, name: str | None = None, subject: str | None = None, html_content: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.sendgrid_session.update_template(template_id, name, subject, html_content)
+
+
+@mcp.tool
+async def delete_template(template_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.sendgrid_session.delete_template(template_id)

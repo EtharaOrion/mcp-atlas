@@ -130,3 +130,19 @@ async def add_part(conversation_id: str, message_type: str, session_id: str, bod
 	if err:
 		return err
 	return session.intercom_session.add_part(conversation_id, message_type, body, author_id, assignee_id)
+
+
+@mcp.tool
+async def update_contact(contact_id: str, session_id: str, name: str | None = None, email: str | None = None, phone: str | None = None, company_id: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.intercom_session.update_contact(contact_id, name, email, phone, company_id)
+
+
+@mcp.tool
+async def delete_contact(contact_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.intercom_session.delete_contact(contact_id)

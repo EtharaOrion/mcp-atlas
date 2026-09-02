@@ -1,2 +1,40 @@
 # Source: world_data 2/LightKraken.json (verbatim). Authored world for LightKraken.
-balances: []
+tickers:
+  - pair: null
+    altname: null
+    ask: null
+    bid: null
+    last: null
+    volume: null
+    high: null
+    low: null
+    open: null
+ohlc:
+  - pair: null
+    time: null
+    open: null
+    high: null
+    low: null
+    close: null
+    vwap: null
+    volume: null
+    count: null
+pairs:
+  - pair: null
+    altname: null
+    wsname: null
+    base: null
+    quote: null
+    pair_decimals: null
+    lot_decimals: null
+    ordermin: null
+    status: null
+assets:
+  - asset: null
+    altname: null
+    aclass: null
+    decimals: null
+    display_decimals: null
+balances:
+  - asset: null
+    balance: null

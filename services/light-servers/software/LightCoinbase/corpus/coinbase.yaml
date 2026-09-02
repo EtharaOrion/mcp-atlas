@@ -1,3 +1,30 @@
 # Source: world_data 2/LightCoinbase.json (verbatim). Authored world for LightCoinbase.
-accounts: []
-transactions: []
+user: {}
+accounts:
+  - id: null
+    name: null
+    primary: null
+    type: null
+    currency_code: null
+    currency_name: null
+    balance_amount: null
+    native_balance_amount: null
+    native_currency: null
+    created_at: null
+    updated_at: null
+prices:
+  - pair: null
+    base: null
+    currency: null
+    amount: null
+transactions:
+  - id: null
+    account_id: null
+    type: null
+    status: null
+    amount: null
+    currency: null
+    native_amount: null
+    native_currency: null
+    description: null
+    created_at: null

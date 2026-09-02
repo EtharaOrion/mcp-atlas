@@ -262,6 +262,30 @@ class IntercomSession:
         return {"status": "ok", "output": self._conversation_obj(conv, with_parts=True)}
 
 
+
+    def update_contact(self, contact_id: str, name: str | None = None, email: str | None = None,
+                       phone: str | None = None, company_id: str | None = None) -> Dict[str, Any]:
+        c = self._get_contact(contact_id)
+        if not c:
+            return {"status": "failed", "output": f"Contact {contact_id} not found"}
+        if name is not None:
+            c["name"] = name
+        if email is not None:
+            c["email"] = email
+        if phone is not None:
+            c["phone"] = phone
+        if company_id is not None:
+            c["company_id"] = company_id
+        c["updated_at"] = self._now()
+        return {"status": "ok", "output": {"type": "contact", **c}}
+
+    def delete_contact(self, contact_id: str) -> Dict[str, Any]:
+        idx = next((i for i, c in enumerate(self.contacts) if c["id"] == contact_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Contact {contact_id} not found"}
+        self.contacts.pop(idx)
+        return {"status": "ok", "output": {"id": contact_id, "object": "contact", "deleted": True}}
+
 if __name__ == "__main__":
     s = IntercomSession(seed=12)
     print(s.list_contacts())

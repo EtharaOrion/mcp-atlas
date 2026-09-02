@@ -140,6 +140,25 @@ class OutlookSession:
         return {"status": "ok", "output": {"value": [self._serialize_contact(c) for c in contacts]}}
 
 
+
+    def update_message(self, message_id: str, is_read: bool | None = None,
+                       subject: str | None = None) -> Dict[str, Any]:
+        m = next((x for x in self.messages if x["id"] == message_id), None)
+        if not m:
+            return {"status": "failed", "output": f"Message {message_id} not found"}
+        if is_read is not None:
+            m["isRead"] = bool(is_read)
+        if subject is not None:
+            m["subject"] = subject
+        return {"status": "ok", "output": self._serialize_message(m)}
+
+    def delete_message(self, message_id: str) -> Dict[str, Any]:
+        idx = next((i for i, x in enumerate(self.messages) if x["id"] == message_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Message {message_id} not found"}
+        self.messages.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = OutlookSession(seed=12)
     print(s.list_messages())

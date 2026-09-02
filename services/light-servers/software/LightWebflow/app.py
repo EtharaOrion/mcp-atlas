@@ -90,3 +90,19 @@ async def create_item(collection_id: str, session_id: str, field_data: Dict[str,
 	if err:
 		return err
 	return session.webflow_session.create_item(collection_id, field_data, is_draft, is_archived)
+
+
+@mcp.tool
+async def update_item(item_id: str, session_id: str, field_data: Dict[str, Any] | None = None, is_draft: bool | None = None, is_archived: bool | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.webflow_session.update_item(item_id, field_data, is_draft, is_archived)
+
+
+@mcp.tool
+async def delete_item(item_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.webflow_session.delete_item(item_id)

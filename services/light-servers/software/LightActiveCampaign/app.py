@@ -98,3 +98,19 @@ async def list_deals(session_id: str, limit: int = 20, offset: int = 0):
 	if err:
 		return err
 	return session.activecampaign_session.list_deals(limit, offset)
+
+
+@mcp.tool
+async def update_contact(contact_id: str, session_id: str, email: str | None = None, first_name: str | None = None, last_name: str | None = None, phone: str | None = None, status: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.activecampaign_session.update_contact(contact_id, email, first_name, last_name, phone, status)
+
+
+@mcp.tool
+async def delete_contact(contact_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.activecampaign_session.delete_contact(contact_id)

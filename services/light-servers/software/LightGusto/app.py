@@ -114,3 +114,19 @@ async def list_company_contractors(company_id: str, session_id: str):
 	if err:
 		return err
 	return session.gusto_session.list_company_contractors(company_id)
+
+
+@mcp.tool
+async def update_employee(employee_id: str, session_id: str, first_name: str | None = None, last_name: str | None = None, title: str | None = None, start_date: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.gusto_session.update_employee(employee_id, first_name, last_name, title, start_date)
+
+
+@mcp.tool
+async def terminate_employee(employee_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.gusto_session.terminate_employee(employee_id)

@@ -1,3 +1,52 @@
 # Source: world_data 2/LightTwitch.json (verbatim). Authored world for LightTwitch.
-users: []
-streams: []
+users:
+  - id: null
+    login: null
+    display_name: null
+    type: null
+    broadcaster_type: null
+    description: null
+    profile_image_url: null
+    view_count: null
+    created_at: null
+games:
+  - id: null
+    name: null
+    box_art_url: null
+    rank: null
+    viewer_count: null
+channels:
+  - broadcaster_id: null
+    broadcaster_name: null
+    broadcaster_login: null
+    game_id: null
+    game_name: null
+    title: null
+    tags: null
+    follower_count: null
+    language: null
+streams:
+  - id: null
+    user_id: null
+    user_login: null
+    user_name: null
+    game_id: null
+    game_name: null
+    title: null
+    type: null
+    viewer_count: null
+    started_at: null
+    language: null
+    thumbnail_url: null
+    is_live: null
+clips:
+  - id: null
+    broadcaster_id: null
+    broadcaster_name: null
+    game_id: null
+    title: null
+    url: null
+    thumbnail_url: null
+    view_count: null
+    duration: null
+    created_at: null

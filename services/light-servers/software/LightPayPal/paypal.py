@@ -204,6 +204,37 @@ class PaypalSession:
         return {"status": "ok", "output": payout}
 
 
+
+    def update_invoice(self, invoice_id: str, amount_value: str | None = None,
+                       currency_code: str | None = None, due_date: str | None = None,
+                       note: str | None = None,
+                       recipient_email: str | None = None) -> Dict[str, Any]:
+        inv = self._find(self.invoices, invoice_id)
+        if not inv:
+            return {"status": "failed", "output": f"Invoice {invoice_id} not found"}
+        if inv["status"] not in ("DRAFT", "SENT"):
+            return {"status": "failed", "output": f"Invoice {invoice_id} cannot be updated in status {inv['status']}"}
+        if amount_value is not None:
+            inv["amount"] = self._money(amount_value, currency_code or inv["amount"]["currency_code"])
+        if currency_code is not None:
+            inv["detail"]["currency_code"] = currency_code
+        if due_date is not None:
+            inv["due_date"] = due_date
+        if note is not None:
+            inv["detail"]["note"] = note
+        if recipient_email is not None and inv["primary_recipients"]:
+            inv["primary_recipients"][0]["billing_info"]["email_address"] = recipient_email
+        return {"status": "ok", "output": inv}
+
+    def cancel_invoice(self, invoice_id: str) -> Dict[str, Any]:
+        inv = self._find(self.invoices, invoice_id)
+        if not inv:
+            return {"status": "failed", "output": f"Invoice {invoice_id} not found"}
+        if inv["status"] == "CANCELLED":
+            return {"status": "failed", "output": f"Invoice {invoice_id} is already cancelled"}
+        inv["status"] = "CANCELLED"
+        return {"status": "ok", "output": inv}
+
 if __name__ == "__main__":
     s = PaypalSession(seed=12)
     print(s.list_invoices())

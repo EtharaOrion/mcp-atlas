@@ -225,6 +225,19 @@ class FedexSession:
         }
 
 
+
+    def cancel_shipment(self, tracking_number: str) -> Dict[str, Any]:
+        shipment = next((s for s in self.shipments if s["tracking_number"] == str(tracking_number)), None)
+        if not shipment:
+            return {"status": "failed", "output": f"Shipment {tracking_number} not found"}
+        t = next((x for x in self.tracking if x["tracking_number"] == str(tracking_number)), None)
+        if t:
+            t["status_code"] = "CA"
+            t["status_description"] = "Cancelled"
+            t["latest_event"] = "Shipment cancelled"
+            t["latest_event_time"] = self._now()
+        return {"status": "ok", "output": {"trackingNumber": tracking_number, "cancelledShipment": True}}
+
 if __name__ == "__main__":
     s = FedexSession(seed=12)
     print(s.get_rate_quote("38116", "10001", 5.0))

@@ -220,6 +220,33 @@ class SquareSession:
         return {"status": "ok", "output": {"counts": counts}}
 
 
+
+    def update_customer(self, customer_id: str, given_name: str | None = None,
+                        family_name: str | None = None, email_address: str | None = None,
+                        phone_number: str | None = None,
+                        company_name: str | None = None) -> Dict[str, Any]:
+        c = self._find(self.customers, customer_id)
+        if not c:
+            return {"status": "failed", "output": f"Customer {customer_id} not found"}
+        if given_name is not None:
+            c["given_name"] = given_name
+        if family_name is not None:
+            c["family_name"] = family_name
+        if email_address is not None:
+            c["email_address"] = email_address
+        if phone_number is not None:
+            c["phone_number"] = phone_number
+        if company_name is not None:
+            c["company_name"] = company_name
+        return {"status": "ok", "output": {"customer": c}}
+
+    def delete_customer(self, customer_id: str) -> Dict[str, Any]:
+        idx = next((i for i, x in enumerate(self.customers) if x["id"] == customer_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Customer {customer_id} not found"}
+        self.customers.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = SquareSession(seed=12)
     print(s.get_merchant())

@@ -146,3 +146,19 @@ async def get_inventory(catalog_object_id: str, session_id: str):
 	if err:
 		return err
 	return session.square_session.get_inventory(catalog_object_id)
+
+
+@mcp.tool
+async def update_customer(customer_id: str, session_id: str, given_name: str | None = None, family_name: str | None = None, email_address: str | None = None, phone_number: str | None = None, company_name: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.square_session.update_customer(customer_id, given_name, family_name, email_address, phone_number, company_name)
+
+
+@mcp.tool
+async def delete_customer(customer_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.square_session.delete_customer(customer_id)

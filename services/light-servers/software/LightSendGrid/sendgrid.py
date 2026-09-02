@@ -217,6 +217,29 @@ class SendgridSession:
         return {"status": "ok", "output": out}
 
 
+
+    def update_template(self, template_id: str, name: str | None = None,
+                        subject: str | None = None,
+                        html_content: str | None = None) -> Dict[str, Any]:
+        t = next((x for x in self.templates if x["id"] == template_id), None)
+        if not t:
+            return {"status": "failed", "output": f"Template {template_id} not found"}
+        if name is not None:
+            t["name"] = name
+        if subject is not None:
+            t["subject"] = subject
+        if html_content is not None:
+            t["html_content"] = html_content
+        t["updated_at"] = self._now()
+        return {"status": "ok", "output": self._serialize_template(t)}
+
+    def delete_template(self, template_id: str) -> Dict[str, Any]:
+        idx = next((i for i, x in enumerate(self.templates) if x["id"] == template_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Template {template_id} not found"}
+        self.templates.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = SendgridSession(seed=12)
     print(s.list_templates())

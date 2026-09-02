@@ -296,6 +296,27 @@ class BigcommerceSession:
         }}
 
 
+
+    def update_order(self, order_id: int, status_id: int | None = None,
+                     payment_method: str | None = None) -> Dict[str, Any]:
+        o = next((x for x in self.orders if x["id"] == int(order_id)), None)
+        if not o:
+            return {"status": "failed", "output": f"Order {order_id} not found"}
+        status_map = {1: "Pending", 2: "Shipped", 10: "Completed", 11: "Awaiting Fulfillment"}
+        if status_id is not None:
+            o["status_id"] = int(status_id)
+            o["status"] = status_map.get(int(status_id), o["status"])
+        if payment_method is not None:
+            o["payment_method"] = payment_method
+        return {"status": "ok", "output": self._serialize_order(o)}
+
+    def delete_order(self, order_id: int) -> Dict[str, Any]:
+        idx = next((i for i, x in enumerate(self.orders) if x["id"] == int(order_id)), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Order {order_id} not found"}
+        self.orders.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = BigcommerceSession(seed=12)
     print(s.list_products())

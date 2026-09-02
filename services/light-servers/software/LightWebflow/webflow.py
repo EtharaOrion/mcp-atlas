@@ -211,6 +211,34 @@ class WebflowSession:
         return {"status": "ok", "output": serialized}
 
 
+
+    def update_item(self, item_id: str, field_data: Dict[str, Any] | None = None,
+                    is_draft: bool | None = None,
+                    is_archived: bool | None = None) -> Dict[str, Any]:
+        item = next((x for x in self.items if x["id"] == item_id), None)
+        if not item:
+            return {"status": "failed", "output": f"Item {item_id} not found"}
+        field_data = field_data or {}
+        if "name" in field_data:
+            item["name"] = field_data["name"]
+        if "slug" in field_data:
+            item["slug"] = field_data["slug"]
+        if "summary" in field_data:
+            item["summary"] = field_data["summary"]
+        if is_draft is not None:
+            item["is_draft"] = bool(is_draft)
+        if is_archived is not None:
+            item["is_archived"] = bool(is_archived)
+        item["last_updated"] = self._now()
+        return {"status": "ok", "output": self._serialize_item(item)}
+
+    def delete_item(self, item_id: str) -> Dict[str, Any]:
+        idx = next((i for i, x in enumerate(self.items) if x["id"] == item_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Item {item_id} not found"}
+        self.items.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = WebflowSession(seed=12)
     print(s.list_sites())

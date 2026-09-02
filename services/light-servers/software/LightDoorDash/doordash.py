@@ -256,6 +256,30 @@ class DoordashSession:
         return {"status": "ok", "output": result}
 
 
+
+    def update_cart_item(self, cart_id: str, item_id: str, quantity: int) -> Dict[str, Any]:
+        cart = self.carts.get(cart_id)
+        if not cart:
+            return {"status": "failed", "output": f"Cart {cart_id} not found"}
+        items = cart["items"]
+        idx = next((i for i, it in enumerate(items) if it["item_id"] == item_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Item {item_id} not in cart {cart_id}"}
+        if int(quantity) <= 0:
+            items.pop(idx)
+        else:
+            items[idx]["quantity"] = int(quantity)
+        return {"status": "ok", "output": self._cart_with_totals(cart_id)}
+
+    def cancel_order(self, order_id: str) -> Dict[str, Any]:
+        o = next((x for x in self.orders if x["order_id"] == order_id), None)
+        if not o:
+            return {"status": "failed", "output": f"Order {order_id} not found"}
+        if o["status"] == "cancelled":
+            return {"status": "failed", "output": f"Order {order_id} is already cancelled"}
+        o["status"] = "cancelled"
+        return {"status": "ok", "output": self._get_order(order_id)}
+
 if __name__ == "__main__":
     s = DoordashSession(seed=12)
     print(s.list_stores())

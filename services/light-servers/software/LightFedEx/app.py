@@ -74,3 +74,11 @@ async def track(tracking_number: str, session_id: str):
 	if err:
 		return err
 	return session.fedex_session.track(tracking_number)
+
+
+@mcp.tool
+async def cancel_shipment(tracking_number: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.fedex_session.cancel_shipment(tracking_number)

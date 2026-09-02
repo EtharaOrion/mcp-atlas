@@ -114,3 +114,19 @@ async def get_order(order_id: str, session_id: str):
 	if err:
 		return err
 	return session.doordash_session.get_order(order_id)
+
+
+@mcp.tool
+async def update_cart_item(cart_id: str, item_id: str, quantity: int, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.doordash_session.update_cart_item(cart_id, item_id, quantity)
+
+
+@mcp.tool
+async def cancel_order(order_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.doordash_session.cancel_order(order_id)

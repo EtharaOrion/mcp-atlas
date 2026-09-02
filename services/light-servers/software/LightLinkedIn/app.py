@@ -114,3 +114,19 @@ async def get_job(job_id: str, session_id: str):
 	if err:
 		return err
 	return session.linkedin_session.get_job(job_id)
+
+
+@mcp.tool
+async def update_post(post_id: str, session_id: str, commentary: str | None = None, visibility: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.linkedin_session.update_post(post_id, commentary, visibility)
+
+
+@mcp.tool
+async def delete_post(post_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.linkedin_session.delete_post(post_id)

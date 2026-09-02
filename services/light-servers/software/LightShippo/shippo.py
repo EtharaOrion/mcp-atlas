@@ -312,6 +312,17 @@ class ShippoSession:
         }}
 
 
+
+    def cancel_transaction(self, object_id: str) -> Dict[str, Any]:
+        t = next((x for x in self.transactions if x["object_id"] == object_id), None)
+        if not t:
+            return {"status": "failed", "output": f"transaction {object_id} not found"}
+        if t["status"] == "CANCELLED":
+            return {"status": "failed", "output": f"transaction {object_id} is already cancelled"}
+        t["status"] = "CANCELLED"
+        t["tracking_status"] = "CANCELLED"
+        return {"status": "ok", "output": dict(t)}
+
 if __name__ == "__main__":
     s = ShippoSession(seed=12)
     print(s.get_address("addr-sender-01"))

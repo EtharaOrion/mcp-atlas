@@ -98,3 +98,19 @@ async def list_customers(session_id: str, email: str | None = None, company: str
 	if err:
 		return err
 	return session.bigcommerce_session.list_customers(email, company, page, limit)
+
+
+@mcp.tool
+async def update_order(order_id: int, session_id: str, status_id: int | None = None, payment_method: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.bigcommerce_session.update_order(order_id, status_id, payment_method)
+
+
+@mcp.tool
+async def delete_order(order_id: int, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.bigcommerce_session.delete_order(order_id)

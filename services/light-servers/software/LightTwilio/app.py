@@ -106,3 +106,19 @@ async def lookup(phone_number: str, session_id: str):
 	if err:
 		return err
 	return session.twilio_session.lookup(phone_number)
+
+
+@mcp.tool
+async def update_message(sid: str, body: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.twilio_session.update_message(sid, body)
+
+
+@mcp.tool
+async def delete_message(sid: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.twilio_session.delete_message(sid)

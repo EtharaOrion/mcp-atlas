@@ -179,6 +179,33 @@ class ActiveCampaignSession:
         }}
 
 
+
+    def update_contact(self, contact_id: str, email: str | None = None, first_name: str | None = None,
+                       last_name: str | None = None, phone: str | None = None,
+                       status: str | None = None) -> Dict[str, Any]:
+        c = next((x for x in self.contacts if x["id"] == str(contact_id)), None)
+        if not c:
+            return {"status": "failed", "output": f"Contact {contact_id} not found"}
+        if email is not None:
+            c["email"] = email
+        if first_name is not None:
+            c["first_name"] = first_name
+        if last_name is not None:
+            c["last_name"] = last_name
+        if phone is not None:
+            c["phone"] = phone
+        if status is not None:
+            c["status"] = str(status)
+        c["updated_timestamp"] = self._now()
+        return {"status": "ok", "output": {"contact": self._serialize_contact(c)}}
+
+    def delete_contact(self, contact_id: str) -> Dict[str, Any]:
+        idx = next((i for i, x in enumerate(self.contacts) if x["id"] == str(contact_id)), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Contact {contact_id} not found"}
+        self.contacts.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = ActiveCampaignSession(seed=12)
     print(s.list_contacts())

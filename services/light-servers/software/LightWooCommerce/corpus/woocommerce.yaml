@@ -1,2 +1,44 @@
 # Source: world_data 2/LightWooCommerce.json (verbatim). Authored world for LightWooCommerce.
-orders: []
+products:
+  - id: null
+    name: null
+    slug: null
+    sku: null
+    type: null
+    status: null
+    price: null
+    regular_price: null
+    sale_price: null
+    on_sale: null
+    stock_quantity: null
+    stock_status: null
+    manage_stock: null
+    categories: null
+    description: null
+    date_created: null
+customers:
+  - id: null
+    first_name: null
+    last_name: null
+    email: null
+    username: null
+    role: null
+    billing_city: null
+    billing_country: null
+    is_paying_customer: null
+    date_created: null
+orders:
+  - id: null
+    number: null
+    customer_id: null
+    status: null
+    currency: null
+    total: null
+    subtotal: null
+    total_tax: null
+    payment_method: null
+    payment_method_title: null
+    billing_first_name: null
+    billing_last_name: null
+    billing_email: null
+    date_created: null

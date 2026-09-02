@@ -238,6 +238,23 @@ class UpsSession:
         }}
 
 
+
+    def cancel_shipment(self, tracking_number: str) -> Dict[str, Any]:
+        shipment = next((s for s in self.shipments if s["tracking_number"] == str(tracking_number)), None)
+        if not shipment:
+            return {"status": "failed", "output": f"Shipment {tracking_number} not found"}
+        t = next((x for x in self.tracking if x["tracking_number"] == str(tracking_number)), None)
+        if t:
+            t["status_type"] = "X"
+            t["status_code"] = "001"
+            t["status_description"] = "Cancelled"
+            t["latest_activity"] = "Shipment cancelled"
+            t["latest_activity_time"] = self._now()
+        return {"status": "ok", "output": {"VoidShipmentResponse": {
+            "Response": {"ResponseStatus": {"Code": "1", "Description": "Success"}},
+            "SummaryResult": {"Status": {"Code": "1", "Description": "Success"}},
+        }}}
+
 if __name__ == "__main__":
     s = UpsSession(seed=12)
     print(s.get_rate("10001", "90001", 5.0))

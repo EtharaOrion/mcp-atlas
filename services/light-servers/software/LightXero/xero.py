@@ -164,6 +164,36 @@ class XeroSession:
         return {"status": "ok", "output": {"Accounts": [self._serialize_account(a) for a in self.accounts]}}
 
 
+
+    def update_invoice(self, invoice_id: str, status: str | None = None,
+                       due_date: str | None = None,
+                       reference: str | None = None) -> Dict[str, Any]:
+        inv = next((x for x in self.invoices
+                    if x["InvoiceID"] == invoice_id or x["InvoiceNumber"] == invoice_id), None)
+        if not inv:
+            return {"status": "failed", "output": {"error": "invoice not found",
+                    "message": f"Invoice {invoice_id} not found"}}
+        if status is not None:
+            inv["Status"] = status.upper()
+        if due_date is not None:
+            inv["DueDate"] = due_date
+        if reference is not None:
+            inv["Reference"] = reference
+        return {"status": "ok", "output": {"Invoices": [self._serialize_invoice(inv)]}}
+
+    def void_invoice(self, invoice_id: str) -> Dict[str, Any]:
+        inv = next((x for x in self.invoices
+                    if x["InvoiceID"] == invoice_id or x["InvoiceNumber"] == invoice_id), None)
+        if not inv:
+            return {"status": "failed", "output": {"error": "invoice not found",
+                    "message": f"Invoice {invoice_id} not found"}}
+        if inv["Status"] == "VOIDED":
+            return {"status": "failed", "output": {"error": "already voided",
+                    "message": f"Invoice {invoice_id} is already voided"}}
+        inv["Status"] = "VOIDED"
+        inv["AmountDue"] = 0.0
+        return {"status": "ok", "output": {"Invoices": [self._serialize_invoice(inv)]}}
+
 if __name__ == "__main__":
     s = XeroSession(seed=12)
     print(s.list_invoices())

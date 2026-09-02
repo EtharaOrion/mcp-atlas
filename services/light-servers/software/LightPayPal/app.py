@@ -114,3 +114,19 @@ async def create_payout(session_id: str, amount_value: str = "0.00", currency_co
 	if err:
 		return err
 	return session.paypal_session.create_payout(amount_value, currency_code, recipient_email, sender_batch_id, note)
+
+
+@mcp.tool
+async def update_invoice(invoice_id: str, session_id: str, amount_value: str | None = None, currency_code: str | None = None, due_date: str | None = None, note: str | None = None, recipient_email: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.paypal_session.update_invoice(invoice_id, amount_value, currency_code, due_date, note, recipient_email)
+
+
+@mcp.tool
+async def cancel_invoice(invoice_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.paypal_session.cancel_invoice(invoice_id)

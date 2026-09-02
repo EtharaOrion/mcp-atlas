@@ -114,3 +114,19 @@ async def get_components(file_key: str, session_id: str):
 	if err:
 		return err
 	return session.figma_session.get_components(file_key)
+
+
+@mcp.tool
+async def update_comment(comment_id: str, message: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.figma_session.update_comment(comment_id, message)
+
+
+@mcp.tool
+async def delete_comment(comment_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.figma_session.delete_comment(comment_id)

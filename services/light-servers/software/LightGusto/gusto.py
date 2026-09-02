@@ -215,6 +215,32 @@ class GustoSession:
         return {"status": "ok", "output": [c for c in self.contractors if c["company_id"] == company_id]}
 
 
+
+    def update_employee(self, employee_id: str, first_name: str | None = None,
+                        last_name: str | None = None, title: str | None = None,
+                        start_date: str | None = None) -> Dict[str, Any]:
+        e = self._find(self.employees, employee_id)
+        if not e:
+            return {"status": "failed", "output": f"Employee {employee_id} not found"}
+        if first_name is not None:
+            e["first_name"] = first_name
+        if last_name is not None:
+            e["last_name"] = last_name
+        if title is not None:
+            e["title"] = title
+        if start_date is not None:
+            e["start_date"] = start_date
+        return {"status": "ok", "output": dict(e)}
+
+    def terminate_employee(self, employee_id: str) -> Dict[str, Any]:
+        e = self._find(self.employees, employee_id)
+        if not e:
+            return {"status": "failed", "output": f"Employee {employee_id} not found"}
+        if e["terminated"]:
+            return {"status": "failed", "output": f"Employee {employee_id} is already terminated"}
+        e["terminated"] = True
+        return {"status": "ok", "output": dict(e)}
+
 if __name__ == "__main__":
     s = GustoSession(seed=12)
     print(s.get_company("comp-001"))

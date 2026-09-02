@@ -90,3 +90,19 @@ async def list_accounts(session_id: str):
 	if err:
 		return err
 	return session.xero_session.list_accounts()
+
+
+@mcp.tool
+async def update_invoice(invoice_id: str, session_id: str, status: str | None = None, due_date: str | None = None, reference: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.xero_session.update_invoice(invoice_id, status, due_date, reference)
+
+
+@mcp.tool
+async def void_invoice(invoice_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.xero_session.void_invoice(invoice_id)

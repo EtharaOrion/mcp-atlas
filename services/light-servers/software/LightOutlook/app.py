@@ -90,3 +90,19 @@ async def list_contacts(session_id: str):
 	if err:
 		return err
 	return session.outlook_session.list_contacts()
+
+
+@mcp.tool
+async def update_message(message_id: str, session_id: str, is_read: bool | None = None, subject: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.outlook_session.update_message(message_id, is_read, subject)
+
+
+@mcp.tool
+async def delete_message(message_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.outlook_session.delete_message(message_id)

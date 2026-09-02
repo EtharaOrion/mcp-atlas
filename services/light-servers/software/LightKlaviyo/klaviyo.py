@@ -208,6 +208,30 @@ class KlaviyoSession:
         return {"status": "ok", "output": [self._serialize_campaign(c) for c in campaigns]}
 
 
+
+    def update_profile(self, profile_id: str, email: str | None = None, first_name: str | None = None,
+                       last_name: str | None = None, phone_number: str | None = None,
+                       organization: str | None = None, title: str | None = None,
+                       city: str | None = None, region: str | None = None,
+                       country: str | None = None) -> Dict[str, Any]:
+        p = next((x for x in self.profiles if x["id"] == profile_id), None)
+        if not p:
+            return {"status": "failed", "output": f"Profile {profile_id} not found"}
+        for field, val in [("email", email), ("first_name", first_name), ("last_name", last_name),
+                           ("phone_number", phone_number), ("organization", organization),
+                           ("title", title), ("city", city), ("region", region), ("country", country)]:
+            if val is not None:
+                p[field] = val
+        p["updated"] = self._now()
+        return {"status": "ok", "output": self._serialize_profile(p)}
+
+    def delete_profile(self, profile_id: str) -> Dict[str, Any]:
+        idx = next((i for i, x in enumerate(self.profiles) if x["id"] == profile_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Profile {profile_id} not found"}
+        self.profiles.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = KlaviyoSession(seed=12)
     print(s.list_profiles())

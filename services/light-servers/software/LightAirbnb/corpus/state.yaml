@@ -1,2 +1,14 @@
-
-reservations: []
+reservations:
+  - reservation_id: null
+    listing_id: null
+    guest_name: null
+    checkin: null
+    checkout: null
+    nights: null
+    guests: null
+    status: null
+    nightly_subtotal: null
+    cleaning_fee: null
+    service_fee: null
+    total: null
+    created_at: null

@@ -142,6 +142,25 @@ class LinkedinSession:
         return {"status": "failed", "output": f"Job {job_id} not found"}
 
 
+
+    def update_post(self, post_id: str, commentary: str | None = None,
+                    visibility: str | None = None) -> Dict[str, Any]:
+        p = next((x for x in self.posts if x["id"] == post_id), None)
+        if not p:
+            return {"status": "failed", "output": f"Post {post_id} not found"}
+        if commentary is not None:
+            p["commentary"] = commentary
+        if visibility is not None:
+            p["visibility"] = visibility
+        return {"status": "ok", "output": p}
+
+    def delete_post(self, post_id: str) -> Dict[str, Any]:
+        idx = next((i for i, x in enumerate(self.posts) if x["id"] == post_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Post {post_id} not found"}
+        self.posts.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = LinkedinSession(seed=12)
     print(s.get_me())

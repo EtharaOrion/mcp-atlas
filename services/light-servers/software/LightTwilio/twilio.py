@@ -248,6 +248,21 @@ class TwilioSession:
         }}
 
 
+
+    def update_message(self, sid: str, body: str) -> Dict[str, Any]:
+        m = next((x for x in self.messages if x["sid"] == sid), None)
+        if not m:
+            return {"status": "failed", "output": f"Message {sid} not found"}
+        m["body"] = body
+        return {"status": "ok", "output": self._serialize_message(m)}
+
+    def delete_message(self, sid: str) -> Dict[str, Any]:
+        idx = next((i for i, x in enumerate(self.messages) if x["sid"] == sid), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Message {sid} not found"}
+        self.messages.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = TwilioSession(seed=12)
     print(s.list_messages())

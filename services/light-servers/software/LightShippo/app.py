@@ -114,3 +114,11 @@ async def get_tracking(carrier: str, tracking_number: str, session_id: str):
 	if err:
 		return err
 	return session.shippo_session.get_tracking(carrier, tracking_number)
+
+
+@mcp.tool
+async def cancel_transaction(object_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.shippo_session.cancel_transaction(object_id)
