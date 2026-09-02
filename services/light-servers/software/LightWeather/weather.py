@@ -31,8 +31,30 @@ class WeatherSession:
             self.os = connect_os(os_cfg)
             self.time_machine = TimeMachine(rng=self.rng)
 
+            # Defaults so a corpus that omits a collection degrades to empty
+            # instead of an AttributeError; load_state overwrites verbatim.
+            self.cities = {}
+            self.stations = {}
+            self.climate_samples = {}
+            self.conditions = {}
+            self.advisories = {}
+            self.base_time = "2026-01-01 08:00:00"
+            self.alerts = {}
+            self.preferences = {}
+            self._current_weather = {}
+            self._daily_forecasts = {}
+            self._hourly_forecasts = {}
+            self._precip_probs = {}
+            self._uv = {}
+            self._aqi = {}
+            self._sun_times = {}
+            self._historical = {}
+            self._wind = {}
+            self._station_obs = {}
+
             from software.utils.world_data import load_state as _load_state
             _load_state(self, 'LightWeather')
+            self._generate_state()
         else:
             # Seedless: world loaded verbatim from the frozen snapshot.
             restore_into(self, Path(__file__).resolve().parent / "world.pkl")
@@ -55,13 +77,17 @@ class WeatherSession:
         now = self.base_time
         base_dt = self._now_dt()
 
+        # Fallback so an override world without "conditions" degrades to
+        # "unknown" instead of crashing rng.choice on an empty list.
+        conds = list(self.conditions.values()) or [{"id": "unknown", "name": "Unknown"}]
+
         # per-city state
         for cname, cinfo in self.cities.items():
             sample = self.climate_samples.get(cname, {})
             avg = sample.get("avg_temp", 15)
 
             # current weather
-            cond = self.rng.choice(list(self.conditions.values())) if self.conditions else {"id": "unknown", "name": "Unknown"}
+            cond = self.rng.choice(conds)
             temp = round(avg + self.rng.uniform(-8, 8), 1)
             wind = round(self.rng.uniform(0, 80), 1)
             humidity = round(self.rng.uniform(20, 95), 1)
@@ -78,7 +104,7 @@ class WeatherSession:
             dfore = []
             for d in range(7):
                 date_str = (base_dt + timedelta(days=d)).strftime("%Y-%m-%d")
-                dcond = self.rng.choice(list(self.conditions.values()))
+                dcond = self.rng.choice(conds)
                 dtemp = round(avg + self.rng.uniform(-8, 8), 1)
                 precip = round(max(0.0, self.rng.gauss(3, 8)), 1)
                 dfore.append({"date": date_str, "condition": dcond, "temp_c": dtemp, "precip_mm": precip})
@@ -88,7 +114,7 @@ class WeatherSession:
             hfore = []
             for h in range(48):
                 ts = (base_dt + timedelta(hours=h)).strftime("%Y-%m-%d %H:%M:%S")
-                hcond = self.rng.choice(list(self.conditions.values()))
+                hcond = self.rng.choice(conds)
                 htemp = round(avg + self.rng.uniform(-6, 6), 1)
                 pprob = round(self.rng.uniform(0, 1), 2)
                 hfore.append({"timestamp": ts, "condition": hcond, "temp_c": htemp, "precip_prob": pprob})
@@ -112,7 +138,7 @@ class WeatherSession:
             # historical samples
             hist = []
             for i in range(30):
-                hist.append({"date": (base_dt - timedelta(days=i)).strftime("%Y-%m-%d"), "temp_c": round(avg + self.rng.uniform(-10, 10), 1), "condition": self.rng.choice(list(self.conditions.values()))})
+                hist.append({"date": (base_dt - timedelta(days=i)).strftime("%Y-%m-%d"), "temp_c": round(avg + self.rng.uniform(-10, 10), 1), "condition": self.rng.choice(conds)})
             self._historical[cname] = hist
 
             winds = []

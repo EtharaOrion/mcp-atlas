@@ -10,3 +10,893 @@ stocks:
   trade_history: []
   watch_list: []
   price_alerts: {}
+
+# Exported verbatim from world.pkl: market catalog + scalar knobs the
+# session __init__ expects as extra top-level keys.
+day_trades_remaining: 1
+fee_rate: 0.0015312290250627076
+market_open: true
+stocks_catalog:
+  AAPL:
+    description: 'A leading global technology company that designs, manufactures,
+      and markets smartphones (iPhone), personal computers (Mac), tablets (iPad),
+      and wearables. It also provides various related services.
+
+      '
+    market_cap: 3.0T
+    name: Apple Inc.
+    pe_ratio: 25.79
+    price: 248.45
+    sector: Technology
+    ticker: AAPL
+  ABBV:
+    description: 'Biopharmaceutical company known for Humira, the world''s top-selling
+      drug,  and Skyrizi.
+
+      '
+    market_cap: 346.61B
+    name: AbbVie Inc.
+    pe_ratio: 13.93
+    price: 230.26
+    sector: Healthcare
+    ticker: ABBV
+  ABNB:
+    description: 'Online marketplace for lodging, primarily homestays for vacation  rentals,
+      and tourism activities.
+
+      '
+    market_cap: 126.73B
+    name: Airbnb Inc.
+    pe_ratio: 35.77
+    price: 151.98
+    sector: Consumer Discretionary
+    ticker: ABNB
+  ADBE:
+    description: 'Provider of creative software solutions including Photoshop, Illustrator,
+      and  Premiere Pro. Expanding into generative AI with Firefly.
+
+      '
+    market_cap: 286.77B
+    name: Adobe Inc.
+    pe_ratio: 41.28
+    price: 702.49
+    sector: Technology
+    ticker: ADBE
+  AMD:
+    description: 'A semiconductor company producing CPUs and GPUs for data centers,
+      gaming consoles,  and personal computers. Main rival to Intel and NVIDIA.
+
+      '
+    market_cap: 337.35B
+    name: Advanced Micro Devices
+    pe_ratio: 291.8
+    price: 139.8
+    sector: Technology
+    ticker: AMD
+  AMGN:
+    description: 'One of the world''s largest independent biotechnology companies
+      focused  on oncology and inflammation.
+
+      '
+    market_cap: 194.27B
+    name: Amgen Inc.
+    pe_ratio: 22.25
+    price: 314.59
+    sector: Healthcare
+    ticker: AMGN
+  AMZN:
+    description: 'E-commerce giant and cloud computing leader (AWS). Also operates
+      Prime Video,  Whole Foods, and a massive logistics network.
+
+      '
+    market_cap: 2.18T
+    name: Amazon.com Inc.
+    pe_ratio: 59.03
+    price: 281.76
+    sector: Consumer Discretionary
+    ticker: AMZN
+  ARM:
+    description: 'British semiconductor designer whose architecture powers almost
+      all  smartphones and increasingly more data centers.
+
+      '
+    market_cap: 172.69B
+    name: Arm Holdings
+    pe_ratio: 95.45
+    price: 158.92
+    sector: Technology
+    ticker: ARM
+  ASML:
+    description: 'Dutch company that manufactures photolithography machines used to
+      produce the  world''s most advanced computer chips.
+
+      '
+    market_cap: 376.63B
+    name: ASML Holding
+    pe_ratio: 42.79
+    price: 1250.44
+    sector: Technology
+    ticker: ASML
+  BA:
+    description: 'Global aerospace leader manufacturing commercial jetliners (737,
+      787)  and defense, space, and security systems.
+
+      '
+    market_cap: 123.6B
+    name: Boeing Company
+    pe_ratio: -19.96
+    price: 180.32
+    sector: Industrials
+    ticker: BA
+  BAC:
+    description: 'Large retail bank in the U.S. Significant player in mortgage lending  and
+      corporate banking.
+
+      '
+    market_cap: 268.2B
+    name: Bank of America
+    pe_ratio: 9.64
+    price: 44.92
+    sector: Financial Services
+    ticker: BAC
+  BP:
+    description: 'British energy giant transitioning toward integrated energy, including  electric
+      vehicle charging and hydrogen.
+
+      '
+    market_cap: 97.91B
+    name: BP p.l.c.
+    pe_ratio: 7.21
+    price: 56.34
+    sector: Energy
+    ticker: BP
+  BRK.B:
+    description: 'Warren Buffett''s conglomerate owning GEICO, Dairy Queen, and massive  stakes
+      in Apple and Coca-Cola.
+
+      '
+    market_cap: 1039.47B
+    name: Berkshire Hathaway
+    pe_ratio: 11.87
+    price: 410.12
+    sector: Financial Services
+    ticker: BRK.B
+  BYDDF:
+    description: 'Chinese EV and battery manufacturer. Competitive rival to Tesla
+      in global  electric car sales and vertical integration.
+
+      '
+    market_cap: 78.13B
+    name: BYD Company Limited
+    pe_ratio: 17.02
+    price: 24.75
+    sector: Consumer Discretionary
+    ticker: BYDDF
+  CAT:
+    description: 'The world''s leading manufacturer of construction and mining equipment,  diesel
+      and natural gas engines.
+
+      '
+    market_cap: 196.55B
+    name: Caterpillar Inc.
+    pe_ratio: 17.44
+    price: 428.16
+    sector: Industrials
+    ticker: CAT
+  COIN:
+    description: 'The largest cryptocurrency exchange in the U.S. Business highly
+      correlated  with Bitcoin and crypto market volatility.
+
+      '
+    market_cap: 68.33B
+    name: Coinbase Global
+    pe_ratio: 135.36
+    price: 279.29
+    sector: Financial Services
+    ticker: COIN
+  COST:
+    description: 'Membership-only warehouse club known for bulk sales, high member  retention,
+      and the famous $1.50 hot dog.
+
+      '
+    market_cap: 303.89B
+    name: Costco Wholesale
+    pe_ratio: 45.5
+    price: 1041.84
+    sector: Consumer Staples
+    ticker: COST
+  CRM:
+    description: 'Global leader in Customer Relationship Management (CRM) software
+      and cloud-based  enterprise applications like Slack and Tableau.
+
+      '
+    market_cap: 341.19B
+    name: Salesforce Inc.
+    pe_ratio: 61.55
+    price: 364.79
+    sector: Technology
+    ticker: CRM
+  CVS:
+    description: 'Operates a massive pharmacy chain and Aetna health insurance. Integrating  pharmacy
+      and primary care.
+
+      '
+    market_cap: 94.64B
+    name: CVS Health
+    pe_ratio: 12.35
+    price: 110.63
+    sector: Healthcare
+    ticker: CVS
+  CVX:
+    description: 'Major integrated energy company. Investing in lower-carbon intensity  oil,
+      gas, and renewable fuels.
+
+      '
+    market_cap: 319.15B
+    name: Chevron Corporation
+    pe_ratio: 12.78
+    price: 196.13
+    sector: Energy
+    ticker: CVX
+  DASH:
+    description: 'The largest food delivery platform in the United States, expanding  into
+      grocery and convenience delivery.
+
+      '
+    market_cap: 74.52B
+    name: DoorDash Inc.
+    pe_ratio: -37.14
+    price: 133.9
+    sector: Consumer Discretionary
+    ticker: DASH
+  DIS:
+    description: 'Entertainment empire owning Pixar, Marvel, Star Wars, and theme
+      parks.  Battling in the streaming space with Disney+.
+
+      '
+    market_cap: 235.22B
+    name: The Walt Disney Co
+    pe_ratio: 74.57
+    price: 184.03
+    sector: Communication Services
+    ticker: DIS
+  DKNG:
+    description: 'Digital sports entertainment and gaming company famous for daily  fantasy
+      sports and mobile sports betting.
+
+      '
+    market_cap: 24.68B
+    name: DraftKings Inc.
+    pe_ratio: -15.69
+    price: 42.02
+    sector: Consumer Discretionary
+    ticker: DKNG
+  Duke:
+    description: 'One of the largest electric power holding companies in the U.S.,  serving
+      millions of customers in the Southeast.
+
+      '
+    market_cap: 83.62B
+    name: Duke Energy
+    pe_ratio: 16.85
+    price: 134.63
+    sector: Utilities
+    ticker: Duke
+  F:
+    description: 'Legacy American automaker transitioning to electric vehicles with
+      the F-150  Lightning and Mustang Mach-E.
+
+      '
+    market_cap: 53.39B
+    name: Ford Motor Company
+    pe_ratio: 11.09
+    price: 16.16
+    sector: Consumer Discretionary
+    ticker: F
+  GE:
+    description: 'Recently spun-off focused solely on jet engines and aviation systems  for
+      commercial and military aircraft.
+
+      '
+    market_cap: 235.64B
+    name: GE Aerospace
+    pe_ratio: 21.88
+    price: 248.07
+    sector: Industrials
+    ticker: GE
+  GOOGL:
+    description: 'Parent company of Google, YouTube, and Waymo. Dominates online search
+      and  advertising markets while investing heavily in Gemini AI models.
+
+      '
+    market_cap: 2.17T
+    name: Alphabet Inc.
+    pe_ratio: 22.74
+    price: 125.31
+    sector: Technology
+    ticker: GOOGL
+  GS:
+    description: 'Leading global investment banking and securities firm. Expert in
+      M&A  advisory and institutional trading.
+
+      '
+    market_cap: 174.4B
+    name: Goldman Sachs Group
+    pe_ratio: 16.24
+    price: 552.89
+    sector: Financial Services
+    ticker: GS
+  HON:
+    description: 'Diversified technology and manufacturing leader serving aerospace,  building
+      technologies, and performance materials.
+
+      '
+    market_cap: 147.03B
+    name: Honeywell International
+    pe_ratio: 23.67
+    price: 200.91
+    sector: Industrials
+    ticker: HON
+  HOOD:
+    description: 'Financial services platform that pioneered commission-free stock  trading
+      and popularized ''meme stock'' trading.
+
+      '
+    market_cap: 15.23B
+    name: Robinhood Markets
+    pe_ratio: -110.42
+    price: 22.82
+    sector: Financial Services
+    ticker: HOOD
+  ISRG:
+    description: 'Leader in robotic-assisted surgery with the Da Vinci Surgical System.  High
+      recurring revenue from instruments.
+
+      '
+    market_cap: 138.9B
+    name: Intuitive Surgical
+    pe_ratio: 75.21
+    price: 399.33
+    sector: Healthcare
+    ticker: ISRG
+  JNJ:
+    description: 'Diversified healthcare giant producing pharmaceuticals, medical
+      devices,  and consumer health products like Band-Aids.
+
+      '
+    market_cap: 486.27B
+    name: Johnson & Johnson
+    pe_ratio: 14.87
+    price: 137.95
+    sector: Healthcare
+    ticker: JNJ
+  JPM:
+    description: 'Largest bank in the United States. Offers investment banking, asset  management,
+      and consumer financial services.
+
+      '
+    market_cap: 660.89B
+    name: JPMorgan Chase & Co.
+    pe_ratio: 11.82
+    price: 310.84
+    sector: Financial Services
+    ticker: JPM
+  KO:
+    description: 'Global beverage leader with brands like Coke, Sprite, and Dasani.  Famous
+      for its consistent dividend growth.
+
+      '
+    market_cap: 289.27B
+    name: Coca-Cola Company
+    pe_ratio: 23.73
+    price: 67.77
+    sector: Consumer Staples
+    ticker: KO
+  LLY:
+    description: 'Pharmaceutical company leading in diabetes and obesity treatments
+      with  drugs like Mounjaro and Zepbound.
+
+      '
+    market_cap: 785.93B
+    name: Eli Lilly & Co.
+    pe_ratio: 114.45
+    price: 865.07
+    sector: Healthcare
+    ticker: LLY
+  LMT:
+    description: 'The world''s largest defense contractor, famous for the F-35 fighter
+      jet  and advanced missile systems.
+
+      '
+    market_cap: 100.3B
+    name: Lockheed Martin
+    pe_ratio: 16.36
+    price: 670.38
+    sector: Industrials
+    ticker: LMT
+  LULU:
+    description: 'High-end athletic apparel retailer known for yoga pants and premium  athleisure
+      wear.
+
+      '
+    market_cap: 47.8B
+    name: Lululemon Athletica
+    pe_ratio: 33.11
+    price: 501.2
+    sector: Consumer Discretionary
+    ticker: LULU
+  MA:
+    description: 'Second-largest payment processor worldwide. Innovating in contactless  payments
+      and blockchain technology.
+
+      '
+    market_cap: 597.41B
+    name: Mastercard Inc.
+    pe_ratio: 36.27
+    price: 471.7
+    sector: Financial Services
+    ticker: MA
+  MCD:
+    description: 'The world''s largest fast-food restaurant chain. Also a massive
+      real estate  owner through its franchise model.
+
+      '
+    market_cap: 223.61B
+    name: McDonald's Corp
+    pe_ratio: 22.48
+    price: 390.78
+    sector: Consumer Discretionary
+    ticker: MCD
+  META:
+    description: 'Owner of Facebook, Instagram, and WhatsApp. Pivoting to the Metaverse  and
+      open-source Llama AI models.
+
+      '
+    market_cap: 1.46T
+    name: Meta Platforms Inc.
+    pe_ratio: 30.63
+    price: 563.79
+    sector: Communication Services
+    ticker: META
+  MRNA:
+    description: 'Biotech pioneer specializing in mRNA technology for vaccines and  cancer
+      treatments.
+
+      '
+    market_cap: 41.54B
+    name: Moderna Inc.
+    pe_ratio: -5.44
+    price: 141.47
+    sector: Healthcare
+    ticker: MRNA
+  MSFT:
+    description: 'A technology giant known for Windows OS, Office suite, and Azure
+      cloud services. Leading the AI revolution through partnership with OpenAI and
+      Copilot integration.
+
+      '
+    market_cap: 3.86T
+    name: Microsoft Corporation
+    pe_ratio: 36.86
+    price: 406.32
+    sector: Technology
+    ticker: MSFT
+  MSTR:
+    description: 'Software company famous for its massive Bitcoin treasury. Often
+      used  as a proxy for Bitcoin investment.
+
+      '
+    market_cap: 38.04B
+    name: MicroStrategy Inc.
+    pe_ratio: -45.96
+    price: 1666.82
+    sector: Technology
+    ticker: MSTR
+  NEE:
+    description: 'The largest renewable energy company in the world, operating major  wind
+      and solar projects across the U.S.
+
+      '
+    market_cap: 181.08B
+    name: NextEra Energy
+    pe_ratio: 24.32
+    price: 53.09
+    sector: Utilities
+    ticker: NEE
+  NFLX:
+    description: 'The pioneer of streaming television. Focused on original content
+      and  cracking down on password sharing.
+
+      '
+    market_cap: 280.22B
+    name: Netflix Inc.
+    pe_ratio: 45.32
+    price: 844.41
+    sector: Communication Services
+    ticker: NFLX
+  NKE:
+    description: 'The world''s largest designer and seller of athletic footwear and
+      apparel.  Known for the ''Just Do It'' slogan and Jordan Brand.
+
+      '
+    market_cap: 184.19B
+    name: Nike Inc.
+    pe_ratio: 28.87
+    price: 134.86
+    sector: Consumer Discretionary
+    ticker: NKE
+  NVDA:
+    description: 'The dominant provider of graphics processing units (GPUs) essential
+      for deep learning,  artificial intelligence, and high-performance computing.
+
+      '
+    market_cap: 2.39T
+    name: NVIDIA Corporation
+    pe_ratio: 66.42
+    price: 1325.06
+    sector: Technology
+    ticker: NVDA
+  OXY:
+    description: 'Oil company backed by Warren Buffett. Leader in enhanced oil recovery  and
+      direct air capture of CO2.
+
+      '
+    market_cap: 77.07B
+    name: Occidental Petroleum
+    pe_ratio: 13.52
+    price: 80.96
+    sector: Energy
+    ticker: OXY
+  PANW:
+    description: 'Global cybersecurity leader providing next-generation firewalls
+      and  cloud security solutions.
+
+      '
+    market_cap: 89.68B
+    name: Palo Alto Networks
+    pe_ratio: 48.6
+    price: 268.8
+    sector: Technology
+    ticker: PANW
+  PEP:
+    description: 'Food and beverage giant owning Pepsi, Lay''s, Gatorade, and Quaker
+      Oats.  Diversified across snacks and drinks.
+
+      '
+    market_cap: 327.7B
+    name: PepsiCo Inc.
+    pe_ratio: 27.32
+    price: 238.06
+    sector: Consumer Staples
+    ticker: PEP
+  PFE:
+    description: 'Global pharmaceutical company known for the COVID-19 vaccine (Comirnaty)  and
+      Paxlovid. Currently diversifying post-pandemic.
+
+      '
+    market_cap: 215.31B
+    name: Pfizer Inc.
+    pe_ratio: 12.27
+    price: 43.91
+    sector: Healthcare
+    ticker: PFE
+  PG:
+    description: 'Consumer goods leader owning Tide, Gillette, and Pampers. Defensive  stock
+      known for stability.
+
+      '
+    market_cap: 380.23B
+    name: Procter & Gamble
+    pe_ratio: 23.93
+    price: 241.5
+    sector: Consumer Staples
+    ticker: PG
+  PLTR:
+    description: 'Data analytics software for government and commercial sectors. Known  for
+      its Artificial Intelligence Platform (AIP).
+
+      '
+    market_cap: 74.64B
+    name: Palantir Technologies
+    pe_ratio: 196.68
+    price: 27.49
+    sector: Technology
+    ticker: PLTR
+  PM:
+    description: 'Leading tobacco company transitioning to a smoke-free future with  IQOS
+      heated tobacco products.
+
+      '
+    market_cap: 148.1B
+    name: Philip Morris International
+    pe_ratio: 17.82
+    price: 107.08
+    sector: Consumer Staples
+    ticker: PM
+  PYPL:
+    description: 'Digital wallet and payment platform. Owner of Venmo. Facing competition  from
+      Apple Pay and Google Pay.
+
+      '
+    market_cap: 86.19B
+    name: PayPal Holdings
+    pe_ratio: 14.83
+    price: 98.02
+    sector: Financial Services
+    ticker: PYPL
+  RBLX:
+    description: 'Online gaming platform and game creation system that allows users
+      to  program and play games created by others.
+
+      '
+    market_cap: 29.52B
+    name: Roblox Corporation
+    pe_ratio: -16.65
+    price: 34.56
+    sector: Communication Services
+    ticker: RBLX
+  RDDT:
+    description: 'Social media platform organized around thousands of communities
+      (subreddits)  ranging from finance to entertainment.
+
+      '
+    market_cap: 8.57B
+    name: Reddit Inc.
+    pe_ratio: -13.56
+    price: 46.89
+    sector: Communication Services
+    ticker: RDDT
+  RTX:
+    description: 'Aerospace and defense company providing advanced systems for commercial,  military,
+      and government customers.
+
+      '
+    market_cap: 142.75B
+    name: Raytheon Technologies
+    pe_ratio: 20.43
+    price: 151.72
+    sector: Industrials
+    ticker: RTX
+  SBUX:
+    description: 'Leading specialty coffee roaster and retailer with thousands of
+      stores globally.  Focuses on premium coffee experience and digital loyalty.
+
+      '
+    market_cap: 92.48B
+    name: Starbucks Corporation
+    pe_ratio: 25.5
+    price: 111.42
+    sector: Consumer Discretionary
+    ticker: SBUX
+  SHOP:
+    description: 'Provides e-commerce platforms for small and medium-sized businesses
+      to sell  products online. Competitor to Amazon''s marketplace.
+
+      '
+    market_cap: 131.91B
+    name: Shopify Inc.
+    pe_ratio: 715.05
+    price: 72.76
+    sector: Consumer Discretionary
+    ticker: SHOP
+  SLB:
+    description: 'The world''s leading provider of technology for reservoir characterization,  drilling,
+      and production to the oil and gas industry.
+
+      '
+    market_cap: 73.73B
+    name: Schlumberger NV
+    pe_ratio: 17.97
+    price: 82.93
+    sector: Energy
+    ticker: SLB
+  SNOW:
+    description: 'A cloud-based data warehousing and analytics company that allows
+      businesses to  store and analyze data using cloud-based hardware and software.
+
+      '
+    market_cap: 64.3B
+    name: Snowflake Inc.
+    pe_ratio: -13.26
+    price: 140.57
+    sector: Technology
+    ticker: SNOW
+  SONY:
+    description: 'Japanese conglomerate famous for PlayStation, music publishing,
+      and  image sensors for smartphones.
+
+      '
+    market_cap: 129.87B
+    name: Sony Group Corp
+    pe_ratio: 14.69
+    price: 73.08
+    sector: Communication Services
+    ticker: SONY
+  SPOT:
+    description: 'World''s most popular audio streaming subscription service, covering  music
+      and podcasts.
+
+      '
+    market_cap: 82.2B
+    name: Spotify Technology
+    pe_ratio: 111.55
+    price: 296.37
+    sector: Communication Services
+    ticker: SPOT
+  SQ:
+    description: 'Formerly Square. Operates Cash App and merchant payment services.  Focused
+      on Bitcoin and decentralized finance.
+
+      '
+    market_cap: 67.28B
+    name: Block Inc.
+    pe_ratio: 80.42
+    price: 87.83
+    sector: Financial Services
+    ticker: SQ
+  T:
+    description: 'Telecommunications giant providing wireless and fiber internet services.  High
+      dividend yield stock.
+
+      '
+    market_cap: 126.95B
+    name: AT&T Inc.
+    pe_ratio: 8.5
+    price: 21.25
+    sector: Communication Services
+    ticker: T
+  TGT:
+    description: 'General merchandise retailer known for stylish affordable products
+      and  successful ''cheap-chic'' branding.
+
+      '
+    market_cap: 83.65B
+    name: Target Corporation
+    pe_ratio: 18.14
+    price: 147.89
+    sector: Consumer Discretionary
+    ticker: TGT
+  TM:
+    description: 'World''s largest automaker by volume. Known for hybrid vehicles
+      like the Prius  and reputation for reliability.
+
+      '
+    market_cap: 310.64B
+    name: Toyota Motor Corp
+    pe_ratio: 9.77
+    price: 240.86
+    sector: Consumer Discretionary
+    ticker: TM
+  TMUS:
+    description: 'Leader in 5G wireless coverage in the U.S. Known for its ''Un-carrier''  marketing
+      and aggressive growth.
+
+      '
+    market_cap: 198.14B
+    name: T-Mobile US
+    pe_ratio: 22.9
+    price: 177.06
+    sector: Communication Services
+    ticker: TMUS
+  TSLA:
+    description: 'Electric vehicle (EV) pioneer focused on sustainable energy, battery
+      storage  systems, and autonomous driving technology (FSD).
+
+      '
+    market_cap: 654.38B
+    name: Tesla Inc.
+    pe_ratio: 44.03
+    price: 253.65
+    sector: Consumer Discretionary
+    ticker: TSLA
+  TTE:
+    description: 'French broad energy company that produces and markets fuels,  natural
+      gas, and low-carbon electricity.
+
+      '
+    market_cap: 220.74B
+    name: TotalEnergies SE
+    pe_ratio: 8.01
+    price: 89.39
+    sector: Energy
+    ticker: TTE
+  U:
+    description: 'The world''s leading platform for creating and operating interactive,  real-time
+      3D (RT3D) content.
+
+      '
+    market_cap: 9.58B
+    name: Unity Software Inc.
+    pe_ratio: -8.87
+    price: 31.61
+    sector: Technology
+    ticker: U
+  UNH:
+    description: 'The largest health insurance company in the U.S. Also provides data  analytics
+      and healthcare services through Optum.
+
+      '
+    market_cap: 561.62B
+    name: UnitedHealth Group
+    pe_ratio: 16.42
+    price: 722.28
+    sector: Healthcare
+    ticker: UNH
+  UPS:
+    description: 'Global logistics and package delivery leader. Indicator of global  trade
+      and e-commerce health.
+
+      '
+    market_cap: 174.36B
+    name: United Parcel Service
+    pe_ratio: 17.95
+    price: 122.89
+    sector: Industrials
+    ticker: UPS
+  V:
+    description: 'Digital payment giant facilitating global credit and debit card
+      transactions  across 200+ countries.
+
+      '
+    market_cap: 603.12B
+    name: Visa Inc.
+    pe_ratio: 29.1
+    price: 275.75
+    sector: Financial Services
+    ticker: V
+  VRTX:
+    description: 'Specializes in treatments for cystic fibrosis and expanding into  gene
+      editing for sickle cell disease.
+
+      '
+    market_cap: 105.84B
+    name: Vertex Pharmaceuticals
+    pe_ratio: 29.02
+    price: 551.34
+    sector: Healthcare
+    ticker: VRTX
+  VZ:
+    description: 'Massive wireless carrier known for network reliability and significant  dividend
+      payments to shareholders.
+
+      '
+    market_cap: 207.13B
+    name: Verizon Communications
+    pe_ratio: 8.04
+    price: 39.24
+    sector: Communication Services
+    ticker: VZ
+  WMT:
+    description: 'The world''s largest retailer by revenue. Operating massive discount  department
+      stores and growing its online presence.
+
+      '
+    market_cap: 627.55B
+    name: Walmart Inc.
+    pe_ratio: 28.05
+    price: 75.98
+    sector: Consumer Staples
+    ticker: WMT
+  XOM:
+    description: 'One of the world''s largest oil and gas companies. Focused on fossil  fuel
+      extraction and carbon capture technology.
+
+      '
+    market_cap: 619.13B
+    name: Exxon Mobil Corp
+    pe_ratio: 13.2
+    price: 169.84
+    sector: Energy
+    ticker: XOM
+  ZM:
+    description: 'Communications technology company providing videotelephony and  online
+      chat services through a cloud-based software platform.
+
+      '
+    market_cap: 23.34B
+    name: Zoom Video
+    pe_ratio: 12.71
+    price: 73.91
+    sector: Technology
+    ticker: ZM
+vip_fee: 8000

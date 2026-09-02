@@ -17,3 +17,1380 @@ alerts:
   timestamp: '2026-05-02 15:47:16'
 preferences:
   primary_location: Savannah
+
+# Exported verbatim from world.pkl: full city/station/climate/condition
+# catalog + base_time, so seed mode matches the frozen ground truth.
+advisories:
+  flood_warning:
+    content: Heavy rain may cause flooding in low-lying areas. Avoid driving through
+      flooded roads.
+    id: flood_warning
+    title: Flood Warning
+  heat_warning:
+    content: High temperatures expected. Stay hydrated and avoid strenuous outdoor
+      activities.
+    id: heat_warning
+    title: Heat Advisory
+  snow_warning:
+    content: Accumulating snow expected. Road conditions may deteriorate.
+    id: snow_warning
+    title: Snow Advisory
+  wind_warning:
+    content: Strong gusts expected. Secure loose objects and be cautious of falling
+      debris.
+    id: wind_warning
+    title: High Wind Warning
+base_time: '2026-01-01 08:00:00'
+cities:
+  Albuquerque:
+    coords:
+    - 35.0844
+    - -106.6504
+    name: Albuquerque
+    tz: MST
+  Amsterdam:
+    coords:
+    - 52.3676
+    - 4.9041
+    name: Amsterdam
+    tz: CET
+  Anchorage:
+    coords:
+    - 61.2181
+    - -149.9003
+    name: Anchorage
+    tz: AKST
+  Arlington:
+    coords:
+    - 32.7357
+    - -97.1081
+    name: Arlington
+    tz: CST
+  Athens:
+    coords:
+    - 37.9838
+    - 23.7275
+    name: Athens
+    tz: EET
+  Atlanta:
+    coords:
+    - 33.749
+    - -84.388
+    name: Atlanta
+    tz: EST
+  Aurora:
+    coords:
+    - 39.7294
+    - -104.8319
+    name: Aurora
+    tz: MST
+  Austin:
+    coords:
+    - 30.2672
+    - -97.7431
+    name: Austin
+    tz: CST
+  Bakersfield:
+    coords:
+    - 35.3733
+    - -119.0187
+    name: Bakersfield
+    tz: PST
+  Baltimore:
+    coords:
+    - 39.2904
+    - -76.6122
+    name: Baltimore
+    tz: EST
+  Bangkok:
+    coords:
+    - 13.7563
+    - 100.5018
+    name: Bangkok
+    tz: ICT
+  Barcelona:
+    coords:
+    - 41.3851
+    - 2.1734
+    name: Barcelona
+    tz: CET
+  Berlin:
+    coords:
+    - 52.52
+    - 13.405
+    name: Berlin
+    tz: CET
+  Bogota:
+    coords:
+    - 4.711
+    - -74.0721
+    name: Bogota
+    tz: COT
+  Boston:
+    coords:
+    - 42.3601
+    - -71.0589
+    name: Boston
+    tz: EST
+  Brussels:
+    coords:
+    - 50.8503
+    - 4.3517
+    name: Brussels
+    tz: CET
+  Budapest:
+    coords:
+    - 47.4979
+    - 19.0402
+    name: Budapest
+    tz: CET
+  Buenos Aires:
+    coords:
+    - -34.6037
+    - -58.3816
+    name: Buenos Aires
+    tz: ART
+  Cape Town:
+    coords:
+    - -33.9249
+    - 18.4241
+    name: Cape Town
+    tz: SAST
+  Charlotte:
+    coords:
+    - 35.2271
+    - -80.8431
+    name: Charlotte
+    tz: EST
+  Chicago:
+    coords:
+    - 41.8781
+    - -87.6298
+    name: Chicago
+    tz: CST
+  Colorado Springs:
+    coords:
+    - 38.8339
+    - -104.8214
+    name: Colorado Springs
+    tz: MST
+  Columbus:
+    coords:
+    - 39.9612
+    - -82.9988
+    name: Columbus
+    tz: EST
+  Copenhagen:
+    coords:
+    - 55.6761
+    - 12.5683
+    name: Copenhagen
+    tz: CET
+  Dallas:
+    coords:
+    - 32.7767
+    - -96.797
+    name: Dallas
+    tz: CST
+  Denver:
+    coords:
+    - 39.7392
+    - -104.9903
+    name: Denver
+    tz: MST
+  Detroit:
+    coords:
+    - 42.3314
+    - -83.0458
+    name: Detroit
+    tz: EST
+  Dubai:
+    coords:
+    - 25.2048
+    - 55.2708
+    name: Dubai
+    tz: GST
+  Dublin:
+    coords:
+    - 53.3498
+    - -6.2603
+    name: Dublin
+    tz: GMT
+  El Paso:
+    coords:
+    - 31.7619
+    - -106.485
+    name: El Paso
+    tz: MST
+  Fort Worth:
+    coords:
+    - 32.7555
+    - -97.3308
+    name: Fort Worth
+    tz: CST
+  Fresno:
+    coords:
+    - 36.7378
+    - -119.7871
+    name: Fresno
+    tz: PST
+  Helsinki:
+    coords:
+    - 60.1699
+    - 24.9384
+    name: Helsinki
+    tz: EET
+  Hong Kong:
+    coords:
+    - 22.3193
+    - 114.1694
+    name: Hong Kong
+    tz: HKT
+  Honolulu:
+    coords:
+    - 21.3069
+    - -157.8583
+    name: Honolulu
+    tz: HST
+  Houston:
+    coords:
+    - 29.7604
+    - -95.3698
+    name: Houston
+    tz: CST
+  Indianapolis:
+    coords:
+    - 39.7684
+    - -86.1581
+    name: Indianapolis
+    tz: EST
+  Istanbul:
+    coords:
+    - 41.0082
+    - 28.9784
+    name: Istanbul
+    tz: TRT
+  Jacksonville:
+    coords:
+    - 30.3322
+    - -81.6557
+    name: Jacksonville
+    tz: EST
+  Jakarta:
+    coords:
+    - -6.2088
+    - 106.8456
+    name: Jakarta
+    tz: WIB
+  Johannesburg:
+    coords:
+    - -26.2041
+    - 28.0473
+    name: Johannesburg
+    tz: SAST
+  Kansas City:
+    coords:
+    - 39.0997
+    - -94.5786
+    name: Kansas City
+    tz: CST
+  Kuala Lumpur:
+    coords:
+    - 3.139
+    - 101.6869
+    name: Kuala Lumpur
+    tz: MYT
+  Lagos:
+    coords:
+    - 6.5244
+    - 3.3792
+    name: Lagos
+    tz: WAT
+  Las Vegas:
+    coords:
+    - 36.1699
+    - -115.1398
+    name: Las Vegas
+    tz: PST
+  Lima:
+    coords:
+    - -12.0464
+    - -77.0428
+    name: Lima
+    tz: PET
+  Lisbon:
+    coords:
+    - 38.7223
+    - -9.1393
+    name: Lisbon
+    tz: WET
+  London:
+    coords:
+    - 51.5074
+    - -0.1278
+    name: London
+    tz: GMT
+  Long Beach:
+    coords:
+    - 33.7701
+    - -118.1937
+    name: Long Beach
+    tz: PST
+  Los Angeles:
+    coords:
+    - 34.0522
+    - -118.2437
+    name: Los Angeles
+    tz: PST
+  Louisville:
+    coords:
+    - 38.2527
+    - -85.7585
+    name: Louisville
+    tz: EST
+  Madrid:
+    coords:
+    - 40.4168
+    - -3.7038
+    name: Madrid
+    tz: CET
+  Manila:
+    coords:
+    - 14.5995
+    - 120.9842
+    name: Manila
+    tz: PHT
+  Memphis:
+    coords:
+    - 35.1495
+    - -90.049
+    name: Memphis
+    tz: CST
+  Mesa:
+    coords:
+    - 33.4152
+    - -111.8315
+    name: Mesa
+    tz: MST
+  Miami:
+    coords:
+    - 25.7617
+    - -80.1918
+    name: Miami
+    tz: EST
+  Milwaukee:
+    coords:
+    - 43.0389
+    - -87.9065
+    name: Milwaukee
+    tz: CST
+  Minneapolis:
+    coords:
+    - 44.9778
+    - -93.265
+    name: Minneapolis
+    tz: CST
+  Moscow:
+    coords:
+    - 55.7558
+    - 37.6173
+    name: Moscow
+    tz: MSK
+  Nairobi:
+    coords:
+    - -1.2921
+    - 36.8219
+    name: Nairobi
+    tz: EAT
+  Nashville:
+    coords:
+    - 36.1627
+    - -86.7816
+    name: Nashville
+    tz: CST
+  New Orleans:
+    coords:
+    - 29.9511
+    - -90.0715
+    name: New Orleans
+    tz: CST
+  New York:
+    coords:
+    - 40.7128
+    - -74.006
+    name: New York
+    tz: EST
+  Oakland:
+    coords:
+    - 37.8044
+    - -122.2711
+    name: Oakland
+    tz: PST
+  Oklahoma City:
+    coords:
+    - 35.4676
+    - -97.5164
+    name: Oklahoma City
+    tz: CST
+  Omaha:
+    coords:
+    - 41.2565
+    - -95.9345
+    name: Omaha
+    tz: CST
+  Oslo:
+    coords:
+    - 59.9139
+    - 10.7522
+    name: Oslo
+    tz: CET
+  Paris:
+    coords:
+    - 48.8566
+    - 2.3522
+    name: Paris
+    tz: CET
+  Philadelphia:
+    coords:
+    - 39.9526
+    - -75.1652
+    name: Philadelphia
+    tz: EST
+  Phoenix:
+    coords:
+    - 33.4484
+    - -112.074
+    name: Phoenix
+    tz: MST
+  Portland:
+    coords:
+    - 45.5051
+    - -122.675
+    name: Portland
+    tz: PST
+  Prague:
+    coords:
+    - 50.0755
+    - 14.4378
+    name: Prague
+    tz: CET
+  Raleigh:
+    coords:
+    - 35.7796
+    - -78.6382
+    name: Raleigh
+    tz: EST
+  Rome:
+    coords:
+    - 41.9028
+    - 12.4964
+    name: Rome
+    tz: CET
+  Sacramento:
+    coords:
+    - 38.5816
+    - -121.4944
+    name: Sacramento
+    tz: PST
+  San Antonio:
+    coords:
+    - 29.4241
+    - -98.4936
+    name: San Antonio
+    tz: CST
+  San Diego:
+    coords:
+    - 32.7157
+    - -117.1611
+    name: San Diego
+    tz: PST
+  San Francisco:
+    coords:
+    - 37.7749
+    - -122.4194
+    name: San Francisco
+    tz: PST
+  San Jose:
+    coords:
+    - 37.3382
+    - -121.8863
+    name: San Jose
+    tz: PST
+  Santiago:
+    coords:
+    - -33.4489
+    - -70.6693
+    name: Santiago
+    tz: CLT
+  Seattle:
+    coords:
+    - 47.6062
+    - -122.3321
+    name: Seattle
+    tz: PST
+  Seoul:
+    coords:
+    - 37.5665
+    - 126.978
+    name: Seoul
+    tz: KST
+  Singapore:
+    coords:
+    - 1.3521
+    - 103.8198
+    name: Singapore
+    tz: SGT
+  Stockholm:
+    coords:
+    - 59.3293
+    - 18.0686
+    name: Stockholm
+    tz: CET
+  Sydney:
+    coords:
+    - -33.8688
+    - 151.2093
+    name: Sydney
+    tz: AEST
+  Tampa:
+    coords:
+    - 27.9506
+    - -82.4572
+    name: Tampa
+    tz: EST
+  Tokyo:
+    coords:
+    - 35.6895
+    - 139.6917
+    name: Tokyo
+    tz: JST
+  Tucson:
+    coords:
+    - 32.2226
+    - -110.9747
+    name: Tucson
+    tz: MST
+  Tulsa:
+    coords:
+    - 36.15398
+    - -95.992775
+    name: Tulsa
+    tz: CST
+  Vienna:
+    coords:
+    - 48.2082
+    - 16.3738
+    name: Vienna
+    tz: CET
+  Virginia Beach:
+    coords:
+    - 36.8529
+    - -75.978
+    name: Virginia Beach
+    tz: EST
+  Warsaw:
+    coords:
+    - 52.2297
+    - 21.0122
+    name: Warsaw
+    tz: CET
+  Washington:
+    coords:
+    - 38.9072
+    - -77.0369
+    name: Washington
+    tz: EST
+  Wichita:
+    coords:
+    - 37.6872
+    - -97.3301
+    name: Wichita
+    tz: CST
+  Zurich:
+    coords:
+    - 47.3769
+    - 8.5417
+    name: Zurich
+    tz: CET
+climate_samples:
+  Albuquerque:
+    avg_temp: 14
+    city: Albuquerque
+    rainfall_mm: 230
+  Amsterdam:
+    avg_temp: 10
+    city: Amsterdam
+    rainfall_mm: 800
+  Anchorage:
+    avg_temp: -1
+    city: Anchorage
+    rainfall_mm: 400
+  Arlington:
+    avg_temp: 18
+    city: Arlington
+    rainfall_mm: 900
+  Athens:
+    avg_temp: 19
+    city: Athens
+    rainfall_mm: 400
+  Atlanta:
+    avg_temp: 18
+    city: Atlanta
+    rainfall_mm: 1270
+  Aurora:
+    avg_temp: 11
+    city: Aurora
+    rainfall_mm: 390
+  Austin:
+    avg_temp: 20
+    city: Austin
+    rainfall_mm: 840
+  Bakersfield:
+    avg_temp: 19
+    city: Bakersfield
+    rainfall_mm: 180
+  Baltimore:
+    avg_temp: 14
+    city: Baltimore
+    rainfall_mm: 980
+  Bangkok:
+    avg_temp: 29
+    city: Bangkok
+    rainfall_mm: 2100
+  Barcelona:
+    avg_temp: 16
+    city: Barcelona
+    rainfall_mm: 640
+  Berlin:
+    avg_temp: 9
+    city: Berlin
+    rainfall_mm: 570
+  Bogota:
+    avg_temp: 14
+    city: Bogota
+    rainfall_mm: 800
+  Boston:
+    avg_temp: 11
+    city: Boston
+    rainfall_mm: 1050
+  Brussels:
+    avg_temp: 10
+    city: Brussels
+    rainfall_mm: 820
+  Budapest:
+    avg_temp: 11
+    city: Budapest
+    rainfall_mm: 540
+  Buenos Aires:
+    avg_temp: 16
+    city: Buenos Aires
+    rainfall_mm: 1100
+  Cape Town:
+    avg_temp: 16
+    city: Cape Town
+    rainfall_mm: 520
+  Charlotte:
+    avg_temp: 16
+    city: Charlotte
+    rainfall_mm: 1100
+  Chicago:
+    avg_temp: 10
+    city: Chicago
+    rainfall_mm: 990
+  Colorado Springs:
+    avg_temp: 9
+    city: Colorado Springs
+    rainfall_mm: 380
+  Columbus:
+    avg_temp: 11
+    city: Columbus
+    rainfall_mm: 980
+  Copenhagen:
+    avg_temp: 8
+    city: Copenhagen
+    rainfall_mm: 700
+  Dallas:
+    avg_temp: 19
+    city: Dallas
+    rainfall_mm: 940
+  Denver:
+    avg_temp: 10
+    city: Denver
+    rainfall_mm: 420
+  Detroit:
+    avg_temp: 9
+    city: Detroit
+    rainfall_mm: 820
+  Dubai:
+    avg_temp: 30
+    city: Dubai
+    rainfall_mm: 100
+  Dublin:
+    avg_temp: 9
+    city: Dublin
+    rainfall_mm: 850
+  El Paso:
+    avg_temp: 18
+    city: El Paso
+    rainfall_mm: 230
+  Fort Worth:
+    avg_temp: 18
+    city: Fort Worth
+    rainfall_mm: 920
+  Fresno:
+    avg_temp: 17
+    city: Fresno
+    rainfall_mm: 220
+  Helsinki:
+    avg_temp: 4
+    city: Helsinki
+    rainfall_mm: 650
+  Hong Kong:
+    avg_temp: 23
+    city: Hong Kong
+    rainfall_mm: 2200
+  Honolulu:
+    avg_temp: 26
+    city: Honolulu
+    rainfall_mm: 1100
+  Houston:
+    avg_temp: 21
+    city: Houston
+    rainfall_mm: 1300
+  Indianapolis:
+    avg_temp: 12
+    city: Indianapolis
+    rainfall_mm: 980
+  Istanbul:
+    avg_temp: 14
+    city: Istanbul
+    rainfall_mm: 700
+  Jacksonville:
+    avg_temp: 22
+    city: Jacksonville
+    rainfall_mm: 1300
+  Jakarta:
+    avg_temp: 27
+    city: Jakarta
+    rainfall_mm: 2000
+  Johannesburg:
+    avg_temp: 17
+    city: Johannesburg
+    rainfall_mm: 780
+  Kansas City:
+    avg_temp: 13
+    city: Kansas City
+    rainfall_mm: 950
+  Kuala Lumpur:
+    avg_temp: 27
+    city: Kuala Lumpur
+    rainfall_mm: 2400
+  Lagos:
+    avg_temp: 27
+    city: Lagos
+    rainfall_mm: 1700
+  Las Vegas:
+    avg_temp: 21
+    city: Las Vegas
+    rainfall_mm: 100
+  Lima:
+    avg_temp: 19
+    city: Lima
+    rainfall_mm: 10
+  Lisbon:
+    avg_temp: 17
+    city: Lisbon
+    rainfall_mm: 700
+  London:
+    avg_temp: 11
+    city: London
+    rainfall_mm: 800
+  Long Beach:
+    avg_temp: 17
+    city: Long Beach
+    rainfall_mm: 360
+  Los Angeles:
+    avg_temp: 18
+    city: Los Angeles
+    rainfall_mm: 380
+  Louisville:
+    avg_temp: 13
+    city: Louisville
+    rainfall_mm: 1100
+  Madrid:
+    avg_temp: 14
+    city: Madrid
+    rainfall_mm: 450
+  Manila:
+    avg_temp: 27
+    city: Manila
+    rainfall_mm: 1800
+  Memphis:
+    avg_temp: 17
+    city: Memphis
+    rainfall_mm: 1350
+  Mesa:
+    avg_temp: 22
+    city: Mesa
+    rainfall_mm: 200
+  Miami:
+    avg_temp: 25
+    city: Miami
+    rainfall_mm: 1600
+  Milwaukee:
+    avg_temp: 7
+    city: Milwaukee
+    rainfall_mm: 920
+  Minneapolis:
+    avg_temp: 6
+    city: Minneapolis
+    rainfall_mm: 760
+  Moscow:
+    avg_temp: 3
+    city: Moscow
+    rainfall_mm: 650
+  Nairobi:
+    avg_temp: 19
+    city: Nairobi
+    rainfall_mm: 1000
+  Nashville:
+    avg_temp: 15
+    city: Nashville
+    rainfall_mm: 1250
+  New Orleans:
+    avg_temp: 22
+    city: New Orleans
+    rainfall_mm: 1600
+  New York:
+    avg_temp: 12
+    city: New York
+    rainfall_mm: 1200
+  Oakland:
+    avg_temp: 15
+    city: Oakland
+    rainfall_mm: 600
+  Oklahoma City:
+    avg_temp: 15
+    city: Oklahoma City
+    rainfall_mm: 850
+  Omaha:
+    avg_temp: 11
+    city: Omaha
+    rainfall_mm: 820
+  Oslo:
+    avg_temp: 5
+    city: Oslo
+    rainfall_mm: 520
+  Paris:
+    avg_temp: 12
+    city: Paris
+    rainfall_mm: 640
+  Philadelphia:
+    avg_temp: 13
+    city: Philadelphia
+    rainfall_mm: 1060
+  Phoenix:
+    avg_temp: 23
+    city: Phoenix
+    rainfall_mm: 210
+  Portland:
+    avg_temp: 12
+    city: Portland
+    rainfall_mm: 1100
+  Prague:
+    avg_temp: 10
+    city: Prague
+    rainfall_mm: 650
+  Raleigh:
+    avg_temp: 15
+    city: Raleigh
+    rainfall_mm: 1120
+  Rome:
+    avg_temp: 16
+    city: Rome
+    rainfall_mm: 800
+  Sacramento:
+    avg_temp: 16
+    city: Sacramento
+    rainfall_mm: 430
+  San Antonio:
+    avg_temp: 20
+    city: San Antonio
+    rainfall_mm: 800
+  San Diego:
+    avg_temp: 17
+    city: San Diego
+    rainfall_mm: 260
+  San Francisco:
+    avg_temp: 15
+    city: San Francisco
+    rainfall_mm: 600
+  San Jose:
+    avg_temp: 16
+    city: San Jose
+    rainfall_mm: 380
+  Santiago:
+    avg_temp: 13
+    city: Santiago
+    rainfall_mm: 350
+  Seattle:
+    avg_temp: 11
+    city: Seattle
+    rainfall_mm: 950
+  Seoul:
+    avg_temp: 13
+    city: Seoul
+    rainfall_mm: 1450
+  Singapore:
+    avg_temp: 28
+    city: Singapore
+    rainfall_mm: 2400
+  Stockholm:
+    avg_temp: 6
+    city: Stockholm
+    rainfall_mm: 540
+  Sydney:
+    avg_temp: 20
+    city: Sydney
+    rainfall_mm: 1000
+  Tampa:
+    avg_temp: 24
+    city: Tampa
+    rainfall_mm: 1500
+  Tokyo:
+    avg_temp: 16
+    city: Tokyo
+    rainfall_mm: 1500
+  Tucson:
+    avg_temp: 22
+    city: Tucson
+    rainfall_mm: 300
+  Tulsa:
+    avg_temp: 15
+    city: Tulsa
+    rainfall_mm: 980
+  Vienna:
+    avg_temp: 11
+    city: Vienna
+    rainfall_mm: 600
+  Virginia Beach:
+    avg_temp: 16
+    city: Virginia Beach
+    rainfall_mm: 1100
+  Warsaw:
+    avg_temp: 8
+    city: Warsaw
+    rainfall_mm: 580
+  Washington:
+    avg_temp: 14
+    city: Washington
+    rainfall_mm: 1000
+  Wichita:
+    avg_temp: 13
+    city: Wichita
+    rainfall_mm: 620
+  Zurich:
+    avg_temp: 9
+    city: Zurich
+    rainfall_mm: 950
+conditions:
+  cloudy:
+    description: Overcast skies, limited sunshine. Cooler temperatures.
+    id: cloudy
+    name: Cloudy
+  partly_cloudy:
+    description: Sun mixed with clouds. Mild temperatures and light breeze.
+    id: partly_cloudy
+    name: Partly Cloudy
+  rain:
+    description: Precipitation in the form of rain. Intensity ranges from drizzle
+      to heavy showers.
+    id: rain
+    name: Rain
+  snow:
+    description: Snowfall with varying accumulation rates depending on temperature
+      and humidity.
+    id: snow
+    name: Snow
+  sunny:
+    description: Clear sky with abundant sunshine. Little to no cloud cover.
+    id: sunny
+    name: Sunny
+  thunderstorm:
+    description: Thunderstorms with lightning, heavy rain, gusty winds, and possible
+      hail.
+    id: thunderstorm
+    name: Thunderstorm
+stations:
+  st_abq_1:
+    city: Albuquerque
+    id: st_abq_1
+    name: Albuquerque Station
+  st_ams_1:
+    city: Amsterdam
+    id: st_ams_1
+    name: Amsterdam Central
+  st_anc_1:
+    city: Anchorage
+    id: st_anc_1
+    name: Anchorage Airport
+  st_art_1:
+    city: Arlington
+    id: st_art_1
+    name: Arlington Station
+  st_atl_1:
+    city: Atlanta
+    id: st_atl_1
+    name: Atlanta Midtown
+  st_atn_1:
+    city: Athens
+    id: st_atn_1
+    name: Athens Central
+  st_aur_1:
+    city: Aurora
+    id: st_aur_1
+    name: Aurora Transit
+  st_aus_1:
+    city: Austin
+    id: st_aus_1
+    name: Austin Downtown
+  st_bak_1:
+    city: Bakersfield
+    id: st_bak_1
+    name: Bakersfield Station
+  st_bal_1:
+    city: Baltimore
+    id: st_bal_1
+    name: Baltimore Inner Harbor
+  st_bar_1:
+    city: Barcelona
+    id: st_bar_1
+    name: Barcelona Estacio
+  st_ber_1:
+    city: Berlin
+    id: st_ber_1
+    name: Berlin Hauptbahnhof
+  st_bkk_1:
+    city: Bangkok
+    id: st_bkk_1
+    name: Bangkok Central
+  st_bog_1:
+    city: Bogota
+    id: st_bog_1
+    name: Bogota Central
+  st_bos_1:
+    city: Boston
+    id: st_bos_1
+    name: Boston Harbor
+  st_bru_1:
+    city: Brussels
+    id: st_bru_1
+    name: Brussels Midi
+  st_bud_1:
+    city: Budapest
+    id: st_bud_1
+    name: Budapest Keleti
+  st_bue_1:
+    city: Buenos Aires
+    id: st_bue_1
+    name: Buenos Aires Central
+  st_chi_1:
+    city: Chicago
+    id: st_chi_1
+    name: Chicago Loop Station
+  st_clt_1:
+    city: Charlotte
+    id: st_clt_1
+    name: Charlotte Uptown
+  st_col_1:
+    city: Columbus
+    id: st_col_1
+    name: Columbus Central
+  st_cos_1:
+    city: Colorado Springs
+    id: st_cos_1
+    name: Colorado Springs Station
+  st_cph_1:
+    city: Copenhagen
+    id: st_cph_1
+    name: Copenhagen Central
+  st_cpt_1:
+    city: Cape Town
+    id: st_cpt_1
+    name: Cape Town Central
+  st_dal_1:
+    city: Dallas
+    id: st_dal_1
+    name: Dallas North
+  st_den_1:
+    city: Denver
+    id: st_den_1
+    name: Denver Highlands
+  st_det_1:
+    city: Detroit
+    id: st_det_1
+    name: Detroit North
+  st_dub_1:
+    city: Dublin
+    id: st_dub_1
+    name: Dublin Central
+  st_dubai_1:
+    city: Dubai
+    id: st_dubai_1
+    name: Dubai Centre
+  st_elp_1:
+    city: El Paso
+    id: st_elp_1
+    name: El Paso Border Station
+  st_fre_1:
+    city: Fresno
+    id: st_fre_1
+    name: Fresno Central
+  st_fw_1:
+    city: Fort Worth
+    id: st_fw_1
+    name: Fort Worth Station
+  st_hel_1:
+    city: Helsinki
+    id: st_hel_1
+    name: Helsinki Central
+  st_hkg_1:
+    city: Hong Kong
+    id: st_hkg_1
+    name: Hong Kong Station
+  st_hnl_1:
+    city: Honolulu
+    id: st_hnl_1
+    name: Honolulu Harbor
+  st_hou_1:
+    city: Houston
+    id: st_hou_1
+    name: Houston Main
+  st_ind_1:
+    city: Indianapolis
+    id: st_ind_1
+    name: Indianapolis Center
+  st_ist_1:
+    city: Istanbul
+    id: st_ist_1
+    name: Istanbul Sirkeci
+  st_jax_1:
+    city: Jacksonville
+    id: st_jax_1
+    name: Jacksonville Wharf
+  st_jkt_1:
+    city: Jakarta
+    id: st_jkt_1
+    name: Jakarta Central
+  st_jnb_1:
+    city: Johannesburg
+    id: st_jnb_1
+    name: Johannesburg Central
+  st_kc_1:
+    city: Kansas City
+    id: st_kc_1
+    name: Kansas City Central
+  st_kul_1:
+    city: Kuala Lumpur
+    id: st_kul_1
+    name: Kuala Lumpur Central
+  st_la_1:
+    city: Los Angeles
+    id: st_la_1
+    name: Los Angeles Central
+  st_lag_1:
+    city: Lagos
+    id: st_lag_1
+    name: Lagos Central
+  st_las_1:
+    city: Las Vegas
+    id: st_las_1
+    name: Las Vegas Strip Station
+  st_lb_1:
+    city: Long Beach
+    id: st_lb_1
+    name: Long Beach Port
+  st_ldn_1:
+    city: London
+    id: st_ldn_1
+    name: London Bridge Station
+  st_lim_1:
+    city: Lima
+    id: st_lim_1
+    name: Lima Central
+  st_lis_1:
+    city: Lisbon
+    id: st_lis_1
+    name: Lisbon Central
+  st_lou_1:
+    city: Louisville
+    id: st_lou_1
+    name: Louisville Central
+  st_mad_1:
+    city: Madrid
+    id: st_mad_1
+    name: Madrid Centro
+  st_mem_1:
+    city: Memphis
+    id: st_mem_1
+    name: Memphis Riverfront
+  st_mesa_1:
+    city: Mesa
+    id: st_mesa_1
+    name: Mesa Station
+  st_mia_1:
+    city: Miami
+    id: st_mia_1
+    name: Miami Beach Station
+  st_mil_1:
+    city: Milwaukee
+    id: st_mil_1
+    name: Milwaukee Lakefront
+  st_mnl_1:
+    city: Manila
+    id: st_mnl_1
+    name: Manila Central
+  st_mow_1:
+    city: Moscow
+    id: st_mow_1
+    name: Moscow Central
+  st_mpl_1:
+    city: Minneapolis
+    id: st_mpl_1
+    name: Minneapolis Center
+  st_naw_1:
+    city: New Orleans
+    id: st_naw_1
+    name: New Orleans Wharf
+  st_nbo_1:
+    city: Nairobi
+    id: st_nbo_1
+    name: Nairobi Central
+  st_nsh_1:
+    city: Nashville
+    id: st_nsh_1
+    name: Nashville Central
+  st_ny_1:
+    city: New York
+    id: st_ny_1
+    name: NYC Central Station
+  st_oak_1:
+    city: Oakland
+    id: st_oak_1
+    name: Oakland Port
+  st_okc_1:
+    city: Oklahoma City
+    id: st_okc_1
+    name: Oklahoma City Hub
+  st_oma_1:
+    city: Omaha
+    id: st_oma_1
+    name: Omaha Central
+  st_osk_1:
+    city: Oslo
+    id: st_osk_1
+    name: Oslo Central
+  st_par_1:
+    city: Paris
+    id: st_par_1
+    name: Paris Gare
+  st_phi_1:
+    city: Philadelphia
+    id: st_phi_1
+    name: Philadelphia Center
+  st_phx_1:
+    city: Phoenix
+    id: st_phx_1
+    name: Phoenix Airport Station
+  st_por_1:
+    city: Portland
+    id: st_por_1
+    name: Portland Central
+  st_prg_1:
+    city: Prague
+    id: st_prg_1
+    name: Prague Central
+  st_ral_1:
+    city: Raleigh
+    id: st_ral_1
+    name: Raleigh Downtown
+  st_rom_1:
+    city: Rome
+    id: st_rom_1
+    name: Rome Termini
+  st_sa_1:
+    city: San Antonio
+    id: st_sa_1
+    name: San Antonio Plaza
+  st_sac_1:
+    city: Sacramento
+    id: st_sac_1
+    name: Sacramento Capitol
+  st_scl_1:
+    city: Santiago
+    id: st_scl_1
+    name: Santiago Central
+  st_sd_1:
+    city: San Diego
+    id: st_sd_1
+    name: San Diego Harbor
+  st_sea_1:
+    city: Seattle
+    id: st_sea_1
+    name: Seattle Pier
+  st_seo_1:
+    city: Seoul
+    id: st_seo_1
+    name: Seoul Station
+  st_sf_1:
+    city: San Francisco
+    id: st_sf_1
+    name: SF Downtown Station
+  st_sin_1:
+    city: Singapore
+    id: st_sin_1
+    name: Singapore Central
+  st_sj_1:
+    city: San Jose
+    id: st_sj_1
+    name: San Jose Tech Park
+  st_sto_1:
+    city: Stockholm
+    id: st_sto_1
+    name: Stockholm Central
+  st_tpa_1:
+    city: Tampa
+    id: st_tpa_1
+    name: Tampa Bay Station
+  st_tuc_1:
+    city: Tucson
+    id: st_tuc_1
+    name: Tucson Desert Station
+  st_tul_1:
+    city: Tulsa
+    id: st_tul_1
+    name: Tulsa Central
+  st_vb_1:
+    city: Virginia Beach
+    id: st_vb_1
+    name: Virginia Beach Pier
+  st_vie_1:
+    city: Vienna
+    id: st_vie_1
+    name: Vienna Central
+  st_waw_1:
+    city: Warsaw
+    id: st_waw_1
+    name: Warsaw Central
+  st_wich_1:
+    city: Wichita
+    id: st_wich_1
+    name: Wichita Central
+  st_wsh_1:
+    city: Washington
+    id: st_wsh_1
+    name: Washington Downtown
+  st_zrh_1:
+    city: Zurich
+    id: st_zrh_1
+    name: Zurich Haupt

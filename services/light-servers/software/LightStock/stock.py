@@ -77,6 +77,12 @@ class StockSession:
             self.trading_balance = 0
             self.savings_balance = 0
             self.frozen_margin = 0.0
+            # Scalar knobs expected as extra top-level corpus keys; defaults so
+            # a corpus that omits them degrades gracefully instead of a 500.
+            self.fee_rate = 0.0015
+            self.vip_fee = 8000
+            self.market_open = True
+            self.day_trades_remaining = 1
             # runtime flag, reset every session (not world data)
             self.password_verified = False
             # World data loaded verbatim from corpus/state.json (no cooking):
