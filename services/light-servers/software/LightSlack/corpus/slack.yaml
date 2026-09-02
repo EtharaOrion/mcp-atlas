@@ -117,3 +117,4 @@ channels:
 team:
   id: null
   name: null
+  domain: null
