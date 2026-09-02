@@ -12,3 +12,34 @@ reservations:
     service_fee: null
     total: null
     created_at: null
+listings:
+  - listing_id: null
+    name: null
+    city: null
+    country: null
+    max_guests: null
+    price_per_night: null
+    cleaning_fee: null
+    rating: null
+    host_id: null
+    description: null
+    amenities: null
+hosts:
+  - host_id: null
+    name: null
+    email: null
+    phone: null
+    superhost: null
+    joined_date: null
+availability:
+  - listing_id: null
+    start_date: null
+    end_date: null
+    available: null
+reviews:
+  - review_id: null
+    listing_id: null
+    reviewer_name: null
+    rating: null
+    comment: null
+    date: null

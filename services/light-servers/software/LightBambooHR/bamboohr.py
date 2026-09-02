@@ -170,6 +170,14 @@ class BamboohrSession:
         return {"status": "failed", "output": f"Report {report_id} not found"}
 
 
+
+    def delete_time_off_request(self, request_id: str) -> dict:
+        req = self._find(self.time_off, request_id)
+        if not req:
+            return {"status": "failed", "output": f"Time-off request {request_id} not found"}
+        self.time_off.remove(req)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = BamboohrSession(seed=12)
     print(s.get_company())

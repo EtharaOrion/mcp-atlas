@@ -146,3 +146,11 @@ async def list_escalation_policies(session_id: str):
 	if err:
 		return err
 	return session.pagerduty_session.list_escalation_policies()
+
+
+@mcp.tool
+async def delete_incident(incident_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.pagerduty_session.delete_incident(incident_id)

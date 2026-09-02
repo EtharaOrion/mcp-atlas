@@ -122,3 +122,11 @@ async def get_latest_quote(symbol: str, session_id: str):
 	if err:
 		return err
 	return session.alpaca_session.get_latest_quote(symbol)
+
+
+@mcp.tool
+async def close_position(symbol: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.alpaca_session.close_position(symbol)

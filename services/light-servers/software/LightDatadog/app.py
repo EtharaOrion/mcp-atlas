@@ -130,3 +130,11 @@ async def list_hosts(session_id: str):
 	if err:
 		return err
 	return session.datadog_session.list_hosts()
+
+
+@mcp.tool
+async def delete_monitor(monitor_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.datadog_session.delete_monitor(monitor_id)

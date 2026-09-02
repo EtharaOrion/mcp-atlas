@@ -170,3 +170,11 @@ async def check_in_attendee(attendee_id: str, session_id: str):
 	if err:
 		return err
 	return session.eventbrite_session.check_in_attendee(attendee_id)
+
+
+@mcp.tool
+async def delete_ticket_class(ticket_class_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.eventbrite_session.delete_ticket_class(ticket_class_id)

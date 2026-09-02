@@ -394,3 +394,11 @@ class MedSession:
                 "by_refill_status": by_refill_status,
             },
         }
+
+
+    def delete_pharmacy(self, phid: str) -> dict:
+        if phid not in self.pharmacies:
+            return {"status": "failed", "output": f"pharmacy {phid} not found"}
+        del self.pharmacies[phid]
+        return {"status": "ok", "output": {}}
+

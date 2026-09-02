@@ -169,3 +169,11 @@ async def get_stats(session_id: str):
     session, err = get_session(session_id)
     if err: return err
     return session.hotel_session.get_stats()
+
+
+@mcp.tool
+async def delete_review(revid: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.hotel_session.delete_review(revid)

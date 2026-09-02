@@ -199,6 +199,14 @@ class WhatsappSession:
         return {"status": "failed", "output": f"Message {message_id} not found"}
 
 
+
+    def delete_message(self, message_id: str) -> dict:
+        idx = next((i for i, m in enumerate(self.messages) if m["message_id"] == message_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Message {message_id} not found"}
+        self.messages.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = WhatsappSession(seed=12)
     print(s.get_business())

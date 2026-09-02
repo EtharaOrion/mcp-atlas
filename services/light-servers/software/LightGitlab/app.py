@@ -146,3 +146,11 @@ async def list_pipelines(project_id: str, session_id: str, status: str | None = 
 	if err:
 		return err
 	return session.gitlab_session.list_pipelines(project_id, status)
+
+
+@mcp.tool
+async def delete_issue(project_id: str, issue_iid: int, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.gitlab_session.delete_issue(project_id, issue_iid)

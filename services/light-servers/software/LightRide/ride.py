@@ -352,3 +352,11 @@ class RideSession:
                 "avg_rating": round(avg_rating, 2),
             },
         }
+
+
+    def delete_driver(self, did: str) -> dict:
+        if did not in self.drivers:
+            return {"status": "failed", "output": f"driver {did} not found"}
+        del self.drivers[did]
+        return {"status": "ok", "output": {}}
+

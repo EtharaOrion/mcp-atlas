@@ -90,3 +90,11 @@ async def soql_query(q: str, session_id: str):
 	if err:
 		return err
 	return session.salesforce_session.soql_query(q)
+
+
+@mcp.tool
+async def delete_record(sobject: str, record_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.salesforce_session.delete_record(sobject, record_id)

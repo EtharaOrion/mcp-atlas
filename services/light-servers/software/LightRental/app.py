@@ -151,3 +151,11 @@ async def get_stats(session_id: str):
     session, err = get_session(session_id)
     if err: return err
     return session.rental_session.get_stats()
+
+
+@mcp.tool
+async def delete_asset(aid: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.rental_session.delete_asset(aid)

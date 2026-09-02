@@ -138,3 +138,19 @@ async def get_report(campaign_id: str, session_id: str):
 	if err:
 		return err
 	return session.mailchimp_session.get_report(campaign_id)
+
+
+@mcp.tool
+async def delete_campaign(campaign_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.mailchimp_session.delete_campaign(campaign_id)
+
+
+@mcp.tool
+async def delete_member(list_id: str, email: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.mailchimp_session.delete_member(list_id, email)

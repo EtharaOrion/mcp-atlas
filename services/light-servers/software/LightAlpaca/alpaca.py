@@ -254,6 +254,14 @@ class AlpacaSession:
         return {"status": "ok", "output": {"symbol": symbol.upper(), "quote": q}}
 
 
+
+    def close_position(self, symbol: str) -> dict:
+        p = self._find_position(symbol)
+        if not p:
+            return {"status": "failed", "output": f"position not found for {symbol.upper()}"}
+        self.positions.remove(p)
+        return {"status": "ok", "output": p}
+
 if __name__ == "__main__":
     s = AlpacaSession(seed=12)
     print(s.get_account())

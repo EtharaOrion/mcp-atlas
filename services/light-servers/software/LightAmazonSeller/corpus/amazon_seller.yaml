@@ -1,5 +1,19 @@
 # Source: world_data 2/LightAmazonSeller.json (verbatim). Authored world for LightAmazonSeller.
-seller_account: {}
+seller_account:
+  sellerId: null
+  marketplaceId: null
+  sellerName: null
+  email: null
+  accountHealth:
+    overallStatus: null
+    defectRate: null
+    lateShipmentRate: null
+    cancelationRate: null
+  performanceNotifications:
+    - notificationId: null
+      severity: null
+      message: null
+      createdAt: null
 buying_notes_fw26: {}
 catalog_items:
   - asin: null

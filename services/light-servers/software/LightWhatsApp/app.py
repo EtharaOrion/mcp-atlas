@@ -130,3 +130,11 @@ async def mark_read(message_id: str, session_id: str):
 	if err:
 		return err
 	return session.whatsapp_session.mark_read(message_id)
+
+
+@mcp.tool
+async def delete_message(message_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.whatsapp_session.delete_message(message_id)

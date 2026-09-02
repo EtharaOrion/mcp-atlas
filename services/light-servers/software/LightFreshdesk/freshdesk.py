@@ -138,6 +138,14 @@ class FreshdeskSession:
         return {"status": "ok", "output": list(self.agents)}
 
 
+
+    def delete_ticket(self, ticket_id: int) -> dict:
+        idx = next((i for i, t in enumerate(self.tickets) if t["id"] == int(ticket_id)), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Ticket {ticket_id} not found"}
+        self.tickets.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = FreshdeskSession(seed=12)
     print(s.list_tickets())

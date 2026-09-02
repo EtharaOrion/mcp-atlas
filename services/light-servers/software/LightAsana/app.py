@@ -130,3 +130,11 @@ async def update_task(task_gid: str, session_id: str, name: str | None = None, c
 	if err:
 		return err
 	return session.asana_session.update_task(task_gid, name, completed, assignee_gid, due_on, section_gid, notes)
+
+
+@mcp.tool
+async def delete_task(task_gid: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.asana_session.delete_task(task_gid)

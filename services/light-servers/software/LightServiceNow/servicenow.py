@@ -182,6 +182,14 @@ class ServicenowSession:
         return {"status": "ok", "output": rec}
 
 
+
+    def delete_incident(self, sys_id: str) -> dict:
+        rec = self._find(self.incidents, sys_id)
+        if not rec:
+            return {"status": "failed", "output": f"Incident {sys_id} not found"}
+        self.incidents.remove(rec)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = ServicenowSession(seed=12)
     print(s.list_incidents())

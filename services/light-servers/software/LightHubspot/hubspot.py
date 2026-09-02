@@ -241,6 +241,14 @@ class HubspotSession:
         return {"status": "ok", "output": {"results": [dict(p) for p in self.pipelines]}}
 
 
+
+    def delete_deal(self, deal_id: str) -> dict:
+        d = self._find(self.deals, deal_id)
+        if not d:
+            return {"status": "failed", "output": f"Deal {deal_id} not found"}
+        self.deals.remove(d)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = HubspotSession(seed=12)
     print(s.list_contacts())

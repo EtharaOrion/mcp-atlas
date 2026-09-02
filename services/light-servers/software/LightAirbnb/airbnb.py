@@ -187,6 +187,14 @@ class AirbnbSession:
         return {"status": "ok", "output": existing}
 
 
+
+    def delete_reservation(self, reservation_id) -> dict:
+        idx = next((i for i, r in enumerate(self.reservations) if r["reservation_id"] == reservation_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Reservation {reservation_id} not found"}
+        self.reservations.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = AirbnbSession(seed=12)
     print(s.search_listings())

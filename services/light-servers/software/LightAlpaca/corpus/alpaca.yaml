@@ -1,5 +1,25 @@
 # Source: world_data 2/LightAlpaca.json (verbatim). Authored world for LightAlpaca.
-account: {}
+account:
+  id: null
+  account_number: null
+  status: null
+  currency: null
+  buying_power: null
+  cash: null
+  portfolio_value: null
+  equity: null
+  last_equity: null
+  long_market_value: null
+  short_market_value: null
+  initial_margin: null
+  maintenance_margin: null
+  multiplier: null
+  trading_blocked: null
+  transfers_blocked: null
+  account_blocked: null
+  pattern_day_trader: null
+  daytrade_count: null
+  created_at: null
 positions:
   - asset_id: null
     symbol: null

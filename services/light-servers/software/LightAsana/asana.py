@@ -225,6 +225,14 @@ class AsanaSession:
         return {"status": "failed", "output": f"Task {task_gid} not found"}
 
 
+
+    def delete_task(self, task_gid: str) -> dict:
+        idx = next((i for i, t in enumerate(self.tasks) if t["gid"] == task_gid), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Task {task_gid} not found"}
+        self.tasks.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = AsanaSession(seed=12)
     print(s.list_workspaces())

@@ -274,6 +274,14 @@ class EventbriteSession:
         return {"status": "failed", "output": f"Attendee {attendee_id} not found"}
 
 
+
+    def delete_ticket_class(self, ticket_class_id: str) -> dict:
+        idx = next((i for i, t in enumerate(self.ticket_classes) if t["id"] == ticket_class_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Ticket class {ticket_class_id} not found"}
+        self.ticket_classes.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = EventbriteSession(seed=12)
     print(s.list_organizations())

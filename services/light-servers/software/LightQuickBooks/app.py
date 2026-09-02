@@ -370,3 +370,11 @@ async def accounts_payable_aging(session_id: str):
 	if err:
 		return err
 	return session.quickbooks_session.accounts_payable_aging()
+
+
+@mcp.tool
+async def delete_vendor(vendor_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.quickbooks_session.delete_vendor(vendor_id)

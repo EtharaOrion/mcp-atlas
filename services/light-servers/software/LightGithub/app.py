@@ -170,3 +170,11 @@ async def delete_comment(owner: str, repo: str, comment_id: int, session_id: str
 	if err:
 		return err
 	return session.github_session.delete_comment(owner, repo, comment_id)
+
+
+@mcp.tool
+async def delete_issue(owner: str, repo: str, number: int, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.github_session.delete_issue(owner, repo, number)

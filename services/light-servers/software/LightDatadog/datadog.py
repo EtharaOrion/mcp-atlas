@@ -264,6 +264,14 @@ class DatadogSession:
         }}
 
 
+
+    def delete_monitor(self, monitor_id: str) -> dict:
+        idx = next((i for i, m in enumerate(self.monitors) if m["id"] == int(monitor_id)), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Monitor {monitor_id} not found"}
+        self.monitors.pop(idx)
+        return {"status": "ok", "output": {"deleted_monitor_ids": [int(monitor_id)]}}
+
 if __name__ == "__main__":
     s = DatadogSession(seed=12)
     print(s.list_monitors())

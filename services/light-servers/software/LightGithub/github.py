@@ -254,6 +254,14 @@ class GithubSession:
         return {"status": "ok", "output": {"id": comment_id, "deleted": True}}
 
 
+
+    def delete_issue(self, owner: str, repo: str, number: int) -> dict:
+        idx = next((i for i, iss in enumerate(self.issues) if iss["repo"] == repo and iss["number"] == int(number)), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Issue {number} not found in {owner}/{repo}"}
+        self.issues.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = GithubSession(seed=12)
     print(s.get_user())

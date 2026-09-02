@@ -236,6 +236,17 @@ class GitlabSession:
         return {"status": "ok", "output": results}
 
 
+
+    def delete_issue(self, project_id: str, issue_iid: int) -> dict:
+        project = next((p for p in self.projects if str(p["id"]) == str(project_id) or p.get("path_with_namespace") == project_id or p.get("name") == project_id), None)
+        if not project:
+            return {"status": "failed", "output": f"Project {project_id} not found"}
+        idx = next((i for i, iss in enumerate(self.issues) if iss["project_id"] == project["id"] and iss["iid"] == int(issue_iid)), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Issue {issue_iid} not found"}
+        self.issues.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = GitlabSession(seed=12)
     print(s.get_current_user())

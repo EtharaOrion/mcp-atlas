@@ -196,6 +196,14 @@ class GreenhouseSession:
         return {"status": "ok", "output": results}
 
 
+
+    def delete_candidate(self, candidate_id: str) -> dict:
+        c = self._find(self.candidates, candidate_id)
+        if not c:
+            return {"status": "failed", "output": f"Candidate {candidate_id} not found"}
+        self.candidates.remove(c)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = GreenhouseSession(seed=12)
     print(s.list_candidates())

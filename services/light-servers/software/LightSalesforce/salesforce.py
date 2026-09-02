@@ -208,6 +208,16 @@ class SalesforceSession:
         }}
 
 
+
+    def delete_record(self, sobject: str, record_id: str) -> dict:
+        name = self._canonical(sobject)
+        rec = self._find(name, record_id)
+        if not rec:
+            return {"status": "failed", "output": f"Provided external ID field does not exist or is not accessible: {record_id}"}
+        recs = self._records(name)
+        recs[:] = [r for r in recs if r.get("Id") != record_id]
+        return {"status": "ok", "output": {"id": record_id, "success": True, "errors": []}}
+
 if __name__ == "__main__":
     s = SalesforceSession(seed=12)
     print(s.list_records("Account"))

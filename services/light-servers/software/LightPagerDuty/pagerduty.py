@@ -212,6 +212,14 @@ class PagerDutySession:
         return {"status": "ok", "output": {"escalation_policies": list(self.policies)}}
 
 
+
+    def delete_incident(self, incident_id: str) -> dict:
+        idx = next((i for i, inc in enumerate(self.incidents) if inc["incident_id"] == incident_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Incident {incident_id} not found"}
+        self.incidents.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = PagerDutySession(seed=12)
     print(s.list_services())

@@ -106,3 +106,11 @@ async def list_templates(session_id: str):
 	if err:
 		return err
 	return session.docusign_session.list_templates()
+
+
+@mcp.tool
+async def void_envelope(envelope_id: str, session_id: str, voided_reason: str = "Voided"):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.docusign_session.void_envelope(envelope_id, voided_reason)

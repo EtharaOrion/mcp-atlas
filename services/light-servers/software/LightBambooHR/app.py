@@ -122,3 +122,11 @@ async def get_report(report_id: str, session_id: str):
 	if err:
 		return err
 	return session.bamboohr_session.get_report(report_id)
+
+
+@mcp.tool
+async def delete_time_off_request(request_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.bamboohr_session.delete_time_off_request(request_id)

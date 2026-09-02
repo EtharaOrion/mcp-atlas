@@ -138,3 +138,11 @@ async def list_deal_pipelines(session_id: str):
 	if err:
 		return err
 	return session.hubspot_session.list_deal_pipelines()
+
+
+@mcp.tool
+async def delete_deal(deal_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.hubspot_session.delete_deal(deal_id)

@@ -236,6 +236,17 @@ class DocusignSession:
         }}
 
 
+
+    def void_envelope(self, envelope_id: str, voided_reason: str = "Voided") -> dict:
+        e = next((x for x in self.envelopes if x["envelope_id"] == envelope_id), None)
+        if not e:
+            return {"status": "failed", "output": f"Envelope {envelope_id} not found"}
+        if e["status"] == "voided":
+            return {"status": "failed", "output": f"Envelope {envelope_id} is already voided"}
+        e["status"] = "voided"
+        e["voided_reason"] = voided_reason
+        return {"status": "ok", "output": self._envelope_obj(e)}
+
 if __name__ == "__main__":
     s = DocusignSession(seed=12)
     print(s.list_envelopes())

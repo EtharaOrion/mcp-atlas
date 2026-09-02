@@ -130,3 +130,11 @@ async def list_scorecards(session_id: str, application_id: str | None = None, ca
 	if err:
 		return err
 	return session.greenhouse_session.list_scorecards(application_id, candidate_id)
+
+
+@mcp.tool
+async def delete_candidate(candidate_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.greenhouse_session.delete_candidate(candidate_id)

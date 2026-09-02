@@ -192,3 +192,11 @@ async def get_stats(session_id: str):
     session, err = get_session(session_id)
     if err: return err
     return session.med_session.get_stats()
+
+
+@mcp.tool
+async def delete_pharmacy(phid: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.med_session.delete_pharmacy(phid)

@@ -98,3 +98,11 @@ async def list_agents(session_id: str):
 	if err:
 		return err
 	return session.freshdesk_session.list_agents()
+
+
+@mcp.tool
+async def delete_ticket(ticket_id: int, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.freshdesk_session.delete_ticket(ticket_id)

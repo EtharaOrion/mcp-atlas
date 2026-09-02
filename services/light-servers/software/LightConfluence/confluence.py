@@ -248,6 +248,14 @@ class ConfluenceSession:
         }}
 
 
+
+    def delete_content(self, content_id: str) -> dict:
+        idx = next((i for i, p in enumerate(self.pages) if p["id"] == content_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Content {content_id} not found"}
+        self.pages.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = ConfluenceSession(seed=12)
     print(s.list_spaces())

@@ -192,3 +192,11 @@ async def get_stats(session_id: str):
 
 if __name__ == "__main__":
     mcp.run(transport="http", host="0.0.0.0", port=9035)
+
+
+@mcp.tool
+async def delete_camera(caid: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.security_session.delete_camera(caid)

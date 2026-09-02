@@ -383,3 +383,11 @@ class RentalSession:
                 "revenue": round(revenue, 2),
             },
         }
+
+
+    def delete_asset(self, aid: str) -> dict:
+        if aid not in self.assets:
+            return {"status": "failed", "output": f"Asset {aid} not found"}
+        del self.assets[aid]
+        return {"status": "ok", "output": {}}
+

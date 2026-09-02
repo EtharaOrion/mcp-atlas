@@ -122,3 +122,11 @@ async def start_playback(session_id: str, uris: List[str] | None = None, context
 	if err:
 		return err
 	return session.spotify_session.start_playback(uris, context_uri)
+
+
+@mcp.tool
+async def remove_tracks(playlist_id: str, uris: List[str], session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.spotify_session.remove_tracks(playlist_id, uris)

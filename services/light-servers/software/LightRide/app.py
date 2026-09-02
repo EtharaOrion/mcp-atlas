@@ -158,3 +158,11 @@ async def get_stats(session_id: str):
     session, err = get_session(session_id)
     if err: return err
     return session.ride_session.get_stats()
+
+
+@mcp.tool
+async def delete_driver(did: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.ride_session.delete_driver(did)

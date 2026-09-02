@@ -272,6 +272,18 @@ class SpotifySession:
         return {"status": "ok", "output": deepcopy(self._playback_state)}
 
 
+
+    def remove_tracks(self, playlist_id: str, uris: list) -> dict:
+        p = next((x for x in self.playlists if x["playlist_id"] == playlist_id), None)
+        if not p:
+            return {"status": "failed", "output": f"Playlist {playlist_id} not found"}
+        for uri in uris:
+            track_id = uri.split(":")[-1] if ":" in uri else uri
+            idx = next((i for i, pt in enumerate(self.playlist_tracks) if pt["playlist_id"] == playlist_id and pt["track_id"] == track_id), None)
+            if idx is not None:
+                self.playlist_tracks.pop(idx)
+        return {"status": "ok", "output": {"snapshot_id": self.uuid()}}
+
 if __name__ == "__main__":
     s = SpotifySession(seed=12)
     print(s.get_me())

@@ -397,3 +397,11 @@ class HotelSession:
                 "booked_revenue": round(revenue, 2),
             },
         }
+
+
+    def delete_review(self, revid: str) -> dict:
+        if revid not in self.reviews:
+            return {"status": "failed", "output": f"Review {revid} not found"}
+        del self.reviews[revid]
+        return {"status": "ok", "output": {}}
+

@@ -880,6 +880,14 @@ class QuickbooksSession:
         }}
 
 
+
+    def delete_vendor(self, vendor_id: str) -> dict:
+        v = self._get("vendors", vendor_id)
+        if not v:
+            return {"status": "failed", "output": f"Vendor {vendor_id} not found"}
+        self.vendors[:] = [x for x in self.vendors if str(x.get("Id")) != str(vendor_id)]
+        return {"status": "ok", "output": {"Vendor": {"domain": "QBO", "status": "Deleted", "Id": vendor_id}}}
+
 if __name__ == "__main__":
     s = QuickbooksSession(seed=12)
     print(s.get_company_info())

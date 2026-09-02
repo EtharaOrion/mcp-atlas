@@ -417,3 +417,11 @@ class SecuritySession:
                 "by_sensor_kind": by_sensor_kind,
             },
         }
+
+
+    def delete_camera(self, caid: str) -> dict:
+        if caid not in self.cameras:
+            return {"status": "failed", "output": f"camera {caid} not found"}
+        del self.cameras[caid]
+        return {"status": "ok", "output": {}}
+

@@ -241,6 +241,21 @@ class MailchimpSession:
         return {"status": "failed", "output": f"Campaign {campaign_id} not found"}
 
 
+
+    def delete_campaign(self, campaign_id: str) -> dict:
+        idx = next((i for i, c in enumerate(self.campaigns) if c["id"] == campaign_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Campaign {campaign_id} not found"}
+        self.campaigns.pop(idx)
+        return {"status": "ok", "output": {}}
+
+    def delete_member(self, list_id: str, email: str) -> dict:
+        idx = next((i for i, m in enumerate(self.members) if m["list_id"] == list_id and m["email_address"].lower() == email.lower()), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Member {email} not found in list {list_id}"}
+        self.members.pop(idx)
+        return {"status": "ok", "output": {}}
+
 if __name__ == "__main__":
     s = MailchimpSession(seed=12)
     print(s.list_lists())
