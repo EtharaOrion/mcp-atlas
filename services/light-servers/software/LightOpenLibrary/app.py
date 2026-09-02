@@ -129,3 +129,11 @@ async def remove_from_reading_list(work_id: str, session_id: str):
 	if err:
 		return err
 	return session.openlibrary_session.remove_from_reading_list(work_id)
+
+
+@mcp.tool
+async def update_reading_list_entry(work_id: str, notes: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.openlibrary_session.update_reading_list_entry(work_id, notes)

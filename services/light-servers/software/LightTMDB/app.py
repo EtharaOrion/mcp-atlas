@@ -129,3 +129,11 @@ async def remove_from_watchlist(media_id: int, session_id: str, media_type: str 
 	if err:
 		return err
 	return session.tmdb_session.remove_from_watchlist(media_id, media_type)
+
+
+@mcp.tool
+async def update_watchlist_entry(media_id: int, session_id: str, media_type: str = "movie", notes: str = ""):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.tmdb_session.update_watchlist_entry(media_id, media_type, notes)
