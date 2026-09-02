@@ -49,8 +49,8 @@ sys.path.insert(0, str(REPO / "scripts"))
 # other home-rooted path gets its `/Users/<name>` or `/home/<name>` head
 # replaced with `~`. Container paths (/workspace, /logs, /tmp) stay verbatim.
 _ANCHORED_RE = re.compile(
-    r"(?:file://)?/(?:Users|home)/[^\s\"'\\]*?/"
-    r"(?=(?:delivery_output|output|tasks|jobs)(?:/|[\"'\s]|$))"
+    r"(?:file://)?(?:/(?:Users|home)|~)/[^\s\"'\\]*?/"
+    r"(?=(?:delivery_output|output|input|tasks|jobs)(?:/|[\"'\s]|$))"
 )
 _HOME_RE = re.compile(r"(?:file://)?/(?:Users|home)/[^/\s\"'\\]+")
 

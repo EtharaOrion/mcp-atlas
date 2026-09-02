@@ -15,8 +15,8 @@ from pathlib import Path
 # home-rooted path gets its `/Users/<name>` or `/home/<name>` head replaced
 # with `~`. Container paths (/workspace, /logs, /tmp) survive verbatim.
 _ANCHORED_RE = re.compile(
-    r"(?:file://)?/(?:Users|home)/[^\s\"'\\]*?/"
-    r"(?=(?:delivery_output|output|tasks|jobs)(?:/|[\"'\s]|$))"
+    r"(?:file://)?(?:/(?:Users|home)|~)/[^\s\"'\\]*?/"
+    r"(?=(?:delivery_output|output|input|tasks|jobs)(?:/|[\"'\s]|$))"
 )
 _HOME_RE = re.compile(r"(?:file://)?/(?:Users|home)/[^/\s\"'\\]+")
 
