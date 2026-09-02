@@ -1,5 +1,6 @@
 from fastmcp import Client as MCPClient
 import asyncio
+import logging
 import threading
 from typing import Dict, Any, Optional
 from concurrent.futures import ThreadPoolExecutor, Future
@@ -199,6 +200,24 @@ class DummyOSConnector:
     
     def gen_past(self, start_year: int = 2026, k: int = 1):
         return [self.now()] * k
+
+def connect_os(os_cfg):
+    """Build the OS/time connector for a session from a login ``os_cfg``.
+
+    A well-formed ``os_cfg`` carries ``session_id`` and ``url`` (the LightSystem
+    clock server). Anything else — empty, None, non-dict, or a partial dict —
+    falls back to the fixed-time DummyOSConnector. A partial dict previously
+    raised KeyError out of login; degrading with a warning keeps the session
+    usable while still leaving a trace in the server log.
+    """
+    if isinstance(os_cfg, dict) and os_cfg.get("session_id") and os_cfg.get("url"):
+        return OSConnector(session_id=os_cfg["session_id"], url=os_cfg["url"])
+    if os_cfg:
+        logging.getLogger(__name__).warning(
+            "os_cfg missing/invalid session_id or url; using DummyOSConnector (got keys: %s)",
+            sorted(os_cfg.keys()) if isinstance(os_cfg, dict) else type(os_cfg).__name__,
+        )
+    return DummyOSConnector()
 
 def uuid_rng(rng: random.Random):
     alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"

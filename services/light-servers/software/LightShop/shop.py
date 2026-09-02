@@ -44,12 +44,12 @@ class Transaction:
     total: float
     info: Dict[str, Dict[str, int]] = field(default_factory=dict) # {sid: {cid: cnt}}
 
-from software.utils.core import OSConnector, DummyOSConnector
+from software.utils.core import OSConnector, DummyOSConnector, connect_os
 from software.utils.world_snapshot import restore_into, seed_mode, resolve_seed
 
 class ShopSession:
     def __init__(self, os_cfg, seed=None, fixture=None):
-        _os = OSConnector(session_id=os_cfg["session_id"], url=os_cfg["url"]) if os_cfg else DummyOSConnector()
+        _os = connect_os(os_cfg)
         if seed_mode():
             # Seed architecture: roll the world from a seed (different seeds ->
             # different worlds). This is the original pre-seedless behaviour.

@@ -9,7 +9,7 @@ WORK_DIR = Path('.').__str__()
 if WORK_DIR not in sys.path:
     sys.path.append(WORK_DIR)
 
-from software.utils.core import OSConnector, DummyOSConnector
+from software.utils.core import OSConnector, DummyOSConnector, connect_os
 from software.utils.world_snapshot import restore_into, seed_mode, resolve_seed
 
 
@@ -58,10 +58,7 @@ class TaxSession:
         if seed_mode():
             # Seed architecture: world rolled from a seed (re-armed).
             self.rng = random.Random(resolve_seed(seed))
-            self.os = OSConnector(
-                session_id=os_cfg["session_id"],
-                url=os_cfg["url"],
-            ) if os_cfg else DummyOSConnector()
+            self.os = connect_os(os_cfg)
             # Kept as a literal: LightTax's _SHAPES entry coerces state.json's
             # "today" string back into this datetime; tools read self._today.
             self._today = datetime(2026, 1, 5)
@@ -76,7 +73,7 @@ class TaxSession:
         else:
             # Seedless: world loaded verbatim from the frozen snapshot.
             restore_into(self, Path(__file__).resolve().parent / "world.pkl")
-            self.os = OSConnector(session_id=os_cfg["session_id"], url=os_cfg["url"]) if os_cfg else DummyOSConnector()
+            self.os = connect_os(os_cfg)
 
     def uuid(self) -> str:
         alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"

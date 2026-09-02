@@ -8,7 +8,7 @@ WORK_DIR = Path('.').__str__()
 if WORK_DIR not in sys.path:
     sys.path.append(WORK_DIR)
 
-from software.utils.core import OSConnector, DummyOSConnector
+from software.utils.core import OSConnector, DummyOSConnector, connect_os
 from software.utils.world_snapshot import restore_into, seed_mode, resolve_seed
 
 @dataclass
@@ -48,7 +48,7 @@ class ReadSession:
         if seed_mode():
             # Seed architecture: world rolled from a seed (re-armed).
             self.rng = random.Random(resolve_seed(seed))
-            self.os = OSConnector(session_id=os_cfg["session_id"], url=os_cfg["url"]) if os_cfg else DummyOSConnector()
+            self.os = connect_os(os_cfg)
             # Annotations drive the coercion in load_typed_state (rebuild
             # Book/Bookmark/Highlight objects the tools expect).
             self.books: Dict[str, Book] = {}
@@ -61,7 +61,7 @@ class ReadSession:
         else:
             # Seedless: world loaded verbatim from the frozen snapshot.
             restore_into(self, Path(__file__).resolve().parent / "world.pkl")
-            self.os = OSConnector(session_id=os_cfg["session_id"], url=os_cfg["url"]) if os_cfg else DummyOSConnector()
+            self.os = connect_os(os_cfg)
 
     def uuid(self) -> str:
         alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"

@@ -62,7 +62,7 @@ if WORK_DIR not in sys.path:
 
 from software.utils import corpus_registry
 from software.utils.time import TimeMachine
-from software.utils.core import OSConnector, DummyOSConnector, uuid_rng
+from software.utils.core import OSConnector, DummyOSConnector, uuid_rng, connect_os
 from software.utils.world_snapshot import restore_into, seed_mode, resolve_seed
 
 corpus_path = Path("software") / "LightTalk" / "corpus"
@@ -78,10 +78,7 @@ class ContactSession:
         if seed_mode():
             # Seed architecture: world rolled from a seed (re-armed).
             self.rng = random.Random(resolve_seed(seed))
-            self.os = OSConnector(
-                session_id=os_cfg["session_id"],
-                url=os_cfg["url"]
-            ) if os_cfg else DummyOSConnector()
+            self.os = connect_os(os_cfg)
             self.time_machine = TimeMachine(rng=self.rng)
 
             # Annotations drive the coercion in load_typed_state: contacts_dict
@@ -128,10 +125,7 @@ class ContactSession:
         else:
             # Seedless: world loaded verbatim from the frozen snapshot.
             restore_into(self, corpus_path / "world.pkl")
-            self.os = OSConnector(
-                session_id=os_cfg["session_id"],
-                url=os_cfg["url"]
-            ) if os_cfg else DummyOSConnector()
+            self.os = connect_os(os_cfg)
 
 
     def __mock_moments(self):

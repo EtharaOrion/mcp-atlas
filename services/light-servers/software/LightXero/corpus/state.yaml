@@ -5,31 +5,55 @@ contacts:
   EmailAddress: barrington@example.com
   IsSupplier: false
   IsCustomer: true
+  FirstName: ''
+  LastName: ''
+  ContactStatus: ACTIVE
+  AccountNumber: ACC-001
 - ContactID: c0000002-0000-0000-0000-000000000002
   Name: Renard-Whitcomb Residence
   EmailAddress: renard.whitcomb@example.com
   IsSupplier: false
   IsCustomer: true
+  FirstName: ''
+  LastName: ''
+  ContactStatus: ACTIVE
+  AccountNumber: ACC-002
 - ContactID: c0000003-0000-0000-0000-000000000003
   Name: Coastal Georgia Community Foundation
   EmailAddress: info@coastalga.org
   IsSupplier: false
   IsCustomer: true
+  FirstName: ''
+  LastName: ''
+  ContactStatus: ACTIVE
+  AccountNumber: ACC-003
 - ContactID: c0000004-0000-0000-0000-000000000004
   Name: Hartwell Timber Supply
   EmailAddress: orders@hartwelltimber.com
   IsSupplier: true
   IsCustomer: false
+  FirstName: ''
+  LastName: ''
+  ContactStatus: ACTIVE
+  AccountNumber: ACC-004
 - ContactID: c0000005-0000-0000-0000-000000000005
   Name: Barrington Estate Trust
   EmailAddress: trust@barringtonestate.com
   IsSupplier: false
   IsCustomer: true
+  FirstName: ''
+  LastName: ''
+  ContactStatus: ACTIVE
+  AccountNumber: ACC-005
 - ContactID: c0000006-0000-0000-0000-000000000006
   Name: Piedmont Finishing Supplies
   EmailAddress: sales@piedmontfinishing.com
   IsSupplier: true
   IsCustomer: false
+  FirstName: ''
+  LastName: ''
+  ContactStatus: ACTIVE
+  AccountNumber: ACC-006
 invoices:
 - InvoiceID: i0000001-0000-0000-0000-000000000001
   InvoiceNumber: INV-2041

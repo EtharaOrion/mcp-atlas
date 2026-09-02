@@ -11,7 +11,7 @@ if WORK_DIR not in sys.path:
 
 from software.utils import corpus_registry
 from software.utils.time import TimeMachine
-from software.utils.core import OSConnector, DummyOSConnector, uuid_rng
+from software.utils.core import OSConnector, DummyOSConnector, uuid_rng, connect_os
 from software.utils.world_snapshot import restore_into, seed_mode, resolve_seed
 
 @dataclass
@@ -61,7 +61,7 @@ class StockSession:
             # Seed architecture: world rolled from a seed (re-armed).
             self.rng = random.Random(resolve_seed(seed))
             self.time_machine = TimeMachine(rng=self.rng)
-            self.os = OSConnector(session_id=os_cfg["session_id"], url=os_cfg["url"]) if os_cfg else DummyOSConnector()
+            self.os = connect_os(os_cfg)
 
             # Annotations kept for clarity; the "user"/"stocks" aggregates and
             # the sets/dicts below are rebuilt by _SHAPES in load_typed_state.
@@ -98,7 +98,7 @@ class StockSession:
         else:
             # Seedless: world loaded verbatim from the frozen snapshot.
             restore_into(self, Path(__file__).resolve().parent / "world.pkl")
-            self.os = OSConnector(session_id=os_cfg["session_id"], url=os_cfg["url"]) if os_cfg else DummyOSConnector()
+            self.os = connect_os(os_cfg)
 
     @staticmethod
     def require_market_open(func):
