@@ -518,17 +518,28 @@ def test_malformed_oracle_calls_are_ignored_not_fatal(tmp_path):
 
 
 @requires_toml
-def test_verifier_env_forwards_subscription_and_api_credentials(bundle):
-    """agent_judge.py runs claude-agent-sdk, which shells out to the `claude`
-    CLI. On a subscription-only run the CLI needs CLAUDE_CODE_OAUTH_TOKEN;
-    without it the judge has no credentials and every task scores 0."""
+def test_verifier_env_forwards_the_judge_backend(bundle):
+    """The rubric judge shells out to the local `codex` CLI, so JUDGE_MODEL is
+    the whole judge configuration. The bridge names it used to need
+    (EVAL_LLM_BASE_URL, EVAL_LLM_API_KEY) are read by nothing and must stay
+    dropped: an env var that looks like judge configuration, and is not, is
+    how a run ends up pointed somewhere nobody intended."""
     env = _toml(bundle)["verifier"]["env"]
-    for key in ("ANTHROPIC_API_KEY", "ANTHROPIC_BASE_URL", "CLAUDE_CODE_OAUTH_TOKEN"):
-        assert key in env, f"verifier env does not forward {key}"
-        assert env[key].startswith("${") and ":-}" in env[key], (
-            f"{key} must be a Harbor-expanded passthrough, not a literal"
-        )
     assert env["JUDGE_MODEL"] == adapter.DEFAULT_JUDGE_MODEL
+    for key in ("EVAL_LLM_BASE_URL", "EVAL_LLM_API_KEY"):
+        assert key not in env, f"verifier env still forwards the dead {key}"
+
+
+@requires_toml
+def test_verifier_env_forwards_no_dead_claude_credentials(bundle):
+    """The judge stopped driving claude-agent-sdk, so nothing in the verifier
+    reads these. Left in place they would look like judge configuration while
+    configuring nothing, which is how a run ends up pointed somewhere nobody
+    intended."""
+    env = _toml(bundle)["verifier"]["env"]
+    for dead in ("ANTHROPIC_API_KEY", "ANTHROPIC_BASE_URL",
+                 "CLAUDE_CODE_OAUTH_TOKEN", "LITELLM_API_KEY", "LITELLM_BASE_URL"):
+        assert dead not in env, f"verifier env still forwards dead {dead}"
 
 
 # --- G21: solve.sh must be silent (Harbor captures stdout+stderr into oracle.txt)

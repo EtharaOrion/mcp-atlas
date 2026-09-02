@@ -123,6 +123,57 @@ if [[ -f "$TESTSH" ]]; then
     [[ -x "$TESTSH" ]] && ok "test.sh is executable" || fail "test.sh not executable (chmod +x tests/test.sh)"
 fi
 
+sect "Grading baselines"
+# tests/old_env.json and tests/gt_env.json are DERIVED artefacts: they describe
+# the world the light-servers corpus produces at this task's seed. Edit the
+# shared corpus -- or mount corpus additions -- and they stop describing the
+# served world, at which point a perfect run is graded against a world that no
+# longer exists. Both channels break, in different ways:
+#   * an ADDED entity is in the end dump but not in gt_env  -> `unexpected`
+#     -> completion (Rc) scores 0.0
+#   * a CHANGED entity is in both end and old_env but differs -> `drifted`
+#     -> misbehave (Rb) rises above 0.0
+# scripts/rederive_env.py rebuilds both from the live corpus; a non-zero exit
+# here means they need rebuilding.
+if [[ -f "$TASK/tests/oracle.json" && -f "$TASK/tests/old_env.json" ]]; then
+    REDERIVE="$(dirname "${BASH_SOURCE[0]}")/rederive_env.py"
+    if [[ -f "$REDERIVE" ]]; then
+        OUT="$(python3 "$REDERIVE" "$TASK" 2>&1)"
+        if grep -q "DIFFERS from committed" <<<"$OUT"; then
+            fail "baselines do not match the corpus the servers now serve"
+            grep -E "changed:|only in " <<<"$OUT" | sed 's/\[rederive\]/       /' | head -12
+            printf "         fix: python3 scripts/rederive_env.py %s --write\n" "$TASK"
+        elif grep -q "matches committed" <<<"$OUT"; then
+            ok "old_env.json / gt_env.json match the live corpus"
+        else
+            warn "could not verify baselines (light-servers deps missing?)"
+        fi
+    else
+        warn "scripts/rederive_env.py not found — baselines unverified"
+    fi
+else
+    ok "No state-channel baselines to verify"
+fi
+
+sect "Corpus additions"
+# Additions must never ship inside the bundle: anything inside it changes
+# task_hash and breaks the memory/crucible_view.yaml binding.
+if compgen -G "$TASK/corpus_additions/*" >/dev/null 2>&1; then
+    fail "corpus_additions/ inside the bundle — changes task_hash; keep it outside"
+else
+    ok "No corpus additions inside the bundle"
+fi
+if [[ -f "$COMPOSE" ]] && grep -q 'COMPLEXMCP_CORPUS_ADDITIONS' "$COMPOSE" 2>/dev/null; then
+    if grep -q 'COMPLEXMCP_SEED_MODE:\s*"seed"' "$COMPOSE" 2>/dev/null; then
+        ok "additions mounted with seed mode"
+    else
+        fail "COMPLEXMCP_CORPUS_ADDITIONS set but seed mode is not \"seed\" — additions would be ignored"
+    fi
+    if grep -q 'COMPLEXMCP_WORLD_DATA' "$COMPOSE" 2>/dev/null; then
+        fail "COMPLEXMCP_CORPUS_ADDITIONS and COMPLEXMCP_WORLD_DATA both set — hydrate() wipes the additions"
+    fi
+fi
+
 sect "Python syntax"
 while IFS= read -r pyf; do
     if python3 -m py_compile "$pyf" 2>/dev/null; then

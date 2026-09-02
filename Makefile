@@ -4,7 +4,7 @@ IMAGE_NAME = agent-environment
 VERSION = 1.2.7
 GHCR_REPO = ghcr.io/scaleapi/mcp-atlas
 
-.PHONY: build run-docker shell push install-harness run-harness install-python run-eval test build-light-servers
+.PHONY: build run-docker shell push install-harness run-harness install-python run-eval test build-light-servers judge-codex-check run-eval-codex run-batch batch-status
 
 # ---------------------------------------------------------------------------
 # Agent Environment (docker image with the 36 MCP servers)
@@ -52,6 +52,24 @@ run-eval: # run the full HuggingFace eval (usage: make run-eval MODEL=... OUTPUT
 	python run_eval.py --model "$(MODEL)" --output "$(OUTPUT)"
 
 # ---------------------------------------------------------------------------
+# Judge backend: Codex subscription via the local codex CLI
+# ---------------------------------------------------------------------------
+# Both rubric judges (rubric_judge_cli, the one test.sh grades with, and
+# score_rubric) shell out to `codex exec` in a read-only sandbox. No bridge
+# server, no generated key, no base URL: the only credential is a
+# `codex login` this machine already holds, and the whole preflight is one
+# CLI call. The model comes from JUDGE_MODEL (default gpt-5.6-sol).
+
+CODEX_JUDGE_MODEL = gpt-5.6-sol
+
+judge-codex-check: # verify the codex CLI is installed and logged in
+	codex login status
+
+run-eval-codex: judge-codex-check # run the eval with the judge on the codex CLI
+	JUDGE_MODEL=$(CODEX_JUDGE_MODEL) \
+	python run_eval.py --model "$(MODEL)" --output "$(OUTPUT)"
+
+# ---------------------------------------------------------------------------
 # Tests (run by CI)
 # ---------------------------------------------------------------------------
 # PYTHON must be >= 3.11: the adapter tests parse generated task.toml with
@@ -64,8 +82,8 @@ test: test-env test-python # run every test suite
 test-env: # verify mcp_server_template.json and install_mcp_packages.sh stay in sync
 	cd services/agent-environment && uv sync && uv run pytest
 
-test-python: # adapter + scoring + mcp_eval unit tests (no Docker, no network)
-	$(PYTEST_PYTHON) -m pytest adapters services/scoring/tests services/mcp_eval/tests -q
+test-python: # adapter + scoring + mcp_eval + scripts unit tests (no Docker, no network)
+	$(PYTEST_PYTHON) -m pytest adapters services/scoring/tests services/mcp_eval/tests scripts/tests services/light-servers/tests -q
 
 smoke: # end-to-end bundle generation + Harbor validation (no Docker, no network)
 	$(PYTEST_PYTHON) scripts/smoke_test.py
@@ -77,6 +95,17 @@ smoke: # end-to-end bundle generation + Harbor validation (no Docker, no network
 run-task: # run one task via Harbor and emit output/<task>/ (summary, pass_summary, passk_summary, report.md, trajectory/, .raw/)
 	@test -n "$(TASK)" || { echo "usage: make run-task TASK=tasks/<task-dir>"; exit 2; }
 	AGENT=$(AGENT) MODEL=$(MODEL) N=$(N) COPY_TO=$(COPY_TO) scripts/run_task.sh $(TASK)
+
+# make run-batch [TASK=tasks/<dir> | ALL=1] [MODEL=...] [N=3] [BATCH=<id>]
+run-batch: # run many tasks as one resumable batch; rerun the same command to resume
+	@test -n "$(TASK)$(ALL)" || { echo "usage: make run-batch ALL=1 [MODEL=...] [N=...]  |  make run-batch TASK=tasks/<dir>"; exit 2; }
+	python3 scripts/run_batch.py $(if $(ALL),--all,--task $(TASK)) \
+	  $(if $(MODEL),--model $(MODEL),) $(if $(AGENT),--agent $(AGENT),) \
+	  $(if $(N),--n $(N),) $(if $(BATCH),--batch-id $(BATCH),) $(BATCH_ARGS)
+
+# make batch-status [BATCH=<id>]   (defaults to the most recently touched batch)
+batch-status: # print a batch's per-step progress without running anything
+	python3 scripts/run_batch.py --status $(if $(BATCH),--batch-id $(BATCH),)
 
 # make harbor-output JOB=jobs/<job>
 harbor-output: # reshape an existing Harbor job into output/<task>/ without re-running it

@@ -1060,7 +1060,30 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
         _dump(out_task / "pass_summary.json", pass_summary)
 
         # passk_summary.json
-        ks_eff = [k for k in ks if k <= n] or [1]
+        # n/c from the summary-episode merge can undercount: the merge only
+        # sees episodes summary.json carried forward, so a task with five
+        # Run_N dirs on disk can still report n=1. The Run_N dirs are the
+        # ground truth for how many attempts exist -- each holds its own
+        # verifier/reward.json -- so when disk shows more runs than the merge
+        # recovered, recount n and c from disk.
+        _traj_dir = out_task / "trajectory"
+        _disk_rewards = []
+        if _traj_dir.is_dir():
+            for _rd in sorted(_traj_dir.glob("Run_*"),
+                              key=lambda p: int(p.name.split("_")[-1]) if p.name.split("_")[-1].isdigit() else 0):
+                _rw = _load(_rd / "verifier" / "reward.json", {}) or {}
+                if _rw.get("reward") is not None:
+                    _disk_rewards.append(float(_rw["reward"]))
+        if len(_disk_rewards) > n:
+            _tw = (_load(task_dir / "tests" / "test_weights.json", {}) if task_dir else {}) or {}
+            _thr = _tw.get("threshold", PASS_THRESHOLD_DEFAULT)
+            n = len(_disk_rewards)
+            c = sum(1 for r in _disk_rewards if r >= _thr)
+            rewards = _disk_rewards
+        # Empty ks means "auto": scale k to however many runs this task has
+        # actually accumulated, so pass@k needs no --at retuning when the
+        # attempt count changes.
+        ks_eff = list(range(1, n + 1)) if not ks else ([k for k in ks if k <= n] or [1])
         per_task = [{
             "task": task_name, "n": n, "c": c,
             "pass@1": round(pass_at_k(n, c, 1), 6),
@@ -1173,15 +1196,34 @@ def main(argv=None) -> int:
     ap.add_argument("--output-dir", type=Path, default=REPO / "output")
     ap.add_argument("--copy-to", type=Path, default=None,
                     help="Also mirror each output/<task>/ dir into this directory.")
-    ap.add_argument("--at", default="1", help="comma-separated k values for pass@k (default 1)")
+    ap.add_argument("--at", default="auto",
+                    help="comma-separated k values for pass@k, or 'auto' (default) "
+                         "to use every k from 1 to the number of runs")
     ap.add_argument("--run-offset", type=int, default=0, dest="run_offset",
                     help="number of already-written Run_N dirs to skip when numbering new runs")
     a = ap.parse_args(argv)
-    ks = [int(x) for x in a.at.split(",") if x.strip()]
+    ks = [] if a.at.strip().lower() == "auto" else [int(x) for x in a.at.split(",") if x.strip()]
     if not a.job_dir.exists():
         print(f"job dir not found: {a.job_dir}", file=sys.stderr)
         return 2
     written = convert_job(a.job_dir, a.output_dir, ks=ks, run_offset=a.run_offset)
+    # Mask host-local paths (/Users/..., /home/..., file:///...) in EVERYTHING
+    # this pipeline leaves behind, not just the delivery: the reshaped task
+    # dir (config/summary/report.md carry jobs_dir and task paths) and
+    # harbor's own raw job records (trial_uri etc.). By reshape time the
+    # harbor run is complete, and masking keeps the JSON valid, so `harbor
+    # view` still works. Runs before copy_to so mirrors ship masked too.
+    _md_script = Path(__file__).parent / "make_delivery.py"
+    _mod = None
+    if _md_script.exists():
+        import importlib.util as _ilu
+        _spec = _ilu.spec_from_file_location("make_delivery", _md_script)
+        _mod = _ilu.module_from_spec(_spec)
+        _spec.loader.exec_module(_mod)
+        for w in written:
+            _mod.mask_tree(w)
+        if written:
+            _mod.mask_tree(a.job_dir)
     if a.copy_to:
         for w in written:
             dst = a.copy_to / w.name
@@ -1189,12 +1231,7 @@ def main(argv=None) -> int:
                 shutil.rmtree(dst)
             shutil.copytree(w, dst)
             print(f"[output] mirrored → {dst}")
-    _md_script = Path(__file__).parent / "make_delivery.py"
-    if _md_script.exists() and written:
-        import importlib.util as _ilu
-        _spec = _ilu.spec_from_file_location("make_delivery", _md_script)
-        _mod = _ilu.module_from_spec(_spec)
-        _spec.loader.exec_module(_mod)
+    if _mod is not None and written:
         _delivery_dir = a.output_dir.parent / "delivery_output"
         for w in written:
             _mod.make_delivery(w.name, a.output_dir, REPO / "tasks", _delivery_dir)

@@ -26,13 +26,13 @@ def _run(monkeypatch, scores):
     """Drive the disciplined scorer with a scripted sequence of judge replies."""
     seen = []
 
-    def fake_call(model, api_base, api_key, messages):
+    def fake_call(model, messages):
         seen.append(messages[1]["content"])
         return {"score": scores[min(len(seen) - 1, len(scores) - 1)], "reason": "r"}
 
     monkeypatch.setattr(rj, "_call_judge_once", fake_call)
     out = rj._score_criterion_with_discipline(
-        CRIT, "prompt", TRAJ, "m", "b", "k", n_trials=11
+        CRIT, "prompt", TRAJ, "m", n_trials=11
     )
     return out, seen
 
@@ -98,7 +98,7 @@ def test_stable_judge_is_reported_stable(monkeypatch):
 def test_failed_trials_are_dropped_not_defaulted(monkeypatch):
     calls = {"n": 0}
 
-    def flaky(model, api_base, api_key, messages):
+    def flaky(model, messages):
         calls["n"] += 1
         if calls["n"] % 2 == 0:
             return {"nonsense": True}  # forces the retry path then a failure
@@ -106,7 +106,7 @@ def test_failed_trials_are_dropped_not_defaulted(monkeypatch):
 
     monkeypatch.setattr(rj, "_call_judge_once", flaky)
     _, _, _, rel = rj._score_criterion_with_discipline(
-        CRIT, "p", TRAJ, "m", "b", "k", n_trials=11
+        CRIT, "p", TRAJ, "m", n_trials=11
     )
     # No trial may contribute a fabricated score to the sample.
     assert all(s is not None for s in rel["trial_scores"])
@@ -117,7 +117,7 @@ def test_re_grade_returns_reliability_only(monkeypatch):
     monkeypatch.setattr(
         rj, "_call_judge_once", lambda *a, **k: {"score": 0.25, "reason": "r"}
     )
-    rel = rj.re_grade(CRIT, "p", TRAJ, "m", "b", "k", n_trials=11)
+    rel = rj.re_grade(CRIT, "p", TRAJ, "m", n_trials=11)
     assert rel["trials_succeeded"] == 11
     assert "conformal" in rel and "stability" in rel
 

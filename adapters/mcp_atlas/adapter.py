@@ -26,7 +26,9 @@ csv.field_size_limit(sys.maxsize)
 
 DEFAULT_IMAGE = "ghcr.io/scaleapi/mcp-atlas:1.2.7"
 DEFAULT_CATEGORY = "mcp-tool-use"
-DEFAULT_JUDGE_MODEL = "claude-sonnet-4-6"
+# The judge grades on a Codex subscription through the local `codex` CLI.
+# This is the judge model only; the agent under test is selected separately.
+DEFAULT_JUDGE_MODEL = "gpt-5.6-sol"
 DEFAULT_AGENT_TIMEOUT = 1800
 DEFAULT_SANDBOX_PORT = 1984
 DEFAULT_ORG = "mcp-atlas"
@@ -161,16 +163,18 @@ ENABLED_TOOLS_FILE = "{enabled_tools_path}"
 timeout_sec = 900.0
 
 [verifier.env]
-ANTHROPIC_API_KEY = "${{ANTHROPIC_API_KEY:-}}"
-ANTHROPIC_BASE_URL = "${{ANTHROPIC_BASE_URL:-}}"
-# tests/agent_judge.py drives claude-agent-sdk, which shells out to the
-# `claude` CLI. Forwarding the subscription token lets the verifier bill a
-# Claude Code plan instead of metered API credits -- the same auth path
-# Harbor's own claude-code agent uses. Without this the judge has no
-# credentials on a subscription-only run and every task scores 0.
-CLAUDE_CODE_OAUTH_TOKEN = "${{CLAUDE_CODE_OAUTH_TOKEN:-}}"
-LITELLM_API_KEY = "${{LITELLM_API_KEY:-}}"
-LITELLM_BASE_URL = "${{LITELLM_BASE_URL:-}}"
+# The rubric judge shells out to the local `codex` CLI from
+# services/scoring/rubric_judge_cli.py. It no longer reaches any endpoint, so
+# the bridge names this block used to forward (EVAL_LLM_BASE_URL,
+# EVAL_LLM_API_KEY) are read by nothing in the verifier and are dropped rather
+# than left in place: an env var that looks like it configures the judge, and
+# does not, is how a run ends up pointed somewhere nobody intended.
+#
+# JUDGE_MODEL is the one name still consulted. Note the CLI transport means
+# rubric grading needs `codex` installed and logged in wherever the judge
+# actually runs — inside a container that lacks it, the judge's preflight
+# fails fast and the rubric channel is graded host-side instead.
+# See harness/CODEX-JUDGE.md.
 JUDGE_MODEL = "{judge_model}"
 {artifacts}"""
 

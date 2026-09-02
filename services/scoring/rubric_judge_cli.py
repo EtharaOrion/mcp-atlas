@@ -5,7 +5,11 @@ import argparse
 import asyncio
 import json
 import os
+import shutil
+import subprocess
 import sys
+import tempfile
+import time
 from pathlib import Path
 
 _out_path: Path | None = None
@@ -13,13 +17,26 @@ _token_out: Path | None = None
 
 
 def _load_criteria(rubric_path: Path) -> list[dict]:
+    """Load the bundle rubric, or refuse.
+
+    An unrecognised shape used to return an empty list. That is the worst
+    available outcome: zero criteria grade cleanly, _compute_scores divides a
+    zero pool, and the run reports a finished rubric channel that judged
+    nothing. Raising turns a silent wrong answer into a loud one, and matches
+    rubric_judge._load_rubric, which refuses rather than returning empty.
+    """
     raw = json.loads(rubric_path.read_text())
     if isinstance(raw, list):
         return raw
     if isinstance(raw, dict):
-        if "criteria" in raw:
+        if isinstance(raw.get("criteria"), list):
             return raw["criteria"]
-    return []
+        if isinstance(raw.get("rubric"), list):
+            return raw["rubric"]
+    raise ValueError(
+        f"{rubric_path} must be a list, {{'criteria': [...]}}, or {{'rubric': [...]}}, "
+        f"got {type(raw).__name__}"
+    )
 
 
 def _render_trajectory(traj: dict, max_chars: int = 10000) -> str:
@@ -37,32 +54,84 @@ def _render_trajectory(traj: dict, max_chars: int = 10000) -> str:
     return joined[:max_chars] + ("\n...[truncated]" if len(joined) > max_chars else "")
 
 
-_OUTPUT_SCHEMA = {
-    "type": "json_schema",
-    "schema": {
-        "type": "object",
-        "properties": {
-            "results": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "number": {"type": "string"},
-                        "satisfied": {"type": "boolean"},
-                        "justification": {"type": "string"},
-                    },
-                    "required": ["number", "satisfied", "justification"],
-                },
-            }
-        },
-        "required": ["results"],
-    },
-}
+# _OUTPUT_SCHEMA lived here. It was the Agent SDK's structured-output
+# contract; the direct transport parses the reply with _parse_judge_json,
+# which already handled bare, fenced, and prose-wrapped JSON.
 
 
-async def _run_judge(criteria: list[dict], traj_ctx: str, final_ctx: str, model: str) -> list[dict]:
-    from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
+# The models this judge grades with, spelled the way `codex exec -m` wants
+# them. The transport (ported from devops-projects' judge council `codex/`
+# seat) is the locally-installed Codex CLI run as a subprocess. It spends the
+# operator's ChatGPT subscription quota rather than metered API credit, and
+# needs no OPENAI_API_KEY, no bridge server, and no generated key — only a
+# `codex login` this machine already holds.
+CODEX_MODELS = ("gpt-5.6-sol",)
 
+CODEX_EXEC_ARGS = ("exec", "--json", "--sandbox", "read-only", "--skip-git-repo-check")
+
+# Measured 2026-09-01 on codex-cli 0.146.0: a trivial one-line prompt still
+# reported input_tokens=14564 (cached_input_tokens=11008). That is Codex's own
+# agent scaffold, carried on EVERY call on top of the grading prompt. It is
+# quota, not dollars, but it makes this judge's token counts non-comparable
+# to an HTTP judge's.
+CODEX_SCAFFOLD_TOKENS_OBSERVED = 14_564
+
+# Retry policy for the subprocess transport. Transient failures here look
+# like nonzero exits or an empty event stream rather than HTTP 429s, but the
+# cause is usually the same hot rate-limit window right after an agent run.
+_BACKOFF_BASE_SEC = 15.0
+_BACKOFF_CAP_SEC = 120.0
+_MAX_ATTEMPTS = 4
+
+
+def _codex_cli() -> str:
+    """Path to the Codex CLI, or "" when it is not installed."""
+    return shutil.which("codex") or ""
+
+
+def _codex_credential_error() -> str:
+    """Why the Codex CLI is unusable as a judge, or "" if it is ready.
+
+    Asks the CLI itself (`codex login status`) rather than reading its
+    credential store: the answer is what actually matters, and no secret need
+    be touched to get it.
+    """
+    cli = _codex_cli()
+    if not cli:
+        return (
+            "codex CLI not found on PATH; the rubric judge shells out to "
+            "`codex exec`, so it must run where the CLI is installed and "
+            "logged in (the host, not the task container)"
+        )
+    try:
+        proc = subprocess.run(
+            [cli, "login", "status"], capture_output=True, text=True, timeout=30
+        )
+    except (OSError, subprocess.SubprocessError) as err:
+        return f"could not run `codex login status`: {err}"
+    out = f"{proc.stdout} {proc.stderr}".strip()
+    # A plain substring test for "logged in" would also match "Not logged in",
+    # so a nonzero exit or an explicit denial each fail on their own.
+    if proc.returncode != 0 or "not logged in" in out.lower():
+        return f"codex CLI is not logged in (run `codex login`): {out[:120]}"
+    return ""
+
+
+def _preflight(model: str) -> str | None:
+    """Confirm the judge can reach its backend before grading starts.
+
+    A backend discovered per-criterion arrives as a rubric full of failures
+    that still writes a score file, which reads like a graded run. For a
+    Codex model the whole check is the CLI's own `codex login status`; a
+    non-Codex model returns None here and is refused by _run_judge instead.
+    """
+    if model not in CODEX_MODELS:
+        return None
+    return _codex_credential_error() or None
+
+
+def _judge_prompt(criteria: list[dict], traj_ctx: str, final_ctx: str) -> str:
+    """The grading prompt. Shared, so the two transports grade identically."""
     criteria_payload = json.dumps(
         [
             {
@@ -95,46 +164,162 @@ async def _run_judge(criteria: list[dict], traj_ctx: str, final_ctx: str, model:
         "Use final message for evaluation_target=final_answer.\n"
         "Return JSON: {results: [{number, satisfied (bool), justification (one sentence)}]}"
     )
+    return prompt
 
-    options = ClaudeAgentOptions(
-        allowed_tools=[],
-        permission_mode="acceptEdits",
-        model=model,
-        max_turns=2,
-        output_format=_OUTPUT_SCHEMA,
-        effort="low",
+
+def _codex_exec(model: str, prompt: str, timeout: float) -> tuple[str, dict]:
+    """One `codex exec` call: prompt in on stdin, (reply_text, usage) out.
+
+    The single implementation of the subprocess plumbing — `_run_judge_codex`
+    here and `rubric_judge._call_judge_once` both grade through it, so the
+    argv, the sandbox pinning, and the JSONL event parsing cannot drift apart.
+    Raises JudgeResponseError on a nonzero exit or an empty event stream;
+    retry policy belongs to the caller.
+    """
+    cli = _codex_cli()
+    if not cli:
+        raise JudgeResponseError("codex CLI not found on PATH")
+    proc = subprocess.run(
+        [cli, *CODEX_EXEC_ARGS, "-m", model],
+        input=prompt, capture_output=True, text=True, timeout=timeout,
+        # A scratch cwd, so the read-only agent cannot even see the trial
+        # tree it is judging or mistake it for its own workspace.
+        cwd=tempfile.gettempdir(),
     )
+    if proc.returncode != 0:
+        raise JudgeResponseError(
+            f"codex exec exited {proc.returncode}: "
+            f"{(proc.stderr or proc.stdout).strip()[:300]}"
+        )
+    message, usage_obj = "", {}
+    for line in proc.stdout.splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        item = event.get("item") or {}
+        if item.get("type") == "agent_message" and isinstance(item.get("text"), str):
+            # Keep the LAST message: the agent may narrate before it
+            # delivers the verdict JSON.
+            message = item["text"]
+        if event.get("type") == "turn.completed":
+            usage_obj = event.get("usage") or {}
+    if not message.strip():
+        raise JudgeResponseError("codex exec produced no agent message")
+    return message, usage_obj
 
-    messages: list = []
-    async with ClaudeSDKClient(options) as client:
-        await client.query(prompt=prompt)
-        async for msg in client.receive_response():
-            messages.append(msg)
 
-    _record_usage(messages, model)
+def _run_judge_codex(
+    criteria: list[dict], traj_ctx: str, final_ctx: str, model: str
+) -> list[dict]:
+    """Grade by running the local Codex CLI. No server, no key, no bridge.
 
-    
-    seen: list[str] = []
-    for msg in reversed(messages):
-        if hasattr(msg, "structured_output") and msg.structured_output:
-            raw = msg.structured_output
-            try:
-                parsed = json.loads(raw) if isinstance(raw, str) else raw
-            except (ValueError, TypeError):
-                seen.append(f"structured_output: {str(raw)[:400]}")
-                parsed = None
-            if isinstance(parsed, dict) and "results" in parsed:
-                return parsed.get("results", [])
-        if hasattr(msg, "result") and msg.result:
-            parsed = _parse_judge_json(str(msg.result))
-            if isinstance(parsed, dict) and "results" in parsed:
-                return parsed.get("results", [])
-            seen.append(f"result: {str(msg.result)[:400]}")
+    Ported from devops-projects' judge council `_call_judge_codex`. It drives
+    the CLI the way it is meant to be driven (`codex exec`) rather than
+    extracting the stored credential and replaying it against api.openai.com:
+    that credential is scoped to Codex traffic, and impersonating the Codex
+    client to get around that is neither reliable nor ours to do.
 
+    Two consequences worth knowing at the call site:
+
+      * Codex is an AGENT, not a completion endpoint. It is pinned to a
+        read-only sandbox and run in a scratch cwd so the judge cannot mutate
+        the trial it is grading, but it may still take a turn or two to
+        answer, so this is slower than an HTTP call.
+      * Every call carries Codex's own ~14.5K-token scaffold
+        (CODEX_SCAFFOLD_TOKENS_OBSERVED) on top of the grading prompt.
+    """
+    # A missing CLI is a configuration fact, not a transient failure: refuse
+    # before the retry loop rather than backing off three times into it.
+    if not _codex_cli():
+        raise JudgeResponseError("codex CLI not found on PATH")
+    prompt = _judge_prompt(criteria, traj_ctx, final_ctx)
+    timeout = float(os.environ.get("JUDGE_CODEX_TIMEOUT", "600"))
+
+    last: Exception | None = None
+    text, usage = "", {}
+    for n in range(1, _MAX_ATTEMPTS + 1):
+        try:
+            text, usage = _codex_exec(model, prompt, timeout)
+            break
+        except (JudgeResponseError, OSError, subprocess.SubprocessError) as err:
+            last = err
+            if n >= _MAX_ATTEMPTS:
+                raise JudgeResponseError(f"codex judge failed: {err}") from err
+            delay = min(_BACKOFF_BASE_SEC * 2 ** (n - 1), _BACKOFF_CAP_SEC)
+            print(
+                f"[judge] codex/{model}: {str(err)[:120]} "
+                f"(attempt {n}/{_MAX_ATTEMPTS}), retrying in {delay:.0f}s",
+                file=sys.stderr,
+            )
+            time.sleep(delay)
+    else:  # pragma: no cover - the loop always breaks or raises
+        raise JudgeResponseError(f"codex judge failed: {last}")
+
+    _record_usage_codex(usage, model)
+
+    parsed = _parse_judge_json(text) if text else None
+    if isinstance(parsed, dict) and "results" in parsed:
+        return parsed.get("results", [])
     raise JudgeResponseError(
-        "judge returned no parseable JSON"
-        + (f"; last responses: {' | '.join(seen[:3])}" if seen else " (no response at all)")
+        "judge returned no parseable JSON; reply began: "
+        + (text[:400] if text else "(empty)")
     )
+
+
+def _record_usage_codex(usage: dict, model: str) -> None:
+    """Same file and field names as the old bridge path, from `codex exec` usage.
+
+    Codex reports OpenAI-style INCLUSIVE input counts: cached_input_tokens is
+    part of input_tokens. The cached portion is subtracted so the fields stay
+    disjoint, matching how every other judge line is read downstream.
+
+    Written best-effort so scripts/finance_reporter.py always sees the usage
+    that was incurred: never raises, never blocks grading.
+    """
+    if _token_out is None:
+        return
+    try:
+        cached = int(usage.get("cached_input_tokens", 0) or 0)
+        total_in = int(usage.get("input_tokens", 0) or 0)
+        line = {
+            "model_name": model or os.getenv("JUDGE_MODEL", ""),
+            "judge_input_tokens": max(0, total_in - cached),
+            "judge_output_tokens": int(usage.get("output_tokens", 0) or 0),
+            "judge_input_cache_tokens": cached,
+            "judge_output_cache_tokens": 0,
+            # `codex exec` spends the operator's ChatGPT subscription quota,
+            # not metered credit, so the dollar cost is genuinely zero.
+            # Reporting an invented one would be worse than reporting zero.
+            "judge_cost_usd": 0.0,
+        }
+        _token_out.parent.mkdir(parents=True, exist_ok=True)
+        _token_out.write_text(json.dumps([line], indent=2))
+    except Exception:
+        pass
+
+
+async def _run_judge(
+    criteria: list[dict], traj_ctx: str, final_ctx: str, model: str
+) -> list[dict]:
+    """Grade one trial. Codex only, over the local CLI.
+
+    This used to dispatch: a Codex model went to codex-bridge over HTTP and,
+    before that, through claude_agent_sdk. Both branches are gone. The judge
+    is gpt-5.6-sol through `codex exec`, and keeping the other transports
+    meant keeping a bridge server, its generated key, and Docker networking
+    as live concerns in a path that no longer touches any of them.
+    """
+    if model not in CODEX_MODELS:
+        raise JudgeResponseError(
+            f"{model!r} is not a model this judge grades with. The rubric judge "
+            f"runs on {list(CODEX_MODELS)} through the local `codex` CLI; pass "
+            "--model, or set JUDGE_MODEL, to one of those."
+        )
+    return _run_judge_codex(criteria, traj_ctx, final_ctx, model)
 
 
 class JudgeResponseError(RuntimeError):
@@ -162,61 +347,6 @@ def _parse_judge_json(text: str):
         except ValueError:
             pass
     return None
-
-
-def _record_usage(messages: list, model: str) -> None:
-    """Write the judge's own token usage to --token-output.
-
-    scripts/finance_reporter.py reads this file to fill the finance API's
-    judge_lines, so the keys are already the API's field names. Written even
-    when the judge failed, so the reporter always sees the cost that was
-    incurred. Best-effort: never raises, never blocks grading.
-    """
-    if _token_out is None:
-        return
-
-    line = {
-        "model_name": model or os.getenv("JUDGE_MODEL", ""),
-        "judge_input_tokens": 0,
-        "judge_output_tokens": 0,
-        "judge_input_cache_tokens": 0,
-        # Cache WRITES, which are input-side. The old name for this key was
-        # `judge_output_cache_tokens`, which read as if outputs were cached --
-        # they never are -- and invited the 1.25x write rate to be costed at the
-        # 0.10x read rate, a 12.5x error. Both keys are emitted so existing
-        # readers keep working; see the compatibility note below.
-        "judge_cache_write_tokens": 0,
-        "judge_turns": 0,
-        "judge_cost_usd": 0.0,
-    }
-    try:
-        # DO NOT SUM ACROSS MESSAGES. `messages` holds every AssistantMessage
-        # plus the closing ResultMessage, and ResultMessage.usage is ALREADY the
-        # session total -- adding the per-message figures to it double-counts.
-        # Walking from the end and stopping at the first message that carries
-        # usage or cost lands on that ResultMessage, so tokens and
-        # `total_cost_usd` describe the same scope.
-        for msg in reversed(messages):
-            usage = getattr(msg, "usage", None)
-            cost = getattr(msg, "total_cost_usd", None)
-            if not isinstance(usage, dict) and cost is None:
-                continue
-            if isinstance(usage, dict):
-                # SDK usage buckets are disjoint: input_tokens excludes cache.
-                line["judge_input_tokens"] = usage.get("input_tokens", 0) or 0
-                line["judge_output_tokens"] = usage.get("output_tokens", 0) or 0
-                line["judge_input_cache_tokens"] = usage.get("cache_read_input_tokens", 0) or 0
-                line["judge_cache_write_tokens"] = usage.get("cache_creation_input_tokens", 0) or 0
-            line["judge_turns"] = getattr(msg, "num_turns", 0) or 0
-            line["judge_cost_usd"] = cost or 0.0
-            break
-        # Compatibility: readers keyed on the old name still resolve.
-        line["judge_output_cache_tokens"] = line["judge_cache_write_tokens"]
-        _token_out.parent.mkdir(parents=True, exist_ok=True)
-        _token_out.write_text(json.dumps(line, indent=2))
-        print(f"[judge] token usage → {_token_out}")
-    except Exception as exc:                      # usage is a nice-to-have only
-        print(f"[judge] could not record usage: {exc}", file=sys.stderr)
 
 
 def _compute_scores(criteria: list[dict], results: list[dict]) -> dict:
@@ -275,7 +405,7 @@ def main() -> None:
     ap.add_argument("--token-output", default=None,
                     help="write the judge's own token usage here, in the finance "
                          "API's judge_lines shape (read by scripts/finance_reporter.py)")
-    ap.add_argument("--model", default=os.getenv("JUDGE_MODEL", "claude-sonnet-4-6"))
+    ap.add_argument("--model", default=os.getenv("JUDGE_MODEL", "gpt-5.6-sol"))
     a = ap.parse_args()
 
     _out_path = Path(a.output)
@@ -289,6 +419,14 @@ def main() -> None:
     if not traj_path.exists():
         print(f"trajectory not found: {traj_path}", file=sys.stderr)
         sys.exit(1)
+
+    # Route to the judge backend before any grading starts. A misconfigured
+    # backend that is discovered per-criterion arrives as a rubric full of
+    # failures that still writes a score file, which reads like a graded run.
+    routing_error = _preflight(a.model)
+    if routing_error:
+        print(routing_error, file=sys.stderr)
+        sys.exit(2)
 
     criteria = _load_criteria(rubric_path)
     if not criteria:

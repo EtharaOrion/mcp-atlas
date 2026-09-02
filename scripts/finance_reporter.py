@@ -279,6 +279,9 @@ def main() -> int:
     ap.add_argument("--odoo-url", default="", help="override ODOO_URL")
     ap.add_argument("--strict", action="store_true",
                     help="exit non-zero on failure (default: always exit 0)")
+    ap.add_argument("--skip-if-reported", action="store_true",
+                    help="exit 0 without posting if this run already has a successful "
+                         "finance_receipt.json (makes a resumed run safe to re-drive)")
     args = ap.parse_args()
 
     load_dotenv()
@@ -288,6 +291,19 @@ def main() -> int:
     if not run_dir.is_dir():
         log(f"no such run dir: {run_dir}", err=True)
         return fail
+
+    # Posting is the one step here with an off-machine side effect, so a resumed
+    # or re-driven run must not report the same trajectory twice. The receipt the
+    # previous attempt wrote is the proof it already landed; a receipt from a
+    # FAILED post is not, and falls through to a retry.
+    if args.skip_if_reported:
+        prior = run_dir / "finance_receipt.json"
+        try:
+            if prior.is_file() and json.loads(prior.read_text()).get("ok"):
+                log(f"{run_dir.name} already reported ({prior.name}) — skipping")
+                return 0
+        except (OSError, json.JSONDecodeError):
+            pass  # unreadable receipt proves nothing; report again
 
     base = (args.odoo_url or env("ODOO_URL")).rstrip("/")
     if not base and not args.dry_run:

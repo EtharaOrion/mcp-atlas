@@ -148,7 +148,7 @@ Convert the 500-task dataset into Harbor bundles:
 python adapters/mcp_atlas/run_adapter.py \
   --input input/MCP-Atlas.parquet \
   --output-dir tasks \
-  --judge-model claude-sonnet-4-6 \
+  --judge-model gpt-5.6-sol \
   --overwrite
 ```
 
@@ -163,6 +163,18 @@ Example:
 ```bash
 harbor run -y --path tasks/6863f438a500a4b36aab0f24 --agent claude-code --model claude-opus-4-8 --jobs-dir output
 ```
+
+Run many tasks as one resumable batch (progress is checkpointed per step, so
+rerunning the same command picks up where it stopped instead of re-running the
+agent phase you already paid for):
+
+```bash
+scripts/run_batch.py --all --model claude-opus-4-8 --n 3
+scripts/run_batch.py --status
+```
+
+See [`TASK_BUNDLE.md`](TASK_BUNDLE.md) § "Batches and resume" for the checkpoint
+layout and the resume rules.
 
 ## Scaling throughput
 

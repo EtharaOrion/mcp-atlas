@@ -10,7 +10,8 @@ that flag automatically for every `harbor run`, so nothing has to be typed.
 Env knobs:
     HARBOR_OUTPUT_DIR      where output/<task>/ goes      (default: <mcp-atlas repo>/output)
     HARBOR_OUTPUT_COPY_TO  optional mirror directory        (default: none)
-    HARBOR_OUTPUT_AT       comma-separated k for pass@k    (default: "1")
+    HARBOR_OUTPUT_AT       comma-separated k for pass@k, or "auto" for
+                           every k from 1..runs             (default: "auto")
 """
 from __future__ import annotations
 
@@ -38,7 +39,7 @@ class HarborOutputPlugin(BaseJobPlugin):
         self._output_dir = Path(kwargs.get("output_dir") or os.environ.get("HARBOR_OUTPUT_DIR") or (REPO / "output"))
         copy_to = kwargs.get("copy_to", os.environ.get("HARBOR_OUTPUT_COPY_TO", ""))
         self._copy_to = Path(copy_to).expanduser() if copy_to else None
-        self._at = str(kwargs.get("at") or os.environ.get("HARBOR_OUTPUT_AT") or "1")
+        self._at = str(kwargs.get("at") or os.environ.get("HARBOR_OUTPUT_AT") or "auto")
 
     async def on_job_start(self, job) -> None:
         self._job_dir = Path(job.job_dir)

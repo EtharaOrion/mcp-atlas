@@ -351,7 +351,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ap.add_argument("--model", default="claude-opus-4-8")
     ap.add_argument("--agent", default="claude-code")
     ap.add_argument("--n", type=int, default=1, help="attempts per task (default: 1)")
-    ap.add_argument("--at", default="1", help="pass@k value handed to the reshaper")
+    ap.add_argument("--at", default="auto",
+                    help="pass@k ks handed to the reshaper ('auto' = every k from 1..runs)")
     ap.add_argument("--build-mult", default="3", help="environment build timeout multiplier")
     ap.add_argument("--output-dir", default=str(REPO / "output"))
     ap.add_argument("--copy-to", default="", help="extra mirror for the reshaped bundle")

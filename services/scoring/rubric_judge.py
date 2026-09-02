@@ -23,8 +23,20 @@ from services.scoring.trajectory_io import load_trajectory
 
 _KEEP_TAIL = 20
 _MAX_JUDGE_RETRIES = 3
-_DEFAULT_BASE_URL = "http://localhost:4000/v1"
-_DEFAULT_API_KEY = "cc-bridge-local"
+# The judge grades on a Codex subscription through the local `codex` CLI —
+# the same transport rubric_judge_cli uses, imported from it so there is one
+# implementation of the subprocess plumbing rather than two that can drift.
+# rubric_judge_cli is stdlib-only, so importing it here does not weigh down a
+# module that is deliberately importable without litellm (which is gone from
+# this path entirely: no bridge, no endpoint, no key).
+try:
+    from services.scoring import rubric_judge_cli as _codex_cli
+except ImportError:  # pragma: no cover - the container mounts this dir flat
+    import rubric_judge_cli as _codex_cli
+
+CODEX_MODELS = _codex_cli.CODEX_MODELS
+_DEFAULT_JUDGE_MODEL = os.environ.get("JUDGE_MODEL") or "gpt-5.6-sol"
+
 _JUDGE_SYSTEM_PROMPT = (
     'You grade AI agent trajectories against rubric criteria. '
     'Return only JSON: {"score": <float 0..1>, "reason": "<one sentence>"}.'
@@ -66,12 +78,73 @@ _CONFORMAL_WIDE = float(os.environ.get("RUBRIC_JUDGE_CONFORMAL_WIDE", "0.25"))
 
 
 def _load_rubric(rubric_path: Path) -> list[dict[str, Any]]:
+    """Load a rubric in any shape this project ships, or refuse with a reason.
+
+    Three shapes exist. A bare list and `{"rubric": [...]}` are this module's
+    own; `{"criteria": [...]}` is what the task bundles under dataset/ carry and
+    what `rubric_judge_cli` reads. Only the first two were accepted here, so
+    calling `score_rubric` directly on a shipped rubric failed on the shape.
+
+    The bundle shape is not a rename of the other two, and that is the part
+    worth being careful about. It keys criteria by `number` rather than `id`,
+    and carries `score` on the closed domain {-5,-3,-1,1,3,5} together with an
+    `is_positive` flag, where this module expects a non-negative `weight`.
+    Those are translated below.
+
+    `is_positive: false` is not translated, because there is nothing here to
+    translate it into. `rubric_judge_cli` grades penalty criteria against a
+    separate negative pool; this module scalarizes a single weighted mean and
+    has no such pool, so a penalty criterion admitted here would be scored as
+    if satisfying it were good. Both shipped bundles contain such criteria, so
+    this is the live case rather than a hypothetical. Refusing keeps the
+    previous protection the shape error was giving by accident, and says why.
+    """
     data = yaml.safe_load(rubric_path.read_text())
     if isinstance(data, dict) and "rubric" in data:
         return list(data["rubric"])
     if isinstance(data, list):
         return list(data)
-    raise ValueError(f"Rubric file must be a list or {{'rubric': [...]}}, got {type(data).__name__}")
+    if isinstance(data, dict) and isinstance(data.get("criteria"), list):
+        return _adapt_bundle_criteria(data["criteria"], rubric_path)
+    raise ValueError(
+        "Rubric file must be a list, {'rubric': [...]}, or {'criteria': [...]}, "
+        f"got {type(data).__name__}"
+    )
+
+
+def _adapt_bundle_criteria(
+    criteria: list[dict[str, Any]], rubric_path: Path
+) -> list[dict[str, Any]]:
+    """Translate the bundle rubric shape into this module's, or refuse."""
+    penalties = [
+        str(c.get("number", "?")) for c in criteria
+        if isinstance(c, dict) and not bool(c.get("is_positive", True))
+    ]
+    if penalties:
+        raise ValueError(
+            f"{rubric_path} declares penalty criteria {penalties} with "
+            "is_positive=false. score_rubric scalarizes a single weighted mean and "
+            "has no negative pool, so grading them here would award reward for "
+            "satisfying a criterion that describes a fault. Use "
+            "rubric_judge_cli.py, which grades positive and negative pools "
+            "separately."
+        )
+    adapted: list[dict[str, Any]] = []
+    for c in criteria:
+        if not isinstance(c, dict):
+            continue
+        out = dict(c)
+        # Seed for the per-criterion position permutation. Without a distinct
+        # id every criterion seeds from "" and the discipline degenerates to one
+        # shared ordering, which looks like it ran and proves nothing.
+        if not out.get("id"):
+            out["id"] = str(c.get("number", ""))
+        # `score` is a point value, not a weight. Its sign is carried by
+        # is_positive, which is known true here, so magnitude is the weight.
+        if "weight" not in out and "score" in out:
+            out["weight"] = abs(float(c["score"]))
+        adapted.append(out)
+    return adapted
 
 
 def _normalize_weights(criteria: list[dict[str, Any]]) -> list[float]:
@@ -163,26 +236,25 @@ def _extract_json(text: str) -> dict[str, Any]:
 
 
 def _call_judge_once(
-    model_for_call: str,
-    api_base: str,
-    api_key: str,
+    model: str,
     messages: list[dict[str, str]],
 ) -> dict[str, Any]:
-    # Imported here rather than at module scope: litellm is a heavy runtime
-    # dependency needed only to actually call a model. Deferring it keeps this
-    # module importable, and therefore its reliability discipline testable,
-    # in environments that do not carry it.
-    import litellm
-    response = litellm.completion(
-        model=model_for_call,
-        api_base=api_base,
-        api_key=api_key,
-        messages=messages,
-        response_format={"type": "json_object"},
-        temperature=0.0,
+    """One judge verdict through the local Codex CLI.
+
+    This used to be a litellm call at a codex-bridge endpoint, with api_base,
+    api_key, and a provider-routing rule to keep straight. `codex exec` has
+    none of those: the prompt goes in on stdin and the reply comes back in the
+    event stream. It has no system role either, so the system and user
+    messages are concatenated — and no temperature control, so trial-to-trial
+    determinism is whatever the model gives; the reliability discipline around
+    this call measures exactly that, which is its job.
+    """
+    prompt = "\n\n".join(
+        str(m.get("content", "")) for m in messages if m.get("content")
     )
-    content = response["choices"][0]["message"]["content"]
-    return _extract_json(content)
+    timeout = float(os.environ.get("JUDGE_CODEX_TIMEOUT", "600"))
+    text, _usage = _codex_cli._codex_exec(model, prompt, timeout)
+    return _extract_json(text)
 
 
 def _score_criterion(
@@ -190,8 +262,6 @@ def _score_criterion(
     task_prompt: str,
     trajectory: dict[str, Any],
     model_for_call: str,
-    api_base: str,
-    api_key: str,
     section_order: list[int] | None = None,
 ) -> tuple[float | None, str, str | None]:
     reminder: str | None = None
@@ -201,12 +271,15 @@ def _score_criterion(
             task_prompt, criterion, trajectory, reminder, section_order
         )
         try:
-            parsed = _call_judge_once(model_for_call, api_base, api_key, messages)
+            parsed = _call_judge_once(model_for_call, messages)
             score = float(parsed.get("score"))
             score = max(0.0, min(1.0, score))
             reason = str(parsed.get("reason", ""))
             return score, reason, None
-        except (JSONDecodeError, ValueError, TypeError, KeyError) as e:
+        # RuntimeError covers the CLI transport (JudgeResponseError, a nonzero
+        # `codex exec` exit); the rest are the malformed-JSON family. Both are
+        # worth this loop's retries — the reminder is harmless on the former.
+        except (JSONDecodeError, ValueError, TypeError, KeyError, RuntimeError) as e:
             last_err = f"{type(e).__name__}: {e}"
             reminder = (
                 "IMPORTANT: your previous response was not valid JSON matching "
@@ -285,8 +358,6 @@ def _score_criterion_with_discipline(
     task_prompt: str,
     trajectory: dict[str, Any],
     model_for_call: str,
-    api_base: str,
-    api_key: str,
     n_trials: int = _JUDGE_TRIALS_EFFECTIVE,
 ) -> tuple[float | None, str, str | None, dict[str, Any]]:
     """Grade one criterion under the principle 5a discipline.
@@ -308,7 +379,7 @@ def _score_criterion_with_discipline(
 
     for t, order in enumerate(orders):
         score, reason, err = _score_criterion(
-            criterion, task_prompt, trajectory, model_for_call, api_base, api_key, order
+            criterion, task_prompt, trajectory, model_for_call, order
         )
         if t == 0:
             canonical_score, canonical_reason, canonical_err = score, reason, err
@@ -343,8 +414,6 @@ def re_grade(
     task_prompt: str,
     trajectory: dict[str, Any],
     model_for_call: str,
-    api_base: str,
-    api_key: str,
     n_trials: int = _STABILITY_TRIALS,
 ) -> dict[str, Any]:
     """Re-grade one criterion and return only its reliability block.
@@ -354,7 +423,7 @@ def re_grade(
     rubric. It performs no aggregation and changes no reward.
     """
     _, _, _, reliability = _score_criterion_with_discipline(
-        criterion, task_prompt, trajectory, model_for_call, api_base, api_key, n_trials
+        criterion, task_prompt, trajectory, model_for_call, n_trials
     )
     return reliability
 
@@ -364,19 +433,28 @@ def score_rubric(
     rubric_path: Path,
     task_prompt: str,
     output_path: Path,
-    judge_model: str = "claude-sonnet-4-6",
-    judge_base_url: str | None = None,
-    judge_api_key: str | None = None,
+    judge_model: str = _DEFAULT_JUDGE_MODEL,
 ) -> dict:
     trajectory_path = Path(trajectory_path)
     rubric_path = Path(rubric_path)
     output_path = Path(output_path)
 
-    api_base = judge_base_url or os.environ.get("EVAL_LLM_BASE_URL") or _DEFAULT_BASE_URL
-    api_key = judge_api_key or os.environ.get("EVAL_LLM_API_KEY") or _DEFAULT_API_KEY
-    # Prefix with `openai/` so litellm routes through the OpenAI-compatible path and
-    # honours api_base (native Anthropic routing ignores it).
-    model_for_call = judge_model if "/" in judge_model else f"openai/{judge_model}"
+    # The only transport is the local Codex CLI, so the whole endpoint dance —
+    # base URLs, bridge keys, litellm provider routing — is gone. What remains
+    # worth doing up front mirrors rubric_judge_cli: refuse a model this judge
+    # cannot grade with, and refuse an unusable CLI before any grading starts.
+    # This loop counts per-criterion errors rather than raising, so a broken
+    # setup discovered per-criterion would produce a complete-looking score
+    # file computed from nothing.
+    if judge_model not in CODEX_MODELS:
+        raise ValueError(
+            f"{judge_model!r} is not a model this judge grades with. The rubric "
+            f"judge runs on {list(CODEX_MODELS)} through the local `codex` CLI."
+        )
+    credential_error = _codex_cli._codex_credential_error()
+    if credential_error:
+        raise RuntimeError(credential_error)
+    model_for_call = judge_model
 
     trajectory = load_trajectory(trajectory_path)
     criteria = _load_rubric(rubric_path)
@@ -396,8 +474,6 @@ def score_rubric(
             task_prompt,
             truncated,
             model_for_call,
-            api_base,
-            api_key,
         )
         entry: dict[str, Any] = {
             "id": criterion.get("id"),
@@ -464,7 +540,7 @@ def _cli() -> None:
     p.add_argument("--rubric", required=True, type=Path)
     p.add_argument("--task-prompt", required=True, type=str)
     p.add_argument("--output", required=True, type=Path)
-    p.add_argument("--judge-model", default="claude-sonnet-4-6")
+    p.add_argument("--judge-model", default=_DEFAULT_JUDGE_MODEL)
     args = p.parse_args()
 
     result = score_rubric(

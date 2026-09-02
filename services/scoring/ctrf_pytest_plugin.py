@@ -117,8 +117,17 @@ class CtrfReporter:
                 "status": status,
                 "duration": int(entry["duration"] * 1000),
             }
+            # Emit `weight` only when the task actually declares one. A test
+            # absent from test_weights.json has no weight; writing 0 for it
+            # makes that indistinguishable from a component the task
+            # deliberately retired by declaring it at zero. Those are different
+            # facts, and _build_detail joins on this key, so the invented 0
+            # travels downstream as if it had been declared. The junit-derived
+            # CTRF this plugin replaced omits the key, which is why the two
+            # disagreed.
             weight = self.weights.get(name)
-            row["weight"] = weight if weight is not None else 0
+            if weight is not None:
+                row["weight"] = weight
             tests.append(row)
 
         # Positive-weighted tests only: guards are negative-weighted and a

@@ -70,7 +70,7 @@ MODEL="${MODEL:-claude-opus-4-8}"
 N="${N:-1}"
 BUILD_MULT="${BUILD_MULT:-3}"
 OUTPUT_DIR="${OUTPUT_DIR:-$REPO/output}"
-AT="${AT:-1}"
+AT="${AT:-auto}"   # pass@k ks for the reshaper; auto = every k from 1..N runs
 JOB="${JOB:-$SLUG}"   # job dir == output/<task>/ (reshaped in place by the converter)
 
 # The absolute pin the compose comment has always claimed existed. Without it,
@@ -328,7 +328,9 @@ stage_reshape() {
     done
     rm -rf "$stash"
   fi
-  state_put run_dir "$OUTPUT_DIR/$JOB/trajectory/Run_$((offset+1))"
+  # Relative to the job dir this state file sits in — keeps host-local paths
+  # out of everything the pipeline writes (informational only, never read back).
+  state_put run_dir "trajectory/Run_$((offset+1))"
 }
 
 # finance API: report trajectory usage (after the runs are done).

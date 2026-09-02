@@ -152,6 +152,20 @@ def make_delivery(
 
         report = _load(run_dir / "report.json", {})
         judge_tokens = _load(run_dir / "verifier" / "judge_tokens.json", {})
+        # rubric_judge_cli writes judge_tokens.json as a LIST of per-call
+        # entries (one per codex exec); older judges wrote one dict. Merge a
+        # list into the dict shape _build_judge_usage expects: token counts
+        # and cost sum across calls, model comes from the first entry.
+        if isinstance(judge_tokens, list):
+            calls = [t for t in judge_tokens if isinstance(t, dict)]
+            merged = {"model_name": calls[0].get("model_name", "") if calls else ""}
+            for key in ("judge_input_tokens", "judge_output_tokens",
+                        "judge_input_cache_tokens", "judge_output_cache_tokens",
+                        "judge_cache_write_tokens", "judge_cost_usd"):
+                vals = [t[key] for t in calls if isinstance(t.get(key), (int, float))]
+                if vals:
+                    merged[key] = sum(vals)
+            judge_tokens = merged
         report.pop("include_multimodal", None)
         report["judge_model"] = judge_tokens.get("model_name", "")
         report["judge_usage"] = _build_judge_usage(judge_tokens)
