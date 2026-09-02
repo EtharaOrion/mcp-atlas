@@ -227,15 +227,6 @@ class OpenlibrarySession:
             return {"status": "failed", "output": f"Work {work_id} not in reading list"}
         return {"status": "ok", "output": {"removed_work_id": work_id}}
 
-    def update_reading_list_entry(self, work_id: str, notes: str) -> Dict[str, Any]:
-        if not hasattr(self, 'reading_list'):
-            self.reading_list = []
-        for entry in self.reading_list:
-            if entry["work_id"] == work_id:
-                entry["notes"] = notes
-                return {"status": "ok", "output": entry}
-        return {"status": "failed", "output": f"Work {work_id} not in reading list"}
-
 if __name__ == "__main__":
     s = OpenlibrarySession(seed=12)
     print(s.search(q="ring"))

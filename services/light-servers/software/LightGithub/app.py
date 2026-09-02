@@ -178,11 +178,3 @@ async def delete_issue(owner: str, repo: str, number: int, session_id: str):
 	if err:
 		return err
 	return session.github_session.delete_issue(owner, repo, number)
-
-
-@mcp.tool
-async def list_repos(session_id: str, owner: str | None = None):
-	session, err = get_session(session_id)
-	if err:
-		return err
-	return session.github_session.list_repos(owner)
