@@ -7,8 +7,8 @@ and complex-mcp task runs land in one consistent shape:
     ├── config.json  lock.json  result.json          (Harbor job files, verbatim)
     ├── summary.json  pass_summary.json  pass@N.json (N = run count)  report.md
     ├── trajectory/Run_N/                            (one per trial, Harbor-shaped)
-    │   ├── agent/{claude-code.txt, trajectory.json}
-    │   ├── logs/{agent-stream.txt, verifier-ctrf.json, verifier-reward.txt, verifier-stdout.txt}
+    │   ├── agent/{claude-code.jsonl, trajectory.json}
+    │   ├── logs/{agent-stream.jsonl, verifier-ctrf.json, verifier-reward.txt, verifier-stdout.txt}
     │   ├── verifier/{ctrf.json, reward.txt, test-stdout.txt, reward.json, detail.json, rubric_breakdown.json}
     │   ├── artifacts/{<files the agent produced>, manifest.json, index.json}
     │   ├── config.json  lock.json  result.json  report.json
@@ -199,7 +199,7 @@ def _now() -> str:
 # ---------------------------------------------------------------------------
 
 def parse_stream(path: Path) -> dict:
-    """Walk claude-code.txt once and pull out everything the reports need."""
+    """Walk the agent stream (claude-code.jsonl) once and pull out everything the reports need."""
     out = {
         "messages": [],        # flat OpenAI-shaped messages
         "trace": [],           # per tool call: step, tool, args, result, is_error
@@ -209,6 +209,8 @@ def parse_stream(path: Path) -> dict:
         "tool_cnt": {},
         "usage": None,
         "termination_reason": None,
+        "thinking_blocks": 0,      # thinking blocks seen in the stream
+        "thinking_nonempty": 0,    # of those, how many carried readable text
     }
     if not path.exists():
         return out
@@ -234,12 +236,18 @@ def parse_stream(path: Path) -> dict:
             msg = {}
         content = msg.get("content")
         if et == "assistant" and isinstance(content, list):
-            texts, tcs = [], []
+            texts, tcs, reasoning = [], [], []
             for b in content:
                 if not isinstance(b, dict):
                     continue
                 if b.get("type") == "text" and b.get("text"):
                     texts.append(b["text"])
+                elif b.get("type") == "thinking":
+                    out["thinking_blocks"] += 1
+                    tt = b.get("thinking")
+                    if isinstance(tt, str) and tt.strip():
+                        out["thinking_nonempty"] += 1
+                        reasoning.append(tt.strip())
                 elif b.get("type") == "tool_use":
                     step += 1
                     raw = b.get("name", "")
@@ -252,6 +260,8 @@ def parse_stream(path: Path) -> dict:
                     tcs.append({"id": b.get("id"), "type": "function",
                                 "function": {"name": name, "arguments": json.dumps(b.get("input") or {})}})
             am = {"role": "assistant", "content": "\n".join(texts)}
+            if reasoning:
+                am["reasoning_content"] = "\n".join(reasoning)
             if tcs:
                 am["tool_calls"] = tcs
             out["messages"].append(am)
@@ -348,6 +358,8 @@ def _synth_trajectory(stream: dict, *, model: str, agent_name: str, session_id, 
         role = m.get("role")
         step = {"step_id": i, "source": "agent" if role == "assistant" else ("user" if role == "user" else "tool"),
                 "message": m.get("content") or ""}
+        if role == "assistant" and m.get("reasoning_content"):
+            step["reasoning_content"] = m["reasoning_content"]
         if role == "assistant" and m.get("tool_calls"):
             step["tool_calls"] = [{"tool_call_id": tc.get("id"), "function_name": tc["function"]["name"],
                                    "arguments": json.loads(tc["function"].get("arguments") or "{}")}
@@ -535,7 +547,14 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     exception = tres.get("exception_info")
     passed = reward is not None and reward >= threshold
 
-    stream_path = ag / "claude-code.txt"
+    # The agent stream is JSON-lines, but Harbor hardcodes a .txt name
+    # (harbor/agents/installed/claude_code.py tees to /logs/agent/claude-code.txt).
+    # Normalize the trial file to .jsonl here; re-reshapes find the .jsonl and
+    # skip the rename, so this stays idempotent.
+    stream_path = ag / "claude-code.jsonl"
+    legacy_txt = ag / "claude-code.txt"
+    if legacy_txt.exists() and not stream_path.exists():
+        legacy_txt.rename(stream_path)
     if not stream_path.exists():
         txts = sorted(ag.glob("*.txt"), key=lambda f: f.stat().st_size, reverse=True) if ag.exists() else []
         stream_path = txts[0] if txts else stream_path
@@ -660,7 +679,9 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     # ---- trajectory/Run_N (Harbor-shaped) ---------------------------------
     run_dir = out_task / "trajectory" / f"Run_{run_no}"
     run_dir.mkdir(parents=True, exist_ok=True)
-    _copy(ag / "claude-code.txt", run_dir / "agent" / "claude-code.txt")
+    if _copy(ag / "claude-code.jsonl", run_dir / "agent" / "claude-code.jsonl"):
+        # Drop the stale .txt twin a pre-rename reshape may have left behind.
+        (run_dir / "agent" / "claude-code.txt").unlink(missing_ok=True)
     _copy(ag / "oracle.txt", run_dir / "agent" / "oracle.txt")
     _copy(ag / "trajectory.json", run_dir / "agent" / "trajectory.json")
     for f in ("config.json", "result.json"):
@@ -678,7 +699,8 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         _dump(run_dir / "result.json", _trun_res)
     _copy(trial_dir / "artifacts", run_dir / "artifacts")
     _flatten_artifacts(run_dir)
-    _copy(stream_path, run_dir / "logs" / "agent-stream.txt")
+    if _copy(stream_path, run_dir / "logs" / "agent-stream.jsonl"):
+        (run_dir / "logs" / "agent-stream.txt").unlink(missing_ok=True)
     _copy(ver / "ctrf.json", run_dir / "logs" / "verifier-ctrf.json")
     _copy(ver / "reward.txt", run_dir / "logs" / "verifier-reward.txt")
     _copy(ver / "test-stdout.txt", run_dir / "logs" / "verifier-stdout.txt")
@@ -713,8 +735,17 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         "final_reward": final_reward,
         "test_weights_percentage": test_pct,
         "rubric_weights_percentage": rubric_pct,
+        "thinking": {"blocks": stream["thinking_blocks"],
+                     "with_text": stream["thinking_nonempty"]},
     }
     _dump(run_dir / "report.json", report)
+    if stream["thinking_blocks"] and not stream["thinking_nonempty"]:
+        # Signature-only thinking blocks: the model thought but the request
+        # shape suppressed the text (thinking display omitted). Run with
+        # thinking=adaptive + thinking_display=summarized to capture it.
+        print(f"[harbor_to_output] WARNING: {stream['thinking_blocks']} thinking "
+              f"blocks in run {run_no} all came back empty (display omitted?)",
+              file=sys.stderr)
 
     # ---- .raw/trials_<slug>/trajectories/<model>/run_N --------------------
     raw_run = raw_trials / "trajectories" / model / f"run_{run_no}"
