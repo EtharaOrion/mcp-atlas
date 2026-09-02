@@ -313,6 +313,14 @@ class JiraSession:
         }}
 
 
+    def delete_issue(self, issue_key: str) -> Dict[str, Any]:
+        for idx, issue in enumerate(self.issues):
+            if issue["key"] == issue_key:
+                self.issues.pop(idx)
+                return {"status": "ok", "output": {"key": issue_key, "deleted": True}}
+        return {"status": "failed", "output": f"Issue {issue_key} does not exist"}
+
+
 if __name__ == "__main__":
     s = JiraSession(seed=12)
     print(s.list_projects())

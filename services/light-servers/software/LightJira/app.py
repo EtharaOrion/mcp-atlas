@@ -122,3 +122,11 @@ async def list_sprints(board_id: int, session_id: str, state: str | None = None)
 	if err:
 		return err
 	return session.jira_session.list_sprints(board_id, state)
+
+
+@mcp.tool
+async def delete_issue(issue_key: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.jira_session.delete_issue(issue_key)

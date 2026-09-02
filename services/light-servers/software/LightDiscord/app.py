@@ -122,3 +122,19 @@ async def create_message(channel_id: str, content: str, session_id: str, author_
 	if err:
 		return err
 	return session.discord_session.create_message(channel_id, content, author_id)
+
+
+@mcp.tool
+async def update_message(channel_id: str, message_id: str, content: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.discord_session.update_message(channel_id, message_id, content)
+
+
+@mcp.tool
+async def delete_message(channel_id: str, message_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.discord_session.delete_message(channel_id, message_id)

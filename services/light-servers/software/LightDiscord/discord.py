@@ -140,6 +140,28 @@ class DiscordSession:
         return {"status": "ok", "output": msg}
 
 
+    def update_message(self, channel_id: str, message_id: str, content: str) -> Dict[str, Any]:
+        if not any(c["id"] == channel_id for c in self.channels):
+            return {"status": "failed", "output": f"Unknown Channel {channel_id}"}
+        if not content:
+            return {"status": "failed", "output": "Cannot set empty content"}
+        for msg in self.messages:
+            if msg["id"] == message_id and msg["channel_id"] == channel_id:
+                msg["content"] = content
+                msg["edited_timestamp"] = self._now()
+                return {"status": "ok", "output": msg}
+        return {"status": "failed", "output": f"Message {message_id} not found"}
+
+    def delete_message(self, channel_id: str, message_id: str) -> Dict[str, Any]:
+        if not any(c["id"] == channel_id for c in self.channels):
+            return {"status": "failed", "output": f"Unknown Channel {channel_id}"}
+        for idx, msg in enumerate(self.messages):
+            if msg["id"] == message_id and msg["channel_id"] == channel_id:
+                self.messages.pop(idx)
+                return {"status": "ok", "output": {"id": message_id, "deleted": True}}
+        return {"status": "failed", "output": f"Message {message_id} not found"}
+
+
 if __name__ == "__main__":
     s = DiscordSession(seed=12)
     print(s.get_me())

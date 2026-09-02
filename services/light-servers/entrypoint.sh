@@ -205,4 +205,4 @@ else
 fi
 
 echo "Servers started. Waiting..."
-wait
+wait || true

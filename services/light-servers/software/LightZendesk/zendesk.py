@@ -206,6 +206,16 @@ class ZendeskSession:
         return {"status": "ok", "output": {"organizations": list(self.organizations), "count": len(self.organizations)}}
 
 
+    def delete_ticket(self, ticket_id: int) -> Dict[str, Any]:
+        t = self._find(self.tickets, ticket_id)
+        if not t:
+            return {"status": "failed", "output": f"Ticket {ticket_id} not found"}
+        self.tickets.remove(t)
+        tid = _to_int(ticket_id)
+        self.comments = [c for c in self.comments if c["ticket_id"] != tid]
+        return {"status": "ok", "output": {"ticket_id": ticket_id, "deleted": True}}
+
+
 if __name__ == "__main__":
     s = ZendeskSession(seed=12)
     print(s.list_tickets())
