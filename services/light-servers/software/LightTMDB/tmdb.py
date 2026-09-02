@@ -168,6 +168,16 @@ class TmdbSession:
             return {"status": "failed", "output": f"{media_type} {media_id} not in watchlist"}
         return {"status": "ok", "output": {"removed_media_id": int(media_id), "media_type": media_type}}
 
+    def update_watchlist_entry(self, media_id: int, media_type: str = "movie", notes: str = "") -> Dict[str, Any]:
+        if not hasattr(self, 'watchlist'):
+            self.watchlist = []
+        key = (int(media_id), media_type)
+        for entry in self.watchlist:
+            if (int(entry["media_id"]), entry["media_type"]) == key:
+                entry["notes"] = notes
+                return {"status": "ok", "output": entry}
+        return {"status": "failed", "output": f"{media_type} {media_id} not in watchlist"}
+
 if __name__ == "__main__":
     s = TmdbSession(seed=12)
     print(s.movie_popular())
