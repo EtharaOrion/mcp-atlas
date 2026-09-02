@@ -7,7 +7,39 @@ import shutil
 import sys
 from pathlib import Path
 
-from path_mask import mask_local_paths, mask_tree
+# Host-local path masking, inline. Harbor stamps absolute host paths
+# (trial_uri, trials_dir, jobs_dir, tracebacks) into bookkeeping files, which
+# is how `/Users/<name>/...` strings end up in shipped bundles. A path holding
+# a repo anchor is cut to anchor-relative form (`/Users/x/dev/harness/output/t`
+# -> `output/t`, still a usable pointer inside the bundle); any other
+# home-rooted path gets its `/Users/<name>` or `/home/<name>` head replaced
+# with `~`. Container paths (/workspace, /logs, /tmp) survive verbatim.
+_ANCHORED_RE = re.compile(
+    r"(?:file://)?/(?:Users|home)/[^\s\"'\\]*?/"
+    r"(?=(?:delivery_output|output|tasks|jobs)(?:/|[\"'\s]|$))"
+)
+_HOME_RE = re.compile(r"(?:file://)?/(?:Users|home)/[^/\s\"'\\]+")
+
+_TEXT_SUFFIXES = {".json", ".txt", ".md", ".xml", ".yaml", ".yml", ".log",
+                  ".toml", ".py", ".csv", ".html", ".cfg", ".ini"}
+
+
+def mask_local_paths(text: str) -> str:
+    return _HOME_RE.sub("~", _ANCHORED_RE.sub("", text))
+
+
+def mask_tree(root: Path) -> list[Path]:
+    """Mask every text file under `root`; return the files that changed."""
+    changed: list[Path] = []
+    for p in sorted(root.rglob("*")):
+        if not (p.is_file() and p.suffix.lower() in _TEXT_SUFFIXES):
+            continue
+        text = p.read_text(encoding="utf-8", errors="replace")
+        masked = mask_local_paths(text)
+        if masked != text:
+            p.write_text(masked, encoding="utf-8")
+            changed.append(p)
+    return changed
 
 
 def _load(path: Path, default=None):
