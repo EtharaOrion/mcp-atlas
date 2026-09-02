@@ -145,3 +145,14 @@ async def get_stats(session_id: str):
     s, err = get_session(session_id)
     if err: return err
     return s.forum_session.get_stats()
+
+@mcp.tool
+async def update_thread(tid: str, session_id: str, title: str | None = None, body: str | None = None):
+    s = get_session(session_id)
+    return s.forum_session.update_thread(tid, title=title, body=body)
+
+@mcp.tool
+async def update_post(pid: str, body: str, session_id: str):
+    s = get_session(session_id)
+    return s.forum_session.update_post(pid, body)
+

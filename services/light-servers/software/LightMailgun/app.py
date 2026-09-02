@@ -98,3 +98,9 @@ async def delete_member(address: str, member_address: str, session_id: str):
 	if err:
 		return err
 	return session.mailgun_session.delete_member(address, member_address)
+
+@mcp.tool
+async def update_member(address: str, member_address: str, session_id: str, subscribed: bool | None = None, member_name: str | None = None):
+    s = get_session(session_id)
+    return s.mailgun_session.update_member(address, member_address, subscribed=subscribed, member_name=member_name)
+

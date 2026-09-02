@@ -405,3 +405,26 @@ class HotelSession:
         del self.reviews[revid]
         return {"status": "ok", "output": {}}
 
+    def update_reservation(self, resid: str, check_in: str | None = None, check_out: str | None = None, room_type: str | None = None, guests_count: int | None = None) -> Dict:
+        r = self.reservations.get(resid)
+        if not r:
+            return {"status": "failed", "output": f"reservation {resid} not found"}
+        if r.status in {"checked_out", "cancelled"}:
+            return {"status": "failed", "output": f"reservation {resid} cannot be updated (status={r.status})"}
+        if room_type is not None:
+            if room_type not in ROOM_TYPES:
+                return {"status": "failed", "output": f"room_type must be one of {ROOM_TYPES}"}
+            r.room_type = room_type
+        if check_in is not None:
+            r.check_in = check_in
+        if check_out is not None:
+            r.check_out = check_out
+        if check_in is not None or check_out is not None:
+            h = self.hotels.get(r.hotel_id)
+            if h:
+                _, total = self._price_nights(r.check_in, r.check_out, h.price_per_night)
+                r.total_price = total
+        if guests_count is not None:
+            r.guests_count = int(guests_count)
+        return {"status": "ok", "output": self._res_summary(r)}
+

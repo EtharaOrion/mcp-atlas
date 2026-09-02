@@ -286,6 +286,22 @@ class DropboxSession:
         return {"status": "ok", "output": {"metadata": self._serialize_entry(removed)}}
 
 
+    def move_file(self, from_path: str, to_path: str) -> dict:
+        if not from_path or not to_path:
+            return {"status": "failed", "output": {"error_summary": "bad_request/", "message": "from_path and to_path are required"}}
+        source = self._norm_path(from_path)
+        target = self._norm_path(to_path)
+        idx = next((i for i, f in enumerate(self.files) if f["path_lower"] == source), None)
+        if idx is None:
+            return {"status": "failed", "output": {"error_summary": "path_not_found/", "message": f"{from_path!r} not found"}}
+        if any(f["path_lower"] == target for f in self.files):
+            return {"status": "failed", "output": {"error_summary": "to_path_conflict/", "message": f"{to_path!r} already exists"}}
+        new_name = target.rsplit("/", 1)[-1] if "/" in target else target.lstrip("/")
+        self.files[idx]["path_lower"] = target
+        self.files[idx]["path_display"] = to_path if to_path.startswith("/") else "/" + to_path
+        self.files[idx]["name"] = new_name
+        return {"status": "ok", "output": {"metadata": self._serialize_entry(self.files[idx])}}
+
 if __name__ == "__main__":
     s = DropboxSession(seed=12)
     print(s.get_current_account())

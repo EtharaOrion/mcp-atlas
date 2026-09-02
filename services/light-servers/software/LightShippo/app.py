@@ -122,3 +122,9 @@ async def cancel_transaction(object_id: str, session_id: str):
 	if err:
 		return err
 	return session.shippo_session.cancel_transaction(object_id)
+
+@mcp.tool
+async def update_address(object_id: str, session_id: str, name: str | None = None, street1: str | None = None, city: str | None = None, state: str | None = None, zip_: str | None = None):
+    s = get_session(session_id)
+    return s.shippo_session.update_address(object_id, name=name, street1=street1, city=city, state=state, zip_=zip_)
+

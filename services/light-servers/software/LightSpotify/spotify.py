@@ -284,6 +284,18 @@ class SpotifySession:
                 self.playlist_tracks.pop(idx)
         return {"status": "ok", "output": {"snapshot_id": self.uuid()}}
 
+    def update_playlist(self, playlist_id: str, name: str | None = None, description: str | None = None, public: bool | None = None) -> dict:
+        p = next((pl for pl in self.playlists if pl.get("id") == playlist_id), None)
+        if p is None:
+            return {"status": "failed", "output": f"Playlist {playlist_id} not found"}
+        if name is not None:
+            p["name"] = name
+        if description is not None:
+            p["description"] = description
+        if public is not None:
+            p["public"] = bool(public)
+        return {"status": "ok", "output": p}
+
 if __name__ == "__main__":
     s = SpotifySession(seed=12)
     print(s.get_me())

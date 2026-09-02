@@ -406,3 +406,22 @@ class GameSession:
                 "by_genre": by_genre,
             },
         }
+
+    def update_game(self, gid: str, title: str | None = None, platform: str | None = None, genre: str | None = None, is_installed: bool | None = None) -> Dict:
+        g = self.games.get(gid)
+        if not g:
+            return {"status": "failed", "output": f"game {gid} not found"}
+        if platform is not None:
+            if platform not in PLATFORMS:
+                return {"status": "failed", "output": f"platform must be one of {PLATFORMS}"}
+            g.platform = platform
+        if genre is not None:
+            if genre not in GENRES:
+                return {"status": "failed", "output": f"genre must be one of {GENRES}"}
+            g.genre = genre
+        if title is not None:
+            g.title = title
+        if is_installed is not None:
+            g.is_installed = bool(is_installed)
+        return {"status": "ok", "output": self._game_summary(g)}
+

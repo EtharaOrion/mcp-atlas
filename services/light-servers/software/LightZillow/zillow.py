@@ -228,6 +228,20 @@ class ZillowSession:
         return {"status": "failed", "output": f"Saved search {search_id} not found"}
 
 
+    def update_saved_search(self, search_id: str, name: str | None = None, min_price: int | None = None, max_price: int | None = None, min_beds: int | None = None) -> dict:
+        search = next((s for s in self.saved_searches if s.get("id") == search_id or s.get("search_id") == search_id), None)
+        if search is None:
+            return {"status": "failed", "output": f"Saved search {search_id} not found"}
+        if name is not None:
+            search["name"] = name
+        if min_price is not None:
+            search["min_price"] = int(min_price)
+        if max_price is not None:
+            search["max_price"] = int(max_price)
+        if min_beds is not None:
+            search["min_beds"] = int(min_beds)
+        return {"status": "ok", "output": search}
+
 if __name__ == "__main__":
     s = ZillowSession(seed=12)
     print(s.search_properties())

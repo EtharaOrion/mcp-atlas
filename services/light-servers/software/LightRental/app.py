@@ -159,3 +159,9 @@ async def delete_asset(aid: str, session_id: str):
 	if err:
 		return err
 	return session.rental_session.delete_asset(aid)
+
+@mcp.tool
+async def update_booking(bid: str, session_id: str, start_date: str | None = None, end_date: str | None = None):
+    s = get_session(session_id)
+    return s.rental_session.update_booking(bid, start_date=start_date, end_date=end_date)
+

@@ -82,3 +82,9 @@ async def cancel_shipment(tracking_number: str, session_id: str):
 	if err:
 		return err
 	return session.ups_session.cancel_shipment(tracking_number)
+
+@mcp.tool
+async def update_shipment(tracking_number: str, session_id: str, service_code: str | None = None, dest_zip: str | None = None):
+    s = get_session(session_id)
+    return s.ups_session.update_shipment(tracking_number, service_code=service_code, dest_zip=dest_zip)
+

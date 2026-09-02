@@ -106,3 +106,9 @@ async def cancel_order(symbol: str, orderId: int, session_id: str):
 	if err:
 		return err
 	return session.binance_session.cancel_order(symbol, orderId)
+
+@mcp.tool
+async def update_order(symbol: str, orderId: int, session_id: str, new_quantity: str | None = None, new_price: str | None = None):
+    s = get_session(session_id)
+    return s.binance_session.update_order(symbol, orderId, new_quantity=new_quantity, new_price=new_price)
+

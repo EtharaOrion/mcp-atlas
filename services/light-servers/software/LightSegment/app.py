@@ -114,3 +114,9 @@ async def delete_event(message_id: str, session_id: str):
 	if err:
 		return err
 	return session.segment_session.delete_event(message_id)
+
+@mcp.tool
+async def update_destination(destination_id: str, session_id: str, enabled: bool | None = None, settings: Dict[str, Any] | None = None):
+    s = get_session(session_id)
+    return s.segment_session.update_destination(destination_id, enabled=enabled, settings=settings)
+

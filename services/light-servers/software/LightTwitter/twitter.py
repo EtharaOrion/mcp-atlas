@@ -189,6 +189,13 @@ class TwitterSession:
         return {"status": "ok", "output": {"retweeted": True}}
 
 
+    def update_tweet(self, tweet_id: str, text: str) -> dict:
+        tweet = next((t for t in self.tweets if t.get("id") == tweet_id), None)
+        if tweet is None:
+            return {"status": "failed", "output": f"Tweet {tweet_id} not found"}
+        tweet["text"] = text
+        return {"status": "ok", "output": tweet}
+
 if __name__ == "__main__":
     s = TwitterSession(seed=12)
     print(s.get_me())

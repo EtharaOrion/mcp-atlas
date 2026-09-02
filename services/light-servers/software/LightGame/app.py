@@ -189,3 +189,9 @@ async def get_stats(session_id: str):
     session, err = get_session(session_id)
     if err: return err
     return session.game_session.get_stats()
+
+@mcp.tool
+async def update_game(gid: str, session_id: str, title: str | None = None, platform: str | None = None, genre: str | None = None, is_installed: bool | None = None):
+    s = get_session(session_id)
+    return s.game_session.update_game(gid, title=title, platform=platform, genre=genre, is_installed=is_installed)
+

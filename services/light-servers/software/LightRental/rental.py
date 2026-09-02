@@ -391,3 +391,27 @@ class RentalSession:
         del self.assets[aid]
         return {"status": "ok", "output": {}}
 
+    def update_booking(self, bid: str, start_date: str | None = None, end_date: str | None = None) -> dict:
+        b = next((x for x in self.bookings if x["bid"] == bid), None) if hasattr(self, "bookings") else None
+        if b is None:
+            b = self.bookings.get(bid) if isinstance(getattr(self, "bookings", None), dict) else None
+        if b is None:
+            return {"status": "failed", "output": f"Booking {bid} not found"}
+        if hasattr(b, "status"):
+            if b.status in ("cancelled", "returned"):
+                return {"status": "failed", "output": f"Cannot update booking with status {b.status}"}
+            if start_date is not None:
+                b.start_date = start_date
+            if end_date is not None:
+                b.end_date = end_date
+            from dataclasses import asdict
+            return {"status": "ok", "output": asdict(b)}
+        else:
+            if b.get("status") in ("cancelled", "returned"):
+                return {"status": "failed", "output": f"Cannot update booking with status {b.get('status')}"}
+            if start_date is not None:
+                b["start_date"] = start_date
+            if end_date is not None:
+                b["end_date"] = end_date
+            return {"status": "ok", "output": b}
+

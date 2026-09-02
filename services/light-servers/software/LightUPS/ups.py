@@ -255,6 +255,19 @@ class UpsSession:
             "SummaryResult": {"Status": {"Code": "1", "Description": "Success"}},
         }}}
 
+    def update_shipment(self, tracking_number: str, service_code: str | None = None, dest_zip: str | None = None) -> dict:
+        shipment = next((s for s in self.shipments if s["tracking_number"] == str(tracking_number)), None)
+        if not shipment:
+            return {"status": "failed", "output": f"Shipment {tracking_number} not found"}
+        t = next((x for x in self.tracking if x["tracking_number"] == str(tracking_number)), None)
+        if t and t.get("status_code") == "CA":
+            return {"status": "failed", "output": "Cannot update a cancelled shipment"}
+        if service_code is not None:
+            shipment["service_code"] = service_code
+        if dest_zip is not None:
+            shipment["dest_zip"] = str(dest_zip)
+        return {"status": "ok", "output": shipment}
+
 if __name__ == "__main__":
     s = UpsSession(seed=12)
     print(s.get_rate("10001", "90001", 5.0))

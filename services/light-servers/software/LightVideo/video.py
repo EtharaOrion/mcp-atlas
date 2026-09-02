@@ -314,3 +314,13 @@ class VideoSession:
                 "by_channel": by_channel,
             },
         }
+
+    def update_playlist(self, plid: str, name: str | None = None) -> Dict:
+        p = self.playlists.get(plid)
+        if not p:
+            return {"status": "failed", "output": f"playlist {plid} not found"}
+        if name is not None:
+            p.name = name
+        from dataclasses import asdict
+        return {"status": "ok", "output": asdict(p)}
+

@@ -122,3 +122,9 @@ async def delete_saved_search(search_id: str, session_id: str):
 	if err:
 		return err
 	return session.zillow_session.delete_saved_search(search_id)
+
+@mcp.tool
+async def update_saved_search(search_id: str, session_id: str, name: str | None = None, min_price: int | None = None, max_price: int | None = None, min_beds: int | None = None):
+    s = get_session(session_id)
+    return s.zillow_session.update_saved_search(search_id, name=name, min_price=min_price, max_price=max_price, min_beds=min_beds)
+

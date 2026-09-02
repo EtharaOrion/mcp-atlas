@@ -262,6 +262,19 @@ class AlpacaSession:
         self.positions.remove(p)
         return {"status": "ok", "output": p}
 
+    def update_order(self, order_id: str, qty: float | None = None, limit_price: float | None = None) -> dict:
+        o = next((o for o in self.orders if o["id"] == order_id), None)
+        if not o:
+            return {"status": "failed", "output": f"order not found: {order_id}"}
+        if o["status"] in ("filled", "canceled", "expired"):
+            return {"status": "failed", "output": f"order {order_id} cannot be modified (status {o['status']})"}
+        if qty is not None:
+            qty_f = float(qty)
+            o["qty"] = str(int(qty_f)) if qty_f == int(qty_f) else str(qty_f)
+        if limit_price is not None:
+            o["limit_price"] = str(limit_price)
+        return {"status": "ok", "output": o}
+
 if __name__ == "__main__":
     s = AlpacaSession(seed=12)
     print(s.get_account())

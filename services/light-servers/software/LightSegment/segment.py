@@ -163,6 +163,16 @@ class SegmentSession:
         return {"status": "ok", "output": {"messageId": message_id, "deleted": True}}
 
 
+    def update_destination(self, destination_id: str, enabled: bool | None = None, settings: dict | None = None) -> dict:
+        dest = next((d for d in self.destinations if d.get("id") == destination_id), None)
+        if dest is None:
+            return {"status": "failed", "output": f"Destination {destination_id} not found"}
+        if enabled is not None:
+            dest["enabled"] = bool(enabled)
+        if settings is not None:
+            dest.setdefault("settings", {}).update(settings)
+        return {"status": "ok", "output": dest}
+
 if __name__ == "__main__":
     s = SegmentSession(seed=12)
     print(s.list_sources())

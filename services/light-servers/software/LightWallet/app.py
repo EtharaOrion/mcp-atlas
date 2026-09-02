@@ -168,3 +168,9 @@ async def get_stats(session_id: str):
     session, err = get_session(session_id)
     if err: return err
     return session.wallet_session.get_stats()
+
+@mcp.tool
+async def update_wallet(wid: str, session_id: str, name: str | None = None, kind: str | None = None):
+    s = get_session(session_id)
+    return s.wallet_session.update_wallet(wid, name=name, kind=kind)
+

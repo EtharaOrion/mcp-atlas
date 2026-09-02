@@ -233,3 +233,9 @@ async def wait_payment_password(session_id: str):
     if err: return err
 
     return session.shop_session.wait_payment_password()
+
+@mcp.tool
+async def update_cart_item(caid: str, cnt: int, session_id: str):
+    s = get_session(session_id)
+    return s.shop_session.update_cart_item(caid, cnt)
+

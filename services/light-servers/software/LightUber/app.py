@@ -122,3 +122,9 @@ async def get_me(session_id: str):
 	if err:
 		return err
 	return session.uber_session.get_me()
+
+@mcp.tool
+async def update_request(request_id: str, session_id: str, end_latitude: float | None = None, end_longitude: float | None = None):
+    s = get_session(session_id)
+    return s.uber_session.update_request(request_id, end_latitude=end_latitude, end_longitude=end_longitude)
+

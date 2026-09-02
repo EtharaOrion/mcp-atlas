@@ -246,6 +246,18 @@ class UberSession:
         return {"status": "ok", "output": self.rider}
 
 
+    def update_request(self, request_id: str, end_latitude: float | None = None, end_longitude: float | None = None) -> dict:
+        req = next((r for r in self.requests if r.get("request_id") == request_id), None)
+        if req is None:
+            return {"status": "failed", "output": f"Request {request_id} not found"}
+        if req.get("status") in ("completed", "cancelled"):
+            return {"status": "failed", "output": f"Cannot update a {req['status']} request"}
+        if end_latitude is not None:
+            req["end_latitude"] = float(end_latitude)
+        if end_longitude is not None:
+            req["end_longitude"] = float(end_longitude)
+        return {"status": "ok", "output": req}
+
 if __name__ == "__main__":
     s = UberSession(seed=12)
     print(s.list_products())

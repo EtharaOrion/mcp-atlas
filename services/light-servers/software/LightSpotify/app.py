@@ -130,3 +130,9 @@ async def remove_tracks(playlist_id: str, uris: List[str], session_id: str):
 	if err:
 		return err
 	return session.spotify_session.remove_tracks(playlist_id, uris)
+
+@mcp.tool
+async def update_playlist(playlist_id: str, session_id: str, name: str | None = None, description: str | None = None, public: bool | None = None):
+    s = get_session(session_id)
+    return s.spotify_session.update_playlist(playlist_id, name=name, description=description, public=public)
+

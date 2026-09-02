@@ -183,6 +183,17 @@ class MailgunSession:
         self.members.pop(idx)
         return {"status": "ok", "output": {"message": "Mailing list member has been deleted"}}
 
+    def update_member(self, address: str, member_address: str, subscribed: bool | None = None, member_name: str | None = None) -> dict:
+        members = self.list_members_data.get(address, [])
+        m = next((x for x in members if x["address"] == member_address), None)
+        if m is None:
+            return {"status": "failed", "output": f"Member {member_address} not found in list {address}"}
+        if subscribed is not None:
+            m["subscribed"] = bool(subscribed)
+        if member_name is not None:
+            m["name"] = member_name
+        return {"status": "ok", "output": {"member": m}}
+
 if __name__ == "__main__":
     s = MailgunSession(seed=12)
     print(s.get_events("sandbox.mailgun.org"))

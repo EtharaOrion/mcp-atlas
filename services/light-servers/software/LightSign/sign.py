@@ -415,3 +415,16 @@ class SignSession:
                 "by_request_status": by_req_status,
             },
         }
+
+    def update_document(self, docid: str, title: str | None = None, tags: list | None = None) -> Dict:
+        d = self.documents.get(docid)
+        if not d:
+            return {"status": "failed", "output": f"document {docid} not found"}
+        if d.status not in ("draft", "pending"):
+            return {"status": "failed", "output": f"document {docid} cannot be updated (status={d.status})"}
+        if title is not None:
+            d.title = title
+        if tags is not None:
+            d.tags = list(tags)
+        return {"status": "ok", "output": self._doc_summary(d)}
+

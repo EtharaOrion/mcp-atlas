@@ -282,6 +282,24 @@ class EventbriteSession:
         self.ticket_classes.pop(idx)
         return {"status": "ok", "output": {}}
 
+    def update_event(self, event_id: str, name: str | None = None, summary: str | None = None, start_utc: str | None = None, end_utc: str | None = None, capacity: int | None = None, online_event: bool | None = None) -> dict:
+        for i, e in enumerate(self.events):
+            if e["id"] == event_id:
+                if name is not None:
+                    self.events[i]["name"] = name
+                if summary is not None:
+                    self.events[i]["summary"] = summary
+                if start_utc is not None:
+                    self.events[i]["start_utc"] = start_utc
+                if end_utc is not None:
+                    self.events[i]["end_utc"] = end_utc
+                if capacity is not None:
+                    self.events[i]["capacity"] = int(capacity)
+                if online_event is not None:
+                    self.events[i]["online_event"] = bool(online_event)
+                return {"status": "ok", "output": self._serialize_event(self.events[i])}
+        return {"status": "failed", "output": f"Event {event_id} not found"}
+
 if __name__ == "__main__":
     s = EventbriteSession(seed=12)
     print(s.list_organizations())

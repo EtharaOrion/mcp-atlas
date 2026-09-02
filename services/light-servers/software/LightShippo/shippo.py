@@ -323,6 +323,22 @@ class ShippoSession:
         t["tracking_status"] = "CANCELLED"
         return {"status": "ok", "output": dict(t)}
 
+    def update_address(self, object_id: str, name: str | None = None, street1: str | None = None, city: str | None = None, state: str | None = None, zip_: str | None = None) -> dict:
+        addr = next((a for a in self.addresses if a.get("object_id") == object_id), None)
+        if addr is None:
+            return {"status": "failed", "output": f"Address {object_id} not found"}
+        if name is not None:
+            addr["name"] = name
+        if street1 is not None:
+            addr["street1"] = street1
+        if city is not None:
+            addr["city"] = city
+        if state is not None:
+            addr["state"] = state
+        if zip_ is not None:
+            addr["zip"] = zip_
+        return {"status": "ok", "output": addr}
+
 if __name__ == "__main__":
     s = ShippoSession(seed=12)
     print(s.get_address("addr-sender-01"))

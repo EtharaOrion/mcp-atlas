@@ -178,3 +178,9 @@ async def delete_ticket_class(ticket_class_id: str, session_id: str):
 	if err:
 		return err
 	return session.eventbrite_session.delete_ticket_class(ticket_class_id)
+
+@mcp.tool
+async def update_event(event_id: str, session_id: str, name: str | None = None, summary: str | None = None, start_utc: str | None = None, end_utc: str | None = None, capacity: int | None = None, online_event: bool | None = None):
+    s = get_session(session_id)
+    return s.eventbrite_session.update_event(event_id, name=name, summary=summary, start_utc=start_utc, end_utc=end_utc, capacity=capacity, online_event=online_event)
+

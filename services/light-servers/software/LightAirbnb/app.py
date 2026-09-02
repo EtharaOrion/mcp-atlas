@@ -114,3 +114,9 @@ async def delete_reservation(reservation_id: str, session_id: str):
 	if err:
 		return err
 	return session.airbnb_session.delete_reservation(reservation_id)
+
+@mcp.tool
+async def update_reservation(reservation_id: str, session_id: str, checkin: str | None = None, checkout: str | None = None, guests: int | None = None, guest_name: str | None = None):
+    s = get_session(session_id)
+    return s.airbnb_session.update_reservation(reservation_id, checkin=checkin, checkout=checkout, guests=guests, guest_name=guest_name)
+

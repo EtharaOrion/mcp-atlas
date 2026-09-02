@@ -206,3 +206,8 @@ async def get_fids_by_departure(departure: str, session_id: str):
 
     return session.flight_session.get_fids_by_departure(departure)
 
+@mcp.tool
+async def update_passenger(passenger_idx: int, session_id: str, name: str | None = None, light_talk_uid: str | None = None):
+    s = get_session(session_id)
+    return s.flight_session.update_passenger(passenger_idx, name=name, light_talk_uid=light_talk_uid)
+

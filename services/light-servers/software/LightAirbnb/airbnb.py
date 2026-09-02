@@ -195,6 +195,22 @@ class AirbnbSession:
         self.reservations.pop(idx)
         return {"status": "ok", "output": {}}
 
+    def update_reservation(self, reservation_id, checkin=None, checkout=None, guests=None, guest_name=None) -> dict:
+        existing = next((r for r in self.reservations if r["reservation_id"] == reservation_id), None)
+        if existing is None:
+            return {"status": "failed", "output": f"Reservation {reservation_id} not found"}
+        if existing["status"] == "cancelled":
+            return {"status": "failed", "output": "Cannot update a cancelled reservation"}
+        if checkin is not None:
+            existing["checkin"] = checkin
+        if checkout is not None:
+            existing["checkout"] = checkout
+        if guests is not None:
+            existing["guests"] = int(guests)
+        if guest_name is not None:
+            existing["guest_name"] = guest_name
+        return {"status": "ok", "output": existing}
+
 if __name__ == "__main__":
     s = AirbnbSession(seed=12)
     print(s.search_listings())

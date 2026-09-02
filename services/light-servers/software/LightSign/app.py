@@ -182,3 +182,9 @@ async def get_stats(session_id: str):
     session, err = get_session(session_id)
     if err: return err
     return session.sign_session.get_stats()
+
+@mcp.tool
+async def update_document(docid: str, session_id: str, title: str | None = None, tags: List[str] | None = None):
+    s = get_session(session_id)
+    return s.sign_session.update_document(docid, title=title, tags=tags)
+

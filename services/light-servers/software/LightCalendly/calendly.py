@@ -252,6 +252,21 @@ class CalendlySession:
         return {"status": "failed", "output": f"scheduled event {uuid_} not found"}
 
 
+    def reschedule_event(self, uuid_: str, start_time: str | None = None, end_time: str | None = None, location: str | None = None) -> dict:
+        uuid_ = self._strip_uri(uuid_)
+        for ev in self.scheduled_events:
+            if ev["uuid"] == uuid_:
+                if ev["status"] == "canceled":
+                    return {"status": "failed", "output": "Cannot reschedule a canceled event"}
+                if start_time is not None:
+                    ev["start_time"] = start_time
+                if end_time is not None:
+                    ev["end_time"] = end_time
+                if location is not None:
+                    ev["location"] = location
+                return {"status": "ok", "output": {"resource": self._event_obj(ev)}}
+        return {"status": "failed", "output": f"scheduled event {uuid_} not found"}
+
 if __name__ == "__main__":
     s = CalendlySession(seed=12)
     print(s.get_me())

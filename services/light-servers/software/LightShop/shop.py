@@ -602,6 +602,15 @@ class ShopSession:
         }
 
 
+    def update_cart_item(self, caid: str, cnt: int) -> dict:
+        cart_item = next((item for item in self.cart if item.caid == caid), None)
+        if cart_item is None:
+            return {"status": "failed", "output": f"Cart item {caid} not found"}
+        if int(cnt) <= 0:
+            return {"status": "failed", "output": "Count must be positive; use delete_item_in_cart to remove"}
+        cart_item.cnt = int(cnt)
+        return {"status": "ok", "output": {"caid": caid, "cnt": cart_item.cnt}}
+
 if __name__ == "__main__":
     shop_session = ShopSession(seed=11, os_cfg=None)
 

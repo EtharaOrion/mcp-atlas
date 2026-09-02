@@ -106,3 +106,9 @@ async def cancel_order(txid: str, session_id: str):
 	if err:
 		return err
 	return session.kraken_session.cancel_order(txid)
+
+@mcp.tool
+async def update_order(txid: str, session_id: str, volume: str | None = None, price: str | None = None):
+    s = get_session(session_id)
+    return s.kraken_session.update_order(txid, volume=volume, price=price)
+

@@ -166,3 +166,9 @@ async def delete_driver(did: str, session_id: str):
 	if err:
 		return err
 	return session.ride_session.delete_driver(did)
+
+@mcp.tool
+async def update_driver(did: str, session_id: str, name: str | None = None, car_model: str | None = None, is_available: bool | None = None):
+    s = get_session(session_id)
+    return s.ride_session.update_driver(did, name=name, car_model=car_model, is_available=is_available)
+

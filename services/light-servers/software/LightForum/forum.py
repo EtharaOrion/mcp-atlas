@@ -190,3 +190,25 @@ class ForumSession:
             "threads": len(self.threads),
             "posts": len(self.posts),
         }}
+
+    def update_thread(self, tid: str, title: str | None = None, body: str | None = None) -> dict:
+        t = self.threads.get(tid)
+        if not t:
+            return {"status": "failed", "output": "thread not found"}
+        if t.locked:
+            return {"status": "failed", "output": "thread is locked"}
+        if title is not None:
+            t.title = title
+        if body is not None:
+            t.body = body
+        from dataclasses import asdict
+        return {"status": "ok", "output": asdict(t)}
+
+    def update_post(self, pid: str, body: str) -> dict:
+        p = self.posts.get(pid)
+        if not p:
+            return {"status": "failed", "output": "post not found"}
+        p.body = body
+        from dataclasses import asdict
+        return {"status": "ok", "output": asdict(p)}
+

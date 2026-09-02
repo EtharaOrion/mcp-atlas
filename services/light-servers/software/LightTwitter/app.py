@@ -154,3 +154,9 @@ async def retweet(user_id: str, tweet_id: str, session_id: str):
 	if err:
 		return err
 	return session.twitter_session.retweet(user_id, tweet_id)
+
+@mcp.tool
+async def update_tweet(tweet_id: str, text: str, session_id: str):
+    s = get_session(session_id)
+    return s.twitter_session.update_tweet(tweet_id, text)
+

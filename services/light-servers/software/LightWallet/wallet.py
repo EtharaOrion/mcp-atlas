@@ -282,3 +282,15 @@ class WalletSession:
                 "transfers_by_status": by_status,
             },
         }
+
+    def update_wallet(self, wid: str, name: str | None = None, kind: str | None = None) -> Dict:
+        w = self.wallets.get(wid)
+        if not w:
+            return {"status": "failed", "output": f"wallet {wid} not found"}
+        if name is not None:
+            w.name = name
+        if kind is not None:
+            w.kind = kind
+        from dataclasses import asdict
+        return {"status": "ok", "output": asdict(w)}
+

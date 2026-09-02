@@ -175,3 +175,9 @@ async def get_stats(session_id: str):
     session, err = get_session(session_id)
     if err: return err
     return session.video_session.get_stats()
+
+@mcp.tool
+async def update_playlist(plid: str, session_id: str, name: str | None = None):
+    s = get_session(session_id)
+    return s.video_session.update_playlist(plid, name=name)
+

@@ -177,3 +177,9 @@ async def delete_review(revid: str, session_id: str):
 	if err:
 		return err
 	return session.hotel_session.delete_review(revid)
+
+@mcp.tool
+async def update_reservation(resid: str, session_id: str, check_in: str | None = None, check_out: str | None = None, room_type: str | None = None, guests_count: int | None = None):
+    s = get_session(session_id)
+    return s.hotel_session.update_reservation(resid, check_in=check_in, check_out=check_out, room_type=room_type, guests_count=guests_count)
+

@@ -115,3 +115,9 @@ async def get_stats(session_id: str):
     s, err = get_session(session_id)
     if err: return err
     return s.auction_session.get_stats()
+
+@mcp.tool
+async def update_listing(lid: str, session_id: str, title: str | None = None, description: str | None = None, end_time: str | None = None, category: str | None = None):
+    s = get_session(session_id)
+    return s.auction_session.update_listing(lid, title=title, description=description, end_time=end_time, category=category)
+

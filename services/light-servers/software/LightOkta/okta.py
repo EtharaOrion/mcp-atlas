@@ -194,6 +194,21 @@ class OktaSession:
         return {"status": "ok", "output": [self._serialize_app(a) for a in results]}
 
 
+    def update_user(self, user_id: str, first_name: str | None = None, last_name: str | None = None, email: str | None = None) -> dict:
+        u = next((x for x in self.users if x["id"] == user_id), None)
+        if u is None:
+            return {"status": "failed", "output": f"User {user_id} not found"}
+        profile = u.get("profile", {})
+        if first_name is not None:
+            profile["firstName"] = first_name
+        if last_name is not None:
+            profile["lastName"] = last_name
+        if email is not None:
+            profile["email"] = email
+            profile["login"] = email
+        u["profile"] = profile
+        return {"status": "ok", "output": u}
+
 if __name__ == "__main__":
     s = OktaSession(seed=12)
     print(s.list_users())

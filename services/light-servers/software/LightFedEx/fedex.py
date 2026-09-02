@@ -238,6 +238,22 @@ class FedexSession:
             t["latest_event_time"] = self._now()
         return {"status": "ok", "output": {"trackingNumber": tracking_number, "cancelledShipment": True}}
 
+    def update_shipment(self, tracking_number: str, service_type: str | None = None, dest_zip: str | None = None) -> dict:
+        shipment = next((s for s in self.shipments if s["tracking_number"] == str(tracking_number)), None)
+        if not shipment:
+            return {"status": "failed", "output": f"Shipment {tracking_number} not found"}
+        t = next((x for x in self.tracking if x["tracking_number"] == str(tracking_number)), None)
+        if t and t.get("status_code") == "CA":
+            return {"status": "failed", "output": "Cannot update a cancelled shipment"}
+        if service_type is not None:
+            shipment["service_type"] = service_type
+        if dest_zip is not None:
+            shipment["dest_zip"] = str(dest_zip)
+        if t:
+            t["latest_event"] = "Shipment information updated"
+            t["latest_event_time"] = self._now()
+        return {"status": "ok", "output": shipment}
+
 if __name__ == "__main__":
     s = FedexSession(seed=12)
     print(s.get_rate_quote("38116", "10001", 5.0))

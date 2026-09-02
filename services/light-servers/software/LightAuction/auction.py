@@ -167,3 +167,21 @@ class AuctionSession:
             "total_bids": len(self.bids),
             "watchlist_size": len(self.watchlist),
         }}
+
+    def update_listing(self, lid: str, title: str | None = None, description: str | None = None, end_time: str | None = None, category: str | None = None) -> dict:
+        L = self.listings.get(lid)
+        if not L:
+            return {"status": "failed", "output": f"listing {lid} not found"}
+        if L.status != "active":
+            return {"status": "failed", "output": "only active listings can be updated"}
+        if title is not None:
+            L.title = title
+        if description is not None:
+            L.description = description
+        if end_time is not None:
+            L.end_time = end_time
+        if category is not None:
+            L.category = category
+        from dataclasses import asdict
+        return {"status": "ok", "output": asdict(L)}
+

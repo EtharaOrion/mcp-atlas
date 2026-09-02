@@ -604,6 +604,16 @@ class FlightSession:
         }
 
 
+    def update_passenger(self, passenger_idx: int, name: str | None = None, light_talk_uid: str | None = None) -> dict:
+        if passenger_idx >= len(self.passengers):
+            return {"status": "failed", "output": "Index out of range"}
+        passenger = self.passengers[passenger_idx]
+        if name is not None:
+            passenger.name = name
+        if light_talk_uid is not None:
+            passenger.light_talk_uid = light_talk_uid
+        return {"status": "ok", "output": {"index": passenger_idx, "passenger": asdict(passenger)}}
+
 if __name__ == "__main__":
     flight_session = FlightSession(seed=109, os_cfg=None)
     from pprint import pprint

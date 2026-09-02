@@ -360,3 +360,16 @@ class RideSession:
         del self.drivers[did]
         return {"status": "ok", "output": {}}
 
+    def update_driver(self, did: str, name: str | None = None, car_model: str | None = None, is_available: bool | None = None) -> Dict:
+        d = self.drivers.get(did)
+        if not d:
+            return {"status": "failed", "output": f"driver {did} not found"}
+        if name is not None:
+            d.name = name
+        if car_model is not None:
+            d.car_model = car_model
+        if is_available is not None:
+            d.is_available = bool(is_available)
+        from dataclasses import asdict
+        return {"status": "ok", "output": asdict(d)}
+

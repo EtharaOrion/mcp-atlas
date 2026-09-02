@@ -251,6 +251,21 @@ class KubernetesSession:
             "NodeList", [self._node_obj(n) for n in self.nodes])}
 
 
+    def update_deployment(self, namespace: str, name: str, replicas: int | None = None, image: str | None = None) -> dict:
+        if not self._ns_exists(namespace):
+            return {"status": "failed", "output": f"namespace {namespace!r} not found"}
+        deployments = self.deployments.get(namespace, [])
+        d = next((x for x in deployments if x["name"] == name), None)
+        if d is None:
+            return {"status": "failed", "output": f"deployment {name!r} not found in namespace {namespace!r}"}
+        if replicas is not None:
+            d["replicas"] = int(replicas)
+            d["ready_replicas"] = int(replicas)
+        if image is not None:
+            for c in d.get("containers", []):
+                c["image"] = image
+        return {"status": "ok", "output": self._deployment_obj(d)}
+
 if __name__ == "__main__":
     s = KubernetesSession(seed=12)
     print(s.list_namespaces())

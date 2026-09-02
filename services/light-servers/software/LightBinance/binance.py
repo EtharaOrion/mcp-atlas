@@ -248,6 +248,19 @@ class BinanceSession:
         return {"status": "ok", "output": {"orderId": int(orderId), "symbol": symbol.upper(), "status": "CANCELED"}}
 
 
+    def update_order(self, symbol: str, orderId: int, new_quantity: str | None = None, new_price: str | None = None) -> dict:
+        orders = getattr(self, "orders", [])
+        o = next((o for o in orders if o["symbol"] == symbol.upper() and o["orderId"] == int(orderId)), None)
+        if o is None:
+            return {"status": "failed", "output": f"Order {orderId} for {symbol} not found"}
+        if o["status"] != "NEW":
+            return {"status": "failed", "output": "Only NEW orders can be updated"}
+        if new_quantity is not None:
+            o["origQty"] = str(new_quantity)
+        if new_price is not None:
+            o["price"] = str(new_price)
+        return {"status": "ok", "output": o}
+
 if __name__ == "__main__":
     s = BinanceSession(seed=12)
     print(s.get_ticker_price())

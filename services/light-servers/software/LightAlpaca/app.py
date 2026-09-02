@@ -130,3 +130,9 @@ async def close_position(symbol: str, session_id: str):
 	if err:
 		return err
 	return session.alpaca_session.close_position(symbol)
+
+@mcp.tool
+async def update_order(order_id: str, session_id: str, qty: float | None = None, limit_price: float | None = None):
+    s = get_session(session_id)
+    return s.alpaca_session.update_order(order_id, qty=qty, limit_price=limit_price)
+

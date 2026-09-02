@@ -249,6 +249,19 @@ class KrakenSession:
         return {"status": "ok", "output": {"count": 1}}
 
 
+    def update_order(self, txid: str, volume: str | None = None, price: str | None = None) -> dict:
+        orders = getattr(self, "orders", [])
+        o = next((o for o in orders if o["txid"] == txid), None)
+        if o is None:
+            return {"status": "failed", "output": f"Order {txid} not found"}
+        if o.get("status") == "closed":
+            return {"status": "failed", "output": f"Closed orders cannot be modified"}
+        if volume is not None:
+            o["vol"] = str(volume)
+        if price is not None:
+            o["price"] = str(price)
+        return {"status": "ok", "output": o}
+
 if __name__ == "__main__":
     s = KrakenSession(seed=12)
     print(s.get_ticker("XBTUSD"))

@@ -114,3 +114,9 @@ async def delete_file(path: str, session_id: str):
 	if err:
 		return err
 	return session.dropbox_session.delete(path)
+
+@mcp.tool
+async def move_file(from_path: str, to_path: str, session_id: str):
+    s = get_session(session_id)
+    return s.dropbox_session.move_file(from_path, to_path)
+

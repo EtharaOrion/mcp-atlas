@@ -114,3 +114,9 @@ async def cancel_event(uuid_: str, session_id: str, reason: str | None = None):
 	if err:
 		return err
 	return session.calendly_session.cancel_event(uuid_, reason)
+
+@mcp.tool
+async def reschedule_event(uuid_: str, session_id: str, start_time: str | None = None, end_time: str | None = None, location: str | None = None):
+    s = get_session(session_id)
+    return s.calendly_session.reschedule_event(uuid_, start_time=start_time, end_time=end_time, location=location)
+
