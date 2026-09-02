@@ -3770,3 +3770,23 @@ comments:
 
 channel:
   id: null
+
+analytics: {}
+
+captions: {}
+
+channel_sections: []
+
+video_categories:
+- id: '1'
+  snippet:
+    title: Film & Animation
+    assignable: true
+- id: '22'
+  snippet:
+    title: People & Blogs
+    assignable: true
+- id: '28'
+  snippet:
+    title: Science & Technology
+    assignable: true

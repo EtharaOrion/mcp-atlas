@@ -119,3 +119,37 @@ cards:
   member_ids: []
   labels:
   - partnerships
+
+boards:
+- id: board_001
+  name: Heritage Woodworks Projects
+  desc: Main project board
+  closed: false
+  url: https://trello.com/b/abc123/heritage-woodworks-projects
+  prefs:
+    permissionLevel: private
+
+lists:
+- id: trlist_001
+  board_id: board_001
+  name: To Do
+  closed: false
+  pos: 1
+- id: trlist_002
+  board_id: board_001
+  name: In Progress
+  closed: false
+  pos: 2
+- id: trlist_003
+  board_id: board_001
+  name: Done
+  closed: false
+  pos: 3
+
+members:
+- id: trmem_001
+  fullName: James Ashcroft
+  username: jamesashcroft
+  email: james@ashcroftwoodworks.com
+
+checklists: []

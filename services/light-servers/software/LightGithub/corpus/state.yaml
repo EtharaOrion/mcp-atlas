@@ -156,3 +156,35 @@ comments:
 
 user:
   login: null
+
+repos:
+- id: 1001
+  name: heritage-tools
+  full_name: ashcroft/heritage-tools
+  owner:
+    login: ashcroft
+    id: 501
+  private: false
+  description: Wood heritage tools collection
+  default_branch: main
+  language: Python
+  stargazers_count: 12
+  forks_count: 2
+  open_issues_count: 3
+
+pulls:
+- number: 1
+  id: pr_001
+  title: Add dovetail joint calculator
+  state: open
+  user:
+    login: contributor1
+  head:
+    ref: feature/dovetail
+    sha: abc123def456
+  base:
+    ref: main
+  body: Adds dovetail joint angle calculator
+  created_at: '2026-05-01T10:00:00Z'
+  updated_at: '2026-05-10T14:00:00Z'
+  merged: false

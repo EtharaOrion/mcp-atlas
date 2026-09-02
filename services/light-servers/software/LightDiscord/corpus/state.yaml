@@ -76,3 +76,48 @@ messages:
 me:
   id: null
   username: null
+
+guilds:
+- id: guild_001
+  name: Heritage Craft Community
+  icon: null
+  owner_id: duser_001
+  member_count: 42
+
+channels:
+- id: dch_001
+  guild_id: guild_001
+  name: general
+  type: 0
+  position: 0
+- id: dch_002
+  guild_id: guild_001
+  name: announcements
+  type: 0
+  position: 1
+
+members:
+- user_id: duser_001
+  guild_id: guild_001
+  nick: Admin
+  roles:
+  - drole_001
+  joined_at: '2026-01-01T00:00:00Z'
+- user_id: duser_002
+  guild_id: guild_001
+  nick: null
+  roles:
+  - drole_002
+  joined_at: '2026-01-15T00:00:00Z'
+
+roles:
+- id: drole_001
+  guild_id: guild_001
+  name: Admin
+  permissions: '8'
+  color: 0
+- id: drole_002
+  guild_id: guild_001
+  name: Member
+  permissions: '104324160'
+  color: 0

@@ -192,3 +192,5 @@ geocodes:
   lng: -81.0885
   place_id: ChIJgeo0000000007
   location_type: APPROXIMATE
+
+saved_places: []

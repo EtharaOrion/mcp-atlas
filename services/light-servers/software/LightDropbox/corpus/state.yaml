@@ -88,3 +88,29 @@ files:
   size: 256
   client_modified: '2026-05-20T09:00:00Z'
   rev: 0123456789abcdef01000011
+
+account:
+  account_id: dbid_acc_001
+  name:
+    given_name: James
+    surname: Ashcroft
+    display_name: James Ashcroft
+  email: james@ashcroftwoodworks.com
+  account_type:
+    .tag: basic
+  space_usage:
+    used: 2048000
+    allocation:
+      .tag: individual
+      allocated: 2147483648
+
+file_blobs: {}
+
+shared_links:
+- url: https://www.dropbox.com/s/abc123/plan.pdf?dl=0
+  id: id:link001
+  name: workshop-plan.pdf
+  path_lower: /projects/workshop-plan.pdf
+  link_permissions:
+    resolved_visibility:
+      .tag: public

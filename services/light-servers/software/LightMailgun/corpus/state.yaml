@@ -170,3 +170,14 @@ members:
   name: Cordelia Ashmore-Vance
   subscribed: false
   vars: '{"team":"qa"}'
+
+list_members_data:
+  mg_devs@example.com:
+  - address: member1@example.com
+    name: Alice Thornton
+    subscribed: true
+    vars: {}
+  - address: member2@example.com
+    name: Bob Fenwick
+    subscribed: true
+    vars: {}

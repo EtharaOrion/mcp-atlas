@@ -1,4 +1,35 @@
 # Source: world_data 2/LightXero.json (verbatim). Corpus-only authored world.
+contacts:
+- ContactID: c0000001-0000-0000-0000-000000000001
+  Name: Barrington Family
+  EmailAddress: barrington@example.com
+  IsSupplier: false
+  IsCustomer: true
+- ContactID: c0000002-0000-0000-0000-000000000002
+  Name: Renard-Whitcomb Residence
+  EmailAddress: renard.whitcomb@example.com
+  IsSupplier: false
+  IsCustomer: true
+- ContactID: c0000003-0000-0000-0000-000000000003
+  Name: Coastal Georgia Community Foundation
+  EmailAddress: info@coastalga.org
+  IsSupplier: false
+  IsCustomer: true
+- ContactID: c0000004-0000-0000-0000-000000000004
+  Name: Hartwell Timber Supply
+  EmailAddress: orders@hartwelltimber.com
+  IsSupplier: true
+  IsCustomer: false
+- ContactID: c0000005-0000-0000-0000-000000000005
+  Name: Barrington Estate Trust
+  EmailAddress: trust@barringtonestate.com
+  IsSupplier: false
+  IsCustomer: true
+- ContactID: c0000006-0000-0000-0000-000000000006
+  Name: Piedmont Finishing Supplies
+  EmailAddress: sales@piedmontfinishing.com
+  IsSupplier: true
+  IsCustomer: false
 invoices:
 - InvoiceID: i0000001-0000-0000-0000-000000000001
   InvoiceNumber: INV-2041
@@ -128,3 +159,29 @@ invoices:
   AmountPaid: 0.0
   CurrencyCode: USD
   Reference: Restoration consulting — walnut casework
+
+accounts:
+- AccountID: acc-bank-001
+  Name: Business Checking
+  Type: BANK
+  Code: 091
+  Status: ACTIVE
+  CurrencyCode: USD
+- AccountID: acc-rcv-002
+  Name: Accounts Receivable
+  Type: CURRENT
+  Code: '120'
+  Status: ACTIVE
+  CurrencyCode: USD
+- AccountID: acc-rev-003
+  Name: Sales Revenue
+  Type: REVENUE
+  Code: '200'
+  Status: ACTIVE
+  CurrencyCode: USD
+- AccountID: acc-exp-004
+  Name: Materials and Supplies
+  Type: EXPENSE
+  Code: '400'
+  Status: ACTIVE
+  CurrencyCode: USD

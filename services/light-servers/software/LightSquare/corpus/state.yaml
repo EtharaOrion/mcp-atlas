@@ -1,4 +1,119 @@
 # Source: world_data 2/LightSquare.json (verbatim). Corpus-only authored world.
+customers:
+- id: CUST_HARPER01
+  given_name: Harper
+  family_name: Ellis
+  email_address: harper.ellis@example.com
+  phone_number: '+15551110001'
+  created_at: '2026-01-10T09:00:00Z'
+- id: CUST_DIEGO02
+  given_name: Diego
+  family_name: Vargas
+  email_address: diego.vargas@example.com
+  phone_number: '+15551110002'
+  created_at: '2026-01-15T10:00:00Z'
+- id: CUST_MAYA03
+  given_name: Maya
+  family_name: Osei
+  email_address: maya.osei@example.com
+  phone_number: '+15551110003'
+  created_at: '2026-02-01T11:00:00Z'
+- id: CUST_OMAR04
+  given_name: Omar
+  family_name: Khalil
+  email_address: omar.khalil@example.com
+  phone_number: '+15551110004'
+  created_at: '2026-02-14T08:30:00Z'
+- id: CUST_LENA05
+  given_name: Lena
+  family_name: Brandt
+  email_address: lena.brandt@example.com
+  phone_number: '+15551110005'
+  created_at: '2026-03-05T14:00:00Z'
+- id: CUST_PRIYA06
+  given_name: Priya
+  family_name: Nair
+  email_address: priya.nair@example.com
+  phone_number: '+15551110006'
+  created_at: '2026-03-20T12:00:00Z'
+- id: CUST_TOMAS07
+  given_name: Tomas
+  family_name: Novak
+  email_address: tomas.novak@example.com
+  phone_number: '+15551110007'
+  created_at: '2026-04-01T09:45:00Z'
+catalog:
+- type: ITEM_VARIATION
+  id: VAR_LATTE_R
+  item_variation_data:
+    name: Latte (Regular)
+    price_money:
+      amount: 525
+      currency: USD
+- type: ITEM_VARIATION
+  id: VAR_CROISSANT_R
+  item_variation_data:
+    name: Croissant
+    price_money:
+      amount: 300
+      currency: USD
+- type: ITEM_VARIATION
+  id: VAR_COLDBREW_R
+  item_variation_data:
+    name: Cold Brew (Regular)
+    price_money:
+      amount: 500
+      currency: USD
+- type: ITEM_VARIATION
+  id: VAR_MUG_R
+  item_variation_data:
+    name: House Mug
+    price_money:
+      amount: 1200
+      currency: USD
+- type: ITEM_VARIATION
+  id: VAR_BEANS_12
+  item_variation_data:
+    name: Coffee Beans 12oz
+    price_money:
+      amount: 1600
+      currency: USD
+- type: ITEM_VARIATION
+  id: VAR_TEA_TIN
+  item_variation_data:
+    name: Tea Tin
+    price_money:
+      amount: 900
+      currency: USD
+- type: ITEM_VARIATION
+  id: VAR_BAGEL_R
+  item_variation_data:
+    name: Bagel
+    price_money:
+      amount: 375
+      currency: USD
+inventory:
+- catalog_object_id: VAR_LATTE_R
+  quantity: '120'
+  state: IN_STOCK
+- catalog_object_id: VAR_CROISSANT_R
+  quantity: '48'
+  state: IN_STOCK
+- catalog_object_id: VAR_COLDBREW_R
+  quantity: '36'
+  state: IN_STOCK
+- catalog_object_id: VAR_MUG_R
+  quantity: '25'
+  state: IN_STOCK
+- catalog_object_id: VAR_BEANS_12
+  quantity: '60'
+  state: IN_STOCK
+- catalog_object_id: VAR_TEA_TIN
+  quantity: '40'
+  state: IN_STOCK
+- catalog_object_id: VAR_BAGEL_R
+  quantity: '30'
+  state: IN_STOCK
 payments:
 - id: PAY_AURORA01
   order_id: ORD_AURORA01
@@ -162,3 +277,12 @@ orders:
   state: OPEN
   created_at: '2026-05-23T14:09:00Z'
 refunds: []
+
+merchant:
+  id: MERCHANT_MAIN
+  business_name: Harbor Blend Coffee
+  currency: USD
+  status: ACTIVE
+  country: US
+  language_code: en-US
+  main_location_id: LOC_MAIN

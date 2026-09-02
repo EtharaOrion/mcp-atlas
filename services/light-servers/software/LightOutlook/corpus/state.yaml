@@ -88,3 +88,24 @@ messages:
   isRead: true
   importance: normal
   receivedDateTime: '2026-05-25T06:00:00Z'
+
+contacts:
+- id: oc_001
+  displayName: James Barrington
+  emailAddresses:
+  - address: james@barrington.example.com
+    name: James Barrington
+  businessPhones:
+  - '+15551110001'
+
+events:
+- id: ev_001
+  subject: Commission Review
+  start:
+    dateTime: '2026-05-15T10:00:00'
+    timeZone: America/New_York
+  end:
+    dateTime: '2026-05-15T11:00:00'
+    timeZone: America/New_York
+  isAllDay: false
+  status: confirmed

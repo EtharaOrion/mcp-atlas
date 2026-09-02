@@ -181,3 +181,48 @@ comments:
   status: approved
   date: '2026-05-24T12:00:00'
   parent: 0
+
+categories:
+- id: 1
+  name: Uncategorized
+  slug: uncategorized
+  count: 3
+  parent: 0
+- id: 2
+  name: Projects
+  slug: projects
+  count: 5
+  parent: 0
+
+tags:
+- id: 1
+  name: woodworking
+  slug: woodworking
+  count: 8
+- id: 2
+  name: commission
+  slug: commission
+  count: 3
+
+pages:
+- id: 101
+  title: About Us
+  slug: about-us
+  status: publish
+  link: https://example.com/about-us
+  content: About Ashcroft Woodworks
+
+media:
+- id: 201
+  title: Workshop Banner
+  slug: workshop-banner
+  mime_type: image/jpeg
+  source_url: https://example.com/wp-content/uploads/workshop-banner.jpg
+
+users:
+- id: 1
+  name: James Ashcroft
+  slug: james-ashcroft
+  email: james@ashcroftwoodworks.com
+  roles:
+  - administrator

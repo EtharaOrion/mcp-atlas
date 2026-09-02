@@ -90,3 +90,21 @@ messages:
   contentType: html
   importance: high
   createdDateTime: '2026-05-25T08:30:00Z'
+
+teams:
+- id: team_001
+  displayName: Heritage Woodworks
+  description: Main company team
+  membershipType: standard
+
+channels:
+- id: msch_general
+  team_id: team_001
+  displayName: General
+  membershipType: standard
+  description: General channel
+- id: msch_projects
+  team_id: team_001
+  displayName: Projects
+  membershipType: standard
+  description: Project discussions

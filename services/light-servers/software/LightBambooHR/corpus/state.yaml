@@ -181,3 +181,22 @@ time_off:
   unit: days
   notes: ''
   created: '2026-01-05'
+
+company:
+  id: bhr_company_1
+  name: Ashcroft Woodworks LLC
+  subdomain: ashcroft
+  phone: '+15551234567'
+  address:
+    street1: 200 Heritage Way
+    city: Savannah
+    state: GA
+    zip: '31401'
+    country: US
+
+whos_out:
+- id: wo_001
+  employeeId: '103'
+  start: '2026-05-15'
+  end: '2026-05-16'
+  type: Vacation

@@ -88,3 +88,33 @@ records:
     body: Answers to common questions about the API
     section: reference
     tags: faq
+
+indices:
+- name: products
+  entries: 1250
+  dataSize: 48000
+  fileSize: 52000
+  primary: products
+- name: articles
+  entries: 320
+  dataSize: 18000
+  fileSize: 21000
+  primary: articles
+
+settings:
+  searchableAttributes:
+  - name
+  - description
+  - category
+  attributesForFaceting:
+  - category
+  - brand
+  hitsPerPage: 20
+  ranking:
+  - typo
+  - words
+  - filters
+  - proximity
+  - attribute
+  - exact
+  - custom

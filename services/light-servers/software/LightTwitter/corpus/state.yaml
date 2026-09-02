@@ -132,3 +132,24 @@ retweets:
   tweet_id: '3001'
 - user_id: '2004'
   tweet_id: '3006'
+
+users:
+- id: tw_001
+  name: Ashcroft Woodworks
+  screen_name: ashcroftwoodworks
+  description: Heritage furniture craftspeople in Savannah, GA
+  followers_count: 842
+  friends_count: 315
+  statuses_count: 1204
+- id: tw_002
+  name: Sarah Mitchell
+  screen_name: sarahmitchellcraft
+  description: Furniture restorer
+  followers_count: 210
+  friends_count: 180
+  statuses_count: 432
+
+follows:
+- follower_id: tw_002
+  followed_id: tw_001
+  created_at: '2026-01-15T10:00:00Z'

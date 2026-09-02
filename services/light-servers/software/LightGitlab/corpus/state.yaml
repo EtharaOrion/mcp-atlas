@@ -171,3 +171,30 @@ merge_requests:
 
 current_user:
   username: null
+
+projects:
+- id: 1
+  name: heritage-tools
+  path_with_namespace: ashcroft/heritage-tools
+  description: Wood heritage tools
+  default_branch: main
+  visibility: private
+  star_count: 0
+  forks_count: 0
+
+pipelines:
+- id: 101
+  project_id: 1
+  status: success
+  ref: main
+  sha: abc123
+  created_at: '2026-05-10T08:00:00Z'
+  updated_at: '2026-05-10T08:30:00Z'
+
+users:
+- id: 1
+  username: james.ashcroft
+  name: James Ashcroft
+  email: james@ashcroftwoodworks.com
+  state: active
+  avatar_url: null

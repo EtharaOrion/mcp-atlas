@@ -101,3 +101,26 @@ tickets:
   - refund
   created_at: '2026-05-09T07:33:00Z'
   updated_at: '2026-05-10T11:00:00Z'
+
+agents:
+- id: 1
+  contact:
+    name: Support Team
+    email: support@ashcraftwoodworks.com
+  type: support_agent
+  available: true
+  ticket_scope: 1
+
+contacts:
+- id: 101
+  name: Barrington Family
+  email: barrington@example.com
+  phone: '+15551110001'
+  created_at: '2026-01-01T00:00:00Z'
+  updated_at: '2026-01-01T00:00:00Z'
+- id: 102
+  name: Renard-Whitcomb Residence
+  email: renard.whitcomb@example.com
+  phone: '+15551110002'
+  created_at: '2026-01-15T00:00:00Z'
+  updated_at: '2026-01-15T00:00:00Z'

@@ -256,3 +256,22 @@ deals:
   archived: false
   _company: null
   _contact: '208'
+
+pipelines:
+- id: pl_001
+  label: Sales Pipeline
+  displayOrder: 0
+  active: true
+  stages:
+  - id: st_001
+    label: Appointment Scheduled
+    displayOrder: 0
+    probability: 0.2
+  - id: st_002
+    label: Qualified to Buy
+    displayOrder: 1
+    probability: 0.4
+  - id: st_003
+    label: Contract Sent
+    displayOrder: 2
+    probability: 0.9

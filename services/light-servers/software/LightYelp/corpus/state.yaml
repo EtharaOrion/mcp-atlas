@@ -220,3 +220,17 @@ businesses:
     display_address:
     - 118 Bull Street
     - Savannah, GA 31401
+
+categories:
+- alias: furniture_reupholstery
+  title: Furniture Reupholstery
+  parent_aliases:
+  - homeservices
+- alias: woodwork
+  title: Woodwork
+  parent_aliases:
+  - homeservices
+
+reviews: []
+
+saved_businesses: []

@@ -196,3 +196,15 @@ calls:
 
 account:
   sid: null
+
+phone_numbers:
+- sid: PN_001
+  friendly_name: Main Line
+  phone_number: '+15551234567'
+  status: in-use
+  date_created: '2026-01-01T00:00:00Z'
+- sid: PN_002
+  friendly_name: Support Line
+  phone_number: '+15559876543'
+  status: in-use
+  date_created: '2026-02-01T00:00:00Z'

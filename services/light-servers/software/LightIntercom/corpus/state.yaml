@@ -96,3 +96,25 @@ parts:
   author_id: admin-josephine
   body: Statement attached.
   created_at: '2026-05-12T09:00:00.000Z'
+
+companies:
+- id: comp_001
+  name: Barrington Family
+  company_id: ext_001
+  plan:
+    name: Standard
+  created_at: 1640000000
+
+contacts:
+- id: con_001
+  name: James Barrington
+  email: james@barrington.example.com
+  role: user
+  created_at: 1640000000
+  updated_at: 1641000000
+- id: con_002
+  name: Eleanor Renard
+  email: eleanor@renard.example.com
+  role: user
+  created_at: 1641000000
+  updated_at: 1642000000

@@ -59,3 +59,24 @@ posts:
 
 profile:
   id: null
+
+connections:
+- id: conn_001
+  firstName: Sarah
+  lastName: Mitchell
+  headline: Furniture Restoration Specialist
+  vanityName: sarah-mitchell
+
+organizations:
+- id: org_001
+  name: Georgia Guild of Craftspeople
+  vanityName: ga-guild
+  description: Regional guild for heritage craftspeople
+
+jobs:
+- id: job_001
+  title: Lead Woodworker
+  companyName: Heritage Atelier
+  location: Savannah, GA
+  listedAt: 1717200000
+  jobState: LISTED

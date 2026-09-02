@@ -87,3 +87,21 @@ invitees:
 user:
   name: null
   timezone: null
+
+event_types:
+- uri: https://api.calendly.com/event_types/et_001
+  slug: 30min
+  name: 30 Minute Meeting
+  duration: 30
+  kind: solo
+  active: true
+  color: blue
+  type: StandardEventType
+- uri: https://api.calendly.com/event_types/et_002
+  slug: 60min
+  name: 1 Hour Consultation
+  duration: 60
+  kind: solo
+  active: true
+  color: green
+  type: StandardEventType

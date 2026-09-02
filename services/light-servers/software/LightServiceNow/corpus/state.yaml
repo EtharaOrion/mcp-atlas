@@ -130,3 +130,31 @@ incidents:
   opened_by: usr-marcus
   opened_at: '2026-05-26T15:20:00Z'
   updated_at: '2026-05-26T16:45:00Z'
+
+changes:
+- sys_id: chg_001
+  number: CHG0001001
+  short_description: Upgrade monitoring agent
+  state: '2'
+  type: normal
+  category: Software
+  assigned_to: sn_user_001
+  opened_at: '2026-05-01 08:00:00'
+
+problems:
+- sys_id: prb_001
+  number: PRB0001001
+  short_description: Recurring timeout errors
+  state: '2'
+  category: Software
+  assigned_to: sn_user_001
+  opened_at: '2026-04-20 09:00:00'
+
+users:
+- sys_id: sn_user_001
+  user_name: james.ashcroft
+  first_name: James
+  last_name: Ashcroft
+  email: james@ashcroftwoodworks.com
+  active: 'true'
+  title: IT Manager

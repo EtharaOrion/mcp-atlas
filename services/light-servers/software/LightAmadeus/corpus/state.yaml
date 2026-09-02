@@ -326,3 +326,34 @@ offers:
       total: '705.50'
   validatingAirlineCodes:
   - KL
+
+airlines:
+- iataCode: AA
+  businessName: American Airlines
+  commonName: American Airlines
+- iataCode: DL
+  businessName: Delta Air Lines
+  commonName: Delta
+- iataCode: UA
+  businessName: United Airlines
+  commonName: United
+
+airports:
+- iataCode: ATL
+  name: Hartsfield-Jackson Atlanta International
+  city: Atlanta
+  countryCode: US
+  latitude: 33.6367
+  longitude: -84.4281
+- iataCode: JFK
+  name: John F Kennedy International
+  city: New York
+  countryCode: US
+  latitude: 40.6413
+  longitude: -73.7781
+- iataCode: LAX
+  name: Los Angeles International
+  city: Los Angeles
+  countryCode: US
+  latitude: 33.9425
+  longitude: -118.4081

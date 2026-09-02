@@ -150,3 +150,54 @@ deployments:
   strategy: RollingUpdate
   created_time: '2025-08-01T09:00:00Z'
   _pk: kube-system/coredns
+
+namespaces:
+- name: default
+  status: Active
+  labels:
+    kubernetes.io/metadata.name: default
+- name: production
+  status: Active
+  labels:
+    env: production
+
+nodes:
+- name: node-01
+  status: Ready
+  roles:
+  - control-plane
+  capacity:
+    cpu: '4'
+    memory: 8Gi
+  allocatable:
+    cpu: 3900m
+    memory: 7Gi
+- name: node-02
+  status: Ready
+  roles:
+  - worker
+  capacity:
+    cpu: '4'
+    memory: 8Gi
+  allocatable:
+    cpu: 3900m
+    memory: 7Gi
+
+services:
+- name: kubernetes
+  namespace: default
+  type: ClusterIP
+  cluster_ip: 10.96.0.1
+  ports:
+  - port: 443
+    protocol: TCP
+  selector: {}
+- name: web-frontend
+  namespace: production
+  type: LoadBalancer
+  cluster_ip: 10.96.0.10
+  ports:
+  - port: 80
+    protocol: TCP
+  selector:
+    app: web

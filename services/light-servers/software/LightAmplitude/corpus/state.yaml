@@ -72,3 +72,34 @@ events:
   event_time: '2026-05-08T07:14:02Z'
   event_properties:
     plan: pro
+
+segmentation:
+- segment_id: seg_001
+  name: Power Users
+  definition:
+    event: session_start
+    count: 10
+    within_days: 30
+  user_count: 142
+- segment_id: seg_002
+  name: New Users
+  definition:
+    event: sign_up
+    within_days: 7
+  user_count: 58
+
+users:
+- user_id: amp_u001
+  device_id: dev_001
+  country: US
+  platform: Web
+  os: Windows
+  language: English
+  properties: {}
+- user_id: amp_u002
+  device_id: dev_002
+  country: US
+  platform: iOS
+  os: iOS 17
+  language: English
+  properties: {}

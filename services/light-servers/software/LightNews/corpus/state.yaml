@@ -186,3 +186,20 @@ news:
     abstract: Gym credits new conditioning program.
     content: Gym credits new conditioning program. Full coverage from local reporters follows with comments
       from residents and officials.
+
+sections:
+- id: sec_001
+  webTitle: World News
+  apiUrl: https://content.guardianapis.com/world
+  webUrl: https://www.theguardian.com/world
+  type: section
+- id: sec_002
+  webTitle: Technology
+  apiUrl: https://content.guardianapis.com/technology
+  webUrl: https://www.theguardian.com/technology
+  type: section
+- id: sec_003
+  webTitle: Business
+  apiUrl: https://content.guardianapis.com/business
+  webUrl: https://www.theguardian.com/business
+  type: section

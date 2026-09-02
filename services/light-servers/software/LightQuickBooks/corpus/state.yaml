@@ -632,3 +632,27 @@ expenses:
     Amount: 41.75
   MetaData:
     CreateTime: '2026-01-05T09:00:00'
+
+bill_payments: []
+
+company_info:
+  CompanyName: Ashcroft Woodworks LLC
+  LegalName: Ashcroft Woodworks LLC
+  CompanyAddr:
+    Line1: 200 Heritage Way
+    City: Savannah
+    CountrySubDivisionCode: GA
+    PostalCode: '31401'
+    Country: US
+  FiscalYearStartMonth: January
+  Country: US
+  Email:
+    Address: accounting@ashcroftwoodworks.com
+
+company_raw: {}
+
+corporate_expense_ledger: []
+
+reimbursement_policy: {}
+
+break_even_analysis: {}

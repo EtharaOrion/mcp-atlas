@@ -78,3 +78,39 @@ entries:
       Alliance.
     author: Josephine Halloway
     published: false
+
+space:
+  sys:
+    id: sp_main
+    type: Space
+  name: Heritage Woodworks CMS
+  defaultLocale: en-US
+
+content_types:
+- sys:
+    id: ct_article
+    type: ContentType
+  name: Article
+  displayField: title
+  fields:
+  - id: title
+    name: Title
+    type: Symbol
+  - id: body
+    name: Body
+    type: Text
+  - id: publishedAt
+    name: Published At
+    type: Date
+
+assets:
+- sys:
+    id: ast_001
+    type: Asset
+  fields:
+    title: Workshop Banner
+    file:
+      url: //images.ctfassets.net/main/workshop-banner.jpg
+      contentType: image/jpeg
+      details:
+        size: 204800

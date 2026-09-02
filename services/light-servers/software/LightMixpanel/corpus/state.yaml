@@ -162,3 +162,28 @@ events:
     plan: free
     platform: web
     utm_source: google
+
+funnels:
+- funnel_id: 1
+  name: Onboarding Funnel
+  steps:
+  - event: sign_up
+    count: 500
+  - event: first_purchase
+    count: 120
+  - event: second_purchase
+    count: 45
+
+profiles:
+- distinct_id: mp_user_001
+  properties:
+    $name: Alice Thornton
+    $email: alice@example.com
+    plan: pro
+    country: US
+- distinct_id: mp_user_002
+  properties:
+    $name: Bob Fenwick
+    $email: bob@example.com
+    plan: free
+    country: US

@@ -129,3 +129,26 @@ campaigns:
     from_name: Savannah Historic Preservation Alliance
     reply_to: miriam.aldridge@savannahga.gov
     title: November Newsletter
+
+lists:
+- id: list_001
+  name: Newsletter Subscribers
+  stats:
+    member_count: 420
+    unsubscribe_count: 12
+    open_rate: 0.38
+    click_rate: 0.12
+  date_created: '2026-01-01T00:00:00+00:00'
+
+reports:
+- id: rpt_001
+  campaign_id: cmp_001
+  list_id: list_001
+  type: regular
+  emails_sent: 415
+  opens:
+    total_opens: 158
+    unique_opens: 142
+  clicks:
+    total_clicks: 48
+    unique_subscriber_clicks: 42

@@ -69,3 +69,15 @@ works:
   - woodworking
   description: Jazz and gospel roots of the coastal South.
   edition_count: 176
+
+editions: {}
+
+reading_list: []
+
+subjects:
+- key: /subjects/furniture
+  name: Furniture
+  work_count: 142
+- key: /subjects/woodworking
+  name: Woodworking
+  work_count: 289

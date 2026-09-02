@@ -86,3 +86,19 @@ payments:
     currency: USD
     date: '2026-01-13'
     status: paid
+
+subs:
+- id: sub_001
+  status: active
+  customer_id: cust_001
+  plan_id: plan_pro
+  current_period_start: '2026-05-01T00:00:00Z'
+  current_period_end: '2026-06-01T00:00:00Z'
+  cancel_at_period_end: false
+- id: sub_002
+  status: active
+  customer_id: cust_002
+  plan_id: plan_basic
+  current_period_start: '2026-04-15T00:00:00Z'
+  current_period_end: '2026-05-15T00:00:00Z'
+  cancel_at_period_end: false

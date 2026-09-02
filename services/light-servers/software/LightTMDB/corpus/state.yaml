@@ -169,3 +169,21 @@ tv:
   number_of_seasons: 3
   number_of_episodes: 30
   media_type: tv
+
+genres:
+- id: 18
+  name: Drama
+- id: 53
+  name: Thriller
+- id: 10749
+  name: Romance
+- id: 35
+  name: Comedy
+- id: 28
+  name: Action
+
+credits: {}
+
+people: {}
+
+watchlist: []

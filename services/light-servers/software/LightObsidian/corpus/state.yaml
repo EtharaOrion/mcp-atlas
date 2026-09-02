@@ -122,3 +122,24 @@ contents:
     - Sketched the bookcase muntins.
 
     - Reviewed grant receipts for Priscilla.'
+
+vault:
+  name: Heritage Research
+  path: /Users/user/Documents/Heritage Research
+  notes:
+  - path: projects/sideboard-commission.md
+    name: Sideboard Commission
+    created: '2026-01-01T00:00:00'
+    modified: '2026-05-01T12:00:00'
+    size: 2048
+    tags:
+    - project
+    - commission
+  - path: techniques/dovetail-joints.md
+    name: Dovetail Joints
+    created: '2026-02-01T00:00:00'
+    modified: '2026-04-15T09:30:00'
+    size: 4096
+    tags:
+    - technique
+    - joinery

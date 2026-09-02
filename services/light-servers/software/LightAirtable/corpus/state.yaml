@@ -202,3 +202,36 @@ records:
       Email: marcus.whitby@shpa-savannah.org
       Company: Savannah Historic Preservation Alliance
       Role: Program record
+
+bases:
+- id: app_base01
+  name: Project Tracker
+  permission_level: create
+- id: app_base02
+  name: Client Directory
+  permission_level: create
+
+tables:
+- id: tbl_001
+  base_id: app_base01
+  name: Tasks
+  fields:
+  - id: fld_001
+    name: Name
+    type: singleLineText
+  - id: fld_002
+    name: Status
+    type: singleSelect
+  - id: fld_003
+    name: Due Date
+    type: date
+- id: tbl_002
+  base_id: app_base02
+  name: Clients
+  fields:
+  - id: fld_011
+    name: Name
+    type: singleLineText
+  - id: fld_012
+    name: Email
+    type: email
