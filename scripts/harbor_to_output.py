@@ -5,7 +5,7 @@ and complex-mcp task runs land in one consistent shape:
 
     output/<task-slug>/
     ├── config.json  lock.json  result.json          (Harbor job files, verbatim)
-    ├── summary.json  pass_summary.json  passk_summary.json  report.md
+    ├── summary.json  pass_summary.json  pass@N.json (N = run count)  report.md
     ├── trajectory/Run_N/                            (one per trial, Harbor-shaped)
     │   ├── agent/{claude-code.txt, trajectory.json}
     │   ├── logs/{agent-stream.txt, verifier-ctrf.json, verifier-reward.txt, verifier-stdout.txt}
@@ -1099,7 +1099,14 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
             "failure_mode_histogram": hist, "per_task": per_task,
             "attempts_per_task": n, "at": ks_eff,
         }
-        _dump(out_task / "passk_summary.json", passk)
+        # The pass@k file is named after the accumulated run count
+        # (pass@1.json, pass@2.json, ...) so the filename itself says how many
+        # runs it covers. Drop any stale copy from a previous run count.
+        passk_name = f"pass@{n}.json"
+        for _old in list(out_task.glob("pass@*.json")) + [out_task / "passk_summary.json"]:
+            if _old.name != passk_name and _old.exists():
+                _old.unlink()
+        _dump(out_task / passk_name, passk)
         _dump(raw_trials / "passk_summary.json", passk)
 
         # .raw summary / pairs / failure_analysis

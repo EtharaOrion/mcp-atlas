@@ -3,7 +3,7 @@
 #     /Users/macbookpro/Documents/mcp-atlas/output/<task>/
 #
 # in the complex-mcp "harbor" layout (config/lock/result.json + summary.json,
-# pass_summary.json, passk_summary.json, report.md, trajectory/Run_N/, .raw/).
+# pass_summary.json, pass@N.json, report.md, trajectory/Run_N/, .raw/).
 # There is no separate jobs/ directory: Harbor is pointed at output/ with the
 # task slug as the job name, and the HarborOutputPlugin reshapes the job in
 # place when it finishes. A previous run of the same task is moved to

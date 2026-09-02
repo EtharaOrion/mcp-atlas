@@ -600,7 +600,7 @@ output/<task>/
 ├── result.json           harbor's own trial result
 ├── report.md             human-readable summary
 ├── pass_summary.json     pass/fail rollup
-├── passk_summary.json    pass@k
+├── pass@N.json           pass@k (N = run count, e.g. pass@2.json for 2 runs)
 ├── config.json           the job config used
 ├── trajectory/Run_N/
 │   ├── report.json       per-run pytest + rubric view
