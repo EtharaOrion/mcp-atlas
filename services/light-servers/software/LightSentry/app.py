@@ -106,3 +106,11 @@ async def delete_issue(org_slug: str, issue_id: str, session_id: str):
 	if err:
 		return err
 	return session.sentry_session.delete_issue(org_slug, issue_id)
+
+
+@mcp.tool
+async def create_issue(org_slug: str, project_slug: str, title: str, session_id: str, level: str = "error", culprit: str = ""):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.sentry_session.create_issue(org_slug, project_slug, title, level, culprit)

@@ -254,16 +254,34 @@ class KubernetesSession:
     def update_deployment(self, namespace: str, name: str, replicas: int | None = None, image: str | None = None) -> dict:
         if not self._ns_exists(namespace):
             return {"status": "failed", "output": f"namespace {namespace!r} not found"}
-        deployments = self.deployments.get(namespace, [])
-        d = next((x for x in deployments if x["name"] == name), None)
+        d = next((x for x in self.deployments if x["namespace"] == namespace and x["name"] == name), None)
         if d is None:
             return {"status": "failed", "output": f"deployment {name!r} not found in namespace {namespace!r}"}
         if replicas is not None:
             d["replicas"] = int(replicas)
             d["ready_replicas"] = int(replicas)
         if image is not None:
-            for c in d.get("containers", []):
-                c["image"] = image
+            d["image"] = image
+        return {"status": "ok", "output": self._deployment_obj(d)}
+
+    def create_deployment(self, namespace: str, name: str, image: str, replicas: int = 1) -> Dict[str, Any]:
+        if not self._ns_exists(namespace):
+            return {"status": "failed", "output": f"namespace {namespace!r} not found"}
+        if any(d["namespace"] == namespace and d["name"] == name for d in self.deployments):
+            return {"status": "failed", "output": f"deployment {name!r} already exists in namespace {namespace!r}"}
+        replicas = max(0, int(replicas))
+        d = {
+            "name": name,
+            "namespace": namespace,
+            "image": image,
+            "replicas": replicas,
+            "available_replicas": replicas,
+            "ready_replicas": replicas,
+            "updated_replicas": replicas,
+            "strategy": "RollingUpdate",
+            "created_time": self._now(),
+        }
+        self.deployments.append(d)
         return {"status": "ok", "output": self._deployment_obj(d)}
 
 if __name__ == "__main__":

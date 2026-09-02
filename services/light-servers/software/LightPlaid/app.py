@@ -105,3 +105,11 @@ async def remove_account(account_id: str, session_id: str):
 	if err:
 		return err
 	return session.plaid_session.remove_account(account_id)
+
+
+@mcp.tool
+async def create_account(name: str, session_id: str, type_: str = "depository", subtype: str = "checking", balance: float = 0.0):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.plaid_session.create_account(name, type_, subtype, balance)

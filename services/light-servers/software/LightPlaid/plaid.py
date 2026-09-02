@@ -158,6 +158,27 @@ class PlaidSession:
             return {"status": "failed", "output": f"Account {account_id} not found"}
         return {"status": "ok", "output": {"removed_account_id": account_id, "request_id": self._request_id()}}
 
+    def create_account(self, name: str, type_: str = "depository", subtype: str = "checking",
+                       balance: float = 0.0) -> Dict[str, Any]:
+        account_id = self.uuid()
+        mask = ''.join(self.rng.choices("0123456789", k=4))
+        account = {
+            "account_id": account_id,
+            "name": name,
+            "official_name": name,
+            "type": type_,
+            "subtype": subtype,
+            "balances": {
+                "available": round(float(balance), 2),
+                "current": round(float(balance), 2),
+                "iso_currency_code": "USD",
+                "limit": None,
+            },
+            "mask": mask,
+        }
+        self.accounts.append(account)
+        return {"status": "ok", "output": {"account": account, "request_id": self._request_id()}}
+
 if __name__ == "__main__":
     s = PlaidSession(seed=12)
     print(s.get_accounts())

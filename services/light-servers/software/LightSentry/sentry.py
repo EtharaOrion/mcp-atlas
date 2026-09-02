@@ -213,6 +213,31 @@ class SentrySession:
         self.issues.pop(idx)
         return {"status": "ok", "output": {"id": issue_id, "deleted": True}}
 
+    def create_issue(self, org_slug: str, project_slug: str, title: str,
+                     level: str = "error", culprit: str = "") -> Dict[str, Any]:
+        if not self._org_exists(org_slug):
+            return {"status": "failed", "output": f"Organization {org_slug} not found"}
+        if not any(p["org_slug"] == org_slug and p["slug"] == project_slug for p in self.projects):
+            return {"status": "failed", "output": f"Project {project_slug} not found"}
+        now = self._now()
+        new_id = max((i["id"] for i in self.issues), default=40000) + 1
+        issue = {
+            "id": new_id,
+            "org_slug": org_slug,
+            "project_slug": project_slug,
+            "short_id": f"{project_slug.upper()}-{new_id}",
+            "title": title,
+            "culprit": culprit or "",
+            "level": level or "error",
+            "status": "unresolved",
+            "count": 1,
+            "user_count": 0,
+            "first_seen": now,
+            "last_seen": now,
+        }
+        self.issues.append(issue)
+        return {"status": "ok", "output": self._serialize_issue(issue)}
+
 
 if __name__ == "__main__":
     s = SentrySession(seed=12)

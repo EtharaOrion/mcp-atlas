@@ -125,6 +125,16 @@ async def list_nodes(session_id: str):
 
 @mcp.tool
 async def update_deployment(namespace: str, name: str, session_id: str, replicas: int | None = None, image: str | None = None):
-    s = get_session(session_id)
-    return s.kubernetes_session.update_deployment(namespace, name, replicas=replicas, image=image)
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.kubernetes_session.update_deployment(namespace, name, replicas, image)
+
+
+@mcp.tool
+async def create_deployment(namespace: str, name: str, image: str, session_id: str, replicas: int = 1):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.kubernetes_session.create_deployment(namespace, name, image, replicas)
 

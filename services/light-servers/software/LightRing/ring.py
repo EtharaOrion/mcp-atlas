@@ -368,6 +368,37 @@ class RingSession:
         return {"status": "ok", "output": {"type": "floodlight", "device_id": device_id,
                 "floodlight_status": pre_device.get("floodlight_status", {})}}
 
+    def create_motion_zone(self, device_id: int, name: str, x: float = 0.0, y: float = 0.0,
+                           width: float = 1.0, height: float = 1.0) -> Dict[str, Any]:
+        device, _ = self._find_device(device_id)
+        if not device:
+            return {"status": "failed", "output": f"Device {device_id} not found"}
+        new_pk = max((z.get("_pk", 0) for z in self.motion_zones), default=0) + 1
+        zone = {
+            "_pk": new_pk,
+            "device_id": device_id,
+            "zone_id": new_pk,
+            "name": name,
+            "x": float(x),
+            "y": float(y),
+            "width": float(width),
+            "height": float(height),
+        }
+        self.motion_zones.append(zone)
+        public = {k: v for k, v in zone.items() if k != "_pk"}
+        return {"status": "ok", "output": {"type": "motion_zone", "motion_zone": public}}
+
+    def delete_motion_zone(self, device_id: int, zone_id: int) -> Dict[str, Any]:
+        device, _ = self._find_device(device_id)
+        if not device:
+            return {"status": "failed", "output": f"Device {device_id} not found"}
+        idx = next((i for i, z in enumerate(self.motion_zones)
+                    if z["device_id"] == device_id and z.get("zone_id") == zone_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Motion zone {zone_id} not found for device {device_id}"}
+        self.motion_zones.pop(idx)
+        return {"status": "ok", "output": {"type": "motion_zone_deleted", "zone_id": zone_id, "device_id": device_id}}
+
 
 if __name__ == "__main__":
     s = RingSession(seed=12)

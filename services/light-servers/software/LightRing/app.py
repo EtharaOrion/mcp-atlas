@@ -250,3 +250,19 @@ async def toggle_floodlight(device_id: int, on: bool, session_id: str):
 	if err:
 		return err
 	return session.ring_session.toggle_floodlight(device_id, on)
+
+
+@mcp.tool
+async def create_motion_zone(device_id: int, name: str, session_id: str, x: float = 0.0, y: float = 0.0, width: float = 1.0, height: float = 1.0):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.ring_session.create_motion_zone(device_id, name, x, y, width, height)
+
+
+@mcp.tool
+async def delete_motion_zone(device_id: int, zone_id: int, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.ring_session.delete_motion_zone(device_id, zone_id)

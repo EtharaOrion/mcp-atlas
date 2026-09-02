@@ -198,16 +198,21 @@ class OktaSession:
         u = next((x for x in self.users if x["id"] == user_id), None)
         if u is None:
             return {"status": "failed", "output": f"User {user_id} not found"}
-        profile = u.get("profile", {})
         if first_name is not None:
-            profile["firstName"] = first_name
+            u["first_name"] = first_name
         if last_name is not None:
-            profile["lastName"] = last_name
+            u["last_name"] = last_name
         if email is not None:
-            profile["email"] = email
-            profile["login"] = email
-        u["profile"] = profile
-        return {"status": "ok", "output": u}
+            u["email"] = email
+            u["login"] = email
+        return {"status": "ok", "output": self._serialize_user(u)}
+
+    def delete_user(self, user_id: str) -> Dict[str, Any]:
+        idx = next((i for i, u in enumerate(self.users) if u["id"] == user_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"User {user_id} not found"}
+        self.users.pop(idx)
+        return {"status": "ok", "output": {"id": user_id, "deleted": True}}
 
 if __name__ == "__main__":
     s = OktaSession(seed=12)

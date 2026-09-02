@@ -133,6 +133,16 @@ async def list_apps(session_id: str, status: str | None = None):
 
 @mcp.tool
 async def update_user(user_id: str, session_id: str, first_name: str | None = None, last_name: str | None = None, email: str | None = None):
-    s = get_session(session_id)
-    return s.okta_session.update_user(user_id, first_name=first_name, last_name=last_name, email=email)
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.okta_session.update_user(user_id, first_name, last_name, email)
+
+
+@mcp.tool
+async def delete_user(user_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.okta_session.delete_user(user_id)
 
