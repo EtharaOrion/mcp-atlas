@@ -228,6 +228,21 @@ class MixpanelSession:
         }}
 
 
+
+    def update_profile(self, distinct_id: str, properties: Dict[str, Any]) -> Dict[str, Any]:
+        profile = next((p for p in self.profiles if p["distinct_id"] == distinct_id), None)
+        if not profile:
+            return {"status": "failed", "output": f"Profile {distinct_id} not found"}
+        profile.setdefault("properties", {}).update(properties or {})
+        return {"status": "ok", "output": profile}
+
+    def delete_profile(self, distinct_id: str) -> Dict[str, Any]:
+        before = len(self.profiles)
+        self.profiles = [p for p in self.profiles if p["distinct_id"] != distinct_id]
+        if len(self.profiles) == before:
+            return {"status": "failed", "output": f"Profile {distinct_id} not found"}
+        return {"status": "ok", "output": {"deleted_distinct_id": distinct_id}}
+
 if __name__ == "__main__":
     s = MixpanelSession(seed=12)
     print(s.funnels_list())

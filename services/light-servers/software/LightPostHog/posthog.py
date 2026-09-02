@@ -168,6 +168,28 @@ class PosthogSession:
         return {"status": "ok", "output": {"results": results, "count": len(results)}}
 
 
+
+    def update_feature_flag(self, project_id: int, flag_id: int, active: bool | None = None, rollout_percentage: int | None = None) -> Dict[str, Any]:
+        flag = next((f for f in self.flags if f["id"] == int(flag_id) and f["project_id"] == int(project_id)), None)
+        if not flag:
+            return {"status": "failed", "output": f"Feature flag {flag_id} not found in project {project_id}"}
+        if active is not None:
+            flag["active"] = bool(active)
+        if rollout_percentage is not None:
+            flag["rollout_percentage"] = int(rollout_percentage)
+        return {"status": "ok", "output": {
+            "id": flag["id"], "key": flag["key"], "name": flag["name"],
+            "active": flag["active"], "rollout_percentage": flag["rollout_percentage"],
+        }}
+
+    def delete_person(self, project_id: int, distinct_id: str) -> Dict[str, Any]:
+        before = len(self.persons)
+        self.persons = [p for p in self.persons if not (p["project_id"] == int(project_id) and p.get("distinct_id") == distinct_id)]
+        if len(self.persons) == before:
+            return {"status": "failed", "output": f"Person {distinct_id} not found in project {project_id}"}
+        self.events = [e for e in self.events if not (e["project_id"] == int(project_id) and e.get("distinct_id") == distinct_id)]
+        return {"status": "ok", "output": {"deleted_distinct_id": distinct_id, "project_id": int(project_id)}}
+
 if __name__ == "__main__":
     s = PosthogSession(seed=12)
     print(s.list_events(1))

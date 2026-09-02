@@ -235,6 +235,24 @@ class CoinbaseSession:
         return {"status": "ok", "output": txn}
 
 
+
+    def update_account(self, account_id: str, name: str | None = None) -> Dict[str, Any]:
+        acct = self._find_account(account_id)
+        if not acct:
+            return {"status": "failed", "output": f"Account {account_id} not found"}
+        if name:
+            acct["name"] = name
+        return {"status": "ok", "output": self._public_account(acct)}
+
+    def cancel_transaction(self, transaction_id: str) -> Dict[str, Any]:
+        txn = next((t for t in self.transactions if t["id"] == transaction_id), None)
+        if not txn:
+            return {"status": "failed", "output": f"Transaction {transaction_id} not found"}
+        if txn.get("status") == "completed":
+            return {"status": "failed", "output": "Completed transactions cannot be cancelled"}
+        self.transactions = [t for t in self.transactions if t["id"] != transaction_id]
+        return {"status": "ok", "output": {"cancelled_transaction_id": transaction_id}}
+
 if __name__ == "__main__":
     s = CoinbaseSession(seed=12)
     print(s.list_accounts())

@@ -167,6 +167,40 @@ class TwitchSession:
         return {"status": "ok", "output": results[:first]}
 
 
+
+    def follow_channel(self, broadcaster_id: str) -> Dict[str, Any]:
+        if not hasattr(self, 'follows'):
+            self.follows = set()
+        channel = next((c for c in self.channels if c["broadcaster_id"] == broadcaster_id), None)
+        if not channel:
+            return {"status": "failed", "output": f"Channel {broadcaster_id} not found"}
+        if broadcaster_id in self.follows:
+            return {"status": "failed", "output": "Already following this channel"}
+        self.follows.add(broadcaster_id)
+        channel["follower_count"] = channel.get("follower_count", 0) + 1
+        return {"status": "ok", "output": {"broadcaster_id": broadcaster_id, "followed_at": self._now()}}
+
+    def update_channel_info(self, broadcaster_id: str, title: str | None = None, game_name: str | None = None) -> Dict[str, Any]:
+        channel = next((c for c in self.channels if c["broadcaster_id"] == broadcaster_id), None)
+        if not channel:
+            return {"status": "failed", "output": f"Channel {broadcaster_id} not found"}
+        if title is not None:
+            channel["title"] = title
+        if game_name is not None:
+            channel["game_name"] = game_name
+        return {"status": "ok", "output": channel}
+
+    def unfollow_channel(self, broadcaster_id: str) -> Dict[str, Any]:
+        if not hasattr(self, 'follows'):
+            self.follows = set()
+        if broadcaster_id not in self.follows:
+            return {"status": "failed", "output": "Not following this channel"}
+        self.follows.discard(broadcaster_id)
+        channel = next((c for c in self.channels if c["broadcaster_id"] == broadcaster_id), None)
+        if channel and channel.get("follower_count", 0) > 0:
+            channel["follower_count"] -= 1
+        return {"status": "ok", "output": {"broadcaster_id": broadcaster_id, "unfollowed": True}}
+
 if __name__ == "__main__":
     s = TwitchSession(seed=12)
     print(s.get_top_games())

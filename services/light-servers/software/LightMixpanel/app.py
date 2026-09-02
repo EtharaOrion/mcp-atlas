@@ -98,3 +98,18 @@ async def engage(session_id: str, distinct_id: str | None = None, where: str | N
 	if err:
 		return err
 	return session.mixpanel_session.engage(distinct_id, where, page_size)
+
+@mcp.tool
+async def update_profile(distinct_id: str, properties: Dict[str, Any], session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.mixpanel_session.update_profile(distinct_id, properties)
+
+
+@mcp.tool
+async def delete_profile(distinct_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.mixpanel_session.delete_profile(distinct_id)

@@ -125,6 +125,21 @@ class AmplitudeSession:
         }}
 
 
+
+    def update_user_property(self, user_id: str, property_key: str, property_value: str) -> Dict[str, Any]:
+        user = next((u for u in self.users if u["user_id"] == user_id), None)
+        if not user:
+            return {"status": "failed", "output": f"User {user_id} not found"}
+        user.setdefault("user_properties", {})[property_key] = property_value
+        return {"status": "ok", "output": {"user_id": user_id, "updated_property": {property_key: property_value}}}
+
+    def delete_user_data(self, user_id: str) -> Dict[str, Any]:
+        before = len(self.events)
+        self.events = [e for e in self.events if e.get("user_id") != user_id]
+        removed = before - len(self.events)
+        self.users = [u for u in self.users if u["user_id"] != user_id]
+        return {"status": "ok", "output": {"user_id": user_id, "events_removed": removed}}
+
 if __name__ == "__main__":
     s = AmplitudeSession(seed=12)
     print(s.segmentation())

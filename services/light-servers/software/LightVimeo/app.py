@@ -90,3 +90,26 @@ async def get_user_videos(user_id: str, session_id: str, page: int = 1, per_page
 	if err:
 		return err
 	return session.vimeo_session.get_user_videos(user_id, page, per_page)
+
+@mcp.tool
+async def upload_video(title: str, session_id: str, description: str = "", duration: int = 0):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.vimeo_session.upload_video(title, description, duration)
+
+
+@mcp.tool
+async def update_video(video_id: str, session_id: str, title: str | None = None, description: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.vimeo_session.update_video(video_id, title, description)
+
+
+@mcp.tool
+async def delete_video(video_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.vimeo_session.delete_video(video_id)

@@ -193,3 +193,18 @@ async def get_stats(session_id: str):
 
 if __name__ == "__main__":
     mcp.run(transport="http", host="0.0.0.0", port=9036)
+
+@mcp.tool
+async def delete_meter(mid: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.energy_session.delete_meter(mid)
+
+
+@mcp.tool
+async def delete_alert(aid: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.energy_session.delete_alert(aid)

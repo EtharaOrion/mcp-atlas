@@ -106,3 +106,26 @@ async def get_clips(session_id: str, broadcaster_id: str | None = None, game_id:
 	if err:
 		return err
 	return session.twitch_session.get_clips(broadcaster_id, game_id, first)
+
+@mcp.tool
+async def follow_channel(broadcaster_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.twitch_session.follow_channel(broadcaster_id)
+
+
+@mcp.tool
+async def update_channel_info(broadcaster_id: str, session_id: str, title: str | None = None, game_name: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.twitch_session.update_channel_info(broadcaster_id, title, game_name)
+
+
+@mcp.tool
+async def unfollow_channel(broadcaster_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.twitch_session.unfollow_channel(broadcaster_id)

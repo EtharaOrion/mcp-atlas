@@ -142,6 +142,22 @@ class PlaidSession:
         }}
 
 
+
+    def update_account_name(self, account_id: str, name: str) -> Dict[str, Any]:
+        acct = next((a for a in self.accounts if a["account_id"] == account_id), None)
+        if not acct:
+            return {"status": "failed", "output": f"Account {account_id} not found"}
+        acct["name"] = name
+        acct["official_name"] = name
+        return {"status": "ok", "output": {"account_id": account_id, "name": name, "request_id": self._request_id()}}
+
+    def remove_account(self, account_id: str) -> Dict[str, Any]:
+        before = len(self.accounts)
+        self.accounts = [a for a in self.accounts if a["account_id"] != account_id]
+        if len(self.accounts) == before:
+            return {"status": "failed", "output": f"Account {account_id} not found"}
+        return {"status": "ok", "output": {"removed_account_id": account_id, "request_id": self._request_id()}}
+
 if __name__ == "__main__":
     s = PlaidSession(seed=12)
     print(s.get_accounts())

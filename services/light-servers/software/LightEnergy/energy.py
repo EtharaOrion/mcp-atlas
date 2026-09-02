@@ -425,3 +425,17 @@ class EnergySession:
                 "active_alerts": active_alerts,
             },
         }
+
+
+    def delete_meter(self, mid: str) -> Dict:
+        if mid not in self.meters:
+            return {"status": "failed", "output": f"Meter {mid} not found"}
+        del self.meters[mid]
+        self.readings = [r for r in self.readings if r.meter_id != mid]
+        return {"status": "ok", "output": {"deleted_meter_id": mid}}
+
+    def delete_alert(self, aid: str) -> Dict:
+        if aid not in self.alerts:
+            return {"status": "failed", "output": f"Alert {aid} not found"}
+        del self.alerts[aid]
+        return {"status": "ok", "output": {"deleted_alert_id": aid}}

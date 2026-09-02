@@ -74,3 +74,18 @@ async def user_activity(user: str, session_id: str):
 	if err:
 		return err
 	return session.amplitude_session.user_activity(user)
+
+@mcp.tool
+async def update_user_property(user_id: str, property_key: str, property_value: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.amplitude_session.update_user_property(user_id, property_key, property_value)
+
+
+@mcp.tool
+async def delete_user_data(user_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.amplitude_session.delete_user_data(user_id)

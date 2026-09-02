@@ -90,3 +90,18 @@ async def list_persons(project_id: int, session_id: str):
 	if err:
 		return err
 	return session.posthog_session.list_persons(project_id)
+
+@mcp.tool
+async def update_feature_flag(project_id: int, flag_id: int, session_id: str, active: bool | None = None, rollout_percentage: int | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.posthog_session.update_feature_flag(project_id, flag_id, active, rollout_percentage)
+
+
+@mcp.tool
+async def delete_person(project_id: int, distinct_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.posthog_session.delete_person(project_id, distinct_id)

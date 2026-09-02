@@ -90,3 +90,26 @@ async def send_message(team_id: str, channel_id: str, content: str, session_id: 
 	if err:
 		return err
 	return session.microsoft_teams_session.send_message(team_id, channel_id, content, content_type, importance)
+
+@mcp.tool
+async def create_channel(team_id: str, display_name: str, session_id: str, description: str = ""):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.microsoft_teams_session.create_channel(team_id, display_name, description)
+
+
+@mcp.tool
+async def edit_message(team_id: str, channel_id: str, message_id: str, content: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.microsoft_teams_session.edit_message(team_id, channel_id, message_id, content)
+
+
+@mcp.tool
+async def delete_message(team_id: str, channel_id: str, message_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.microsoft_teams_session.delete_message(team_id, channel_id, message_id)

@@ -114,3 +114,18 @@ async def send_money(account_id: str, to: str, amount: str, currency: str, sessi
 	if err:
 		return err
 	return session.coinbase_session.send_money(account_id, to, amount, currency)
+
+@mcp.tool
+async def update_account(account_id: str, session_id: str, name: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.coinbase_session.update_account(account_id, name)
+
+
+@mcp.tool
+async def cancel_transaction(transaction_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.coinbase_session.cancel_transaction(transaction_id)

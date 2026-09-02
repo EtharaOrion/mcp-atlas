@@ -150,6 +150,46 @@ class VimeoSession:
         return {"status": "ok", "output": paged}
 
 
+
+    def upload_video(self, title: str, description: str = "", duration: int = 0) -> Dict[str, Any]:
+        if not title:
+            return {"status": "failed", "output": "title is required"}
+        video = {
+            "id": self.uuid(),
+            "user_id": self._ME,
+            "title": title,
+            "description": description or "",
+            "duration": int(duration or 0),
+            "created_time": self._now(),
+            "link": f"https://vimeo.com/{self.uuid()}",
+            "status": "available",
+            "privacy": {"view": "anybody"},
+            "tags": [],
+        }
+        self.videos.append(video)
+        return {"status": "ok", "output": self._serialize_video(video)}
+
+    def update_video(self, video_id: str, title: str | None = None, description: str | None = None) -> Dict[str, Any]:
+        v = next((x for x in self.videos if x["id"] == str(video_id)), None)
+        if not v:
+            return {"status": "failed", "output": "The requested video could not be found."}
+        if v["user_id"] != self._ME:
+            return {"status": "failed", "output": "You do not have permission to edit this video."}
+        if title is not None:
+            v["title"] = title
+        if description is not None:
+            v["description"] = description
+        return {"status": "ok", "output": self._serialize_video(v)}
+
+    def delete_video(self, video_id: str) -> Dict[str, Any]:
+        v = next((x for x in self.videos if x["id"] == str(video_id)), None)
+        if not v:
+            return {"status": "failed", "output": "The requested video could not be found."}
+        if v["user_id"] != self._ME:
+            return {"status": "failed", "output": "You do not have permission to delete this video."}
+        self.videos = [x for x in self.videos if x["id"] != str(video_id)]
+        return {"status": "ok", "output": {"deleted_video_id": video_id}}
+
 if __name__ == "__main__":
     s = VimeoSession(seed=12)
     print(s.get_me())

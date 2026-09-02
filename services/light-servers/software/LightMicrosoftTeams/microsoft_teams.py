@@ -156,6 +156,45 @@ class MicrosoftTeamsSession:
         return {"status": "ok", "output": self._serialize_message(msg)}
 
 
+
+    def create_channel(self, team_id: str, display_name: str, description: str = "") -> Dict[str, Any]:
+        if not any(t["id"] == team_id for t in self.teams):
+            return {"status": "failed", "output": f"Team {team_id} not found"}
+        if not display_name:
+            return {"status": "failed", "output": "displayName is required"}
+        channel = {
+            "id": f"19:{self.uuid()}@thread.tacv2",
+            "team_id": team_id,
+            "displayName": display_name,
+            "description": description or "",
+            "createdDateTime": self._now(),
+            "isArchived": False,
+        }
+        self.channels.append(channel)
+        return {"status": "ok", "output": self._serialize_channel(channel)}
+
+    def edit_message(self, team_id: str, channel_id: str, message_id: str, content: str) -> Dict[str, Any]:
+        msg = next(
+            (m for m in self.messages if m["id"] == message_id and m["channel_id"] == channel_id and m["team_id"] == team_id),
+            None,
+        )
+        if not msg:
+            return {"status": "failed", "output": f"Message {message_id} not found"}
+        if not content:
+            return {"status": "failed", "output": "content is required"}
+        msg["content"] = content
+        return {"status": "ok", "output": self._serialize_message(msg)}
+
+    def delete_message(self, team_id: str, channel_id: str, message_id: str) -> Dict[str, Any]:
+        idx = next(
+            (i for i, m in enumerate(self.messages) if m["id"] == message_id and m["channel_id"] == channel_id and m["team_id"] == team_id),
+            None,
+        )
+        if idx is None:
+            return {"status": "failed", "output": f"Message {message_id} not found"}
+        self.messages.pop(idx)
+        return {"status": "ok", "output": {"deleted_message_id": message_id}}
+
 if __name__ == "__main__":
     s = MicrosoftTeamsSession(seed=12)
     print(s.list_joined_teams())

@@ -90,3 +90,18 @@ async def get_identity(session_id: str, account_ids: List[str] | None = None):
 	if err:
 		return err
 	return session.plaid_session.get_identity(account_ids)
+
+@mcp.tool
+async def update_account_name(account_id: str, name: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.plaid_session.update_account_name(account_id, name)
+
+
+@mcp.tool
+async def remove_account(account_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.plaid_session.remove_account(account_id)
