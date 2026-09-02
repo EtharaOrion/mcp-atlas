@@ -40,6 +40,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "services" / "mcp_eval"))
+sys.path.insert(0, str(REPO / "scripts"))
+
+from path_mask import mask_file  # noqa: E402
 
 PASS_THRESHOLD_DEFAULT = 0.5
 MCP_PREFIX = "mcp__"
@@ -643,7 +646,14 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     _copy(ag / "oracle.txt", run_dir / "agent" / "oracle.txt")
     _copy(ag / "trajectory.json", run_dir / "agent" / "trajectory.json")
     for f in ("config.json", "result.json"):
-        _copy(trial_dir / f, run_dir / f)
+        if _copy(trial_dir / f, run_dir / f):
+            # Harbor stamps absolute host paths (trial_uri, trials_dir) into
+            # these; mask them so nothing downstream can ship a /Users/... path.
+            mask_file(run_dir / f)
+    # Harbor's exception.txt is a host-side Python traceback (frames under the
+    # user's home dir); mask it wherever it has landed in this run folder.
+    for exc_f in run_dir.glob("exception.txt"):
+        mask_file(exc_f)
     _trun_res = _load(run_dir / "result.json", {}) or {}
     if isinstance((_trun_res.get("verifier_result") or {}).get("rewards"), dict):
         _trun_res["verifier_result"]["rewards"]["reward"] = reward_pct_doc.get("reward", final_reward)

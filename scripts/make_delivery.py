@@ -7,6 +7,8 @@ import shutil
 import sys
 from pathlib import Path
 
+from path_mask import mask_local_paths, mask_tree
+
 
 def _load(path: Path, default=None):
     try:
@@ -16,7 +18,14 @@ def _load(path: Path, default=None):
 
 
 def _dump(path: Path, data) -> None:
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+    path.write_text(mask_local_paths(json.dumps(data, indent=2, ensure_ascii=False)) + "\n")
+
+
+def _copy_masked(src: Path, dst: Path) -> None:
+    """Copy a text file, masking host-local paths (Harbor's trial_uri,
+    trials_dir, jobs_dir carry absolute host paths that must not ship)."""
+    dst.write_text(mask_local_paths(src.read_text(encoding="utf-8", errors="replace")),
+                   encoding="utf-8")
 
 
 def _short_model(name: str) -> str:
@@ -107,7 +116,7 @@ def make_delivery(
             (dst_run / "artifacts").mkdir()
 
         if (run_dir / "config.json").exists():
-            shutil.copy2(run_dir / "config.json", dst_run / "config.json")
+            _copy_masked(run_dir / "config.json", dst_run / "config.json")
 
         report = _load(run_dir / "report.json", {})
         judge_tokens = _load(run_dir / "verifier" / "judge_tokens.json", {})
@@ -117,7 +126,7 @@ def make_delivery(
         _dump(dst_run / "report.json", report)
 
         if (run_dir / "result.json").exists():
-            shutil.copy2(run_dir / "result.json", dst_run / "result.json")
+            _copy_masked(run_dir / "result.json", dst_run / "result.json")
 
         ver_src = run_dir / "verifier"
         ver_dst = dst_run / "verifier"
@@ -144,6 +153,13 @@ def make_delivery(
             "judge_usage": report.get("judge_usage", {}),
         }
         _dump(ver_dst / "score.json", score_data)
+
+    # Safety net: whatever else landed in the bundle (artifacts, logs, task
+    # data), no host-local path may ship. This also catches future additions
+    # to the bundle without anyone having to remember the masking rule.
+    swept = mask_tree(dst)
+    for p in swept:
+        print(f"masked local paths in: {p.relative_to(dst)}")
 
     print(f"Done: {dst}")
 
