@@ -99,3 +99,26 @@ async def get_news_url(nid: str, session_id: str):
     if err: return err
 
     return session.news_session.get_news_url(nid)
+
+@mcp.tool
+async def save_article(nid: str, session_id: str, notes: str = ""):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.news_session.save_article(nid, notes)
+
+
+@mcp.tool
+async def list_saved_articles(session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.news_session.list_saved_articles()
+
+
+@mcp.tool
+async def delete_saved_article(nid: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.news_session.delete_saved_article(nid)

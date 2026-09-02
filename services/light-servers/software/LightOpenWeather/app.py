@@ -74,3 +74,26 @@ async def geocode_direct(q: str, session_id: str, limit: int = 5):
 	if err:
 		return err
 	return session.openweather_session.geocode_direct(q, limit)
+
+@mcp.tool
+async def save_location(name: str, session_id: str, lat: float | None = None, lon: float | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.openweather_session.save_location(name, lat, lon)
+
+
+@mcp.tool
+async def list_saved_locations(session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.openweather_session.list_saved_locations()
+
+
+@mcp.tool
+async def delete_saved_location(name: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.openweather_session.delete_saved_location(name)

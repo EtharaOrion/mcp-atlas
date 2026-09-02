@@ -90,3 +90,26 @@ async def get_airlines(session_id: str, airline_codes: str | None = None):
 	if err:
 		return err
 	return session.amadeus_session.get_airlines(airline_codes)
+
+@mcp.tool
+async def save_flight_offer(offer_id: str, session_id: str, notes: str = ""):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.amadeus_session.save_flight_offer(offer_id, notes)
+
+
+@mcp.tool
+async def list_saved_offers(session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.amadeus_session.list_saved_offers()
+
+
+@mcp.tool
+async def delete_saved_offer(offer_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.amadeus_session.delete_saved_offer(offer_id)

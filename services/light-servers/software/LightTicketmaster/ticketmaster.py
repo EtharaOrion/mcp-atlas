@@ -225,6 +225,30 @@ class TicketmasterSession:
         return {"status": "ok", "output": self._page(out, "classifications")}
 
 
+
+    def save_event(self, event_id: str, notes: str = "") -> Dict[str, Any]:
+        if not hasattr(self, 'saved_events'):
+            self.saved_events = []
+        if any(e["event_id"] == event_id for e in self.saved_events):
+            return {"status": "failed", "output": f"Event {event_id} already saved"}
+        entry = {"event_id": event_id, "notes": notes, "saved_at": ""}
+        self.saved_events.append(entry)
+        return {"status": "ok", "output": entry}
+
+    def list_saved_events(self) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_events'):
+            self.saved_events = []
+        return {"status": "ok", "output": list(self.saved_events)}
+
+    def delete_saved_event(self, event_id: str) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_events'):
+            self.saved_events = []
+        before = len(self.saved_events)
+        self.saved_events = [e for e in self.saved_events if e["event_id"] != event_id]
+        if len(self.saved_events) == before:
+            return {"status": "failed", "output": f"Saved event {event_id} not found"}
+        return {"status": "ok", "output": {"deleted_event_id": event_id}}
+
 if __name__ == "__main__":
     s = TicketmasterSession(seed=12)
     print(s.search_events())

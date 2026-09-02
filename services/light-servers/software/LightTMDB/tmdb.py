@@ -140,6 +140,34 @@ class TmdbSession:
         return {"status": "ok", "output": self._page(combined, page=page)}
 
 
+
+    def add_to_watchlist(self, media_id: int, media_type: str = "movie") -> Dict[str, Any]:
+        if not hasattr(self, 'watchlist'):
+            self.watchlist = []
+        key = (int(media_id), media_type)
+        if any((int(w["media_id"]), w["media_type"]) == key for w in self.watchlist):
+            return {"status": "failed", "output": f"{media_type} {media_id} already in watchlist"}
+        entry = {"media_id": int(media_id), "media_type": media_type, "added_at": ""}
+        self.watchlist.append(entry)
+        return {"status": "ok", "output": entry}
+
+    def list_watchlist(self, media_type: str | None = None) -> Dict[str, Any]:
+        if not hasattr(self, 'watchlist'):
+            self.watchlist = []
+        items = list(self.watchlist)
+        if media_type:
+            items = [w for w in items if w["media_type"] == media_type]
+        return {"status": "ok", "output": items}
+
+    def remove_from_watchlist(self, media_id: int, media_type: str = "movie") -> Dict[str, Any]:
+        if not hasattr(self, 'watchlist'):
+            self.watchlist = []
+        before = len(self.watchlist)
+        self.watchlist = [w for w in self.watchlist if not (int(w["media_id"]) == int(media_id) and w["media_type"] == media_type)]
+        if len(self.watchlist) == before:
+            return {"status": "failed", "output": f"{media_type} {media_id} not in watchlist"}
+        return {"status": "ok", "output": {"removed_media_id": int(media_id), "media_type": media_type}}
+
 if __name__ == "__main__":
     s = TmdbSession(seed=12)
     print(s.movie_popular())

@@ -121,6 +121,30 @@ class YelpSession:
         return {"status": "ok", "output": {"categories": list(self.categories)}}
 
 
+
+    def save_business(self, business_id: str, notes: str = "") -> Dict[str, Any]:
+        if not hasattr(self, 'saved_businesses'):
+            self.saved_businesses = []
+        if any(b["business_id"] == business_id for b in self.saved_businesses):
+            return {"status": "failed", "output": f"Business {business_id} already saved"}
+        entry = {"business_id": business_id, "notes": notes, "saved_at": self._now()}
+        self.saved_businesses.append(entry)
+        return {"status": "ok", "output": entry}
+
+    def list_saved_businesses(self) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_businesses'):
+            self.saved_businesses = []
+        return {"status": "ok", "output": list(self.saved_businesses)}
+
+    def delete_saved_business(self, business_id: str) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_businesses'):
+            self.saved_businesses = []
+        before = len(self.saved_businesses)
+        self.saved_businesses = [b for b in self.saved_businesses if b["business_id"] != business_id]
+        if len(self.saved_businesses) == before:
+            return {"status": "failed", "output": f"Saved business {business_id} not found"}
+        return {"status": "ok", "output": {"deleted_business_id": business_id}}
+
 if __name__ == "__main__":
     s = YelpSession(seed=12)
     print(s.search_businesses())

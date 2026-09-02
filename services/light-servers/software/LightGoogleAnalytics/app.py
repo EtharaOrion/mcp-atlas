@@ -90,3 +90,26 @@ async def get_property(session_id: str):
 	if err:
 		return err
 	return session.google_analytics_session.get_property()
+
+@mcp.tool
+async def create_saved_report(name: str, property_id: str, session_id: str, dimensions: List[Any] | None = None, metrics: List[Any] | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.google_analytics_session.create_saved_report(name, property_id, dimensions, metrics)
+
+
+@mcp.tool
+async def list_saved_reports(session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.google_analytics_session.list_saved_reports()
+
+
+@mcp.tool
+async def delete_saved_report(report_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.google_analytics_session.delete_saved_report(report_id)

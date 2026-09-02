@@ -98,3 +98,26 @@ async def get_epic_natural(session_id: str):
 	if err:
 		return err
 	return session.nasa_session.get_epic_natural()
+
+@mcp.tool
+async def save_apod_bookmark(date: str, session_id: str, notes: str = ""):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.nasa_session.save_apod_bookmark(date, notes)
+
+
+@mcp.tool
+async def list_apod_bookmarks(session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.nasa_session.list_apod_bookmarks()
+
+
+@mcp.tool
+async def delete_apod_bookmark(date: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.nasa_session.delete_apod_bookmark(date)

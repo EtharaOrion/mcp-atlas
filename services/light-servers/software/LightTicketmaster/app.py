@@ -106,3 +106,26 @@ async def list_classifications(session_id: str):
 	if err:
 		return err
 	return session.ticketmaster_session.list_classifications()
+
+@mcp.tool
+async def save_event(event_id: str, session_id: str, notes: str = ""):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.ticketmaster_session.save_event(event_id, notes)
+
+
+@mcp.tool
+async def list_saved_events(session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.ticketmaster_session.list_saved_events()
+
+
+@mcp.tool
+async def delete_saved_event(event_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.ticketmaster_session.delete_saved_event(event_id)

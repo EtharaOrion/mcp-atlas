@@ -179,6 +179,36 @@ class GoogleAnalyticsSession:
         return {"status": "ok", "output": dict(self.property)}
 
 
+
+    def create_saved_report(self, name: str, property_id: str, dimensions: List[Any] | None = None, metrics: List[Any] | None = None) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_reports'):
+            self.saved_reports = []
+        report_id = self.uuid()
+        entry = {
+            "report_id": report_id,
+            "name": name,
+            "property_id": property_id,
+            "dimensions": dimensions or [],
+            "metrics": metrics or [],
+            "created_at": self._now(),
+        }
+        self.saved_reports.append(entry)
+        return {"status": "ok", "output": entry}
+
+    def list_saved_reports(self) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_reports'):
+            self.saved_reports = []
+        return {"status": "ok", "output": list(self.saved_reports)}
+
+    def delete_saved_report(self, report_id: str) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_reports'):
+            self.saved_reports = []
+        before = len(self.saved_reports)
+        self.saved_reports = [r for r in self.saved_reports if r["report_id"] != report_id]
+        if len(self.saved_reports) == before:
+            return {"status": "failed", "output": f"Saved report {report_id} not found"}
+        return {"status": "ok", "output": {"deleted_report_id": report_id}}
+
 if __name__ == "__main__":
     s = GoogleAnalyticsSession(seed=12)
     print(s.get_property())

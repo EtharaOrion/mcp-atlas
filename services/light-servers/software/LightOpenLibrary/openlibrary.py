@@ -203,6 +203,30 @@ class OpenlibrarySession:
         }}
 
 
+
+    def add_to_reading_list(self, work_id: str, notes: str = "") -> Dict[str, Any]:
+        if not hasattr(self, 'reading_list'):
+            self.reading_list = []
+        if any(r["work_id"] == work_id for r in self.reading_list):
+            return {"status": "failed", "output": f"Work {work_id} already in reading list"}
+        entry = {"work_id": work_id, "notes": notes, "added_at": self._now()}
+        self.reading_list.append(entry)
+        return {"status": "ok", "output": entry}
+
+    def list_reading_list(self) -> Dict[str, Any]:
+        if not hasattr(self, 'reading_list'):
+            self.reading_list = []
+        return {"status": "ok", "output": list(self.reading_list)}
+
+    def remove_from_reading_list(self, work_id: str) -> Dict[str, Any]:
+        if not hasattr(self, 'reading_list'):
+            self.reading_list = []
+        before = len(self.reading_list)
+        self.reading_list = [r for r in self.reading_list if r["work_id"] != work_id]
+        if len(self.reading_list) == before:
+            return {"status": "failed", "output": f"Work {work_id} not in reading list"}
+        return {"status": "ok", "output": {"removed_work_id": work_id}}
+
 if __name__ == "__main__":
     s = OpenlibrarySession(seed=12)
     print(s.search(q="ring"))

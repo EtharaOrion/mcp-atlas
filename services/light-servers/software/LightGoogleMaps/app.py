@@ -98,3 +98,26 @@ async def distance_matrix(origins: List[str], destinations: List[str], session_i
 	if err:
 		return err
 	return session.google_maps_session.distance_matrix(origins, destinations, mode)
+
+@mcp.tool
+async def save_place(place_id: str, session_id: str, label: str = ""):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.google_maps_session.save_place(place_id, label)
+
+
+@mcp.tool
+async def list_saved_places(session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.google_maps_session.list_saved_places()
+
+
+@mcp.tool
+async def delete_saved_place(place_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.google_maps_session.delete_saved_place(place_id)

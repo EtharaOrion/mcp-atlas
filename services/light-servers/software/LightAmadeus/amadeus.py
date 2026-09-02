@@ -204,6 +204,30 @@ class AmadeusSession:
         return {"status": "ok", "output": {"meta": {"count": len(data)}, "data": data}}
 
 
+
+    def save_flight_offer(self, offer_id: str, notes: str = "") -> Dict[str, Any]:
+        if not hasattr(self, 'saved_offers'):
+            self.saved_offers = []
+        if any(o["offer_id"] == offer_id for o in self.saved_offers):
+            return {"status": "failed", "output": f"Offer {offer_id} already saved"}
+        entry = {"offer_id": offer_id, "notes": notes, "saved_at": self._now()}
+        self.saved_offers.append(entry)
+        return {"status": "ok", "output": entry}
+
+    def list_saved_offers(self) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_offers'):
+            self.saved_offers = []
+        return {"status": "ok", "output": list(self.saved_offers)}
+
+    def delete_saved_offer(self, offer_id: str) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_offers'):
+            self.saved_offers = []
+        before = len(self.saved_offers)
+        self.saved_offers = [o for o in self.saved_offers if o["offer_id"] != offer_id]
+        if len(self.saved_offers) == before:
+            return {"status": "failed", "output": f"Saved offer {offer_id} not found"}
+        return {"status": "ok", "output": {"deleted_offer_id": offer_id}}
+
 if __name__ == "__main__":
     s = AmadeusSession(seed=12)
     print(s.search_flight_offers("JFK", "LHR"))

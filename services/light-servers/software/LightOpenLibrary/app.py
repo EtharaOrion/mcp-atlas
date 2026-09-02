@@ -106,3 +106,26 @@ async def get_isbn(isbn: str, session_id: str):
 	if err:
 		return err
 	return session.openlibrary_session.get_isbn(isbn)
+
+@mcp.tool
+async def add_to_reading_list(work_id: str, session_id: str, notes: str = ""):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.openlibrary_session.add_to_reading_list(work_id, notes)
+
+
+@mcp.tool
+async def list_reading_list(session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.openlibrary_session.list_reading_list()
+
+
+@mcp.tool
+async def remove_from_reading_list(work_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.openlibrary_session.remove_from_reading_list(work_id)

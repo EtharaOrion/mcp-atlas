@@ -246,6 +246,30 @@ class NasaSession:
         return {"status": "ok", "output": list(self.epic)}
 
 
+
+    def save_apod_bookmark(self, date: str, notes: str = "") -> Dict[str, Any]:
+        if not hasattr(self, 'apod_bookmarks'):
+            self.apod_bookmarks = []
+        if any(b["date"] == date for b in self.apod_bookmarks):
+            return {"status": "failed", "output": f"APOD {date} already bookmarked"}
+        entry = {"date": date, "notes": notes, "saved_at": self._now()}
+        self.apod_bookmarks.append(entry)
+        return {"status": "ok", "output": entry}
+
+    def list_apod_bookmarks(self) -> Dict[str, Any]:
+        if not hasattr(self, 'apod_bookmarks'):
+            self.apod_bookmarks = []
+        return {"status": "ok", "output": list(self.apod_bookmarks)}
+
+    def delete_apod_bookmark(self, date: str) -> Dict[str, Any]:
+        if not hasattr(self, 'apod_bookmarks'):
+            self.apod_bookmarks = []
+        before = len(self.apod_bookmarks)
+        self.apod_bookmarks = [b for b in self.apod_bookmarks if b["date"] != date]
+        if len(self.apod_bookmarks) == before:
+            return {"status": "failed", "output": f"Bookmark for {date} not found"}
+        return {"status": "ok", "output": {"deleted_date": date}}
+
 if __name__ == "__main__":
     s = NasaSession(seed=12)
     print(s.get_apod())

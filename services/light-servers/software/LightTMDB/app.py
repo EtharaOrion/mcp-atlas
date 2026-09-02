@@ -106,3 +106,26 @@ async def trending_all_week(session_id: str, page: int = 1):
 	if err:
 		return err
 	return session.tmdb_session.trending_all_week(page)
+
+@mcp.tool
+async def add_to_watchlist(media_id: int, session_id: str, media_type: str = "movie"):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.tmdb_session.add_to_watchlist(media_id, media_type)
+
+
+@mcp.tool
+async def list_watchlist(session_id: str, media_type: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.tmdb_session.list_watchlist(media_type)
+
+
+@mcp.tool
+async def remove_from_watchlist(media_id: int, session_id: str, media_type: str = "movie"):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.tmdb_session.remove_from_watchlist(media_id, media_type)

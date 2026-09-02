@@ -82,3 +82,26 @@ async def list_categories(session_id: str):
 	if err:
 		return err
 	return session.yelp_session.list_categories()
+
+@mcp.tool
+async def save_business(business_id: str, session_id: str, notes: str = ""):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.yelp_session.save_business(business_id, notes)
+
+
+@mcp.tool
+async def list_saved_businesses(session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.yelp_session.list_saved_businesses()
+
+
+@mcp.tool
+async def delete_saved_business(business_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.yelp_session.delete_saved_business(business_id)

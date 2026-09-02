@@ -226,6 +226,30 @@ class GoogleMapsSession:
         }}
 
 
+
+    def save_place(self, place_id: str, label: str = "") -> Dict[str, Any]:
+        if not hasattr(self, 'saved_places'):
+            self.saved_places = []
+        if any(p["place_id"] == place_id for p in self.saved_places):
+            return {"status": "failed", "output": f"Place {place_id} already saved"}
+        entry = {"place_id": place_id, "label": label, "saved_at": self._now()}
+        self.saved_places.append(entry)
+        return {"status": "ok", "output": entry}
+
+    def list_saved_places(self) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_places'):
+            self.saved_places = []
+        return {"status": "ok", "output": list(self.saved_places)}
+
+    def delete_saved_place(self, place_id: str) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_places'):
+            self.saved_places = []
+        before = len(self.saved_places)
+        self.saved_places = [p for p in self.saved_places if p["place_id"] != place_id]
+        if len(self.saved_places) == before:
+            return {"status": "failed", "output": f"Saved place {place_id} not found"}
+        return {"status": "ok", "output": {"deleted_place_id": place_id}}
+
 if __name__ == "__main__":
     s = GoogleMapsSession(seed=12)
     print(s.text_search("coffee"))

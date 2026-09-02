@@ -237,6 +237,30 @@ class OpenweatherSession:
         return {"status": "ok", "output": out}
 
 
+
+    def save_location(self, name: str, lat: float | None = None, lon: float | None = None) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_locations'):
+            self.saved_locations = []
+        if any(loc["name"] == name for loc in self.saved_locations):
+            return {"status": "failed", "output": f"Location '{name}' already saved"}
+        entry = {"name": name, "lat": lat, "lon": lon, "saved_at": self._now()}
+        self.saved_locations.append(entry)
+        return {"status": "ok", "output": entry}
+
+    def list_saved_locations(self) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_locations'):
+            self.saved_locations = []
+        return {"status": "ok", "output": list(self.saved_locations)}
+
+    def delete_saved_location(self, name: str) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_locations'):
+            self.saved_locations = []
+        before = len(self.saved_locations)
+        self.saved_locations = [loc for loc in self.saved_locations if loc["name"] != name]
+        if len(self.saved_locations) == before:
+            return {"status": "failed", "output": f"Saved location '{name}' not found"}
+        return {"status": "ok", "output": {"deleted_name": name}}
+
 if __name__ == "__main__":
     s = OpenweatherSession(seed=12)
     print(s.geocode_direct("London"))

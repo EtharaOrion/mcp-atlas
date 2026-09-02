@@ -163,6 +163,30 @@ class NewsSession:
             "output": f"light://news?nid={nid}"
         }
 
+
+    def save_article(self, nid: str, notes: str = "") -> dict:
+        if not hasattr(self, 'saved_articles'):
+            self.saved_articles = []
+        if any(a["nid"] == nid for a in self.saved_articles):
+            return {"status": "failed", "output": f"Article {nid} already saved"}
+        entry = {"nid": nid, "notes": notes, "saved_at": ""}
+        self.saved_articles.append(entry)
+        return {"status": "ok", "output": entry}
+
+    def list_saved_articles(self) -> dict:
+        if not hasattr(self, 'saved_articles'):
+            self.saved_articles = []
+        return {"status": "ok", "output": list(self.saved_articles)}
+
+    def delete_saved_article(self, nid: str) -> dict:
+        if not hasattr(self, 'saved_articles'):
+            self.saved_articles = []
+        before = len(self.saved_articles)
+        self.saved_articles = [a for a in self.saved_articles if a["nid"] != nid]
+        if len(self.saved_articles) == before:
+            return {"status": "failed", "output": f"Saved article {nid} not found"}
+        return {"status": "ok", "output": {"deleted_nid": nid}}
+
 if __name__ == "__main__":
     news_session = NewsSession(seed=42)
     
