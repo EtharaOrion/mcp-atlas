@@ -90,3 +90,19 @@ async def get_balance(session_id: str):
 	if err:
 		return err
 	return session.kraken_session.get_balance()
+
+
+@mcp.tool
+async def add_order(pair: str, type: str, ordertype: str, volume: str, session_id: str, price: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.kraken_session.add_order(pair, type, ordertype, volume, price)
+
+
+@mcp.tool
+async def cancel_order(txid: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.kraken_session.cancel_order(txid)

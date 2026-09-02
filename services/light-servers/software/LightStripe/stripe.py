@@ -357,6 +357,43 @@ class StripeSession:
         return {"status": "ok", "output": self.balance}
 
 
+    def update_customer(self, customer_id: str, name: str | None = None, email: str | None = None, description: str | None = None, phone: str | None = None) -> Dict[str, Any]:
+        c = self._find(self.customers, customer_id)
+        if not c:
+            return {"status": "failed", "output": f"No such customer: {customer_id}"}
+        if name is not None:
+            c["name"] = name
+        if email is not None:
+            c["email"] = email
+        if description is not None:
+            c["description"] = description
+        if phone is not None:
+            c["phone"] = phone
+        return {"status": "ok", "output": c}
+
+    def delete_customer(self, customer_id: str) -> Dict[str, Any]:
+        c = self._find(self.customers, customer_id)
+        if not c:
+            return {"status": "failed", "output": f"No such customer: {customer_id}"}
+        self.customers.remove(c)
+        return {"status": "ok", "output": {"id": customer_id, "object": "customer", "deleted": True}}
+
+    def update_subscription(self, sub_id: str, cancel_at_period_end: bool | None = None) -> Dict[str, Any]:
+        s = self._find(self.subscriptions, sub_id)
+        if not s:
+            return {"status": "failed", "output": f"No such subscription: {sub_id}"}
+        if cancel_at_period_end is not None:
+            s["cancel_at_period_end"] = cancel_at_period_end
+        return {"status": "ok", "output": s}
+
+    def cancel_subscription(self, sub_id: str) -> Dict[str, Any]:
+        s = self._find(self.subscriptions, sub_id)
+        if not s:
+            return {"status": "failed", "output": f"No such subscription: {sub_id}"}
+        s["status"] = "canceled"
+        return {"status": "ok", "output": s}
+
+
 if __name__ == "__main__":
     s = StripeSession(seed=12)
     print(s.list_customers())

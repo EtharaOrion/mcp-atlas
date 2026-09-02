@@ -90,3 +90,19 @@ async def get_account(session_id: str):
 	if err:
 		return err
 	return session.binance_session.get_account()
+
+
+@mcp.tool
+async def new_order(symbol: str, side: str, type: str, quantity: str, session_id: str, price: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.binance_session.new_order(symbol, side, type, quantity, price)
+
+
+@mcp.tool
+async def cancel_order(symbol: str, orderId: int, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.binance_session.cancel_order(symbol, orderId)

@@ -103,7 +103,7 @@ class KrakenSession:
             self.os = OSConnector(session_id=os_cfg["session_id"], url=os_cfg["url"]) if os_cfg else DummyOSConnector()
 
     def get_session_dict(self):
-        return {"balances": self.balances}
+        return {"balances": self.balances, "orders": getattr(self, "orders", [])}
 
     # --- helpers -----------------------------------------------------------
     def _now(self) -> str:
@@ -209,6 +209,44 @@ class KrakenSession:
     def get_balance(self) -> Dict[str, Any]:
         result = {b["asset"]: b["balance"] for b in self.balances}
         return {"status": "ok", "output": result}
+
+
+    def add_order(self, pair: str, type: str, ordertype: str, volume: str, price: str | None = None) -> Dict[str, Any]:
+        resolved = self._resolve_pair(pair)
+        if not resolved:
+            return {"status": "failed", "output": f"Unknown pair: {pair}"}
+        if type not in ("buy", "sell"):
+            return {"status": "failed", "output": "type must be 'buy' or 'sell'"}
+        if ordertype not in ("limit", "market"):
+            return {"status": "failed", "output": "ordertype must be 'limit' or 'market'"}
+        if ordertype == "limit" and not price:
+            return {"status": "failed", "output": "price required for limit orders"}
+        if not hasattr(self, "orders"):
+            self.orders = []
+        txid = "O" + self.uuid()[:5].upper()
+        order = {
+            "txid": txid,
+            "pair": resolved,
+            "type": type,
+            "ordertype": ordertype,
+            "volume": str(volume),
+            "price": str(price) if price else "0",
+            "status": "open",
+            "opentm": self._now(),
+        }
+        self.orders.append(order)
+        descr_str = f"{type} {volume} {resolved} @ {ordertype}"
+        if price:
+            descr_str += f" {price}"
+        return {"status": "ok", "output": {"descr": {"order": descr_str}, "txid": [txid]}}
+
+    def cancel_order(self, txid: str) -> Dict[str, Any]:
+        orders = getattr(self, "orders", [])
+        idx = next((i for i, o in enumerate(orders) if o["txid"] == txid), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Order {txid} not found"}
+        self.orders.pop(idx)
+        return {"status": "ok", "output": {"count": 1}}
 
 
 if __name__ == "__main__":

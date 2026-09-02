@@ -155,6 +155,14 @@ class SegmentSession:
         return {"status": "ok", "output": {"destinations": list(self.destinations), "count": len(self.destinations)}}
 
 
+    def delete_event(self, message_id: str) -> Dict[str, Any]:
+        idx = next((i for i, e in enumerate(self.events) if e.get("messageId") == message_id), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Event {message_id} not found"}
+        self.events.pop(idx)
+        return {"status": "ok", "output": {"messageId": message_id, "deleted": True}}
+
+
 if __name__ == "__main__":
     s = SegmentSession(seed=12)
     print(s.list_sources())

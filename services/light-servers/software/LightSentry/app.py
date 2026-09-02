@@ -98,3 +98,11 @@ async def list_releases(org_slug: str, session_id: str, project: str | None = No
 	if err:
 		return err
 	return session.sentry_session.list_releases(org_slug, project)
+
+
+@mcp.tool
+async def delete_issue(org_slug: str, issue_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.sentry_session.delete_issue(org_slug, issue_id)

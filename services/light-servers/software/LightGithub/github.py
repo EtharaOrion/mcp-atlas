@@ -238,6 +238,22 @@ class GithubSession:
         return {"status": "ok", "output": comment}
 
 
+    def update_comment(self, owner: str, repo: str, comment_id: int, body: str) -> Dict[str, Any]:
+        c = next((x for x in self.comments if x["id"] == int(comment_id) and x["repo"] == repo), None)
+        if not c:
+            return {"status": "failed", "output": f"Comment {comment_id} not found in {repo}"}
+        c["body"] = body
+        c["updated_at"] = self._now()
+        return {"status": "ok", "output": c}
+
+    def delete_comment(self, owner: str, repo: str, comment_id: int) -> Dict[str, Any]:
+        idx = next((i for i, c in enumerate(self.comments) if c["id"] == int(comment_id) and c["repo"] == repo), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Comment {comment_id} not found in {repo}"}
+        self.comments.pop(idx)
+        return {"status": "ok", "output": {"id": comment_id, "deleted": True}}
+
+
 if __name__ == "__main__":
     s = GithubSession(seed=12)
     print(s.get_user())

@@ -98,3 +98,19 @@ async def list_shared_links(session_id: str, path: str | None = None):
 	if err:
 		return err
 	return session.dropbox_session.list_shared_links(path)
+
+
+@mcp.tool
+async def upload_file(path: str, content: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.dropbox_session.upload_file(path, content)
+
+
+@mcp.tool
+async def delete_file(path: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.dropbox_session.delete(path)

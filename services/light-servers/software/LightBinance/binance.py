@@ -108,7 +108,7 @@ class BinanceSession:
             self.os = OSConnector(session_id=os_cfg["session_id"], url=os_cfg["url"]) if os_cfg else DummyOSConnector()
 
     def get_session_dict(self):
-        return {"prices": self.prices}
+        return {"prices": self.prices, "orders": getattr(self, "orders", [])}
 
     # --- helpers -----------------------------------------------------------
     def _now(self) -> str:
@@ -211,6 +211,41 @@ class BinanceSession:
             "balances": balances,
             "permissions": ["SPOT"],
         }}
+
+
+    def new_order(self, symbol: str, side: str, type: str, quantity: str, price: str | None = None) -> Dict[str, Any]:
+        if side.upper() not in ("BUY", "SELL"):
+            return {"status": "failed", "output": "side must be BUY or SELL"}
+        if type.upper() not in ("LIMIT", "MARKET"):
+            return {"status": "failed", "output": "type must be LIMIT or MARKET"}
+        if type.upper() == "LIMIT" and not price:
+            return {"status": "failed", "output": "price required for LIMIT orders"}
+        if not any(p["symbol"] == symbol.upper() for p in self.prices):
+            return {"status": "failed", "output": f"Unknown symbol: {symbol}"}
+        if not hasattr(self, "orders"):
+            self.orders = []
+        order_id = abs(hash(self.uuid())) % 10_000_000
+        order = {
+            "symbol": symbol.upper(),
+            "orderId": order_id,
+            "clientOrderId": self.uuid(),
+            "side": side.upper(),
+            "type": type.upper(),
+            "origQty": str(quantity),
+            "price": str(price) if price else "0.00000000",
+            "status": "NEW",
+            "transactTime": self._now(),
+        }
+        self.orders.append(order)
+        return {"status": "ok", "output": order}
+
+    def cancel_order(self, symbol: str, orderId: int) -> Dict[str, Any]:
+        orders = getattr(self, "orders", [])
+        idx = next((i for i, o in enumerate(orders) if o["symbol"] == symbol.upper() and o["orderId"] == int(orderId)), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Order {orderId} for {symbol} not found"}
+        self.orders.pop(idx)
+        return {"status": "ok", "output": {"orderId": int(orderId), "symbol": symbol.upper(), "status": "CANCELED"}}
 
 
 if __name__ == "__main__":

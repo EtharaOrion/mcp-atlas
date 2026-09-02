@@ -243,6 +243,49 @@ class DropboxSession:
         }}
 
 
+    def upload_file(self, path: str, content: str) -> Dict[str, Any]:
+        if not path:
+            return {"status": "failed", "output": {"error_summary": "bad_request/", "message": "path is required"}}
+        target = self._norm_path(path)
+        existing = next((f for f in self.files if f["path_lower"] == target), None)
+        if existing and existing["is_folder"]:
+            return {"status": "failed", "output": {"error_summary": "not_file/", "message": f"{path!r} is a folder"}}
+        name = target.rsplit("/", 1)[-1] if "/" in target else target.lstrip("/")
+        now = self._now()
+        if not hasattr(self, "file_blobs"):
+            self.file_blobs = {}
+        if existing:
+            existing["client_modified"] = now
+            existing["server_modified"] = now
+            existing["size"] = len(content.encode("utf-8"))
+            self.file_blobs[existing["name"]] = content
+            return {"status": "ok", "output": self._serialize_entry(existing)}
+        new_file = {
+            "id": "id:" + self.uuid(),
+            "name": name,
+            "path_lower": target,
+            "path_display": path if path.startswith("/") else "/" + path,
+            "is_folder": False,
+            "size": len(content.encode("utf-8")),
+            "client_modified": now,
+            "server_modified": now,
+            "rev": self.uuid(),
+        }
+        self.files.append(new_file)
+        self.file_blobs[name] = content
+        return {"status": "ok", "output": self._serialize_entry(new_file)}
+
+    def delete(self, path: str) -> Dict[str, Any]:
+        if not path:
+            return {"status": "failed", "output": {"error_summary": "bad_request/", "message": "path is required"}}
+        target = self._norm_path(path)
+        idx = next((i for i, f in enumerate(self.files) if f["path_lower"] == target or f["id"] == path), None)
+        if idx is None:
+            return {"status": "failed", "output": {"error_summary": "path_not_found/", "message": f"{path!r} not found"}}
+        removed = self.files.pop(idx)
+        return {"status": "ok", "output": {"metadata": self._serialize_entry(removed)}}
+
+
 if __name__ == "__main__":
     s = DropboxSession(seed=12)
     print(s.get_current_account())

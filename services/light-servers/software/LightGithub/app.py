@@ -154,3 +154,19 @@ async def create_comment(owner: str, repo: str, number: int, body: str, session_
 	if err:
 		return err
 	return session.github_session.create_comment(owner, repo, number, body)
+
+
+@mcp.tool
+async def update_comment(owner: str, repo: str, comment_id: int, body: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.github_session.update_comment(owner, repo, comment_id, body)
+
+
+@mcp.tool
+async def delete_comment(owner: str, repo: str, comment_id: int, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.github_session.delete_comment(owner, repo, comment_id)

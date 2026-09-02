@@ -98,3 +98,35 @@ async def search(session_id: str, query: str | None = None, type: str | None = N
 	if err:
 		return err
 	return session.box_session.search(query, type, limit, offset)
+
+
+@mcp.tool
+async def create_folder(name: str, parent_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.box_session.create_folder(name, parent_id)
+
+
+@mcp.tool
+async def upload_file(name: str, parent_id: str, content: str, session_id: str, description: str = ""):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.box_session.upload_file(name, parent_id, content, description)
+
+
+@mcp.tool
+async def update_file(file_id: str, session_id: str, name: str | None = None, description: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.box_session.update_file(file_id, name, description)
+
+
+@mcp.tool
+async def delete_file(file_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.box_session.delete_file(file_id)

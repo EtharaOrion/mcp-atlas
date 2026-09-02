@@ -106,3 +106,19 @@ async def get_segment(segment_id: int, session_id: str):
 	if err:
 		return err
 	return session.strava_session.get_segment(segment_id)
+
+
+@mcp.tool
+async def create_activity(name: str, sport_type: str, start_date_local: str, elapsed_time: int, session_id: str, distance: float | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.strava_session.create_activity(name, sport_type, start_date_local, elapsed_time, distance)
+
+
+@mcp.tool
+async def delete_activity(activity_id: int, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.strava_session.delete_activity(activity_id)

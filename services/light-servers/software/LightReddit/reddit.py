@@ -229,6 +229,37 @@ class RedditSession:
         return {"status": "ok", "output": {"kind": "t2", "data": u}}
 
 
+    def edit(self, id: str, text: str) -> Dict[str, Any]:
+        if id.startswith("t3_"):
+            target = next((p for p in self.posts if p["id"] == id), None)
+            if not target:
+                return {"status": "failed", "output": f"Post {id} not found"}
+            target["selftext"] = text
+            return {"status": "ok", "output": {"id": id, "selftext": text}}
+        elif id.startswith("t1_"):
+            target = next((c for c in self.comments if c["id"] == id), None)
+            if not target:
+                return {"status": "failed", "output": f"Comment {id} not found"}
+            target["body"] = text
+            return {"status": "ok", "output": {"id": id, "body": text}}
+        return {"status": "failed", "output": f"Unknown thing type for id {id}"}
+
+    def delete(self, id: str) -> Dict[str, Any]:
+        if id.startswith("t3_"):
+            idx = next((i for i, p in enumerate(self.posts) if p["id"] == id), None)
+            if idx is None:
+                return {"status": "failed", "output": f"Post {id} not found"}
+            self.posts.pop(idx)
+            return {"status": "ok", "output": {"id": id, "deleted": True}}
+        elif id.startswith("t1_"):
+            idx = next((i for i, c in enumerate(self.comments) if c["id"] == id), None)
+            if idx is None:
+                return {"status": "failed", "output": f"Comment {id} not found"}
+            self.comments.pop(idx)
+            return {"status": "ok", "output": {"id": id, "deleted": True}}
+        return {"status": "failed", "output": f"Unknown thing type for id {id}"}
+
+
 if __name__ == "__main__":
     s = RedditSession(seed=12)
     print(s.subreddit_about("programming"))

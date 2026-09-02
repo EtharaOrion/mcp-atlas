@@ -217,6 +217,24 @@ class CoinbaseSession:
         return {"status": "ok", "output": txns}
 
 
+    def send_money(self, account_id: str, to: str, amount: str, currency: str) -> Dict[str, Any]:
+        acct = self._find_account(account_id)
+        if not acct:
+            return {"status": "failed", "output": f"Account {account_id} not found"}
+        txn = {
+            "id": self.uuid(),
+            "account_id": account_id,
+            "type": "send",
+            "status": "completed",
+            "amount": {"amount": f"-{amount}", "currency": currency},
+            "native_amount": {"amount": f"-{amount}", "currency": currency},
+            "to": {"address": to},
+            "created_at": self._now(),
+        }
+        self.transactions.append(txn)
+        return {"status": "ok", "output": txn}
+
+
 if __name__ == "__main__":
     s = CoinbaseSession(seed=12)
     print(s.list_accounts())

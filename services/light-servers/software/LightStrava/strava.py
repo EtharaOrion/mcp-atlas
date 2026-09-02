@@ -188,6 +188,33 @@ class StravaSession:
         return {"status": "ok", "output": s}
 
 
+    def create_activity(self, name: str, sport_type: str, start_date_local: str, elapsed_time: int, distance: float | None = None) -> Dict[str, Any]:
+        new_id = max((a["id"] for a in self.activities), default=0) + 1
+        activity = {
+            "id": new_id,
+            "name": name,
+            "sport_type": sport_type,
+            "type": sport_type,
+            "start_date": start_date_local,
+            "start_date_local": start_date_local,
+            "elapsed_time": int(elapsed_time),
+            "moving_time": int(elapsed_time),
+            "distance": float(distance) if distance is not None else 0.0,
+            "athlete_id": self.athlete.get("id") if hasattr(self, "athlete") else 0,
+            "kudos_count": 0,
+            "achievement_count": 0,
+        }
+        self.activities.append(activity)
+        return {"status": "ok", "output": activity}
+
+    def delete_activity(self, activity_id: int) -> Dict[str, Any]:
+        idx = next((i for i, a in enumerate(self.activities) if a["id"] == int(activity_id)), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Activity {activity_id} not found"}
+        self.activities.pop(idx)
+        return {"status": "ok", "output": {"id": int(activity_id), "deleted": True}}
+
+
 if __name__ == "__main__":
     s = StravaSession(seed=12)
     print(s.get_athlete())

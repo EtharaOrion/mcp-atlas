@@ -194,3 +194,35 @@ async def get_balance(session_id: str):
 	if err:
 		return err
 	return session.stripe_session.get_balance()
+
+
+@mcp.tool
+async def update_customer(customer_id: str, session_id: str, name: str | None = None, email: str | None = None, description: str | None = None, phone: str | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.stripe_session.update_customer(customer_id, name, email, description, phone)
+
+
+@mcp.tool
+async def delete_customer(customer_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.stripe_session.delete_customer(customer_id)
+
+
+@mcp.tool
+async def update_subscription(sub_id: str, session_id: str, cancel_at_period_end: bool | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.stripe_session.update_subscription(sub_id, cancel_at_period_end)
+
+
+@mcp.tool
+async def cancel_subscription(sub_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.stripe_session.cancel_subscription(sub_id)

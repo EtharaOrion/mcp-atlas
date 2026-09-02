@@ -106,3 +106,19 @@ async def user_about(username: str, session_id: str):
 	if err:
 		return err
 	return session.reddit_session.user_about(username)
+
+
+@mcp.tool
+async def edit(id: str, text: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.reddit_session.edit(id, text)
+
+
+@mcp.tool
+async def delete(id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.reddit_session.delete(id)

@@ -344,6 +344,67 @@ class BoxSession:
         }}
 
 
+    def create_folder(self, name: str, parent_id: str) -> Dict[str, Any]:
+        parent = next((f for f in self.folders if f["id"] == str(parent_id)), None)
+        if not parent:
+            return {"status": "failed", "output": f"Parent folder {parent_id} not found"}
+        now = self._now()
+        folder = {
+            "id": self.uuid(),
+            "name": name,
+            "parent_id": str(parent_id),
+            "owner_id": self.users[0]["id"] if self.users else "0",
+            "description": "",
+            "created_at": now,
+            "modified_at": now,
+            "item_count": 0,
+        }
+        self.folders.append(folder)
+        return {"status": "ok", "output": self._serialize_folder(folder)}
+
+    def upload_file(self, name: str, parent_id: str, content: str, description: str = "") -> Dict[str, Any]:
+        parent = next((f for f in self.folders if f["id"] == str(parent_id)), None)
+        if not parent:
+            return {"status": "failed", "output": f"Parent folder {parent_id} not found"}
+        ext = name.rsplit(".", 1)[-1].lower() if "." in name else ""
+        now = self._now()
+        file_obj = {
+            "id": self.uuid(),
+            "name": name,
+            "parent_id": str(parent_id),
+            "owner_id": self.users[0]["id"] if self.users else "0",
+            "description": description,
+            "size": len(content.encode("utf-8")),
+            "extension": ext,
+            "sha1": (self.uuid() * 7)[:40],
+            "created_at": now,
+            "modified_at": now,
+        }
+        self.files.append(file_obj)
+        if not hasattr(self, "file_blobs"):
+            self.file_blobs = {}
+        self.file_blobs[name] = content
+        return {"status": "ok", "output": self._serialize_file(file_obj)}
+
+    def update_file(self, file_id: str, name: str | None = None, description: str | None = None) -> Dict[str, Any]:
+        f = next((x for x in self.files if x["id"] == str(file_id)), None)
+        if not f:
+            return {"status": "failed", "output": f"File {file_id} not found"}
+        if name is not None:
+            f["name"] = name
+        if description is not None:
+            f["description"] = description
+        f["modified_at"] = self._now()
+        return {"status": "ok", "output": self._serialize_file(f)}
+
+    def delete_file(self, file_id: str) -> Dict[str, Any]:
+        idx = next((i for i, f in enumerate(self.files) if f["id"] == str(file_id)), None)
+        if idx is None:
+            return {"status": "failed", "output": f"File {file_id} not found"}
+        self.files.pop(idx)
+        return {"status": "ok", "output": {"id": file_id, "deleted": True}}
+
+
 if __name__ == "__main__":
     s = BoxSession(seed=12)
     print(s.get_me())

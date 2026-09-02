@@ -106,3 +106,11 @@ async def list_destinations(session_id: str):
 	if err:
 		return err
 	return session.segment_session.list_destinations()
+
+
+@mcp.tool
+async def delete_event(message_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.segment_session.delete_event(message_id)

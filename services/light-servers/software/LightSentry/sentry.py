@@ -204,6 +204,16 @@ class SentrySession:
         return {"status": "ok", "output": [self._serialize_release(r) for r in results]}
 
 
+    def delete_issue(self, org_slug: str, issue_id: str) -> Dict[str, Any]:
+        if not self._org_exists(org_slug):
+            return {"status": "failed", "output": f"Organization {org_slug} not found"}
+        idx = next((i for i, x in enumerate(self.issues) if str(x["id"]) == str(issue_id)), None)
+        if idx is None:
+            return {"status": "failed", "output": f"Issue {issue_id} not found"}
+        self.issues.pop(idx)
+        return {"status": "ok", "output": {"id": issue_id, "deleted": True}}
+
+
 if __name__ == "__main__":
     s = SentrySession(seed=12)
     print(s.list_org_projects("orbit-labs"))
