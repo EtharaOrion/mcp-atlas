@@ -69,3 +69,10 @@ playlist_tracks:
   track_id: 7hG8iH9jI0kJ1lK2mL3nM4
   position: 2
   added_at: '2026-05-22T18:47:00Z'
+
+user:
+  id: null
+_playback_state:
+  is_playing: null
+  item: null
+  progress_ms: null

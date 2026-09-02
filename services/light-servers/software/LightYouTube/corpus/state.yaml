@@ -3767,3 +3767,6 @@ comments:
     videoId: vid_001
     parentId: null
   moderationStatus: published
+
+channel:
+  id: null

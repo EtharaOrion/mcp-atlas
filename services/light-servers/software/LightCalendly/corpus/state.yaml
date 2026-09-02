@@ -83,3 +83,7 @@ invitees:
   timezone: America/New_York
   created_at: '2026-05-20T08:00:00.000000Z'
   questions_and_answers: []
+
+user:
+  name: null
+  timezone: null

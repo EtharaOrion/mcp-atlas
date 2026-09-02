@@ -768,3 +768,6 @@ events:
   snapshot_url: ''
   duration_seconds: 8
   cv_properties: person
+
+location:
+  location_id: null

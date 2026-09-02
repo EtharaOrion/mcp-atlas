@@ -6138,3 +6138,11 @@ diary_entries:
   dietary_fiber_g: 3
   sugars_g: 4
   protein_g: 6
+
+user_profile:
+  daily_calorie_goal: null
+  goal_weight_lbs: null
+  macro_goals: {}
+  nutrient_goals:
+    calories: null
+  weekly_weight_goal_lbs: null

@@ -95,3 +95,6 @@ trips:
   surge_multiplier: 1.0
   requested_at: '2026-05-24T10:02:00Z'
   completed_at: '2026-05-24T10:22:00Z'
+
+rider:
+  rider_id: null

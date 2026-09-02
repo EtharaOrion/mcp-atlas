@@ -144,3 +144,6 @@ activities:
   start_date: '2025-05-19T01:30:00Z'
   kudos_count: 19
   segment_id: 3302
+
+athlete:
+  id: null

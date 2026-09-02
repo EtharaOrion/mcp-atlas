@@ -66,3 +66,6 @@ meetings:
   join_url: https://zoom.us/j/85012345672
   agenda: 'Agenda: all-members briefing.'
   created_at: '2026-05-09T10:00:00Z'
+
+user:
+  id: null

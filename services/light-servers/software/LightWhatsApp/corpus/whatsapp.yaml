@@ -105,3 +105,6 @@ conversations:
   last_message_at: '2026-05-26T07:45:00Z'
   origin: user_initiated
   within_24h_window: true
+
+business:
+  phone_number_id: null

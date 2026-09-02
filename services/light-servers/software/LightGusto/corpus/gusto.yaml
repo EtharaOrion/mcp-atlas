@@ -36,3 +36,6 @@ payrolls:
   gross_pay: 0.0
   net_pay: 0.0
   employee_count: 8
+
+company:
+  id: null

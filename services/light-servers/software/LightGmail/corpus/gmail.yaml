@@ -274,3 +274,7 @@ labels:
   messagesUnread: 2
   threadsTotal: 3
   threadsUnread: 2
+
+profile:
+  emailAddress: null
+  historyId: null

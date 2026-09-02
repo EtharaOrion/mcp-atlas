@@ -56,3 +56,6 @@ posts:
     likeCount: 512
     commentCount: 71
     shareCount: 94
+
+profile:
+  id: null

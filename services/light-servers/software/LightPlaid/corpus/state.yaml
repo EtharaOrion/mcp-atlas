@@ -379,3 +379,7 @@ transactions:
   - General
   pending: true
   payment_channel: online
+
+item:
+  item: null
+  institution: null

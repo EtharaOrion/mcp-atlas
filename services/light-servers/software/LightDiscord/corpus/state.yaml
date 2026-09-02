@@ -72,3 +72,7 @@ messages:
   timestamp: '2025-05-03T16:00:00Z'
   pinned: true
   edited_timestamp: null
+
+me:
+  id: null
+  username: null
