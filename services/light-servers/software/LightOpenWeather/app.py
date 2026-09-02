@@ -97,3 +97,11 @@ async def delete_saved_location(name: str, session_id: str):
 	if err:
 		return err
 	return session.openweather_session.delete_saved_location(name)
+
+
+@mcp.tool
+async def update_saved_location(name: str, session_id: str, new_name: str | None = None, lat: float | None = None, lon: float | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.openweather_session.update_saved_location(name, new_name, lat, lon)

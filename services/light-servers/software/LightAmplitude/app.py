@@ -89,3 +89,11 @@ async def delete_user_data(user_id: str, session_id: str):
 	if err:
 		return err
 	return session.amplitude_session.delete_user_data(user_id)
+
+
+@mcp.tool
+async def create_event(events: List[Dict[str, Any]], session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.amplitude_session.ingest(events)

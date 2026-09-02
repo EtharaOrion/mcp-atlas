@@ -113,3 +113,11 @@ async def delete_saved_offer(offer_id: str, session_id: str):
 	if err:
 		return err
 	return session.amadeus_session.delete_saved_offer(offer_id)
+
+
+@mcp.tool
+async def update_saved_offer(offer_id: str, notes: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.amadeus_session.update_saved_offer(offer_id, notes)

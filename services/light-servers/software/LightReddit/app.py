@@ -122,3 +122,27 @@ async def delete(id: str, session_id: str):
 	if err:
 		return err
 	return session.reddit_session.delete(id)
+
+
+@mcp.tool
+async def create_post(sr: str, title: str, session_id: str, kind: str = "self", url: str | None = None, text: str | None = None, author: str | None = "devkat"):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.reddit_session.submit(sr, title, kind, url, text, author)
+
+
+@mcp.tool
+async def update_post(id: str, text: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.reddit_session.edit(id, text)
+
+
+@mcp.tool
+async def delete_post(id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.reddit_session.delete(id)

@@ -121,3 +121,11 @@ async def delete_saved_place(place_id: str, session_id: str):
 	if err:
 		return err
 	return session.google_maps_session.delete_saved_place(place_id)
+
+
+@mcp.tool
+async def update_saved_place(place_id: str, label: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.google_maps_session.update_saved_place(place_id, label)

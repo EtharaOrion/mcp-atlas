@@ -113,3 +113,11 @@ async def delete_saved_report(report_id: str, session_id: str):
 	if err:
 		return err
 	return session.google_analytics_session.delete_saved_report(report_id)
+
+
+@mcp.tool
+async def update_saved_report(report_id: str, session_id: str, name: str | None = None, dimensions: List[Any] | None = None, metrics: List[Any] | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.google_analytics_session.update_saved_report(report_id, name, dimensions, metrics)

@@ -270,6 +270,15 @@ class NasaSession:
             return {"status": "failed", "output": f"Bookmark for {date} not found"}
         return {"status": "ok", "output": {"deleted_date": date}}
 
+    def update_apod_bookmark(self, date: str, notes: str) -> Dict[str, Any]:
+        if not hasattr(self, 'apod_bookmarks'):
+            self.apod_bookmarks = []
+        for b in self.apod_bookmarks:
+            if b["date"] == date:
+                b["notes"] = notes
+                return {"status": "ok", "output": b}
+        return {"status": "failed", "output": f"Bookmark for {date} not found"}
+
 if __name__ == "__main__":
     s = NasaSession(seed=12)
     print(s.get_apod())

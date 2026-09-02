@@ -250,6 +250,15 @@ class GoogleMapsSession:
             return {"status": "failed", "output": f"Saved place {place_id} not found"}
         return {"status": "ok", "output": {"deleted_place_id": place_id}}
 
+    def update_saved_place(self, place_id: str, label: str) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_places'):
+            self.saved_places = []
+        for p in self.saved_places:
+            if p["place_id"] == place_id:
+                p["label"] = label
+                return {"status": "ok", "output": p}
+        return {"status": "failed", "output": f"Saved place {place_id} not found"}
+
 if __name__ == "__main__":
     s = GoogleMapsSession(seed=12)
     print(s.text_search("coffee"))

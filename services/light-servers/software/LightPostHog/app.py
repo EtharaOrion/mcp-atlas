@@ -105,3 +105,11 @@ async def delete_person(project_id: int, distinct_id: str, session_id: str):
 	if err:
 		return err
 	return session.posthog_session.delete_person(project_id, distinct_id)
+
+
+@mcp.tool
+async def create_event(session_id: str, distinct_id: str | None = None, project_id: int | None = None, event: str | None = None, timestamp: str | None = None, properties: Dict[str, Any] | None = None):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.posthog_session.capture(distinct_id, project_id, event, timestamp, properties)

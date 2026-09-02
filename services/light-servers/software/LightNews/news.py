@@ -187,6 +187,15 @@ class NewsSession:
             return {"status": "failed", "output": f"Saved article {nid} not found"}
         return {"status": "ok", "output": {"deleted_nid": nid}}
 
+    def update_saved_article(self, nid: str, notes: str) -> dict:
+        if not hasattr(self, 'saved_articles'):
+            self.saved_articles = []
+        for a in self.saved_articles:
+            if a["nid"] == nid:
+                a["notes"] = notes
+                return {"status": "ok", "output": a}
+        return {"status": "failed", "output": f"Saved article {nid} not found"}
+
 if __name__ == "__main__":
     news_session = NewsSession(seed=42)
     

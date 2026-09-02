@@ -261,6 +261,20 @@ class OpenweatherSession:
             return {"status": "failed", "output": f"Saved location '{name}' not found"}
         return {"status": "ok", "output": {"deleted_name": name}}
 
+    def update_saved_location(self, name: str, new_name: str | None = None, lat: float | None = None, lon: float | None = None) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_locations'):
+            self.saved_locations = []
+        for loc in self.saved_locations:
+            if loc["name"] == name:
+                if new_name is not None:
+                    loc["name"] = new_name
+                if lat is not None:
+                    loc["lat"] = lat
+                if lon is not None:
+                    loc["lon"] = lon
+                return {"status": "ok", "output": loc}
+        return {"status": "failed", "output": f"Saved location '{name}' not found"}
+
 if __name__ == "__main__":
     s = OpenweatherSession(seed=12)
     print(s.geocode_direct("London"))

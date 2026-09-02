@@ -129,3 +129,11 @@ async def unfollow_channel(broadcaster_id: str, session_id: str):
 	if err:
 		return err
 	return session.twitch_session.unfollow_channel(broadcaster_id)
+
+
+@mcp.tool
+async def create_subscription(broadcaster_id: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.twitch_session.follow_channel(broadcaster_id)

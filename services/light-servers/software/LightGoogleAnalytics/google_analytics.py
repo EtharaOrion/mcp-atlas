@@ -209,6 +209,20 @@ class GoogleAnalyticsSession:
             return {"status": "failed", "output": f"Saved report {report_id} not found"}
         return {"status": "ok", "output": {"deleted_report_id": report_id}}
 
+    def update_saved_report(self, report_id: str, name: str | None = None, dimensions: List[Any] | None = None, metrics: List[Any] | None = None) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_reports'):
+            self.saved_reports = []
+        for r in self.saved_reports:
+            if r["report_id"] == report_id:
+                if name is not None:
+                    r["name"] = name
+                if dimensions is not None:
+                    r["dimensions"] = dimensions
+                if metrics is not None:
+                    r["metrics"] = metrics
+                return {"status": "ok", "output": r}
+        return {"status": "failed", "output": f"Saved report {report_id} not found"}
+
 if __name__ == "__main__":
     s = GoogleAnalyticsSession(seed=12)
     print(s.get_property())

@@ -228,6 +228,15 @@ class AmadeusSession:
             return {"status": "failed", "output": f"Saved offer {offer_id} not found"}
         return {"status": "ok", "output": {"deleted_offer_id": offer_id}}
 
+    def update_saved_offer(self, offer_id: str, notes: str) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_offers'):
+            self.saved_offers = []
+        for o in self.saved_offers:
+            if o["offer_id"] == offer_id:
+                o["notes"] = notes
+                return {"status": "ok", "output": o}
+        return {"status": "failed", "output": f"Saved offer {offer_id} not found"}
+
 if __name__ == "__main__":
     s = AmadeusSession(seed=12)
     print(s.search_flight_offers("JFK", "LHR"))

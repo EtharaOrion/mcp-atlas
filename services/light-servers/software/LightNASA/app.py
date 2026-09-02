@@ -121,3 +121,11 @@ async def delete_apod_bookmark(date: str, session_id: str):
 	if err:
 		return err
 	return session.nasa_session.delete_apod_bookmark(date)
+
+
+@mcp.tool
+async def update_apod_bookmark(date: str, notes: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.nasa_session.update_apod_bookmark(date, notes)

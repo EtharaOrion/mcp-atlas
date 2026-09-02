@@ -129,3 +129,11 @@ async def delete_saved_event(event_id: str, session_id: str):
 	if err:
 		return err
 	return session.ticketmaster_session.delete_saved_event(event_id)
+
+
+@mcp.tool
+async def update_saved_event(event_id: str, notes: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.ticketmaster_session.update_saved_event(event_id, notes)

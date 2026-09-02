@@ -122,3 +122,11 @@ async def delete_saved_article(nid: str, session_id: str):
 	if err:
 		return err
 	return session.news_session.delete_saved_article(nid)
+
+
+@mcp.tool
+async def update_saved_article(nid: str, notes: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.news_session.update_saved_article(nid, notes)

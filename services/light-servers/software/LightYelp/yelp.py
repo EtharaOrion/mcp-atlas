@@ -145,6 +145,15 @@ class YelpSession:
             return {"status": "failed", "output": f"Saved business {business_id} not found"}
         return {"status": "ok", "output": {"deleted_business_id": business_id}}
 
+    def update_saved_business(self, business_id: str, notes: str) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_businesses'):
+            self.saved_businesses = []
+        for b in self.saved_businesses:
+            if b["business_id"] == business_id:
+                b["notes"] = notes
+                return {"status": "ok", "output": b}
+        return {"status": "failed", "output": f"Saved business {business_id} not found"}
+
 if __name__ == "__main__":
     s = YelpSession(seed=12)
     print(s.search_businesses())

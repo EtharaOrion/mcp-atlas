@@ -194,3 +194,11 @@ async def search_messages(query: str, session_id: str):
 	if err:
 		return err
 	return session.slack_session.search_messages(query)
+
+
+@mcp.tool
+async def delete_message(channel: str, ts: str, session_id: str):
+	session, err = get_session(session_id)
+	if err:
+		return err
+	return session.slack_session.chat_delete(channel, ts)

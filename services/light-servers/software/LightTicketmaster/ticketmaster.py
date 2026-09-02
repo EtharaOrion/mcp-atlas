@@ -249,6 +249,15 @@ class TicketmasterSession:
             return {"status": "failed", "output": f"Saved event {event_id} not found"}
         return {"status": "ok", "output": {"deleted_event_id": event_id}}
 
+    def update_saved_event(self, event_id: str, notes: str) -> Dict[str, Any]:
+        if not hasattr(self, 'saved_events'):
+            self.saved_events = []
+        for e in self.saved_events:
+            if e["event_id"] == event_id:
+                e["notes"] = notes
+                return {"status": "ok", "output": e}
+        return {"status": "failed", "output": f"Saved event {event_id} not found"}
+
 if __name__ == "__main__":
     s = TicketmasterSession(seed=12)
     print(s.search_events())
