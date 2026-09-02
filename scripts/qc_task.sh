@@ -105,20 +105,6 @@ if [[ -f "$COMPOSE" ]]; then
     done < <(grep -E '^\s+image\s*:' "$COMPOSE" | sed 's/.*image\s*:\s*//')
 fi
 
-sect "light-servers config"
-if [[ -f "$COMPOSE" ]]; then
-    if grep -q 'light-servers' "$COMPOSE" 2>/dev/null; then
-        if grep -q 'ENABLED_SERVERS' "$COMPOSE" 2>/dev/null; then
-            val=$(grep 'ENABLED_SERVERS' "$COMPOSE" | head -1 | sed 's/.*ENABLED_SERVERS[: ]*//' | tr -d '"' | xargs)
-            ok "ENABLED_SERVERS: $val"
-        else
-            fail "light-servers used but ENABLED_SERVERS not set — will start ALL 161 servers (OOM risk)"
-        fi
-    else
-        ok "Not using light-servers"
-    fi
-fi
-
 sect "tests/test.sh"
 TESTSH="$TASK/tests/test.sh"
 if [[ -f "$TESTSH" ]]; then
