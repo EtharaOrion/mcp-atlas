@@ -43,6 +43,25 @@ import nest_asyncio
 # Apply nest_asyncio to allow nested event loops
 nest_asyncio.apply()
 
+# Optional Headroom prompt compression, default OFF (see
+# services/scoring/grader_compress.py). This module is run as a script, so its
+# own directory is on sys.path but the scoring package's is not; the fallback
+# appends it rather than inserting, to avoid shadowing anything already
+# importable. Compression failing must never cost a diagnosis, so the last
+# resort is an identity function.
+try:
+    from services.scoring.grader_compress import compress_messages
+except ImportError:
+    import sys as _sys
+    _sys.path.append(
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scoring")
+    )
+    try:
+        from grader_compress import compress_messages  # type: ignore
+    except ImportError:
+        def compress_messages(model, messages):  # type: ignore[misc]
+            return messages
+
 
 # =========================================================================
 # 1. CONFIGURATION AND SETUP
@@ -375,6 +394,13 @@ class AsyncLiteLLMClient:
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",
                 }
+                # Both callers send a single user turn holding an enriched
+                # trajectory -- 60K chars at the cap in
+                # format_enriched_trajectory_for_judge -- which is the largest
+                # compressible prompt in the grading path. Diagnosis classifies
+                # an already-scored failure, so unlike score_claims nothing here
+                # feeds the benchmark number.
+                messages = compress_messages(self.config.model_name, messages)
                 payload = {
                     "model": self.config.model_name,
                     "messages": messages,
