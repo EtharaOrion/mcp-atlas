@@ -651,12 +651,32 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         })
     test_pct = _pct(traj_val)
     rubric_pct = _pct(rubric_val)
-    parts = [p for p in (test_pct, rubric_pct) if p is not None]
-    final_reward = round(sum(parts) / len(parts), 2) if parts else None
     try:
         _orig_rew = json.loads((ver / "reward.json").read_bytes())
     except Exception:
         _orig_rew = {}
+
+    # The reward is the weighted ledger the verifier already computed, scaled to
+    # a percentage. It is NOT recomputed here.
+    #
+    # This used to be `mean(test_pct, rubric_pct)`, which disagreed with the
+    # graded reward in two ways at once: it dropped the per-component weights
+    # from tests/test_weights.json (5 for traj_tests vs 3 for the rubric, so the
+    # two channels are not equal halves), and it omitted state_completion and
+    # state_misbehave entirely. On one measured trial -- channel_a 0.8485,
+    # rubric 0.9595, state_completion 0.0 -- the ledger scored 0.5478 while this
+    # line reported 90.4, because it averaged the two channels the agent did
+    # well on and ignored the one it did not. Anything reading pass_summary.json
+    # as the headline number got the flattering figure.
+    _ledger_reward = _orig_rew.get("reward")
+    if isinstance(_ledger_reward, (int, float)):
+        final_reward = round(float(_ledger_reward) * 100, 2)
+    else:
+        # No reward.json (a trial that died before the verifier wrote one).
+        # Fall back to the old average rather than reporting nothing, but it is
+        # a strictly worse number -- see above.
+        parts = [p for p in (test_pct, rubric_pct) if p is not None]
+        final_reward = round(sum(parts) / len(parts), 2) if parts else None
     reward_pct_doc = {
         **_orig_rew,
         "reward": final_reward,

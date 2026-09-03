@@ -2,14 +2,14 @@
 # Run one mcp-atlas Harbor task end-to-end and emit the per-task output/ tree
 # (same layout complex-mcp's --layout harbor writer produces).
 #
-#   scripts/run_task.sh tasks/xenon-atomic-cube                 # claude-code + opus-4-8 (defaults)
+#   scripts/run_task.sh tasks/xenon-atomic-cube                 # claude-code + opus-5 (defaults)
 #   MODEL=claude-sonnet-4-6 N=3 scripts/run_task.sh tasks/foo   # 3 attempts, pass@k over them
 #   AGENT=oracle scripts/run_task.sh tasks/foo                  # oracle gate
 #   COPY_TO=/some/dir scripts/run_task.sh tasks/foo           # optional extra mirror
 #
 #   scripts/run_task.sh --stage reshape tasks/foo               # one stage only
 #
-# Env overrides: AGENT (claude-code) MODEL (claude-opus-4-8) N (1) JOB (<task slug>)
+# Env overrides: AGENT (claude-code) MODEL (claude-opus-5) N (1) JOB (<task slug>)
 #                OUTPUT_DIR (<repo>/output) COPY_TO (unset) BUILD_MULT (3) AT (1)
 #                STAGE (all) RUN_OFFSET (auto)
 #
@@ -69,6 +69,8 @@ AGENT="${AGENT:-claude-code}"
 MODEL="${MODEL:-claude-opus-5}"
 N="${N:-1}"
 BUILD_MULT="${BUILD_MULT:-3}"
+SETUP_MULT="${SETUP_MULT:-3}"   # agent-setup timeout multiplier (360s base -> 18m)
+AGENT_HEADROOM_ENABLED="${AGENT_HEADROOM_ENABLED:-false}"  # agent-path compression: OFF
 OUTPUT_DIR="${OUTPUT_DIR:-$REPO/output}"
 AT="${AT:-auto}"   # pass@k ks for the reshaper; auto = every k from 1..N runs
 JOB="${JOB:-$SLUG}"   # job dir == output/<task>/ (reshaped in place by the converter)
@@ -94,7 +96,26 @@ if [ ! -f "$SCORING_DIR/collect_artifacts.py" ]; then
 fi
 export SCORING_DIR
 
-TRAJ_DIR="$OUTPUT_DIR/$JOB/trajectory"
+# The reshaped output dir is NOT always output/<bundle-dir>. harbor_to_output.py
+# names it from task.toml's `name` (last path segment), falling back to the
+# bundle dir -- so tasks/Input_1 with name="complexmcp/larkmoor-depot-false-
+# alarm-attribution" reshapes into output/larkmoor-depot-false-alarm-attribution
+# while Harbor's raw job stays in output/Input_1. $JOB is right for the raw job;
+# everything that reads the reshaped tree has to use this instead. Matches the
+# converter's own regex so the two cannot disagree.
+resolve_out_slug() {
+  local name=""
+  if [ -f "$TASK/task.toml" ]; then
+    name="$(grep -m1 -E '^[[:space:]]*name[[:space:]]*=[[:space:]]*"' "$TASK/task.toml" 2>/dev/null \
+            | sed -E 's/^[[:space:]]*name[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/')"
+  fi
+  name="${name##*/}"
+  [ -n "$name" ] || name="$SLUG"
+  printf '%s\n' "$name"
+}
+OUT_SLUG="$(resolve_out_slug)"
+
+TRAJ_DIR="$OUTPUT_DIR/$OUT_SLUG/trajectory"
 STATE_FILE="$OUTPUT_DIR/$JOB/.run_state.json"
 # Kept outside output/<job>/ on purpose: harbor may wipe the job dir wholesale,
 # which would take a stash living inside it with it.
@@ -102,9 +123,13 @@ STASH_DIR="$OUTPUT_DIR/.stash/$JOB"
 
 state_get() {  # state_get <key> -> value on stdout, empty if absent
   [ -f "$STATE_FILE" ] || return 0
+  # `or ""` would fold a real 0 into "absent", and run_offset is 0 on every
+  # first run -- callers then fell back to counting Run_* dirs and aimed one
+  # run too high. Only None/missing may read as empty.
   python3 -c 'import json,sys
 try:
-    print(json.load(open(sys.argv[1])).get(sys.argv[2], "") or "")
+    v = json.load(open(sys.argv[1])).get(sys.argv[2])
+    print("" if v is None else v)
 except Exception:
     pass' "$STATE_FILE" "$1"
 }
@@ -306,8 +331,21 @@ stage_harbor() {
   fi
 
   rm -f "$OUTPUT_DIR/$JOB/lock.json"
+  # SETUP_MULT multiplies Harbor's agent-setup timeout (base 360s). Setup is
+  # `apt-get install curl procps` followed by
+  # `curl downloads.claude.ai/.../bootstrap.sh | bash`, so it is network-bound
+  # and unrelated to how long the task itself takes. A slow mirror or a cold
+  # CDN blows the default and the trial dies as AgentSetupTimeoutError with an
+  # empty /logs/agent -- which reads like an agent that produced nothing rather
+  # than an agent that never started. Observed on a run that had succeeded
+  # three times prior with no task change.
+  # Must precede harbor: it exports ANTHROPIC_BASE_URL, which harbor's
+  # claude_code agent reads from this environment and forwards into the
+  # container (empty values are dropped, so a failed proxy start is a no-op).
+  route_agent_through_proxy
   local args=(run -y --path "$TASK" --agent "$AGENT" --jobs-dir "$OUTPUT_DIR" --job-name "$JOB" \
-              --environment-build-timeout-multiplier "$BUILD_MULT" --n-attempts "$N")
+              --environment-build-timeout-multiplier "$BUILD_MULT" \
+              --agent-setup-timeout-multiplier "$SETUP_MULT" --n-attempts "$N")
   [ "$AGENT" != "oracle" ] && args+=(--model "$MODEL")
   if [ "$AGENT" = "claude-code" ]; then
     [ -n "$THINKING" ] && args+=(--ak "thinking=$THINKING")
@@ -319,7 +357,91 @@ stage_harbor() {
   state_put harbor_done 1
 }
 
+# Grade the rubric channel on the host, between harbor and reshape.
+#
+# The in-container judge cannot do it: task.toml pins JUDGE_MODEL=gpt-5.6-sol,
+# and codex does not exist in python:3.12-slim. Putting one there would mean
+# mounting this machine's ChatGPT credential into the container the agent just
+# ran in under bypassPermissions, and Harbor cannot isolate the verifier from
+# that container either -- environment_mode='separate' restarts light-servers
+# clean and destroys the world the state channel reads. So the container grades
+# everything that needs the live world, and the rubric is graded here.
+#
+# Runs before stage_reshape so harbor_to_output.py copies the corrected reward
+# rather than the rubric-less one. Checkpointed, because a resume must not spend
+# judge quota re-grading a trial it already graded.
+# ---------------------------------------------------------------- agent proxy
+# Route the AGENT's traffic through the Headroom proxy, so its prompts are
+# compressed too. OFF unless AGENT_HEADROOM_ENABLED=true.
+#
+# Nothing is started here. `headroom proxy` already runs on this host (it is
+# what a Claude Code session points ANTHROPIC_BASE_URL at), so this stage only
+# re-points the CONTAINER at it. The whole job is fixing the host part of the
+# URL: the value inherited from the session is http://127.0.0.1:<port>, and
+# inside the container 127.0.0.1 is the container -- which is exactly why the
+# unset at the top of this script exists. host.docker.internal is the same
+# proxy as seen from inside.
+#
+# Health-checked first: pointing the agent at a dead port turns every turn into
+# "API Error: Connection refused", which reads as the agent refusing the task
+# rather than as infrastructure. If the proxy does not answer we leave
+# ANTHROPIC_BASE_URL unset and run direct, exactly as before.
+HEADROOM_PROXY_PORT="${HEADROOM_PROXY_PORT:-8787}"
+
+route_agent_through_proxy() {
+  [ "$AGENT_HEADROOM_ENABLED" = "true" ] || return 0
+  if ! curl -sf -m 3 "http://127.0.0.1:$HEADROOM_PROXY_PORT/health" >/dev/null 2>&1; then
+    echo "[run_task] no headroom proxy on :$HEADROOM_PROXY_PORT; running direct" >&2
+    echo "[run_task]   start one with: headroom proxy --port $HEADROOM_PROXY_PORT" >&2
+    return 0
+  fi
+  export ANTHROPIC_BASE_URL="http://host.docker.internal:$HEADROOM_PROXY_PORT"
+  echo "[run_task] agent routed through headroom proxy ($ANTHROPIC_BASE_URL)"
+  echo "[run_task]   NOTE: setting ANTHROPIC_BASE_URL makes harbor pin every model"
+  echo "[run_task]   alias (sonnet/opus/haiku/subagent) to $MODEL -- claude_code.py:1358."
+}
+
+stage_host_rubric() {
+  [ "$(state_get host_rubric_done)" = "1" ] && { echo "[run_task] host rubric already graded; skipping"; return 0; }
+  local trial
+  # Trial dirs are named after the TASK slug, not the job: JOB=Input_1_oracle
+  # still produces Input_1__PMNhXaa. Globbing on "$JOB__*" therefore found
+  # nothing whenever JOB was overridden, and the pass skipped itself with
+  # "no trial dir" while the run looked fine.
+  trial="$(find "$OUTPUT_DIR/$JOB" -maxdepth 1 -type d -name "*__*" 2>/dev/null | head -1)"
+  if [ -z "$trial" ]; then
+    echo "[run_task] no trial dir under $OUTPUT_DIR/$JOB; skipping host rubric" >&2
+    return 0
+  fi
+  # FALLBACK, NOT OVERRIDE. Only grade here when the in-container judge did
+  # not produce a rubric.
+  #
+  # Input_1 pins JUDGE_MODEL=gpt-5.6-sol so its container judge fails preflight
+  # and defers to this pass. The other bundles pin nothing, and since
+  # rubric_judge_cli now resolves to the Claude transport when codex is absent,
+  # their container judge SUCCEEDS. Running unconditionally would then grade
+  # every one of them twice -- Claude in the container, codex here, second
+  # writer wins -- for double the cost and artifacts that disagree with the
+  # score. Set FORCE_HOST_RUBRIC=1 to re-grade deliberately.
+  if [ "${FORCE_HOST_RUBRIC:-0}" != "1" ] \
+     && [ -s "$trial/verifier/rubric_breakdown.json" ]; then
+    echo "[run_task] rubric already graded in-container; skipping host pass"
+    state_put host_rubric_done 1
+    return 0
+  fi
+  local py; py="$REPO/.venv/bin/python"; [ -x "$py" ] || py=python3
+  if "$py" "$REPO/scripts/host_rubric_pass.py" --trial "$trial" --task "$TASK"; then
+    state_put host_rubric_done 1
+  else
+    # A failed rubric is not a failed run: Channel A and the state channel are
+    # already graded and still worth reporting. Leave the checkpoint unset so a
+    # rerun retries this without repeating the agent phase.
+    echo "[run_task] host rubric pass failed; rubric channel stays UNSCORED" >&2
+  fi
+}
+
 stage_reshape() {
+  stage_host_rubric
   local offset; offset="$(state_get run_offset)"
   [ -n "$offset" ] || offset="$(resolve_run_offset)"
   local conv=(python3 scripts/harbor_to_output.py "$OUTPUT_DIR/$JOB" \
@@ -350,18 +472,36 @@ stage_reshape() {
 # ODOO_URL normally lives in .env, which this script does not source, so read it
 # from there when the environment doesn't already provide it.
 stage_finance() {
-  if [ -z "${ODOO_URL:-}" ] && [ -f .env ]; then
-    ODOO_URL="$(grep -E '^ODOO_URL=' .env | tail -1 | cut -d= -f2- \
-                | sed 's/[[:space:]]*#.*$//' | tr -d '[:space:]' || true)"
+  # The .env may live above the harness when it is vendored into a larger
+  # workspace, so search upward the way finance_reporter.py does.
+  if [ -z "${ODOO_URL:-}" ]; then
+    local d="$REPO"
+    while [ -n "$d" ] && [ "$d" != "/" ]; do
+      if [ -f "$d/.env" ]; then
+        ODOO_URL="$(grep -E '^ODOO_URL=' "$d/.env" | tail -1 | cut -d= -f2- \
+                    | sed 's/[[:space:]]*#.*$//' | tr -d '[:space:]' || true)"
+        [ -n "$ODOO_URL" ] && break
+      fi
+      d="$(dirname "$d")"
+    done
   fi
-  [ -n "${ODOO_URL:-}" ] || { echo "[finance] ODOO_URL unset — skipping"; return 0; }
+  if [ -z "${ODOO_URL:-}" ]; then
+    echo "[finance] WARNING: ODOO_URL unset (no .env at or above $REPO) — usage NOT reported" >&2
+    return 0
+  fi
 
   local offset; offset="$(state_get run_offset)"
   [ -n "$offset" ] || offset="$(resolve_run_offset)"
+  # Prefer the reshaped tree; fall back to the job dir for bundles whose
+  # task.toml name already matches their directory.
+  local run_dir="$OUTPUT_DIR/$OUT_SLUG/trajectory/Run_$((offset+1))"
+  if [ ! -d "$run_dir" ] && [ -d "$OUTPUT_DIR/$JOB/trajectory/Run_$((offset+1))" ]; then
+    run_dir="$OUTPUT_DIR/$JOB/trajectory/Run_$((offset+1))"
+  fi
   python3 scripts/finance_reporter.py \
-    --run-dir "$OUTPUT_DIR/$JOB/trajectory/Run_$((offset+1))" \
+    --run-dir "$run_dir" \
     --skip-if-reported \
-    --task-id "$SLUG" || echo "[finance] WARNING: reporting failed (non-fatal)"
+    --task-id "$OUT_SLUG" || echo "[finance] WARNING: reporting failed (non-fatal)"
 }
 
 # --- dispatch -----------------------------------------------------------------

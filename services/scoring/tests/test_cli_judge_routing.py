@@ -88,5 +88,55 @@ def test_preflight_ignores_a_non_codex_model(monkeypatch):
     assert cli._preflight("claude-sonnet-4-6") is None
 
 
-def test_the_cli_default_model_is_the_codex_model():
-    assert 'os.getenv("JUDGE_MODEL", "gpt-5.6-sol")' in Path(cli.__file__).read_text()
+def test_the_cli_default_model_is_the_codex_model(monkeypatch):
+    """On a host with codex installed, the pinned Codex grader still wins.
+
+    Was a source-text assertion on the literal argparse default. The default is
+    now resolved at runtime, because tests/test.sh invokes this CLI with no
+    --model and the task container has no codex binary -- so a fixed default
+    meant the bundle rubric channel could never be graded at all. Asserting the
+    behaviour instead of the source keeps the guarantee that mattered.
+    """
+    monkeypatch.delenv("JUDGE_MODEL", raising=False)
+    monkeypatch.setattr(cli, "_codex_cli", lambda: "/usr/local/bin/codex")
+    assert cli._default_judge_model() == cli.CODEX_MODELS[0]
+
+
+def test_an_explicit_judge_model_is_never_overridden(monkeypatch):
+    """A pinned grader is a benchmark property; resolution must not touch it."""
+    monkeypatch.setenv("JUDGE_MODEL", "gpt-5.6-sol")
+    monkeypatch.setattr(cli, "_codex_cli", lambda: "")
+    monkeypatch.setattr(cli, "_claude_cli", lambda: "/root/.local/bin/claude")
+    assert cli._default_judge_model() == "gpt-5.6-sol"
+
+
+def test_container_without_codex_falls_back_to_claude(monkeypatch):
+    """The case this transport exists for: the task container."""
+    monkeypatch.delenv("JUDGE_MODEL", raising=False)
+    monkeypatch.setattr(cli, "_codex_cli", lambda: "")
+    monkeypatch.setattr(cli, "_claude_cli", lambda: "/root/.local/bin/claude")
+    assert cli._default_judge_model() == cli.CLAUDE_MODELS[0]
+
+
+def test_neither_cli_keeps_the_codex_default(monkeypatch):
+    monkeypatch.delenv("JUDGE_MODEL", raising=False)
+    monkeypatch.setattr(cli, "_codex_cli", lambda: "")
+    monkeypatch.setattr(cli, "_claude_cli", lambda: "")
+    assert cli._default_judge_model() == cli.CODEX_MODELS[0]
+
+
+def test_claude_preflight_requires_a_credential(monkeypatch):
+    monkeypatch.setattr(cli, "_claude_cli", lambda: "/root/.local/bin/claude")
+    monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    reason = cli._preflight("claude-sonnet-4-5")
+    assert reason is not None and "CLAUDE_CODE_OAUTH_TOKEN" in reason
+    monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "tok")
+    assert cli._preflight("claude-sonnet-4-5") is None
+
+
+def test_claude_preflight_reports_a_missing_cli(monkeypatch):
+    monkeypatch.setattr(cli, "_claude_cli", lambda: "")
+    monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "tok")
+    reason = cli._preflight("claude-sonnet-4-5")
+    assert reason is not None and "claude CLI not found" in reason
