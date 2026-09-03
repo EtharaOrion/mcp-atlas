@@ -157,5 +157,58 @@
         "partnerships"
       ]
     }
+  ],
+  "checklists": [
+    {
+      "id": "cl_checklist01",
+      "id_card": "62d1000000000000000000d1",
+      "name": "Acceptance Criteria",
+      "pos": 1000,
+      "check_items": [
+        {
+          "id": "ci_0001",
+          "id_checklist": "cl_checklist01",
+          "name": "Unit tests passing",
+          "state": "complete",
+          "pos": 1000
+        },
+        {
+          "id": "ci_0002",
+          "id_checklist": "cl_checklist01",
+          "name": "Code review approved",
+          "state": "incomplete",
+          "pos": 2000
+        },
+        {
+          "id": "ci_0003",
+          "id_checklist": "cl_checklist01",
+          "name": "Documentation updated",
+          "state": "incomplete",
+          "pos": 3000
+        }
+      ]
+    },
+    {
+      "id": "cl_checklist02",
+      "id_card": "62d1000000000000000000d2",
+      "name": "Launch Checklist",
+      "pos": 1000,
+      "check_items": [
+        {
+          "id": "ci_0004",
+          "id_checklist": "cl_checklist02",
+          "name": "Staging environment tested",
+          "state": "complete",
+          "pos": 1000
+        },
+        {
+          "id": "ci_0005",
+          "id_checklist": "cl_checklist02",
+          "name": "Rollback plan documented",
+          "state": "incomplete",
+          "pos": 2000
+        }
+      ]
+    }
   ]
 }

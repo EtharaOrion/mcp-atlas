@@ -57,7 +57,7 @@ class YelpSession:
             self.os = connect_os(os_cfg)
 
     def get_session_dict(self):
-        return {"businesses": self.businesses}
+        return {"businesses": self.businesses, "saved_businesses": self.saved_businesses}
 
     def _now(self) -> str:
         return self.os.now()

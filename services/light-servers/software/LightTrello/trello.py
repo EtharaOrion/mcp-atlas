@@ -55,7 +55,7 @@ class TrelloSession:
             self.os = connect_os(os_cfg)
 
     def get_session_dict(self):
-        return {"cards": self.cards}
+        return {"cards": self.cards, "checklists": self.checklists}
 
     # --- helpers -----------------------------------------------------------
     def _now(self) -> str:

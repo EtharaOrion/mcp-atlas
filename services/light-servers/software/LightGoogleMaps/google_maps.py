@@ -57,7 +57,7 @@ class GoogleMapsSession:
             self.os = connect_os(os_cfg)
 
     def get_session_dict(self):
-        return {"places": self.places, "geocodes": self.geocodes}
+        return {"places": self.places, "geocodes": self.geocodes, "saved_places": self.saved_places}
 
     # --- helpers -----------------------------------------------------------
     def _now(self) -> str:

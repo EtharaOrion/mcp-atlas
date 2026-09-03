@@ -51,7 +51,7 @@ class RingSession:
             self.os = connect_os(os_cfg)
 
     def get_session_dict(self):
-        return {"devices": self.devices, "events": self.events}
+        return {"devices": self.devices, "events": self.events, "motion_zones": self.motion_zones, "notification_prefs": self.notification_prefs}
 
     # --- helpers -----------------------------------------------------------
     def _now(self) -> str:

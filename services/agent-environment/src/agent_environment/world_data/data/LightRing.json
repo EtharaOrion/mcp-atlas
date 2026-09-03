@@ -947,5 +947,20 @@
       "duration_seconds": 8,
       "cv_properties": "person"
     }
-  ]
+  ],
+  "motion_zones": [
+    {
+      "id": "mz_001",
+      "device_id": "dev_ring_001",
+      "name": "Front Porch",
+      "enabled": true,
+      "sensitivity": "medium"
+    }
+  ],
+  "notification_prefs": {
+    "motion": true,
+    "ding": true,
+    "email": false,
+    "sms": true
+  }
 }

@@ -41,7 +41,7 @@ class OpenlibrarySession:
             self.os = connect_os(os_cfg)
 
     def get_session_dict(self):
-        return {"works": self.works}
+        return {"works": self.works, "reading_list": self.reading_list}
 
     # --- helpers -----------------------------------------------------------
     def _now(self) -> str:

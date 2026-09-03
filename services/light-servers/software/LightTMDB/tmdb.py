@@ -61,7 +61,7 @@ class TmdbSession:
             self.os = connect_os(os_cfg)
 
     def get_session_dict(self):
-        return {"movies": self.movies, "tv": self.tv}
+        return {"movies": self.movies, "tv": self.tv, "watchlist": self.watchlist}
 
     # --- helpers -----------------------------------------------------------
     @staticmethod
