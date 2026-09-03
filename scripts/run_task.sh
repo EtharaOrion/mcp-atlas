@@ -75,13 +75,9 @@ OUTPUT_DIR="${OUTPUT_DIR:-$REPO/output}"
 AT="${AT:-auto}"   # pass@k ks for the reshaper; auto = every k from 1..N runs
 JOB="${JOB:-$SLUG}"   # job dir == output/<task>/ (reshaped in place by the converter)
 
-# Extended-thinking capture. `adaptive` + `summarized` is the only request shape
-# the API returns readable thinking text for on Opus 4.8/5-family models —
-# `enabled`+budget_tokens comes back as signature-only blocks with empty text
-# (measured 2026-09-02; see THINKING_FIX.md). Set THINKING="" to skip the flags
-# entirely (e.g. for an older pinned CLI without --thinking support).
-THINKING="${THINKING:-adaptive}"                       # enabled|adaptive|disabled|""
-THINKING_DISPLAY="${THINKING_DISPLAY:-summarized}"     # summarized|omitted|""
+# empty THINKING_DISPLAY = full blocks; "summarized" collapsed thinking into message text and dropped the raw blocks (measured 2026-09-03)
+THINKING="${THINKING:-adaptive}"
+THINKING_DISPLAY="${THINKING_DISPLAY:-}"
 
 # The absolute pin the compose comment has always claimed existed. Without it,
 # compose falls through to ${SCORING_DIR:-../../../services/scoring}, which is

@@ -8,6 +8,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
+RUN npm install -g @openai/codex@0.145.0
+
 # Pre-install all MCP server packages (NPX and UVX), saves approx 1 minute of startup time
 COPY dev_scripts/install_mcp_packages.sh /
 RUN /install_mcp_packages.sh && rm /install_mcp_packages.sh

@@ -117,6 +117,7 @@ export const TrajectoryStepSchema = z.object({
   message: AssistantMessageSchema,
   tool_results: z.array(ToolCallOutputMessageSchema).optional(),
   metrics: TrajectoryStepMetricsSchema.optional(),
+  extra: z.record(z.string(), z.any()).optional(),
 });
 export type TrajectoryStep = z.infer<typeof TrajectoryStepSchema>;
 

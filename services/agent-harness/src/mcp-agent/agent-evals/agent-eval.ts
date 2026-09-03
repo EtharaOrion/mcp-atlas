@@ -352,6 +352,7 @@ async function* runMcpAgent({
             cost_usd: turnUsage.cost_usd,
           }
         : undefined,
+      extra: lastExtra || undefined,
     });
 
     // Break outer loop if tool call limit reached mid-turn or the model
