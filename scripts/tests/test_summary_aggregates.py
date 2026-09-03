@@ -36,8 +36,14 @@ def _load_module():
 h2o = _load_module()
 
 
-def _build_job(tmp_path: Path, per_trial: list[dict]) -> tuple[Path, Path]:
-    """A minimal Harbor job dir carrying `per_trial` metrics in result.json."""
+def _build_job(
+    tmp_path: Path, per_trial: list[dict], trial_reward: dict | None = None
+) -> tuple[Path, Path]:
+    """A minimal Harbor job dir carrying `per_trial` metrics in result.json.
+
+    `trial_reward`, when given, is written as each trial's verifier/reward.json --
+    the container-side record the reshaper reads to derive the final reward.
+    """
     job = tmp_path / "job"
     job.mkdir()
     (job / "config.json").write_text(
@@ -53,6 +59,10 @@ def _build_job(tmp_path: Path, per_trial: list[dict]) -> tuple[Path, Path]:
             json.dumps({"task": {"path": "tasks/demo", "name": "demo"}})
         )
         (trial / "result.json").write_text(json.dumps({"reward": 0.0}))
+        if trial_reward is not None:
+            verifier = trial / "verifier"
+            verifier.mkdir()
+            (verifier / "reward.json").write_text(json.dumps(trial_reward))
     out = tmp_path / "out"
     out.mkdir()
     return job, out
@@ -119,6 +129,48 @@ def test_unmeasured_channel_reports_null_not_zero(tmp_path):
         tmp_path, [{"completion_rate": 0.9, "misbehave_rate": 0.0, "reward": 0.0}]
     )
     assert summary["metrics"]["avg_traj_tests"] is None
+
+
+def _convert_with_trial_reward(tmp_path: Path, trial_reward: dict) -> dict:
+    """Reshape one trial carrying `trial_reward`, returning its Run_1 detail.json."""
+    job, out = _build_job(
+        tmp_path, [{"completion_rate": 0.9, "misbehave_rate": 0.0, "reward": 0.0}], trial_reward
+    )
+    written = h2o.convert_job(job, out, ks=[], run_offset=0)
+    assert written
+    return json.loads((written[0] / "trajectory" / "Run_1" / "verifier" / "detail.json").read_text())
+
+
+def test_scored_zero_records_a_machine_readable_reason(tmp_path):
+    """A zero reward must carry why, or it is indistinguishable from a crash.
+
+    The bundle's test.sh records a reason only when Channel A never wrote. A
+    *scored* zero -- suite ran, run earned nothing -- previously arrived with no
+    explanation, which is what VER-UNATTRIBUTED-ZERO fires on.
+    """
+    detail = _convert_with_trial_reward(
+        tmp_path, {"reward": 0.0, "completion_rate": 0.9, "misbehave_rate": 0.0, "scored": True}
+    )
+    assert detail.get("zero_reason"), "a scored zero reached detail.json with no recorded cause"
+
+
+def test_container_supplied_zero_reason_is_not_overwritten(tmp_path):
+    """The container knows why it failed; this layer does not. Carry it through."""
+    supplied = "unscored: reward_channel_a.json was never written"
+    detail = _convert_with_trial_reward(
+        tmp_path,
+        {"reward": 0.0, "completion_rate": 0.0, "misbehave_rate": 0.0,
+         "scored": False, "zero_reason": supplied},
+    )
+    assert detail["zero_reason"] == supplied
+
+
+def test_nonzero_reward_carries_no_zero_reason(tmp_path):
+    """Only a zero needs explaining; a scored run must not gain a spurious field."""
+    detail = _convert_with_trial_reward(
+        tmp_path, {"reward": 0.75, "completion_rate": 0.9, "misbehave_rate": 0.0, "scored": True}
+    )
+    assert "zero_reason" not in detail
 
 
 def test_mean_or_none_distinguishes_unmeasured_from_zero():

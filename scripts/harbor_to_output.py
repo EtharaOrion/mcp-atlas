@@ -704,6 +704,24 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
                                state_w=_comp_w("state_completion"),
                                mis_w=_comp_w("state_misbehave"))
 
+    # A zero with no recorded cause cannot be told apart from a harness failure,
+    # so the reason travels with the number.
+    #
+    # The bundle's own test.sh already records one for the *unscored* case --
+    # Channel A never wrote, the suite died before writing its result. It records
+    # nothing for a *scored* zero, where the suite ran fine and the run genuinely
+    # earned nothing. That is the common case and it arrived here unexplained.
+    #
+    # Written host-side into detail.json rather than into the bundle: this is the
+    # field the auditor reads, and bundle bytes are hash-pinned in the ENGRAM
+    # ledger, so editing them there would break the pin to add an explanation.
+    # A reason the container already supplied is carried through rather than
+    # overwritten -- it knows why it failed and this layer does not.
+    if final_reward == 0:
+        detail_doc["zero_reason"] = (
+            _orig_rew.get("zero_reason") or f"{failure_class}: {failure_reason}"
+        )
+
     if not (ag / "trajectory.json").exists() and stream["messages"]:
         # Harbor's oracle agent (and any agent that only streams a .txt) writes
         # no ATIF trajectory.json; synthesize one from the parsed stream so the
