@@ -66,7 +66,7 @@ esac
 SLUG="$(basename "$TASK")"
 
 AGENT="${AGENT:-claude-code}"
-MODEL="${MODEL:-claude-opus-4-8}"
+MODEL="${MODEL:-claude-opus-5}"
 N="${N:-1}"
 BUILD_MULT="${BUILD_MULT:-3}"
 OUTPUT_DIR="${OUTPUT_DIR:-$REPO/output}"

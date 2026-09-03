@@ -147,7 +147,7 @@ def main():
     ap.add_argument("--task-id", default="688a441c1a0d2e5c93853e76")
     ap.add_argument("--csv", default="output/outputs_task_688a441c.csv")
     ap.add_argument("--harbor-task-dir", default="output/harbor/688a441c1a0d2e5c93853e76")
-    ap.add_argument("--model", default="claude-opus-4-8", help="agent model label (display only)")
+    ap.add_argument("--model", default="claude-opus-5", help="agent model label (display only)")
     ap.add_argument("--proxy-model", default="anthropic/claude-sonnet-5",
                      help="litellm model name to use for the judge call")
     ap.add_argument("--proxy-base", default="http://127.0.0.1:4000")
