@@ -75,7 +75,10 @@ run-eval-codex: judge-codex-check # run the eval with the judge on the codex CLI
 # PYTHON must be >= 3.11: the adapter tests parse generated task.toml with
 # tomllib. Older interpreters skip those assertions rather than fail, which
 # would quietly stop guarding the Harbor bundle shape.
-PYTEST_PYTHON ?= python3
+# Prefer the project venv when it exists: it holds pyyaml/python-dotenv from
+# requirements.txt, which a bare system python3 usually does not, and the
+# adapter + scoring suites fail at import without them.
+PYTEST_PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 
 test: test-env test-python # run every test suite
 
@@ -91,7 +94,7 @@ smoke: # end-to-end bundle generation + Harbor validation (no Docker, no network
 # ---------------------------------------------------------------------------
 # Harbor task runs → output/<task>/ (complex-mcp "harbor" layout)
 # ---------------------------------------------------------------------------
-# make run-task TASK=tasks/xenon-atomic-cube [MODEL=claude-opus-4-8] [AGENT=claude-code] [N=1]
+# make run-task TASK=tasks/xenon-atomic-cube [MODEL=claude-opus-5] [AGENT=claude-code] [N=1]
 run-task: # run one task via Harbor and emit output/<task>/ (summary, pass_summary, pass@N.json, report.md, trajectory/, .raw/)
 	@test -n "$(TASK)" || { echo "usage: make run-task TASK=tasks/<task-dir>"; exit 2; }
 	AGENT=$(AGENT) MODEL=$(MODEL) N=$(N) COPY_TO=$(COPY_TO) scripts/run_task.sh $(TASK)
