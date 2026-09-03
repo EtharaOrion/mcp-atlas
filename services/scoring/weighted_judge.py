@@ -71,6 +71,8 @@ class Weights:
     threshold: float = 1.0
     traj_tests: ComponentWeight = field(default_factory=ComponentWeight)
     rubric: ComponentWeight = field(default_factory=ComponentWeight)
+    state_completion: ComponentWeight = field(default_factory=ComponentWeight)
+    state_misbehave: ComponentWeight = field(default_factory=ComponentWeight)
 
 
 def load_weights(path: str | Path | None) -> Weights:
@@ -111,6 +113,8 @@ def load_weights(path: str | Path | None) -> Weights:
     components = data.get("components", {})
     traj_raw = components.get("traj_tests", {})
     rubric_raw = components.get("rubric", {})
+    state_raw = components.get("state_completion", {})
+    misbehave_raw = components.get("state_misbehave", {})
     return Weights(
         threshold=float(data.get("threshold", 1.0)),
         traj_tests=ComponentWeight(
@@ -118,6 +122,8 @@ def load_weights(path: str | Path | None) -> Weights:
             tests=dict(traj_raw.get("tests", {})),
         ),
         rubric=ComponentWeight(weight=float(rubric_raw.get("weight", 0.0))),
+        state_completion=ComponentWeight(weight=float(state_raw.get("weight", 0.0))),
+        state_misbehave=ComponentWeight(weight=float(misbehave_raw.get("weight", 0.0))),
     )
 
 
@@ -323,37 +329,43 @@ def score_task(
 # Phase 3: reward ledger combiner + verifier artifact writer
 # ============================================================================
 #
-# mcp-atlas's ledger has two components — traj_tests (Channel A) and rubric
-# (Channel B) — not complex-mcp's full five (state_completion/state_misbehave/
-# graph_plan/traj_tests/rubric). There's no world-state-diff channel here, so
-# state_completion/state_misbehave/graph_plan don't apply and aren't
-# implemented. Both implemented components already fold their own internal
-# goal/guard polarity into a single "goodness" value in [0, 1] (see
-# score_traj_tests() and rubric_weighted.evaluate_rubric()), so unlike
-# complex-mcp's ledger, combining them at the top level is a plain weighted
-# average, not a further earned/penalty split.
+# The ledger carries up to four components: traj_tests (Channel A), rubric
+# (Channel B), and the state channel pair state_completion (Rc, positive
+# weight) / state_misbehave (Rb, negative weight), captured by the bundle's
+# tests/state_dump.py and emitted to state_channel.json. graph_plan is retired
+# (no graph-plan grader runs in tests/test.sh). Positive components fold their
+# own internal goal/guard polarity into a single "goodness" value in [0, 1]
+# (see score_traj_tests() and rubric_weighted.evaluate_rubric()); a
+# negative-weight component is a penalty whose value in [0, 1] measures how
+# much of the forbidden thing happened. The combination follows the documented
+# formula: reward = max(0, (sum of weight*value over all components) / basis),
+# where basis is the sum of the positive weights.
 
 
 def combine_ledger(ledger: dict[str, dict[str, Any]]) -> float | None:
     """Combine component values into one reward in [0, 1].
 
     `ledger` maps component name -> {"weight": float, "value": float|None}.
-    A component only counts if its weight is > 0 and its value isn't None
+    A component only counts if its weight is nonzero and its value isn't None
     (None means "no goal tests/criteria defined" — see score_traj_tests()/
     evaluate_rubric() — so there's nothing to weigh in for that component).
+    Negative-weight components (state_misbehave) subtract from the numerator
+    but never join the basis, and the result floors at 0.
 
-    Returns None if no component is active — the caller should fall back to
-    whatever the pipeline's default (unweighted) scoring already does rather
-    than treating an all-inert ledger as a reward of 0.
+    Returns None if no positive-weight component is active — the caller should
+    fall back to whatever the pipeline's default (unweighted) scoring already
+    does rather than treating an all-inert ledger as a reward of 0.
     """
     active = {
         name: c for name, c in ledger.items()
-        if c.get("weight", 0) > 0 and c.get("value") is not None
+        if c.get("weight", 0) != 0 and c.get("value") is not None
     }
-    if not active:
+    positive = {name: c for name, c in active.items() if c["weight"] > 0}
+    if not positive:
         return None
-    total_weight = sum(c["weight"] for c in active.values())
-    return sum(c["weight"] * c["value"] for c in active.values()) / total_weight
+    basis = sum(c["weight"] for c in positive.values())
+    raw = sum(c["weight"] * c["value"] for c in active.values()) / basis
+    return max(0.0, raw)
 
 
 def judge_weighted(
@@ -365,6 +377,7 @@ def judge_weighted(
     rubric_value: float | None = None,
     rubric_weight: float = 0.0,
     rubric_rows: list[dict[str, Any]] | None = None,
+    state_channel: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Top-level combiner for one task's grading run.
 
@@ -397,6 +410,21 @@ def judge_weighted(
     effective_rubric_weight = rubric_weight or weights.rubric.weight
     if effective_rubric_weight and rubric_value is not None:
         ledger["rubric"] = {"weight": effective_rubric_weight, "value": rubric_value}
+
+    # State channel (Rc/Rb): the parsed contents of state_channel.json, written
+    # by the bundle's tests. A dump that could not run reports available: False
+    # and stays out of the ledger — an unmeasured world is not a scored zero.
+    if state_channel and state_channel.get("available"):
+        if weights.state_completion.weight and state_channel.get("completion") is not None:
+            ledger["state_completion"] = {
+                "weight": weights.state_completion.weight,
+                "value": float(state_channel["completion"]),
+            }
+        if weights.state_misbehave.weight and state_channel.get("misbehave") is not None:
+            ledger["state_misbehave"] = {
+                "weight": weights.state_misbehave.weight,
+                "value": float(state_channel["misbehave"]),
+            }
 
     reward = combine_ledger(ledger)
     return {

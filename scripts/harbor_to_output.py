@@ -477,7 +477,9 @@ def _junit_to_ctrf(junit_path: Path, tw_comp: dict | None = None) -> dict | None
 
 def _build_detail(ctrf: dict | None, weights: dict | None, breakdown: dict | None,
                   traj_val: float | None, rubric_val: float | None,
-                  traj_w: float, rubric_w: float) -> dict:
+                  traj_w: float, rubric_w: float,
+                  state_val: float | None = None, state_mis: float | None = None,
+                  state_w: float = 0, mis_w: float = 0) -> dict:
     tests = ((ctrf or {}).get("results") or {}).get("tests") or []
     tw_tests = (((weights or {}).get("components") or {}).get("traj_tests") or {}).get("tests") or {}
     traj_test_rows = []
@@ -510,6 +512,16 @@ def _build_detail(ctrf: dict | None, weights: dict | None, breakdown: dict | Non
         "rubric": {"weight": rubric_w, "value": _r4(rubric_val),
                    "earned": _r4((rubric_val or 0) * rubric_w) if rubric_val is not None else None},
     }
+    # State channel (Rc/Rb). A declared component whose value never arrived
+    # (state dump failed, or the task has no state channel) stays out rather
+    # than reading as a scored zero; a declared component WITH a value must
+    # appear, because a component that never scores can never fail.
+    if state_w and state_val is not None:
+        ledger["state_completion"] = {"weight": state_w, "value": _r4(state_val),
+                                      "earned": _r4(state_val * state_w)}
+    if mis_w and state_mis is not None:
+        ledger["state_misbehave"] = {"weight": mis_w, "value": _r4(state_mis),
+                                     "earned": _r4(state_mis * mis_w)}
     return {"ledger": ledger, "traj_test_rows": traj_test_rows, "rubric_rows": rubric_rows}
 
 
@@ -687,7 +699,10 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         rubric_expected=bool(rubric_src))
 
     reward_txt_val = str(round(final_reward, 6)) if final_reward is not None else "0.0"
-    detail_doc = _build_detail(ctrf, weights, breakdown, traj_val, rubric_val, traj_w, rubric_w)
+    detail_doc = _build_detail(ctrf, weights, breakdown, traj_val, rubric_val, traj_w, rubric_w,
+                               state_val=state_val, state_mis=state_mis,
+                               state_w=_comp_w("state_completion"),
+                               mis_w=_comp_w("state_misbehave"))
 
     if not (ag / "trajectory.json").exists() and stream["messages"]:
         # Harbor's oracle agent (and any agent that only streams a .txt) writes
@@ -939,6 +954,26 @@ def _mean(vals):
     return round(sum(vals) / len(vals), 6) if vals else 0.0
 
 
+def _mean_or_none(vals):
+    """Mean of the measured values, or None when nothing was measured.
+
+    `_mean` returns 0.0 for an empty list, which reports an unmeasured channel
+    as a scored zero. For counts and token totals that is harmless -- no tokens
+    really is zero tokens. For a scored component it is not: a channel that
+    produced no value and a channel that scored 0.0 are different facts, and
+    collapsing them is the same confusion the reward ledger already refuses.
+    Aggregates over scored components use this instead.
+    """
+    vals = [v for v in vals if v is not None]
+    return round(sum(vals) / len(vals), 6) if vals else None
+
+
+def _fmt_metric(value, places: int = 4) -> str:
+    """Render an aggregate for report.md, naming an absent one rather than
+    printing a number that was never measured."""
+    return "unmeasured" if value is None else f"{value:.{places}f}"
+
+
 def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: int = 0) -> list[Path]:
     job_cfg = _load(job_dir / "config.json", {}) or {}
     job_res = _load(job_dir / "result.json", {}) or {}
@@ -1045,43 +1080,17 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
             hist[e["failure_class"]] = hist.get(e["failure_class"], 0) + 1
         stamp = _now()
 
-        # summary.json
-        summary = {
-            "run_id": job_dir.name, "timestamp": stamp,
-            "config": {"model": model, "agent": agent_name, "method": "harbor", "benchmark": "mcp-atlas",
-                       "task_dir": str(task_dir) if task_dir else None,
-                       "image": _load_image(task_dir), "episodes": n,
-                       "harbor_job": str(job_dir)},
-            "metrics": {
-                "accuracy": _mean([1.0 if e["passed"] else 0.0 for e in all_eps]),
-                "avg_reward": _mean(rewards),
-                # avg_completion_rate averages the same quantity the per-trial
-                # completion_rate carries, which is the Channel A traj_tests value.
-                # It previously averaged rubric_score while result.json's per-trial
-                # completion_rate carried traj_tests, so one name held two different
-                # quantities and the aggregate could never reconcile against the
-                # record beside it. The rubric mean is not lost: it moves to
-                # avg_rubric_score below, under a name that says what it is.
-                "avg_completion_rate": _mean(
-                    [e["judge"]["components"]["traj_tests"]["value"] for e in all_eps]),
-                "avg_rubric_score": _mean([e["judge"]["rubric_score"] for e in all_eps]),
-                "avg_rc": _mean([e["judge"]["state"] for e in all_eps]),
-                "avg_rb": _mean([(e["judge"]["components"].get("state_misbehave") or {}).get("severity") or 0.0 for e in all_eps]),
-                "avg_traj_tests": _mean([e["judge"]["components"]["traj_tests"]["value"] for e in all_eps]),
-                "avg_misbehave_rate": _mean([
-                    (e["judge"]["misbehave"] / max(1, len(e["judge"]["traj_tests"]["passed_tests"]))) for e in all_eps]),
-                "avg_valid_tool_calls": _mean([e["valid_tool_calls"] for e in all_eps]),
-                "avg_invalid_tool_calls": _mean([e["invalid_tool_calls"] for e in all_eps]),
-                "avg_error_tool_calls": _mean([e["error_tool_calls"] for e in all_eps]),
-                "avg_prompt_tokens": _mean([e["tokens"]["prompt"] for e in all_eps]),
-                "avg_llm_tokens": _mean([e["tokens"]["llm"] for e in all_eps]),
-                "avg_tool_tokens": _mean([e["tokens"]["tool"] for e in all_eps]),
-            },
-            "episodes": all_eps,
-        }
-        _dump(out_task / "summary.json", summary)
+        # result.json's per-trial metrics are the record an auditor re-derives
+        # the summary aggregates from, so they are loaded and normalised BEFORE
+        # summary.json is built and the aggregates average those exact values.
+        # Deriving an aggregate from a host-side component instead is what left
+        # avg_completion_rate reporting 0.0 next to per-trial records of 0.9 and
+        # 0.714: one name held two different quantities, so the rollup a reader
+        # sees said the runs completed nothing while the records beside it said
+        # 90% and 71%.
         _top_res = _load(out_task / "result.json", {}) or {}
         _evals = ((_top_res.get("stats") or {}).get("evals") or {})
+        _per_trial: list[dict] = []
         if _evals and all_eps:
             for _eval_data in _evals.values():
                 _metrics = _eval_data.get("metrics") or []
@@ -1102,6 +1111,51 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
                             _v = str(_metrics[_i].get(_fld, 0))
                             _new_rstats[_fld].setdefault(_v, []).append(_tname)
                 _eval_data["reward_stats"] = _new_rstats
+                _per_trial.extend(_metrics)
+
+        # summary.json
+        summary = {
+            "run_id": job_dir.name, "timestamp": stamp,
+            "config": {"model": model, "agent": agent_name, "method": "harbor", "benchmark": "mcp-atlas",
+                       "task_dir": str(task_dir) if task_dir else None,
+                       "image": _load_image(task_dir), "episodes": n,
+                       "harbor_job": str(job_dir)},
+            "metrics": {
+                "accuracy": _mean([1.0 if e["passed"] else 0.0 for e in all_eps]),
+                "avg_reward": _mean(rewards),
+                # avg_completion_rate and avg_misbehave_rate average the per-trial
+                # values recorded in result.json, because those are the bytes the
+                # aggregate is checked against. An earlier attempt pointed this at
+                # the Channel A traj_tests value on the assumption that the
+                # per-trial completion_rate carried it; it does not -- that field
+                # comes from the container's verifier/reward.json, so the two
+                # never reconciled and traj_tests being unmeasured then published
+                # a confident 0.0.
+                "avg_completion_rate": _mean_or_none(
+                    [m.get("completion_rate") for m in _per_trial]),
+                "avg_rubric_score": _mean([e["judge"]["rubric_score"] for e in all_eps]),
+                "avg_rc": _mean([e["judge"]["state"] for e in all_eps]),
+                "avg_rb": _mean([(e["judge"]["components"].get("state_misbehave") or {}).get("severity") or 0.0 for e in all_eps]),
+                # Unmeasured stays unmeasured: when Channel A produced no value
+                # this reports None rather than a 0.0 that reads as "scored, and
+                # scored nothing".
+                "avg_traj_tests": _mean_or_none(
+                    [e["judge"]["components"]["traj_tests"]["value"] for e in all_eps]),
+                "avg_misbehave_rate": _mean_or_none(
+                    [m.get("misbehave_rate") for m in _per_trial]),
+                "avg_valid_tool_calls": _mean([e["valid_tool_calls"] for e in all_eps]),
+                "avg_invalid_tool_calls": _mean([e["invalid_tool_calls"] for e in all_eps]),
+                "avg_error_tool_calls": _mean([e["error_tool_calls"] for e in all_eps]),
+                "avg_prompt_tokens": _mean([e["tokens"]["prompt"] for e in all_eps]),
+                "avg_llm_tokens": _mean([e["tokens"]["llm"] for e in all_eps]),
+                "avg_tool_tokens": _mean([e["tokens"]["tool"] for e in all_eps]),
+            },
+            "episodes": all_eps,
+        }
+        _dump(out_task / "summary.json", summary)
+        # Normalisation happened above, before the aggregates were computed from
+        # it; this only persists the result.
+        if _evals and all_eps:
             _dump(out_task / "result.json", _top_res)
 
         # pass_summary.json
@@ -1197,8 +1251,8 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
             f"| Accuracy (reward ≥ threshold) | {m['accuracy']:.4f} |",
             f"| Avg reward | {m['avg_reward']:.4f} |",
             f"| Avg rubric (Channel B) | {m['avg_rubric_score']:.4f} |",
-            f"| Avg traj_tests (Channel A) | {m['avg_traj_tests']:.4f} |",
-            f"| Avg misbehave rate | {m['avg_misbehave_rate']:.4f} |",
+            f"| Avg traj_tests (Channel A) | {_fmt_metric(m['avg_traj_tests'])} |",
+            f"| Avg misbehave rate | {_fmt_metric(m['avg_misbehave_rate'])} |",
             f"| Avg valid tool calls / episode | {m['avg_valid_tool_calls']:.4f} |",
             f"| Avg invalid tool calls / episode | {m['avg_invalid_tool_calls']:.4f} |",
             f"| Avg error tool calls / episode | {m['avg_error_tool_calls']:.4f} |",
