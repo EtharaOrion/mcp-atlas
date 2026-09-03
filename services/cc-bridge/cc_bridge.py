@@ -469,6 +469,12 @@ async def handle_subscription(body: dict[str, Any]) -> dict[str, Any]:
         mcp, allowed = _build_bridge_mcp_and_allowlist(tools, captured_calls)
         mcp_kwargs = {"mcp_servers": {"bridge": mcp}, "allowed_tools": allowed}
 
+    _thinking_display = os.environ.get("CC_BRIDGE_THINKING_DISPLAY", "summarized").strip()
+    thinking_param = body.get("thinking")
+    if _thinking_display:
+        if not isinstance(thinking_param, dict) or thinking_param.get("type") != "disabled":
+            thinking_param = {"type": "adaptive", "display": _thinking_display}
+
     options = ClaudeAgentOptions(
         model=model,
         system_prompt=system_prompt if system_prompt else None,
@@ -476,6 +482,7 @@ async def handle_subscription(body: dict[str, Any]) -> dict[str, Any]:
         permission_mode="bypassPermissions",
         setting_sources=[],  # no CLAUDE.md / project settings interference
         tools=[],  # disable Claude Code built-ins (Read/Write/Bash/ToolSearch/etc.)
+        thinking=thinking_param if thinking_param else None,
         **mcp_kwargs,
     )
 
