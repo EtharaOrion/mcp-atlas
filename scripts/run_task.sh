@@ -342,6 +342,7 @@ stage_harbor() {
   # Must precede harbor: it exports ANTHROPIC_BASE_URL, which harbor's
   # claude_code agent reads from this environment and forwards into the
   # container (empty values are dropped, so a failed proxy start is a no-op).
+  ensure_bundle_headroom
   route_agent_through_proxy
   local args=(run -y --path "$TASK" --agent "$AGENT" --jobs-dir "$OUTPUT_DIR" --job-name "$JOB" \
               --environment-build-timeout-multiplier "$BUILD_MULT" \
@@ -387,6 +388,34 @@ stage_harbor() {
 # rather than as infrastructure. If the proxy does not answer we leave
 # ANTHROPIC_BASE_URL unset and run direct, exactly as before.
 HEADROOM_PROXY_PORT="${HEADROOM_PROXY_PORT:-8787}"
+
+# Wire the bundle for grader-path Headroom, so GRADER_HEADROOM_ENABLED=true is
+# the ONLY thing an operator has to remember.
+#
+# The library has to be in the task image and the flag has to be on the `main`
+# service; a bundle missing either grades uncompressed and says nothing about
+# it. Making the run do it removes the two-command dance
+# (enable_headroom.sh -> run) and, more importantly, removes the failure mode
+# where someone enables the flag, sees no error, and assumes it worked.
+#
+# enable_headroom.sh is idempotent and its --disable reverts byte-identically,
+# so re-running this is free. Set HEADROOM_AUTO_WIRE=0 to keep the bundle
+# untouched -- useful when the bundle is committed and you do not want a run
+# dirtying your working tree.
+ensure_bundle_headroom() {
+  [ "${GRADER_HEADROOM_ENABLED:-false}" = "true" ] || return 0
+  [ "${HEADROOM_AUTO_WIRE:-1}" = "1" ] || return 0
+  [ -x "$REPO/scripts/enable_headroom.sh" ] || return 0
+  local out
+  out="$(bash "$REPO/scripts/enable_headroom.sh" "$TASK" 2>&1)" || {
+    echo "[run_task] could not wire bundle for headroom; grading uncompressed" >&2
+    return 0
+  }
+  case "$out" in
+    *"already enabled"*) echo "[run_task] bundle already wired for headroom" ;;
+    *) echo "[run_task] wired bundle for headroom (Dockerfile + compose)" ;;
+  esac
+}
 
 route_agent_through_proxy() {
   [ "$AGENT_HEADROOM_ENABLED" = "true" ] || return 0
