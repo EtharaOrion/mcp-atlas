@@ -704,6 +704,14 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     _copy(ver / "ctrf.json", run_dir / "logs" / "verifier-ctrf.json")
     _copy(ver / "reward.txt", run_dir / "logs" / "verifier-reward.txt")
     _copy(ver / "test-stdout.txt", run_dir / "logs" / "verifier-stdout.txt")
+    # Light-servers fleet logs (health report + tool calls), staged into
+    # /logs/light-servers by tests/test.sh from the shared server_logs volume.
+    # They are their own files, not a slice of verifier-stdout.txt: that one is
+    # a copy of /logs/verifier/test-stdout.txt, which is the pytest redirect.
+    _copy(ver / "light-servers-health.log",
+          run_dir / "logs" / "light-servers-health.log")
+    _copy(ver / "light-servers-tool_calls.log",
+          run_dir / "logs" / "light-servers-tool-calls.log")
     for f in ("ctrf.json", "reward.json", "test-stdout.txt", "detail.json",
               "rubric_breakdown.json", "judge_tokens.json",
               "state_channel.json", "end_env.json"):

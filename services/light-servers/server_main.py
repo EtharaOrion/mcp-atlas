@@ -5,6 +5,7 @@ from pathlib import Path
 sys.path.insert(0, "/app")
 
 from fastmcp import FastMCP
+from fastmcp.server.middleware.logging import LoggingMiddleware
 from filesystem_server import mcp as filesystem_mcp
 
 main = FastMCP("light-servers")
@@ -13,6 +14,20 @@ main = FastMCP("light-servers")
 # call time: it binds a str where the server is expected and only fails when
 # the lifespan starts, as 'str' object has no attribute '_lifespan'.
 main.mount(filesystem_mcp, "filesystem")
+
+# Log every MCP request through the aggregated server, arguments included, so a
+# trajectory can be reconstructed from container logs alone. Registered before
+# the mounts below only for readability -- middleware wraps the server, not the
+# sub-servers, so it sees calls to all of them whenever they are mounted.
+#
+# Payloads are truncated at 500 chars: a light-server response can be an entire
+# table, and an untruncated log would bury the call sequence in world state.
+#
+# This covers the server_main.py single-process path ONLY. entrypoint.sh runs a
+# different topology -- 161 independent `fastmcp run app.py` processes that
+# never import this file -- so it gets no tool-call logging from this line.
+# Covering that path means touching each app.py individually.
+main.add_middleware(LoggingMiddleware(include_payloads=True, max_payload_length=500))
 
 _SERVERS_DIR = Path("/app/servers")
 for _app_path in sorted(_SERVERS_DIR.glob("*/app.py")):

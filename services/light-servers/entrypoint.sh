@@ -204,5 +204,15 @@ else
     done
 fi
 
-echo "Servers started. Waiting..."
+# Readiness. The launch loop above only proves fork() succeeded; a server that
+# dies on import is indistinguishable from one serving happily until an agent's
+# tool call fails mid-trajectory. health_check.py polls every port it just
+# started and prints one line per server.
+#
+# `|| true` on purpose: a DOWN server must not stop the container. The servers
+# that DID come up are still usable, and the health lines are the evidence of
+# which is which. Exiting here would replace a partial fleet with no fleet.
+echo "Servers started. Probing readiness..."
+python3 /app/health_check.py || true
+
 wait || true
