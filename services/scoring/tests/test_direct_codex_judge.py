@@ -168,8 +168,9 @@ def test_a_transient_failure_is_retried_then_succeeds(monkeypatch, codex):
 
 def test_usage_is_recorded_in_the_finance_shape(monkeypatch, codex, tmp_path):
     """Codex reports OpenAI-style inclusive counts; the cached portion is
-    subtracted so the fields stay disjoint, and a subscription has no per-call
-    dollar cost — inventing one would be worse than reporting zero."""
+    subtracted so the fields stay disjoint, and the call is valued at the
+    judge model's list price so judge effort is visible in Finance rather
+    than reading $0.00 on every subscription-quota run."""
     out = tmp_path / "judge_tokens.json"
     monkeypatch.setattr(cli, "_token_out", out)
     usage = {"input_tokens": 15_000, "cached_input_tokens": 11_000,
@@ -180,4 +181,29 @@ def test_usage_is_recorded_in_the_finance_shape(monkeypatch, codex, tmp_path):
     assert line["judge_input_tokens"] == 4_000
     assert line["judge_input_cache_tokens"] == 11_000
     assert line["judge_output_tokens"] == 30
-    assert line["judge_cost_usd"] == 0.0
+    # 4_000 in @ $5/Mtok + 11_000 cache-read @ $0.50/Mtok + 30 out @ $30/Mtok
+    assert line["judge_cost_usd"] == pytest.approx(0.0264)
+
+
+def test_cost_is_zero_for_a_model_with_no_known_rate(monkeypatch, codex, tmp_path):
+    """An unrecognised judge prices at nothing rather than borrowing a rate."""
+    out = tmp_path / "judge_tokens.json"
+    monkeypatch.setattr(cli, "_token_out", out)
+    monkeypatch.setattr(cli, "_usage_lines", [])
+    cli._record_usage_codex(
+        {"input_tokens": 15_000, "cached_input_tokens": 11_000,
+         "output_tokens": 30, "cache_write_input_tokens": 0}, "not-a-real-model")
+    assert json.loads(out.read_text())[0]["judge_cost_usd"] == 0.0
+
+
+def test_rates_can_be_zeroed_to_stop_valuing_judge_calls(monkeypatch, codex, tmp_path):
+    """Setting every JUDGE_PRICE_* to 0 restores plain zero-cost reporting."""
+    for var in cli._RATE_ENV.values():
+        monkeypatch.setenv(var, "0")
+    out = tmp_path / "judge_tokens.json"
+    monkeypatch.setattr(cli, "_token_out", out)
+    monkeypatch.setattr(cli, "_usage_lines", [])
+    cli._record_usage_codex(
+        {"input_tokens": 15_000, "cached_input_tokens": 11_000,
+         "output_tokens": 30, "cache_write_input_tokens": 0}, "gpt-5.6-sol")
+    assert json.loads(out.read_text())[0]["judge_cost_usd"] == 0.0
