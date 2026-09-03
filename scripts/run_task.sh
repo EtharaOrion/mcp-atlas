@@ -75,9 +75,9 @@ OUTPUT_DIR="${OUTPUT_DIR:-$REPO/output}"
 AT="${AT:-auto}"   # pass@k ks for the reshaper; auto = every k from 1..N runs
 JOB="${JOB:-$SLUG}"   # job dir == output/<task>/ (reshaped in place by the converter)
 
-# empty THINKING_DISPLAY = full blocks; "summarized" collapsed thinking into message text and dropped the raw blocks (measured 2026-09-03)
+# "summarized" = readable thinking summaries in message text; "" = signature-only blocks with empty content (measured 2026-09-03)
 THINKING="${THINKING:-adaptive}"
-THINKING_DISPLAY="${THINKING_DISPLAY:-}"
+THINKING_DISPLAY="${THINKING_DISPLAY:-summarized}"
 
 # The absolute pin the compose comment has always claimed existed. Without it,
 # compose falls through to ${SCORING_DIR:-../../../services/scoring}, which is
