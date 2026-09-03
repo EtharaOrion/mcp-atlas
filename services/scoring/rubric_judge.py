@@ -49,7 +49,7 @@ except ImportError:  # pragma: no cover - container layout
             return messages
 
 CODEX_MODELS = _codex_cli.CODEX_MODELS
-_DEFAULT_JUDGE_MODEL = os.environ.get("JUDGE_MODEL") or "claude-sonnet-4-5"
+_DEFAULT_JUDGE_MODEL = os.environ.get("JUDGE_MODEL") or "gpt-5.6-sol"
 
 _JUDGE_SYSTEM_PROMPT = (
     'You grade AI agent trajectories against rubric criteria. '

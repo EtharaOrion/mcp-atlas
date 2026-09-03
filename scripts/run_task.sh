@@ -175,6 +175,39 @@ resolve_auth() {
   fi
 }
 
+check_credentials() {
+  case "$STAGE" in reshape|finance) return 0 ;; esac
+  local fail=0
+
+  if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+    echo "[run_task] ERROR: no Claude Code credentials found" >&2
+    echo "[run_task]   Log in with: claude login   or set CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_API_KEY" >&2
+    fail=1
+  elif ! command -v claude >/dev/null 2>&1; then
+    echo "[run_task] ERROR: Claude Code token is set but 'claude' binary not found in PATH" >&2
+    fail=1
+  else
+    echo "[run_task] claude: credentials OK"
+  fi
+
+  if ! command -v codex >/dev/null 2>&1; then
+    echo "[run_task] ERROR: 'codex' not found — rubric judge cannot use gpt-5.6-sol" >&2
+    echo "[run_task]   Install: npm install -g @openai/codex" >&2
+    fail=1
+  else
+    local codex_auth="${HOME}/.codex/auth.json"
+    if [ ! -s "$codex_auth" ]; then
+      echo "[run_task] ERROR: codex auth file missing or empty: $codex_auth" >&2
+      echo "[run_task]   Log in to the ChatGPT desktop app or run: codex auth login" >&2
+      fail=1
+    else
+      echo "[run_task] codex: credentials OK"
+    fi
+  fi
+
+  [ "$fail" = "0" ] || { echo "[run_task] credential check FAILED — fix the above and retry" >&2; exit 4; }
+}
+
 # --- images -------------------------------------------------------------------
 # Nothing below ever asks the operator to have run `docker pull` or
 # `make build-light-servers` first. Preflight is the cheap idempotent stage
@@ -338,6 +371,7 @@ stage_harbor() {
   # Must precede harbor: it exports ANTHROPIC_BASE_URL, which harbor's
   # claude_code agent reads from this environment and forwards into the
   # container (empty values are dropped, so a failed proxy start is a no-op).
+  ensure_cc_bridge
   ensure_bundle_headroom
   route_agent_through_proxy
   local args=(run -y --path "$TASK" --agent "$AGENT" --jobs-dir "$OUTPUT_DIR" --job-name "$JOB" \
@@ -398,6 +432,35 @@ HEADROOM_PROXY_PORT="${HEADROOM_PROXY_PORT:-8787}"
 # so re-running this is free. Set HEADROOM_AUTO_WIRE=0 to keep the bundle
 # untouched -- useful when the bundle is committed and you do not want a run
 # dirtying your working tree.
+ensure_cc_bridge() {
+  local port="${CC_BRIDGE_PORT:-4000}"
+  if curl -sf -m 2 "http://127.0.0.1:$port/health" >/dev/null 2>&1; then
+    echo "[run_task] cc-bridge already running on :$port"
+    return 0
+  fi
+  local bridge_dir="$REPO/services/cc-bridge"
+  local py
+  for py in "$bridge_dir/.venv/bin/python3" "$REPO/.venv/bin/python3" python3; do
+    command -v "$py" >/dev/null 2>&1 && break
+  done
+  if [ ! -f "$bridge_dir/cc_bridge.py" ]; then
+    echo "[run_task] WARNING: cc-bridge not found at $bridge_dir; agent will run without proxy" >&2
+    return 0
+  fi
+  echo "[run_task] starting cc-bridge on :$port"
+  mkdir -p "$bridge_dir/logs"
+  CC_BRIDGE_PORT="$port" nohup "$py" "$bridge_dir/cc_bridge.py" \
+    >"$bridge_dir/logs/cc_bridge.log" 2>&1 &
+  local i=0
+  while [ $i -lt 10 ]; do
+    sleep 1; i=$((i+1))
+    curl -sf -m 1 "http://127.0.0.1:$port/health" >/dev/null 2>&1 && {
+      echo "[run_task] cc-bridge ready on :$port (pid $!)"; return 0
+    }
+  done
+  echo "[run_task] WARNING: cc-bridge did not come up in 10s; check $bridge_dir/logs/cc_bridge.log" >&2
+}
+
 ensure_bundle_headroom() {
   [ "${GRADER_HEADROOM_ENABLED:-false}" = "true" ] || return 0
   [ "${HEADROOM_AUTO_WIRE:-1}" = "1" ] || return 0
@@ -438,19 +501,21 @@ stage_host_rubric() {
     echo "[run_task] no trial dir under $OUTPUT_DIR/$JOB; skipping host rubric" >&2
     return 0
   fi
-  # FALLBACK, NOT OVERRIDE. Only grade here when the in-container judge did
-  # not produce a rubric.
-  #
-  # Input_1 pins JUDGE_MODEL=gpt-5.6-sol so its container judge fails preflight
-  # and defers to this pass. The other bundles pin nothing, and since
-  # rubric_judge_cli now resolves to the Claude transport when codex is absent,
-  # their container judge SUCCEEDS. Running unconditionally would then grade
-  # every one of them twice -- Claude in the container, codex here, second
-  # writer wins -- for double the cost and artifacts that disagree with the
-  # score. Set FORCE_HOST_RUBRIC=1 to re-grade deliberately.
+  local _tokens="$trial/verifier/judge_tokens.json"
+  local _codex_graded=0
+  if [ -s "$_tokens" ]; then
+    _codex_graded=$(python3 - "$_tokens" <<'PYEOF'
+import json,sys
+d=json.load(open(sys.argv[1]))
+m=(d[0] if isinstance(d,list) else d).get('model_name','')
+print(1 if m.startswith('gpt') else 0)
+PYEOF
+    2>/dev/null || echo 0)
+  fi
   if [ "${FORCE_HOST_RUBRIC:-0}" != "1" ] \
-     && [ -s "$trial/verifier/rubric_breakdown.json" ]; then
-    echo "[run_task] rubric already graded in-container; skipping host pass"
+     && [ -s "$trial/verifier/rubric_breakdown.json" ] \
+     && [ "$_codex_graded" = "1" ]; then
+    echo "[run_task] rubric already graded in-container by codex; skipping host pass"
     state_put host_rubric_done 1
     return 0
   fi
@@ -532,6 +597,7 @@ stage_finance() {
 # --- dispatch -----------------------------------------------------------------
 
 resolve_auth
+check_credentials
 
 case "$STAGE" in
   preflight) stage_preflight ;;
