@@ -1,7 +1,7 @@
 {
   "name": "mcp-eval-server",
   "version": "1.0.0",
-  "description": "Agent harness for the MCP-Atlas benchmark — runs LLM agent loops against an agent-environment MCP sandbox.",
+  "description": "Agent harness for the MCP-Atlas benchmark \u2014 runs LLM agent loops against an agent-environment MCP sandbox.",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -23,5 +23,8 @@
     "@types/node": "^20.10.0",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"
+  },
+  "overrides": {
+    "qs": "^6.16.0"
   }
 }
