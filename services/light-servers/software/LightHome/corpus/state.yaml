@@ -1,4 +1,3 @@
-# Source: world_data 2/LightHome.json (verbatim). Corpus-only authored world.
 rooms:
   rm_living:
     rmid: rm_living
@@ -16,6 +15,162 @@ rooms:
     rmid: rm_office
     name: Office
     floor: 2
-devices: {}
-scenes: {}
-automations: {}
+devices:
+  dv_LivCeilLg:
+    dvid: dv_LivCeilLg
+    name: Living Ceiling Light
+    room_id: rm_living
+    kind: light
+    state:
+      'on': true
+      brightness: 70
+      temperature: null
+      color: '#FFE4B5'
+    is_online: true
+    last_seen: 2026-01-05T00:00
+  dv_LivTV0001:
+    dvid: dv_LivTV0001
+    name: Living TV
+    room_id: rm_living
+    kind: tv
+    state:
+      'on': false
+      brightness: null
+      temperature: null
+      color: null
+    is_online: true
+    last_seen: 2026-01-05T00:00
+  dv_LivTherm1:
+    dvid: dv_LivTherm1
+    name: Living Thermostat
+    room_id: rm_living
+    kind: thermostat
+    state:
+      'on': true
+      brightness: null
+      temperature: 22.0
+      color: null
+    is_online: true
+    last_seen: 2026-01-05T00:00
+  dv_BedLamp01:
+    dvid: dv_BedLamp01
+    name: Bedroom Lamp
+    room_id: rm_bedroom
+    kind: light
+    state:
+      'on': false
+      brightness: 40
+      temperature: null
+      color: '#FFDDAA'
+    is_online: true
+    last_seen: 2026-01-05T00:00
+  dv_BedCurtai:
+    dvid: dv_BedCurtai
+    name: Bedroom Curtain
+    room_id: rm_bedroom
+    kind: curtain
+    state:
+      'on': false
+      brightness: null
+      temperature: null
+      color: null
+    is_online: true
+    last_seen: 2026-01-05T00:00
+  dv_KitPlug01:
+    dvid: dv_KitPlug01
+    name: Kitchen Plug
+    room_id: rm_kitchen
+    kind: plug
+    state:
+      'on': true
+      brightness: null
+      temperature: null
+      color: null
+    is_online: true
+    last_seen: 2026-01-05T00:00
+  dv_KitSpeak1:
+    dvid: dv_KitSpeak1
+    name: Kitchen Speaker
+    room_id: rm_kitchen
+    kind: speaker
+    state:
+      'on': false
+      brightness: null
+      temperature: null
+      color: null
+    is_online: true
+    last_seen: 2026-01-05T00:00
+  dv_OffFan001:
+    dvid: dv_OffFan001
+    name: Office Fan
+    room_id: rm_office
+    kind: fan
+    state:
+      'on': false
+      brightness: null
+      temperature: null
+      color: null
+    is_online: true
+    last_seen: 2026-01-05T00:00
+scenes:
+  sc_MovieNgt1:
+    scid: sc_MovieNgt1
+    name: Movie Night
+    actions:
+    - dvid: dv_LivCeilLg
+      state_patch:
+        'on': true
+        brightness: 20
+    - dvid: dv_LivTV0001
+      state_patch:
+        'on': true
+    - dvid: dv_LivTherm1
+      state_patch:
+        'on': true
+        temperature: 21.0
+  sc_WakeUp001:
+    scid: sc_WakeUp001
+    name: Wake Up
+    actions:
+    - dvid: dv_BedLamp01
+      state_patch:
+        'on': true
+        brightness: 60
+    - dvid: dv_BedCurtai
+      state_patch:
+        'on': true
+    - dvid: dv_KitSpeak1
+      state_patch:
+        'on': true
+  sc_Away00001:
+    scid: sc_Away00001
+    name: Away
+    actions:
+    - dvid: dv_LivCeilLg
+      state_patch:
+        'on': false
+    - dvid: dv_LivTV0001
+      state_patch:
+        'on': false
+    - dvid: dv_BedLamp01
+      state_patch:
+        'on': false
+    - dvid: dv_KitPlug01
+      state_patch:
+        'on': false
+    - dvid: dv_OffFan001
+      state_patch:
+        'on': false
+automations:
+  au_SunsetLt1:
+    auid: au_SunsetLt1
+    name: Sunset Lights
+    trigger: time:18:30
+    action: scene:Movie Night
+    is_enabled: true
+  au_MornRout1:
+    auid: au_MornRout1
+    name: Morning Routine
+    trigger: time:07:00
+    action: scene:Wake Up
+    is_enabled: true

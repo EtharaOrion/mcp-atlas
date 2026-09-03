@@ -1,4 +1,3 @@
-# Source: world_data 2/LightSecurity.json (verbatim). Corpus-only authored world.
 cameras:
   9fKodTWB6iLnfAVRqMpdvQ:
     caid: 9fKodTWB6iLnfAVRqMpdvQ
@@ -14,8 +13,57 @@ cameras:
     is_recording: false
     resolution: 1080p
     night_vision: false
-sensors: {}
-alarms: {}
+sensors:
+  se_FrontDoor:
+    seid: se_FrontDoor
+    name: Front Door Sensor
+    room: Front Door
+    kind: door
+    is_active: true
+    last_triggered: 2026-01-04T23:00
+  se_BedWindow:
+    seid: se_BedWindow
+    name: Bedroom Window
+    room: Bedroom
+    kind: window
+    is_active: true
+    last_triggered: 2026-01-04T23:00
+  se_HallMotio:
+    seid: se_HallMotio
+    name: Hall Motion
+    room: Hallway
+    kind: motion
+    is_active: true
+    last_triggered: 2026-01-04T19:00
+  se_KitSmoke1:
+    seid: se_KitSmoke1
+    name: Kitchen Smoke Alarm
+    room: Kitchen
+    kind: smoke
+    is_active: true
+    last_triggered: 2026-01-02T12:00
+  se_BasWater1:
+    seid: se_BasWater1
+    name: Basement Water
+    room: Basement
+    kind: water
+    is_active: false
+    last_triggered: ''
+alarms:
+  al_HallMot01:
+    alid: al_HallMot01
+    sensor_id: se_HallMotio
+    triggered_at: 2026-01-04T19:00
+    kind: motion
+    resolved_at: 2026-01-04T19:05
+    notes: Late-night motion in hallway
+  al_Smoke0001:
+    alid: al_Smoke0001
+    sensor_id: se_KitSmoke1
+    triggered_at: 2026-01-02T12:00
+    kind: smoke
+    resolved_at: 2026-01-02T12:15
+    notes: Smoke sensor tripped during cooking
 events:
   HTJcB7QmWtqfcPp5pGogY2:
     evid: HTJcB7QmWtqfcPp5pGogY2
@@ -45,4 +93,34 @@ events:
     kind: disarmed
     timestamp: 2026-01-04T09:27
     description: Home disarmed in the morning.
-access_logs: {}
+access_logs:
+  acl_Owner01:
+    aclid: acl_Owner01
+    user: owner
+    action: unlock
+    timestamp: 2026-01-05T06:54
+    method: face
+  acl_Guest01:
+    aclid: acl_Guest01
+    user: guest
+    action: unlock
+    timestamp: 2026-01-05T07:00
+    method: keypad
+  acl_Owner02:
+    aclid: acl_Owner02
+    user: owner
+    action: lock
+    timestamp: 2026-01-04T21:00
+    method: phone
+  acl_Cleaner1:
+    aclid: acl_Cleaner1
+    user: cleaner
+    action: unlock
+    timestamp: 2026-01-03T10:00
+    method: keycard
+  acl_Owner03:
+    aclid: acl_Owner03
+    user: owner
+    action: unlock
+    timestamp: 2026-01-04T08:00
+    method: face

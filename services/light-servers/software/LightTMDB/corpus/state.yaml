@@ -1,9 +1,9 @@
-# Source: world_data 2/LightTMDB.json (verbatim). Corpus-only authored world.
 movies:
 - id: 101
   title: The Quiet Orbit
   original_title: The Quiet Orbit
-  overview: A marooned engineer races to repair a failing station before its orbit decays.
+  overview: A marooned engineer races to repair a failing station before its orbit
+    decays.
   release_date: '2024-03-15'
   vote_average: 7.8
   vote_count: 2140
@@ -17,7 +17,8 @@ movies:
 - id: 102
   title: Harvest Moon Diner
   original_title: Harvest Moon Diner
-  overview: A small-town cook reopens her late mother's diner and rediscovers her family.
+  overview: A small-town cook reopens her late mother's diner and rediscovers her
+    family.
   release_date: '2023-11-02'
   vote_average: 7.2
   vote_count: 980
@@ -169,7 +170,6 @@ tv:
   number_of_seasons: 3
   number_of_episodes: 30
   media_type: tv
-
 genres:
 - id: 18
   name: Drama
@@ -181,9 +181,56 @@ genres:
   name: Comedy
 - id: 28
   name: Action
-
-credits: {}
-
-people: {}
-
+credits:
+- person_id: 1
+  movie_id: 101
+  character: Lead Hero
+  department: Acting
+  job: Actor
+- person_id: 2
+  movie_id: 101
+  character: Agent Black
+  department: Acting
+  job: Actor
+- person_id: 4
+  movie_id: 102
+  character: Protagonist
+  department: Acting
+  job: Actor
+- person_id: 3
+  movie_id: 102
+  character: null
+  department: Directing
+  job: Director
+- person_id: 5
+  movie_id: 103
+  character: Mia
+  department: Acting
+  job: Actor
+people:
+- id: 1
+  name: Robert Downey Jr.
+  known_for_department: Acting
+  popularity: 85.3
+  profile_path: /rdj.jpg
+- id: 2
+  name: Scarlett Johansson
+  known_for_department: Acting
+  popularity: 78.9
+  profile_path: /sj.jpg
+- id: 3
+  name: Christopher Nolan
+  known_for_department: Directing
+  popularity: 62.1
+  profile_path: /cn.jpg
+- id: 4
+  name: Cillian Murphy
+  known_for_department: Acting
+  popularity: 71.4
+  profile_path: /cm.jpg
+- id: 5
+  name: Emma Stone
+  known_for_department: Acting
+  popularity: 69.8
+  profile_path: /es.jpg
 watchlist: []

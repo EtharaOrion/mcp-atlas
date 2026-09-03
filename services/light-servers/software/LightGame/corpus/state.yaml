@@ -1,5 +1,167 @@
-# Source: world_data 2/LightGame.json (verbatim). Corpus-only authored world.
-games: {}
-achievements: {}
-play_sessions: {}
-wishlist: {}
+games:
+  gm_EldenRingAB:
+    gid: gm_EldenRingAB
+    title: Elden Ring
+    platform: pc
+    genre: rpg
+    added_at: 2025-07-09T00:00
+    is_installed: true
+    playtime_minutes: 4200
+    last_played_at: 2026-01-04T00:00
+  gm_HaloInfini:
+    gid: gm_HaloInfini
+    title: Halo Infinite
+    platform: xbox
+    genre: fps
+    added_at: 2025-09-07T00:00
+    is_installed: true
+    playtime_minutes: 900
+    last_played_at: 2026-01-02T00:00
+  gm_CivVI00001:
+    gid: gm_CivVI00001
+    title: Civilization VI
+    platform: pc
+    genre: strategy
+    added_at: 2025-03-11T00:00
+    is_installed: true
+    playtime_minutes: 2400
+    last_played_at: 2025-12-22T00:00
+  gm_ZeldaTotk1:
+    gid: gm_ZeldaTotk1
+    title: 'Zelda: TotK'
+    platform: switch
+    genre: adventure
+    added_at: 2025-05-10T00:00
+    is_installed: false
+    playtime_minutes: 1500
+    last_played_at: 2025-11-06T00:00
+  gm_CandyCrus1:
+    gid: gm_CandyCrus1
+    title: Candy Crush
+    platform: mobile
+    genre: puzzle
+    added_at: 2025-10-07T00:00
+    is_installed: true
+    playtime_minutes: 600
+    last_played_at: 2026-01-03T00:00
+achievements:
+  ac_TarnishedR:
+    achid: ac_TarnishedR
+    game_id: gm_EldenRingAB
+    name: Tarnished Rise
+    description: Defeat the first main boss
+    points: 10
+    unlocked_at: 2025-07-19T00:00
+    is_unlocked: true
+  ac_LegendLand:
+    achid: ac_LegendLand
+    game_id: gm_EldenRingAB
+    name: Legend of the Lands
+    description: Complete the main quest
+    points: 50
+    unlocked_at: ''
+    is_unlocked: false
+  ac_FirstBlood:
+    achid: ac_FirstBlood
+    game_id: gm_HaloInfini
+    name: First Blood
+    description: Get your first kill
+    points: 5
+    unlocked_at: 2025-09-08T00:00
+    is_unlocked: true
+  ac_SpartanEli:
+    achid: ac_SpartanEli
+    game_id: gm_HaloInfini
+    name: Spartan Elite
+    description: Reach level 50 multiplayer
+    points: 40
+    unlocked_at: ''
+    is_unlocked: false
+  ac_OneMoreTrn:
+    achid: ac_OneMoreTrn
+    game_id: gm_CivVI00001
+    name: One More Turn
+    description: Play 100 turns in a single game
+    points: 15
+    unlocked_at: 2025-03-22T00:00
+    is_unlocked: true
+  ac_Dominatio1:
+    achid: ac_Dominatio1
+    game_id: gm_CivVI00001
+    name: Domination
+    description: Win a domination victory
+    points: 30
+    unlocked_at: 2025-04-09T00:00
+    is_unlocked: true
+  ac_SkysLimit1:
+    achid: ac_SkysLimit1
+    game_id: gm_ZeldaTotk1
+    name: Sky's the Limit
+    description: Solve the first shrine
+    points: 10
+    unlocked_at: 2025-05-14T00:00
+    is_unlocked: true
+  ac_SweetStrea:
+    achid: ac_SweetStrea
+    game_id: gm_CandyCrus1
+    name: Sweet Streak
+    description: Reach a 10-combo
+    points: 5
+    unlocked_at: 2025-10-14T00:00
+    is_unlocked: true
+play_sessions:
+  ps_Elden001:
+    psid: ps_Elden001
+    game_id: gm_EldenRingAB
+    started_at: 2026-01-04T00:00
+    ended_at: 2026-01-04T02:00
+    duration_minutes: 120
+  ps_Elden002:
+    psid: ps_Elden002
+    game_id: gm_EldenRingAB
+    started_at: 2025-12-29T00:00
+    ended_at: 2025-12-29T01:30
+    duration_minutes: 90
+  ps_Halo001:
+    psid: ps_Halo001
+    game_id: gm_HaloInfini
+    started_at: 2026-01-02T00:00
+    ended_at: 2026-01-02T01:00
+    duration_minutes: 60
+  ps_Civ001:
+    psid: ps_Civ001
+    game_id: gm_CivVI00001
+    started_at: 2025-12-22T00:00
+    ended_at: 2025-12-22T03:00
+    duration_minutes: 180
+  ps_Civ002:
+    psid: ps_Civ002
+    game_id: gm_CivVI00001
+    started_at: 2025-12-06T00:00
+    ended_at: 2025-12-06T04:00
+    duration_minutes: 240
+  ps_Candy001:
+    psid: ps_Candy001
+    game_id: gm_CandyCrus1
+    started_at: 2026-01-03T00:00
+    ended_at: 2026-01-03T00:30
+    duration_minutes: 30
+wishlist:
+  wl_Starfield:
+    wlid: wl_Starfield
+    title: Starfield
+    platform: pc
+    added_at: 2025-12-06T00:00
+    price: 59.99
+  wl_SpiderMan:
+    wlid: wl_SpiderMan
+    title: Spider-Man 3
+    platform: playstation
+    added_at: 2025-12-22T00:00
+    price: 69.99
+  wl_PokemonSc:
+    wlid: wl_PokemonSc
+    title: Pokemon Scarlet
+    platform: switch
+    added_at: 2025-12-29T00:00
+    price: 49.99

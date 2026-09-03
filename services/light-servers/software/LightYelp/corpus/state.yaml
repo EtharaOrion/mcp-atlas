@@ -1,4 +1,3 @@
-# Source: world_data 2/LightYelp.json (verbatim). Corpus-only authored world.
 businesses:
 - id: biz-the-grove-001
   alias: the-indigo-fork
@@ -220,7 +219,6 @@ businesses:
     display_address:
     - 118 Bull Street
     - Savannah, GA 31401
-
 categories:
 - alias: furniture_reupholstery
   title: Furniture Reupholstery
@@ -230,7 +228,40 @@ categories:
   title: Woodwork
   parent_aliases:
   - homeservices
-
-reviews: []
-
+reviews:
+- id: rev_biz-the-grov01
+  business_id: biz-the-grove-001
+  user:
+    name: Alex M.
+  rating: 5
+  text: Absolutely loved it! Great atmosphere and friendly staff.
+  time_created: '2025-12-15'
+- id: rev_biz-tartine-01
+  business_id: biz-tartine-0002
+  user:
+    name: Sam T.
+  rating: 4
+  text: Very good experience overall. Would recommend to friends.
+  time_created: '2025-12-20'
+- id: rev_biz-zuni-00001
+  business_id: biz-zuni-00003
+  user:
+    name: Jordan K.
+  rating: 3
+  text: Decent place. Food was okay but service was a bit slow.
+  time_created: '2025-11-30'
+- id: rev_biz-hop-prim01
+  business_id: biz-hop-prime-04
+  user:
+    name: Riley W.
+  rating: 5
+  text: Fantastic! Best in the city, I keep coming back here.
+  time_created: '2025-12-01'
+- id: rev_biz-philz-0001
+  business_id: biz-philz-00005
+  user:
+    name: Morgan P.
+  rating: 2
+  text: Disappointed. Expected more based on the reviews.
+  time_created: '2025-11-15'
 saved_businesses: []
