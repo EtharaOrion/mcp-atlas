@@ -34,6 +34,20 @@ try:
 except ImportError:  # pragma: no cover - the container mounts this dir flat
     import rubric_judge_cli as _codex_cli
 
+# Optional Headroom prompt compression, default OFF (see grader_compress.py).
+# Same two-step import as _codex_cli above and for the same reason: this runs
+# both from the repo and from inside a task container where the scoring tree is
+# mounted rather than installed. A missing module must never stop a criterion
+# being graded, so the last fallback is an identity function.
+try:
+    from services.scoring.grader_compress import compress_messages
+except ImportError:  # pragma: no cover - container layout
+    try:
+        from grader_compress import compress_messages  # type: ignore
+    except ImportError:
+        def compress_messages(model, messages):  # type: ignore[misc]
+            return messages
+
 CODEX_MODELS = _codex_cli.CODEX_MODELS
 _DEFAULT_JUDGE_MODEL = os.environ.get("JUDGE_MODEL") or "gpt-5.6-sol"
 
@@ -249,6 +263,11 @@ def _call_judge_once(
     determinism is whatever the model gives; the reliability discipline around
     this call measures exactly that, which is its job.
     """
+    # Compression runs before the join, not after, so the system role is still
+    # visible: grader_compress leaves system messages alone, and this prompt's
+    # system half is the JSON verdict contract that _extract_json depends on.
+    # Once these are concatenated that distinction is gone.
+    messages = compress_messages(model, messages)
     prompt = "\n\n".join(
         str(m.get("content", "")) for m in messages if m.get("content")
     )

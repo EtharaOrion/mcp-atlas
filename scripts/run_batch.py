@@ -8,9 +8,9 @@ at any point, restart the same command, and it picks up at the first step that
 had not finished, for every unit, without re-running the agent phase it already
 paid for.
 
-    scripts/run_batch.py --all --model claude-opus-4-8 --n 3
-    scripts/run_batch.py --all --model claude-opus-4-8 --n 3      # ... resume
-    scripts/run_batch.py --all --model claude-opus-4-8 --n 3 --dry-run
+    scripts/run_batch.py --all --model claude-opus-5 --n 3
+    scripts/run_batch.py --all --model claude-opus-5 --n 3      # ... resume
+    scripts/run_batch.py --all --model claude-opus-5 --n 3 --dry-run
     scripts/run_batch.py --batch-id nightly-2026-08-31 --status
 
 A *unit* is one trajectory: ``<task-slug>::<model>::run-<i>``, landing in
@@ -348,7 +348,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                     help="task dir to run (repeatable)")
     ap.add_argument("--all", action="store_true", help="run every task under --tasks-dir")
     ap.add_argument("--tasks-dir", default="tasks", help="where --all looks (default: tasks)")
-    ap.add_argument("--model", default="claude-opus-4-8")
+    ap.add_argument("--model", default="claude-opus-5")
     ap.add_argument("--agent", default="claude-code")
     ap.add_argument("--n", type=int, default=1, help="attempts per task (default: 1)")
     ap.add_argument("--at", default="auto",

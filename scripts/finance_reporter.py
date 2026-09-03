@@ -17,15 +17,26 @@ Data sources (all already on disk when this runs):
     <job-dir>/summary.json                run config (model/agent), if present
     tools.claude_account                  subscription_id, fetched once and cached
 
-Environment (read from the process env, falling back to the repo .env):
+Environment (read from the process env, falling back to the nearest .env
+at or above the repo root):
     ODOO_URL           https://<odoo-instance>   (unset => skip, exit 0)
+    ODOO_AUTH_TOKEN    sent as "Authorization: Bearer <token>"
+                       (header/scheme overridable via ODOO_AUTH_HEADER/_SCHEME)
     FINANCE_PROJECT_ID       e.g. PRJ-512   (required to report)
     FINANCE_PROJECT_TYPE     default "Technical"
     FINANCE_TEAM_TYPE        default "Projects"
     FINANCE_BUDGET_TYPE      "RFP" or "Production"
     FINANCE_RFP_SUB_TYPE     "Testing" | "Sampling"  (RFP only)
     FINANCE_PRODUCTION_MODE  "Singlephase" | "Multiphase"  (Production only)
+    FINANCE_PHASE_NUMBER     default "1"; Odoo's handler requires it
     (is_phase_based is not sent — triggers a server-side schema error on current Odoo build)
+
+Odoo field set (verified against a live create on the current build): it
+stores judge_input_tokens, judge_output_tokens, judge_input_cache_tokens,
+judge_output_cache_tokens, judge_cost_usd and drops judge_cache_write_tokens
+and judge_turns. Both are still sent so they land if the schema catches up; the
+cache-write value is carried by judge_output_cache_tokens meanwhile, which is
+why that column holds an input-side write rather than an output count.
 
 Exits 0 even when reporting fails: a finance outage must never fail a task run.
 Pass --strict to exit non-zero instead (useful in CI).
@@ -50,7 +61,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -63,10 +74,24 @@ PRODUCTION_MODES = ("Singlephase", "Multiphase")
 
 
 # --------------------------------------------------------------------- config
+def find_dotenv() -> Path | None:
+    """First .env at or above the repo root.
+
+    The harness is often vendored as a subdirectory of a larger workspace that
+    owns the single .env (ODOO_URL, FINANCE_*). Looking only at REPO/.env made
+    stage_finance skip silently in that layout, so walk up instead.
+    """
+    for parent in (REPO, *REPO.parents):
+        candidate = parent / ".env"
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 def load_dotenv() -> None:
-    """Fill os.environ from the repo .env for keys that aren't already set."""
-    path = REPO / ".env"
-    if not path.is_file():
+    """Fill os.environ from the nearest .env for keys that aren't already set."""
+    path = find_dotenv()
+    if path is None:
         return
     for line in path.read_text(errors="replace").splitlines():
         line = line.strip()
@@ -106,7 +131,13 @@ def num(value, default=0):
 
 
 def iso8601(raw, fallback_mtime: float | None = None) -> str:
-    """Normalize a Harbor timestamp to ISO 8601 with a timezone offset."""
+    """Normalize a Harbor timestamp to ISO 8601 in UTC.
+
+    Odoo drops the offset and reads the wall clock it is given as UTC, so
+    sending local time shifted every record by the reporter's own offset
+    (a 12:38 +05:30 run displayed as 18:08). Emitting UTC makes the value Odoo
+    stores and the instant the run finished the same moment.
+    """
     dt = None
     if isinstance(raw, str) and raw:
         try:
@@ -117,9 +148,9 @@ def iso8601(raw, fallback_mtime: float | None = None) -> str:
         dt = datetime.fromtimestamp(fallback_mtime)
     if dt is None:
         dt = datetime.now()
-    if dt.tzinfo is None:
+    if dt.tzinfo is None:            # naive stamps are local wall clock
         dt = dt.astimezone()
-    return dt.astimezone().isoformat(timespec="seconds")
+    return dt.astimezone(timezone.utc).isoformat(timespec="seconds")
 
 
 def judge_lines(run_dir: Path) -> list[dict]:
@@ -147,6 +178,30 @@ def judge_lines(run_dir: Path) -> list[dict]:
             line["judge_turns"] = num(rec.get("judge_turns", 0))
             out.append(line)
     return out
+
+
+def usage_evidence(run_dir: Path) -> str:
+    """"" if the run finished; otherwise why its usage cannot be trusted.
+
+    usage_for_run() reads result.json and agent/trajectory.json and falls back
+    to 0 for anything missing, so a directory whose run is still in flight
+    builds a perfectly well-formed all-zeros payload. Posting that is how a
+    trajectory ends up in Finance reading 0 tokens and $0.00 with no model
+    name. Refuse by default and let --allow-empty override, so a genuinely
+    free trial (the oracle agent reports null tokens) can still be recorded
+    on purpose rather than by accident.
+    """
+    if not (run_dir / "result.json").is_file():
+        return "no result.json — the run has not finished"
+    result = read_json(run_dir / "result.json")
+    if result is None:
+        return "result.json is unreadable"
+    traj = read_json(run_dir / "agent" / "trajectory.json") or {}
+    if result.get("agent_result") is None and not traj.get("final_metrics"):
+        exc = (result.get("exception_info") or {}).get("exception_type")
+        return (f"no agent_result and no final_metrics"
+                + (f" (run raised {exc})" if exc else " — the run did not produce usage"))
+    return ""
 
 
 def usage_for_run(run_dir: Path) -> dict:
@@ -232,6 +287,9 @@ def build_payload(run_dir: Path, task_id: str, account: dict) -> dict:
         payload[key] = usage[key]
     payload["subscription_id"] = (env("FINANCE_SUBSCRIPTION_ID")
                                   or account.get("subscription_id") or "")
+    # Odoo's handler requires phase_number even though the API doc omits it,
+    # and wants it as a string.
+    payload["phase_number"] = env("FINANCE_PHASE_NUMBER", "1")
     payload["judge_lines"] = judge_lines(run_dir)
     return payload
 
@@ -239,6 +297,11 @@ def build_payload(run_dir: Path, task_id: str, account: dict) -> dict:
 # ---------------------------------------------------------------------- http
 def headers() -> dict:
     hdrs = {"Content-Type": "application/json", "Accept": "application/json"}
+    token = env("ODOO_AUTH_TOKEN")
+    if token:
+        name = env("ODOO_AUTH_HEADER", "Authorization")
+        scheme = env("ODOO_AUTH_SCHEME", "Bearer")
+        hdrs[name] = f"{scheme} {token}".strip()
     extra = env("ODOO_EXTRA_HEADERS")
     if extra:
         try:
@@ -279,6 +342,9 @@ def main() -> int:
     ap.add_argument("--odoo-url", default="", help="override ODOO_URL")
     ap.add_argument("--strict", action="store_true",
                     help="exit non-zero on failure (default: always exit 0)")
+    ap.add_argument("--allow-empty", action="store_true",
+                    help="post even when the run produced no usage (e.g. an oracle "
+                         "trial); by default an unfinished run is refused")
     ap.add_argument("--skip-if-reported", action="store_true",
                     help="exit 0 without posting if this run already has a successful "
                          "finance_receipt.json (makes a resumed run safe to re-drive)")
@@ -291,6 +357,14 @@ def main() -> int:
     if not run_dir.is_dir():
         log(f"no such run dir: {run_dir}", err=True)
         return fail
+
+    if not args.allow_empty:
+        why = usage_evidence(run_dir)
+        if why:
+            log(f"refusing to report {run_dir.name}: {why}. "
+                f"Re-run once the trial finishes, or pass --allow-empty to record "
+                f"it as a zero-usage trial.", err=True)
+            return fail
 
     # Posting is the one step here with an off-machine side effect, so a resumed
     # or re-driven run must not report the same trajectory twice. The receipt the
@@ -334,6 +408,9 @@ def main() -> int:
         print(json.dumps(payload, indent=2))
         return 0
 
+    if not env("ODOO_AUTH_TOKEN") and not env("ODOO_EXTRA_HEADERS"):
+        log("warning: ODOO_AUTH_TOKEN is empty — sending unauthenticated", err=True)
+
     status, text = post(url, payload)
     ok = 200 <= status < 300
     log(f"{run_dir.name} {payload['trajectory_id']} "
@@ -348,6 +425,24 @@ def main() -> int:
         (run_dir / "finance_receipt.json").write_text(json.dumps(receipt, indent=2) + "\n")
     except OSError as exc:
         log(f"warning: could not write receipt ({exc})", err=True)
+
+    # The receipt lives inside the job dir, and Harbor deletes that wholesale
+    # when the same --job-name is run again -- taking the only proof of the
+    # post with it. Append a one-line summary somewhere Harbor does not own,
+    # so what was billed stays auditable across re-runs.
+    ledger = Path(env("FINANCE_LEDGER") or (REPO / "output" / "finance_ledger.jsonl"))
+    try:
+        ledger.parent.mkdir(parents=True, exist_ok=True)
+        with ledger.open("a") as fh:
+            fh.write(json.dumps({
+                "posted_at": receipt["posted_at"], "ok": ok, "http_status": status,
+                "task_id": task_id, "trajectory_id": payload["trajectory_id"],
+                "model_name": payload["model_name"],
+                "trajectory_cost_usd": payload["trajectory_cost_usd"],
+                "run_dir": str(run_dir),
+            }) + "\n")
+    except OSError as exc:
+        log(f"warning: could not append to ledger ({exc})", err=True)
 
     return 0 if ok else fail
 
