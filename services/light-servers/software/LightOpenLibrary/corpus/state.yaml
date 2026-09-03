@@ -1,4 +1,3 @@
-# Source: world_data 2/LightOpenLibrary.json (verbatim). Corpus-only authored world.
 works:
 - work_id: OL27448W
   title: The Lockbox Letters
@@ -69,11 +68,53 @@ works:
   - woodworking
   description: Jazz and gospel roots of the coastal South.
   edition_count: 176
-
-editions: {}
-
+editions:
+- edition_id: OL30000M
+  work_id: OL27448W
+  title: The Lockbox Letters
+  isbn_13: '9780306406157'
+  isbn_10: '030640615'
+  publisher: Penguin Books
+  publish_date: '2001'
+  number_of_pages: 280
+  language: eng
+- edition_id: OL30001M
+  work_id: OL45804W
+  title: The Joiner's Companion
+  isbn_13: '9780306406168'
+  isbn_10: '030640616'
+  publisher: Harper Collins
+  publish_date: '2002'
+  number_of_pages: 320
+  language: eng
+- edition_id: OL30002M
+  work_id: OL46125W
+  title: Savannah Brick by Brick
+  isbn_13: '9780306406179'
+  isbn_10: '030640617'
+  publisher: Random House
+  publish_date: '2003'
+  number_of_pages: 360
+  language: eng
+- edition_id: OL30003M
+  work_id: OL17930368W
+  title: A History of Small Towns
+  isbn_13: '9780306406190'
+  isbn_10: 030640618
+  publisher: Macmillan
+  publish_date: '2004'
+  number_of_pages: 400
+  language: eng
+- edition_id: OL30004M
+  work_id: OL893415W
+  title: On Community Stewardship
+  isbn_13: '9780306406201'
+  isbn_10: 030640619
+  publisher: Scholastic
+  publish_date: '2005'
+  number_of_pages: 440
+  language: eng
 reading_list: []
-
 subjects:
 - key: /subjects/furniture
   name: Furniture

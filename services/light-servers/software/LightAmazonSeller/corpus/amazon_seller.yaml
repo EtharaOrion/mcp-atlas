@@ -1,4 +1,3 @@
-# Source: world_data 2/LightAmazonSeller.json (verbatim). Authored world for LightAmazonSeller.
 seller_account:
   sellerId: null
   marketplaceId: null
@@ -10,120 +9,127 @@ seller_account:
     lateShipmentRate: null
     cancelationRate: null
   performanceNotifications:
-    - notificationId: null
-      severity: null
-      message: null
-      createdAt: null
-buying_notes_fw26: {}
+  - notificationId: null
+    severity: null
+    message: null
+    createdAt: null
+buying_notes_fw26:
+  week: FW26-2025
+  asin_notes:
+    B08N5WRWNW: Strong reorder signal; supplier lead time 14 days
+    B07ZPKN6YT: Slow mover — reduce next PO by 40%
+    B09G9HD169: New listing; monitor first 30 days closely
+  general_notes: Holiday tail-off expected. Focus on Q1 replenishment orders.
+  updated_at: '2025-06-29T08:00:00Z'
 catalog_items:
-  - asin: null
-    sku: null
-    title: null
-    description: null
-    brand: null
-    price: null
-    quantity: null
-    currency: null
-    sellerId: null
-    fulfillmentChannel: null
-    status: null
-    condition: null
-    productType: null
-    itemWeight: null
-    itemWeightUnit: null
-    itemLength: null
-    itemWidth: null
-    itemHeight: null
-    itemDimensionsUnit: null
-    mainImageUrl: null
-    category: null
-    bulletPoints: null
-    createdDate: null
-    lastUpdatedDate: null
+- asin: null
+  sku: null
+  title: null
+  description: null
+  brand: null
+  price: null
+  quantity: null
+  currency: null
+  sellerId: null
+  fulfillmentChannel: null
+  status: null
+  condition: null
+  productType: null
+  itemWeight: null
+  itemWeightUnit: null
+  itemLength: null
+  itemWidth: null
+  itemHeight: null
+  itemDimensionsUnit: null
+  mainImageUrl: null
+  category: null
+  bulletPoints: null
+  createdDate: null
+  lastUpdatedDate: null
 orders:
-  - AmazonOrderId: null
-    PurchaseDate: null
-    LastUpdateDate: null
-    OrderStatus: null
-    FulfillmentChannel: null
-    SalesChannel: null
-    ShipServiceLevel: null
-    OrderTotal_CurrencyCode: null
-    OrderTotal_Amount: null
-    NumberOfItemsShipped: null
-    NumberOfItemsUnshipped: null
-    PaymentMethod: null
-    MarketplaceId: null
-    ShipmentServiceLevelCategory: null
-    OrderType: null
-    EarliestShipDate: null
-    LatestShipDate: null
-    IsPrime: null
-    IsBusinessOrder: null
-    IsSoldByAB: null
-    ShippingAddress_Name: null
-    ShippingAddress_AddressLine1: null
-    ShippingAddress_City: null
-    ShippingAddress_StateOrRegion: null
-    ShippingAddress_PostalCode: null
-    ShippingAddress_CountryCode: null
-    BuyerEmail: null
-    BuyerName: null
+- AmazonOrderId: null
+  PurchaseDate: null
+  LastUpdateDate: null
+  OrderStatus: null
+  FulfillmentChannel: null
+  SalesChannel: null
+  ShipServiceLevel: null
+  OrderTotal_CurrencyCode: null
+  OrderTotal_Amount: null
+  NumberOfItemsShipped: null
+  NumberOfItemsUnshipped: null
+  PaymentMethod: null
+  MarketplaceId: null
+  ShipmentServiceLevelCategory: null
+  OrderType: null
+  EarliestShipDate: null
+  LatestShipDate: null
+  IsPrime: null
+  IsBusinessOrder: null
+  IsSoldByAB: null
+  ShippingAddress_Name: null
+  ShippingAddress_AddressLine1: null
+  ShippingAddress_City: null
+  ShippingAddress_StateOrRegion: null
+  ShippingAddress_PostalCode: null
+  ShippingAddress_CountryCode: null
+  BuyerEmail: null
+  BuyerName: null
 order_items:
-  - AmazonOrderId: null
-    OrderItemId: null
-    ASIN: null
-    SellerSKU: null
-    Title: null
-    QuantityOrdered: null
-    QuantityShipped: null
-    ItemPrice_CurrencyCode: null
-    ItemPrice_Amount: null
-    ItemTax_Amount: null
-    PromotionDiscount_Amount: null
-    IsGift: null
-    Condition: null
+- AmazonOrderId: null
+  OrderItemId: null
+  ASIN: null
+  SellerSKU: null
+  Title: null
+  QuantityOrdered: null
+  QuantityShipped: null
+  ItemPrice_CurrencyCode: null
+  ItemPrice_Amount: null
+  ItemTax_Amount: null
+  PromotionDiscount_Amount: null
+  IsGift: null
+  Condition: null
 inventory:
-  - asin: null
-    fnSku: null
-    sellerSku: null
-    productName: null
-    condition: null
-    totalQuantity: null
-    inStockSupplyQuantity: null
-    inboundWorkingQuantity: null
-    inboundShippedQuantity: null
-    inboundReceivingQuantity: null
-    reservedQuantity: null
-    unfulfillableQuantity: null
-    lastUpdatedTime: null
+- asin: null
+  fnSku: null
+  sellerSku: null
+  productName: null
+  condition: null
+  totalQuantity: null
+  inStockSupplyQuantity: null
+  inboundWorkingQuantity: null
+  inboundShippedQuantity: null
+  inboundReceivingQuantity: null
+  reservedQuantity: null
+  unfulfillableQuantity: null
+  lastUpdatedTime: null
 returns:
-  - returnId: null
-    AmazonOrderId: null
-    returnDate: null
-    returnStatus: null
-    returnQuantity: null
-    refundAmount: null
-    resolution: null
+- returnId: null
+  AmazonOrderId: null
+  returnDate: null
+  returnStatus: null
+  returnQuantity: null
+  refundAmount: null
+  resolution: null
 reports:
-  - reportId: null
-    reportType: null
-    reportStatus: null
-    dataStartTime: null
-    dataEndTime: null
-    createdTime: null
-    processingEndTime: null
-    reportDocumentId: null
+- reportId: null
+  reportType: null
+  reportStatus: null
+  dataStartTime: null
+  dataEndTime: null
+  createdTime: null
+  processingEndTime: null
+  reportDocumentId: null
 pricing:
-  - asin: null
-    sellerSku: null
-    competitivePrice_CurrencyCode: null
-    competitivePrice_Amount: null
-    competitivePrice_Condition: null
-    listingPrice_Amount: null
-    landedPrice_Amount: null
-    shipping_Amount: null
-    numberOfOffers: null
-    buyBoxPrice_CurrencyCode: null
-    buyBoxPrice_Amount: null
-    buyBoxWinner: null
+- asin: null
+  sellerSku: null
+  competitivePrice_CurrencyCode: null
+  competitivePrice_Amount: null
+  competitivePrice_Condition: null
+  listingPrice_Amount: null
+  landedPrice_Amount: null
+  shipping_Amount: null
+  numberOfOffers: null
+  buyBoxPrice_CurrencyCode: null
+  buyBoxPrice_Amount: null
+  buyBoxWinner: null

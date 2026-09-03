@@ -1,4 +1,3 @@
-# Source: world_data 2/LightQuickBooks.json (verbatim). Corpus-only authored world.
 customers:
 - Id: '0'
   DisplayName: Multiple - See Batch Detail
@@ -147,7 +146,8 @@ vendors:
     FreeFormNumber: (912) 555-1150
   Balance: 0
   Active: true
-  Notes: Woodworks LLC entity taxes - kept separate from Alliance books. Contact Delbert Yancey.
+  Notes: Woodworks LLC entity taxes - kept separate from Alliance books. Contact Delbert
+    Yancey.
 items:
 - Id: '1'
   Name: Annual Membership Dues
@@ -632,9 +632,31 @@ expenses:
     Amount: 41.75
   MetaData:
     CreateTime: '2026-01-05T09:00:00'
-
-bill_payments: []
-
+bill_payments:
+- Id: BP-001
+  PayType: Check
+  DocNumber: '1042'
+  TxnDate: '2025-12-15'
+  TotalAmt: 4200.0
+  VendorRef:
+    value: '1'
+    name: Office Depot
+  CheckPayment:
+    BankAccountRef:
+      value: '94'
+      name: Checking
+- Id: BP-002
+  PayType: CreditCard
+  DocNumber: '1043'
+  TxnDate: '2025-12-22'
+  TotalAmt: 870.5
+  VendorRef:
+    value: '2'
+    name: Staples
+  CreditCardPayment:
+    CCAccountRef:
+      value: '95'
+      name: Amex
 company_info:
   CompanyName: Ashcroft Woodworks LLC
   LegalName: Ashcroft Woodworks LLC
@@ -648,11 +670,64 @@ company_info:
   Country: US
   Email:
     Address: accounting@ashcroftwoodworks.com
-
-company_raw: {}
-
-corporate_expense_ledger: []
-
-reimbursement_policy: {}
-
-break_even_analysis: {}
+company_raw:
+  CompanyName: Lark & Co. Consulting
+  LegalName: Lark and Company LLC
+  EIN: 12-3456789
+  FiscalYearStart: January
+  TaxForm: Form_1120
+  Industry: Professional Services
+  Website: https://larkco.example.com
+corporate_expense_ledger:
+- id: EXP-001
+  date: '2025-12-01'
+  category: Travel
+  amount: 1320.0
+  description: Client site visit - Boston
+  approved_by: CFO
+- id: EXP-002
+  date: '2025-12-08'
+  category: Software
+  amount: 499.0
+  description: Annual SaaS subscription
+  approved_by: CTO
+- id: EXP-003
+  date: '2025-12-14'
+  category: Office
+  amount: 210.5
+  description: Printer cartridges + paper
+  approved_by: CFO
+- id: EXP-004
+  date: '2025-12-20'
+  category: Marketing
+  amount: 850.0
+  description: Q4 ad campaign - LinkedIn
+  approved_by: CEO
+reimbursement_policy:
+  policy_version: '3.1'
+  effective_date: '2025-01-01'
+  max_meal_per_diem: 75.0
+  max_hotel_per_night: 250.0
+  mileage_rate_per_mile: 0.67
+  requires_receipt_above: 25.0
+  approval_required_above: 500.0
+  submission_deadline_days: 30
+  categories:
+  - Travel
+  - Meals
+  - Lodging
+  - Software
+  - Office
+  - Marketing
+  - Training
+break_even_analysis:
+  as_of: '2025-12-31'
+  fixed_costs_monthly: 28000.0
+  variable_cost_per_unit: 42.0
+  price_per_unit: 120.0
+  contribution_margin: 78.0
+  break_even_units: 359
+  break_even_revenue: 43080.0
+  current_units_sold: 520
+  margin_of_safety_units: 161
+  margin_of_safety_pct: 30.96

@@ -1,4 +1,3 @@
-# Source: world_data 2/LightInstagram.json (verbatim). Corpus-only authored world.
 media:
 - id: '17900001001'
   user_id: '17841400123456789'
@@ -1571,7 +1570,8 @@ users:
 - id: '17841400123456789'
   username: amos_whitfield
   name: Amos Jeremiah Whitfield
-  biography: Executive Director, Savannah Historic Preservation Alliance. Woodworker. Deacon.
+  biography: Executive Director, Savannah Historic Preservation Alliance. Woodworker.
+    Deacon.
   website: https://brewedawakening.co
   followers_count: 28500
   follows_count: 890
@@ -1626,13 +1626,79 @@ users:
   ig_id: 6892341075
   account_type: PERSONAL
   category: null
-
-carousel_children: []
-
-hashtags: []
-
+carousel_children:
+- id: 17900001005child1
+  media_id: '17900001005'
+  media_type: IMAGE
+  media_url: https://cdn.instagram.mock/17900001005_1.jpg
+  timestamp: 2026-01-03T10:00:00+0000
+  user_id: '17841400123456789'
+- id: 17900001005child2
+  media_id: '17900001005'
+  media_type: IMAGE
+  media_url: https://cdn.instagram.mock/17900001005_2.jpg
+  timestamp: 2026-01-03T10:00:00+0000
+  user_id: '17841400123456789'
+hashtags:
+- id: '17841563280'
+  name: photography
+  media_count: 850000
+- id: '17841563281'
+  name: travel
+  media_count: 620000
+- id: '17841563282'
+  name: food
+  media_count: 540000
+- id: '17841563283'
+  name: nature
+  media_count: 480000
+- id: '17841563284'
+  name: art
+  media_count: 390000
 media_containers: []
-
-media_insights: []
-
-mentions: []
+media_insights:
+- media_id: '17900001001'
+  impressions: 1200
+  reach: 900
+  engagement: 80
+  profile_visits: 30
+  follows: 5
+- media_id: '17900001002'
+  impressions: 1500
+  reach: 1100
+  engagement: 100
+  profile_visits: 35
+  follows: 6
+- media_id: '17900001028'
+  impressions: 1800
+  reach: 1300
+  engagement: 120
+  profile_visits: 40
+  follows: 7
+- media_id: '17900001030'
+  impressions: 2100
+  reach: 1500
+  engagement: 140
+  profile_visits: 45
+  follows: 8
+- media_id: '17900001031'
+  impressions: 2400
+  reach: 1700
+  engagement: 160
+  profile_visits: 50
+  follows: 9
+- media_id: '17900001033'
+  impressions: 2700
+  reach: 1900
+  engagement: 180
+  profile_visits: 55
+  follows: 10
+mentions:
+- media_id: '17900001001'
+  user_id: '17841400567890123'
+  timestamp: 2026-01-02T09:15:00+0000
+  text: '@amos_whitfield great shot!'
+- media_id: '17900001002'
+  user_id: '17841400567890123'
+  timestamp: 2026-01-03T14:30:00+0000
+  text: Love this! @amos_whitfield
