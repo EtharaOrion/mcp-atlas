@@ -136,9 +136,19 @@ else
 fi
 
 # ------------------------------------------------------------------- 4. pytest
+# `-P` is load-bearing, not tidiness. `python3 -m pytest` prepends the current
+# working directory to sys.path[0], ahead of PYTHONPATH, and `-p
+# ctrf_pytest_plugin` then imports that plugin by bare name. task.toml sets
+# [verifier] environment_mode = "shared", so harbor execs the agent and then
+# this script inside the SAME container: any directory the agent could write is
+# a directory that could shadow the grader's own plugin and run agent-authored
+# code inside the verifier. `-P` drops that entry, PYTHONPATH still supplies
+# /tests and /harness/scoring, and --rootdir anchors conftest collection at
+# /tests rather than at wherever harbor happened to leave the cwd.
 ATLAS_TRAJECTORY="$TRAJ" MCPATLAS_TRAJECTORY="$TRAJ" \
     PYTHONPATH=/tests:/harness/scoring \
-    python3 -m pytest /tests/test_outputs.py \
+    python3 -P -m pytest /tests/test_outputs.py \
+        --rootdir=/tests \
         -p ctrf_pytest_plugin \
         --junitxml="$LOGS/junit.xml" -v -p no:cacheprovider \
         -W ignore::pytest.PytestReturnNotNoneWarning \

@@ -163,19 +163,60 @@ container. `adapters/mcp_atlas/adapter.py` now emits all three, so **newly
 generated** bundles carry them. The two bundles already in `dataset/` predate
 that and need regenerating or patching.
 
-That is a deliberate stopping point. `dataset/` bundle bytes are digested into
-`task_artifact_hashes` in `memory/crucible_view.yaml` under
-`bytes_moved_since_canary_issue: false`. Editing a shipped `task.toml` changes
-`task_hash` and breaks that canary binding, which is an audit decision rather
-than a wiring one.
+That was recorded as a deliberate stopping point, on the ground that `dataset/`
+bundle bytes are digested into `task_artifact_hashes` in
+`.memory/crucible_view.yaml`, so editing a shipped `task.toml` would change
+`task_hash` and break the canary binding.
+
+**That ground does not hold for the bundle that ships.** `task_artifact_hashes`
+names `mcbride-trial-row-correction`, `bull-street-lot-expense-claim` and
+`draft-side-table-lot-price`, and nothing for `Amandeep_keelson`. That absence
+is the standing finding `C-GAP-VIEW-MISSING-TASK-HASH-AMANDEEP`. There is no
+binding on this bundle to break, so the stopping point is a choice rather than a
+constraint, and anything that traded safety for it was trading against nothing.
+
+## Where the judge credential goes
+
+Not into `services/scoring/`. That directory is bind-mounted read-only at
+`/harness/scoring`, and `task.toml` sets `[verifier] environment_mode =
+"shared"` — harbor execs the agent and then the verifier **inside the same
+container**. A key written there is readable by the graded agent for the length
+of its run, and read-only does not help: a read is the leak.
+
+`make judge-config` used to write `EVAL_LLM_API_KEY` to
+`services/scoring/judge_backend.json` for exactly that mount. Nothing in the
+container ever read it — `tests/test.sh` invokes `rubric_judge_cli.py`, which
+does not import `codex_bridge` and takes its credential from `[verifier.env]`.
+The only importers are `harness/Makefile` and `scripts/judge_smoke_test.py`,
+both host-side. It now writes `~/.cb/judge_backend.json`, which is mounted
+nowhere. A stale in-tree copy is refused rather than read, by `load_config` and
+by `preflight`, and `crucible.private_carriers.check_mounted_secrets`
+(`G-CON-MOUNTED-CREDENTIAL-BOUNDARY`) fails if one reappears under any
+agent-visible mount.
+
+The same container-sharing fact is why `tests/test.sh` runs the verifier's
+pytest as `python3 -P -m pytest --rootdir=/tests`. Without `-P`, `python3 -m`
+prepends the working directory to `sys.path` ahead of `PYTHONPATH`, and
+`-p ctrf_pytest_plugin` imports that plugin by bare name — so any directory the
+agent could write to could shadow the grader's own plugin and run agent-authored
+code inside the verifier.
 
 ## Caveats that belong in any run record
 
-- **The judge is not pinned.** Upstream describes the ChatGPT-authenticated
-  Codex backend as "not a documented stable third-party API".
-  `codex_bridge.BridgeStatus.as_record()` emits `backend_pinned: false` with the
-  resolved model and transport so a run states this rather than implying a
-  pinned judge.
+- **Two pin records, and they do not agree.** Pinnability is derived from one
+  predicate — `documented_stable_api` and `resolvable_build_identity`, both
+  required — rather than declared, and each path reports its own result.
+  `codex_bridge.pin_assessment` covers the smoke and preflight path only, and
+  fails the first criterion: upstream calls the ChatGPT-authenticated Codex
+  backend "not a documented stable third-party API", and no code here can
+  change that. `rubric_judge_cli.pin_record` covers the path that actually
+  grades, and it separates the transports: `gpt-5.6-sol` over the `codex` CLI
+  fails the same criterion, while a dated Claude model over the `claude` CLI
+  passes both — and that is the transport the in-container judge uses. So a
+  scored run can carry a pinnable judge; the bridge never was one, and it was
+  never the thing grading. The record travels in `rubric_breakdown.json` under
+  `judge_pin`. A build identity that could not be read is recorded as an unmet
+  criterion, never as a satisfied one.
 - **Judge failures are counted, not raised.** `score_rubric` catches
   per-criterion errors and still returns a reward, so a stopped or
   unauthenticated bridge produces a complete-looking report computed from almost

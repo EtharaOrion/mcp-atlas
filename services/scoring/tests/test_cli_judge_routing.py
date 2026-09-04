@@ -140,3 +140,68 @@ def test_claude_preflight_reports_a_missing_cli(monkeypatch):
     monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "tok")
     reason = cli._preflight("claude-sonnet-4-5")
     assert reason is not None and "claude CLI not found" in reason
+
+
+# ----- the graded path's own pin record -----
+#
+# C-GAP-JUDGE-TRANSPORT-UNPINNED was opened against codex_bridge.py. Fixing the
+# record there alone would have left the transport that actually grades with no
+# pin determination at all, so this path states its own -- and the two
+# transports genuinely differ, which is what makes the determination worth
+# recording rather than a blanket pessimistic constant.
+
+
+def test_the_codex_transport_is_not_pinnable(monkeypatch):
+    """Same undocumented ChatGPT-authenticated backend the bridge fronts.
+    Reaching it by subprocess instead of HTTP does not document it."""
+    monkeypatch.setattr(cli, "_codex_cli", lambda: "/usr/local/bin/codex")
+    monkeypatch.setattr(cli, "_cli_version", lambda c, timeout=10.0: "codex-cli 0.152.1")
+    r = cli.pin_record(cli.CODEX_MODELS[0])
+    assert r["transport"] == "codex-cli"
+    assert r["criteria"]["resolvable_build_identity"] is True
+    assert r["criteria"]["documented_stable_api"] is False
+    assert r["pinned"] is False
+
+
+def test_the_claude_transport_is_pinnable(monkeypatch):
+    """The one that grades inside the task container. Published versioned API,
+    concrete model id -- so the run that produces a score has a pinnable judge,
+    which is precisely what the gap said could not be established."""
+    monkeypatch.setattr(cli, "_claude_cli", lambda: "/root/.local/bin/claude")
+    monkeypatch.setattr(cli, "_cli_version", lambda c, timeout=10.0: "2.1.228 (Claude Code)")
+    r = cli.pin_record(cli.CLAUDE_MODELS[0])
+    assert r["transport"] == "claude-code-cli"
+    assert r["pinned"] is True
+    assert r["cli_version"] == "2.1.228 (Claude Code)"
+
+
+def test_an_unreadable_version_fails_the_criterion_rather_than_passing_it(monkeypatch):
+    """A build identity that could not be read is unestablished, not satisfied."""
+    monkeypatch.setattr(cli, "_claude_cli", lambda: "/root/.local/bin/claude")
+    monkeypatch.setattr(cli, "_cli_version", lambda c, timeout=10.0: None)
+    r = cli.pin_record(cli.CLAUDE_MODELS[0])
+    assert r["criteria"]["resolvable_build_identity"] is False
+    assert r["pinned"] is False
+
+
+def test_an_unknown_model_is_not_quietly_pinned():
+    r = cli.pin_record("some-other-model")
+    assert r["transport"] == "unknown"
+    assert r["pinned"] is False
+
+
+def test_the_pin_criteria_match_the_bridge_module():
+    """One predicate across both records, so the two are comparable. Divergent
+    criteria would let a transport look pinned only because it was judged by a
+    weaker rule."""
+    import importlib
+
+    cb = importlib.import_module("services.scoring.codex_bridge")
+    assert set(cli.pin_record(cli.CODEX_MODELS[0])["criteria"]) == set(cb.PIN_CRITERIA)
+
+
+def test_a_version_probe_that_explodes_does_not_stop_grading(monkeypatch):
+    """Provenance is worth recording; it is not worth failing a run over."""
+    monkeypatch.setattr(cli, "_claude_cli", lambda: "/nonexistent/claude")
+    assert cli._cli_version("/nonexistent/claude") is None
+    assert cli.pin_record(cli.CLAUDE_MODELS[0])["pinned"] is False

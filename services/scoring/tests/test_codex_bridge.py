@@ -345,16 +345,61 @@ def test_judge_default_model_is_resolved_by_the_transport_owner():
     assert rj._DEFAULT_JUDGE_MODEL in (cli.CODEX_MODELS + cli.CLAUDE_MODELS)
 
 
-# ----- the mounted config channel -----
+# ----- the judge-backend config channel -----
 #
-# The bundle's docker-compose mounts services/scoring read-only at
-# /harness/scoring, so a file beside codex_bridge.py reaches the judge running
-# inside the task container. That is the only channel into the verifier that
-# does not require editing a shipped task.toml, and editing one would change
-# the bundle digest pinned in memory/crucible_view.yaml task_artifact_hashes.
+# This config used to live beside codex_bridge.py, on the argument that the
+# /harness/scoring mount was the only way into the verifier that did not
+# require editing a shipped task.toml. Every part of that argument turned out
+# to be wrong, and the file carries a live API key:
+#
+#   * The verifier is not a separate container. task.toml sets
+#     `[verifier] environment_mode = "shared"` and TASK_BUNDLE.md calls `main`
+#     "the `main` container the agent + verifier run in", so a secret under
+#     /harness/scoring is readable by the GRADED AGENT, not just the verifier.
+#   * Nothing in the container read it. tests/test.sh invokes rubric_judge_cli,
+#     which does not import this module and takes its credential from
+#     [verifier.env]. The only importers are the Makefile and the smoke script.
+#   * The digest it was traded against does not cover the shipped bundle:
+#     .memory/crucible_view.yaml task_artifact_hashes has no Amandeep entry.
+#
+# It now lives at ~/.cb/judge_backend.json, which is not mounted anywhere.
 
 
-def test_config_is_read_from_beside_the_module(monkeypatch, tmp_path):
+def test_the_config_is_not_inside_the_mounted_scoring_tree():
+    """The whole point of the move. A path check rather than a behaviour check,
+    because behaviour cannot distinguish a safe location from a lucky one."""
+    scoring_tree = Path(cb.__file__).resolve().parent
+    assert scoring_tree not in cb.JUDGE_BACKEND_CONFIG.resolve().parents, (
+        f"{cb.JUDGE_BACKEND_CONFIG} is inside {scoring_tree}, which docker-compose "
+        "mounts at /harness/scoring for a container the graded agent runs in"
+    )
+
+
+def test_a_stale_in_tree_config_is_reported_and_not_read(monkeypatch, tmp_path, capsys):
+    """Reading it would work, which is exactly why it must not. A run that
+    silently succeeded off a mounted key is the failure mode this prevents."""
+    legacy = tmp_path / "judge_backend.json"
+    legacy.write_text(json.dumps({"JUDGE_MODEL": "from-the-mount"}))
+    monkeypatch.setattr(cb, "MOUNTED_LEGACY_CONFIG", legacy)
+    monkeypatch.setattr(cb, "JUDGE_BACKEND_CONFIG", tmp_path / "absent.json")
+    monkeypatch.delenv("JUDGE_MODEL", raising=False)
+
+    assert cb.mounted_secret_leak() == legacy
+    assert cb.load_config() == {}
+    assert cb.resolve("JUDGE_MODEL") is None
+    assert "harness/scoring" in capsys.readouterr().err
+
+
+def test_preflight_refuses_while_a_stale_in_tree_config_exists(monkeypatch, tmp_path):
+    legacy = tmp_path / "judge_backend.json"
+    legacy.write_text("{}")
+    monkeypatch.setattr(cb, "MOUNTED_LEGACY_CONFIG", legacy)
+    with pytest.raises(cb.BridgeUnavailable) as e:
+        cb.preflight()
+    assert "judge_backend.json" in str(e.value)
+
+
+def test_config_is_read_from_the_host_side_path(monkeypatch, tmp_path):
     cfg = tmp_path / "judge_backend.json"
     cfg.write_text(json.dumps({"EVAL_LLM_BASE_URL": "http://host.docker.internal:3456"}))
     monkeypatch.setattr(cb, "JUDGE_BACKEND_CONFIG", cfg)
@@ -388,8 +433,8 @@ def test_an_explicit_argument_beats_everything(monkeypatch, tmp_path):
     assert cb.resolve("JUDGE_MODEL", "gpt-5.6-sol") == "gpt-5.6-sol"
 
 
-def test_api_key_falls_back_to_the_mounted_config(monkeypatch, tmp_path):
-    """The container has no CB_API_KEY exported; the mounted file carries it."""
+def test_api_key_falls_back_to_the_config_file(monkeypatch, tmp_path):
+    """An operator who never exported CB_API_KEY; the host-side file carries it."""
     monkeypatch.delenv("CB_API_KEY", raising=False)
     monkeypatch.delenv("EVAL_LLM_API_KEY", raising=False)
     monkeypatch.setattr(cb, "CB_CONFIG", tmp_path / "absent.json")
@@ -455,3 +500,45 @@ def test_score_rubric_reaches_the_model_through_the_cli_transport():
     src = (Path(cb.__file__).parent / "rubric_judge.py").read_text()
     assert "_codex_cli._codex_exec(" in src
     assert "subprocess." not in src
+
+
+# ----- pinnability -----
+#
+# `backend_pinned` was the literal False. A constant cannot be checked and
+# cannot change when the backend does, which is half of why
+# C-GAP-JUDGE-TRANSPORT-UNPINNED capped at HOLD. It is derived now.
+
+
+def test_the_pin_verdict_is_derived_from_stated_criteria():
+    a = cb.pin_assessment({})
+    assert set(a["criteria"]) == set(cb.PIN_CRITERIA)
+    assert a["pinned"] is all(a["criteria"].values())
+    for name in cb.PIN_CRITERIA:
+        assert a["basis"][name], f"{name} has no stated basis"
+
+
+def test_an_undocumented_backend_is_not_pinned_even_with_a_build_identity():
+    """The criterion that fails is the one that cannot be fixed from here, and
+    a reported version must not be allowed to paper over it."""
+    a = cb.pin_assessment({"version": "0.4.1"})
+    assert a["criteria"]["resolvable_build_identity"] is True
+    assert a["criteria"]["documented_stable_api"] is False
+    assert a["pinned"] is False
+    assert a["build_identity"] == "0.4.1"
+
+
+def test_an_unidentifiable_build_is_recorded_as_unmet_not_assumed():
+    a = cb.pin_assessment({})
+    assert a["criteria"]["resolvable_build_identity"] is False
+    assert a["build_identity"] is None
+
+
+def test_the_record_says_it_does_not_cover_the_graded_path():
+    """Without this the record reads as the graded judge's pin record, which it
+    is not: a scored run never imports this module."""
+    rec = cb.BridgeStatus(
+        "http://127.0.0.1:3456", "gpt-5.6-sol", True, True, True, ["gpt-5.6-sol"], "ok",
+    ).as_record()
+    assert rec["covers"] == "smoke-and-preflight"
+    assert "rubric_judge_cli" in rec["grading_path"]
+    assert rec["backend_pinned"] is rec["pin_assessment"]["pinned"]

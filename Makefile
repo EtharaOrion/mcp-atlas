@@ -77,19 +77,32 @@ CODEX_JUDGE_MODEL = gpt-5.6-sol
 judge-bridge: # run codex-bridge in the foreground (ctrl-c to stop)
 	codex-bridge serve
 
-# Writes services/scoring/judge_backend.json, which the bundle mounts read-only
-# at /harness/scoring. This is how the backend reaches the in-container judge
-# without adding names to a shipped task.toml -- doing that would change the
-# bundle digest pinned in memory/crucible_view.yaml task_artifact_hashes.
-# The URL is the container's view of the host, not 127.0.0.1.
-judge-config: # write the judge backend config the container reads
-	@python3 -c "import json,sys; sys.path.insert(0,'services/scoring'); \
+# Writes ~/.cb/judge_backend.json -- HOST-SIDE, and deliberately NOT
+# services/scoring/judge_backend.json, which is where it used to go.
+#
+# That directory is bind-mounted read-only at /harness/scoring, and every
+# bundle's task.toml sets [verifier] environment_mode = "shared", so the
+# verifier runs in the same container as the graded agent. A key written there
+# is readable by the agent for the whole run. It bought nothing: the only
+# grader tests/test.sh invokes is rubric_judge_cli.py, which does not import
+# codex_bridge and takes its credential from [verifier.env]. The digest that
+# supposedly forbade the alternative does not cover the shipped bundle either
+# -- .memory/crucible_view.yaml task_artifact_hashes has no Amandeep entry.
+#
+# The URL is still the container's view of the host, not 127.0.0.1, for the
+# host-side smoke path that does read this file.
+judge-config: # write the judge backend config, host-side and unmounted
+	@python3 -c "import json,os,sys; sys.path.insert(0,'services/scoring'); \
 	import codex_bridge as c; \
 	p=c.JUDGE_BACKEND_CONFIG; \
+	p.parent.mkdir(mode=0o700, parents=True, exist_ok=True); \
 	p.write_text(json.dumps({'EVAL_LLM_BASE_URL':'$(CODEX_BRIDGE_ROOT_CONTAINER)', \
 	'EVAL_LLM_API_KEY':c.api_key() or '', 'JUDGE_MODEL':'$(CODEX_JUDGE_MODEL)'}, indent=2)+chr(10)); \
+	os.chmod(p, 0o600); \
 	print('wrote', p)"
-	@chmod 600 services/scoring/judge_backend.json
+	@python3 -c "import sys; sys.path.insert(0,'services/scoring'); \
+	import codex_bridge as c; s=c.mounted_secret_leak(); \
+	sys.exit(0) if s is None else (print('REFUSING: %s is inside the /harness/scoring mount the graded agent can read. Delete it.' % s, file=sys.stderr), sys.exit(1))"
 
 judge-smoke: # end-to-end judge smoke test against an in-process stub (no bridge, free)
 	python3 scripts/judge_smoke_test.py

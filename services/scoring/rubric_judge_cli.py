@@ -156,6 +156,105 @@ def _claude_cli() -> str:
     return str(candidate) if candidate.is_file() and os.access(str(candidate), os.X_OK) else ""
 
 
+# ------------------------------------------------------------- pinnability
+#
+# C-GAP-JUDGE-TRANSPORT-UNPINNED was opened against codex_bridge.py, which
+# self-declares `backend_pinned: false`. That module is not this path: nothing
+# in the task container imports it, and a scored run never touches it. Closing
+# the record there and stopping would have left the transport that actually
+# grades with no pin determination at all, which is the same hole one file to
+# the left. So the graded path states its own, over the same two criteria
+# codex_bridge.PIN_CRITERIA names, and the two transports do not come out the
+# same:
+#
+#   codex   gpt-5.6-sol over a ChatGPT subscription. Same undocumented backend
+#           the bridge fronts, reached by subprocess instead of HTTP. Changing
+#           the transport does not document the API, so this is not pinnable.
+#
+#   claude  A dated Claude model over the Claude Code CLI against a published,
+#           versioned API, with a concrete model id rather than a moving alias.
+#           This one is pinnable, and it is the transport that grades inside the
+#           task container -- so the run that produces a score is the run whose
+#           judge can be pinned.
+#
+# The build identity is measured, not assumed: an unreadable `--version` leaves
+# the criterion unmet rather than silently satisfied.
+_PIN_UNDOCUMENTED_BACKEND = (
+    "gpt-5.6-sol is served by a ChatGPT-authenticated Codex backend, which "
+    "upstream describes as not a documented stable third-party API"
+)
+_PIN_DOCUMENTED_BACKEND = (
+    "the Claude Code CLI targets a published, versioned API and the model id is "
+    "concrete rather than a moving alias"
+)
+
+
+def _cli_version(cli: str, timeout: float = 10.0) -> str | None:
+    """`<cli> --version`, or None when it cannot be read.
+
+    Best-effort and never raises: a judge must not fail to grade because a
+    version probe did. None is a real answer here -- it makes the
+    resolvable_build_identity criterion fail, which is the correct outcome for
+    a transport whose build cannot be identified.
+    """
+    if not cli:
+        return None
+    try:
+        proc = subprocess.run(
+            [cli, "--version"], capture_output=True, text=True, timeout=timeout
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    out = (proc.stdout or proc.stderr or "").strip()
+    return out.splitlines()[0].strip() if out else None
+
+
+def pin_record(model: str) -> dict:
+    """Whether the transport that graded this run is pinnable, and why.
+
+    Written into rubric_breakdown.json so a score carries its own judge
+    provenance. A reward whose judge cannot be pinned is still a reward; what
+    it must not be is a reward that looks pinned because nothing said otherwise.
+    """
+    if model in CODEX_MODELS:
+        transport, cli = "codex-cli", _codex_cli()
+        documented, basis = False, _PIN_UNDOCUMENTED_BACKEND
+    elif model in CLAUDE_MODELS:
+        transport, cli = "claude-code-cli", _claude_cli()
+        documented, basis = True, _PIN_DOCUMENTED_BACKEND
+    else:
+        return {
+            "transport": "unknown",
+            "model": model,
+            "pinned": False,
+            "criteria": {"documented_stable_api": False,
+                         "resolvable_build_identity": False},
+            "basis": {"documented_stable_api":
+                      f"{model!r} is not a model this judge grades with"},
+        }
+
+    version = _cli_version(cli)
+    criteria = {
+        "documented_stable_api": documented,
+        "resolvable_build_identity": bool(version),
+    }
+    return {
+        "transport": transport,
+        "model": model,
+        "cli": cli or None,
+        "cli_version": version,
+        "pinned": all(criteria.values()),
+        "criteria": criteria,
+        "basis": {
+            "documented_stable_api": basis,
+            "resolvable_build_identity": (
+                f"{cli} --version reported {version!r}" if version
+                else f"could not read a version from {cli or 'an absent CLI'}"
+            ),
+        },
+    }
+
+
 def _codex_credential_error() -> str:
     """Why the Codex CLI is unusable as a judge, or "" if it is ready.
 
@@ -835,6 +934,10 @@ def main() -> None:
     print(f"Grading {len(criteria)} criteria with {a.model}")
     results = asyncio.run(_run_judge(criteria, traj_ctx, final_ctx, a.model))
     doc = _compute_scores(criteria, results)
+    # Judge provenance travels with the score. Without it a reader has the
+    # numbers and no way to tell which transport produced them or whether that
+    # transport was pinnable.
+    doc["judge_pin"] = pin_record(a.model)
 
     _out_path.parent.mkdir(parents=True, exist_ok=True)
     _out_path.write_text(json.dumps(doc, indent=2))

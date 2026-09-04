@@ -32,9 +32,10 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import urllib.error
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 # Server root. The bridge binds 127.0.0.1:3456 unless CODEX_BRIDGE_HOST and
@@ -68,15 +69,55 @@ CODEX_AUTH_JSON = Path(
     os.environ.get("CODEX_HOME") or (Path.home() / ".codex")
 ) / "auth.json"
 
-# The bundle's docker-compose mounts this whole directory read-only at
-# /harness/scoring, so a file dropped beside this module is visible to the judge
-# running inside the task container. That is the only channel into the verifier
-# that does not require editing a shipped task.toml, and editing one would
-# change the bundle digest that memory/crucible_view.yaml pins in
-# task_artifact_hashes. Config travels with the scoring code instead.
+# Judge-backend config. HOST-ONLY, and deliberately not beside this module.
 #
-# Gitignored: it carries the local bridge key. Written by `make judge-config`.
-JUDGE_BACKEND_CONFIG = Path(__file__).resolve().parent / "judge_backend.json"
+# It used to live at `services/scoring/judge_backend.json` on the argument that
+# the compose mount at /harness/scoring was the only channel into the verifier
+# that did not require editing a shipped task.toml. Three facts retired that
+# argument, and they are recorded here because the file carries a live key:
+#
+# 1. The verifier is not a separate container. Every bundle's task.toml sets
+#    `[verifier] environment_mode = "shared"`, and TASK_BUNDLE.md describes
+#    `main` as "the `main` container the agent + verifier run in" -- harbor
+#    execs the agent, then the verifier, inside the same container. So a secret
+#    under /harness/scoring is readable by the graded agent for the whole run,
+#    not merely by the verifier.
+#
+# 2. Nothing inside that container reads this file. The only grader
+#    `tests/test.sh` invokes is rubric_judge_cli.py, which does not import this
+#    module; it grades over the local `codex` CLI on the host or the `claude`
+#    CLI in the container, taking CLAUDE_CODE_OAUTH_TOKEN from [verifier.env].
+#    The only importers of codex_bridge are harness/Makefile and
+#    scripts/judge_smoke_test.py, both host-side. The key was exposed for no
+#    consumer.
+#
+# 3. The digest that supposedly forbade the alternative does not exist. The
+#    Amandeep bundle -- the only one that ships -- carries no entry in
+#    .memory/crucible_view.yaml task_artifact_hashes, which is the standing
+#    finding C-GAP-VIEW-MISSING-TASK-HASH-AMANDEEP. There was no binding to
+#    break.
+#
+# So it moves beside the bridge's own key file, which is already 0600 in a 0700
+# directory and is not mounted anywhere. Written by `make judge-config`.
+JUDGE_BACKEND_CONFIG = Path.home() / ".cb" / "judge_backend.json"
+
+# The path it used to live at, retained only so a stale copy is reported rather
+# than read. Reading it would re-establish the exposure this move removed, and
+# would do so silently, so `load_config` refuses it and `preflight` fails on it.
+MOUNTED_LEGACY_CONFIG = Path(__file__).resolve().parent / "judge_backend.json"
+
+
+def mounted_secret_leak() -> Path | None:
+    """The legacy in-tree config, if an operator still has one on disk.
+
+    Returns the path rather than a bool so callers can name it in the message
+    an operator has to act on. The check is existence-only and does not read the
+    file: whether it happens to carry a key today is not the point, the mount is.
+    """
+    try:
+        return MOUNTED_LEGACY_CONFIG if MOUNTED_LEGACY_CONFIG.is_file() else None
+    except OSError:
+        return None
 
 INSTALL_COMMAND = "npm install --global codex-anthropic-bridge"
 START_COMMAND = "codex-bridge serve"
@@ -115,11 +156,27 @@ def provider_route(model: str) -> str:
 
 
 def load_config() -> dict:
-    """The mounted judge-backend config, or an empty mapping.
+    """The host-side judge-backend config, or an empty mapping.
 
     Absent is normal and not an error: an operator who exports the environment
     directly never needs this file.
+
+    A stale copy at the old in-tree path is warned about and NOT read. Reading
+    it would work -- the values are the same shape -- and that is exactly the
+    problem: the run would succeed while a live key sat inside a mount the
+    graded agent can read, with nothing in the output saying so. Refusing makes
+    the operator delete it.
     """
+    stale = mounted_secret_leak()
+    if stale is not None:
+        print(
+            f"[codex_bridge] ignoring {stale}: it is inside the tree that "
+            "docker-compose mounts read-only at /harness/scoring, and the "
+            "verifier shares a container with the graded agent, so anything "
+            "there is agent-readable. Delete it and run `make judge-config`, "
+            f"which now writes {JUDGE_BACKEND_CONFIG}.",
+            file=sys.stderr,
+        )
     try:
         data = json.loads(JUDGE_BACKEND_CONFIG.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
@@ -204,6 +261,70 @@ def api_key(explicit: str | None = None) -> str | None:
     return None
 
 
+# ---------------------------------------------------------------- pinnability
+#
+# `backend_pinned` used to be the literal False in the record below. A constant
+# is not a determination: it reads the same whether someone evaluated the
+# backend or typed a pessimistic default, and it cannot become true when the
+# backend changes. C-GAP-JUDGE-TRANSPORT-UNPINNED capped at HOLD partly for
+# that reason. The predicate is stated here instead, and the record carries the
+# per-criterion result so a reader can check the conclusion against the basis.
+#
+# A judge backend is pinned when BOTH hold:
+#
+#   documented_stable_api      The backend's API is published and versioned, so
+#                              the behaviour a trial measured is the behaviour a
+#                              re-run gets. codex-bridge fails this on upstream's
+#                              own statement: its README calls the
+#                              ChatGPT-authenticated Codex backend "not a
+#                              documented stable third-party API".
+#
+#   resolvable_build_identity  The serving build reports an identity a run can
+#                              record, so two runs can be told apart. Observed
+#                              from /health rather than assumed; absent is
+#                              recorded as unestablished, never as satisfied.
+#
+# Both must hold, so this bridge is not pinnable today and the first criterion
+# is the reason. That is a property of the backend, not a defect in this file:
+# no code here can make an undocumented API documented, and pretending otherwise
+# by flipping the flag would be the failure this predicate exists to prevent.
+PIN_CRITERIA = ("documented_stable_api", "resolvable_build_identity")
+
+# Upstream's own characterisation, quoted rather than paraphrased because it is
+# the whole basis for the first criterion failing.
+_UPSTREAM_STABILITY_NOTE = (
+    "codex-bridge's README describes the ChatGPT-authenticated Codex backend as "
+    "'not a documented stable third-party API'"
+)
+
+
+def pin_assessment(server_identity: dict | None = None) -> dict:
+    """Whether this backend is pinnable, and on what basis.
+
+    Derived, not declared. `server_identity` is whatever /health reported;
+    an empty mapping means the build identity was not established, which is
+    recorded as a failed criterion rather than glossed as a pass.
+    """
+    identity = server_identity or {}
+    build = identity.get("version") or identity.get("build") or None
+    criteria = {
+        "documented_stable_api": False,
+        "resolvable_build_identity": bool(build),
+    }
+    return {
+        "pinned": all(criteria.values()),
+        "criteria": criteria,
+        "build_identity": build,
+        "basis": {
+            "documented_stable_api": _UPSTREAM_STABILITY_NOTE,
+            "resolvable_build_identity": (
+                f"/health reported {build!r}" if build
+                else "/health reported no version or build field"
+            ),
+        },
+    }
+
+
 @dataclass
 class BridgeStatus:
     root: str
@@ -213,15 +334,32 @@ class BridgeStatus:
     model_available: bool
     models_listed: list[str]
     detail: str
+    # Whatever /health reported about itself. Empty when the probe did not get
+    # that far or the body carried nothing identifying; the pin assessment
+    # reads the difference rather than assuming either way.
+    server_identity: dict = field(default_factory=dict)
 
     def as_record(self) -> dict:
         """The block a run should store next to its scores.
 
-        The bridge's own README calls the ChatGPT-authenticated Codex backend
-        "not a documented stable third-party API", so a run that grades through
-        it cannot claim a pinned judge. Recording which endpoint and model
-        actually answered is the most a run can honestly say.
+        Two things this record has to get right, because both were wrong before.
+
+        The pin verdict is DERIVED. `pin_assessment` states the predicate and
+        returns the per-criterion result, so a reader can check the conclusion
+        rather than take the flag on trust, and so the verdict can move if the
+        backend ever does. `backend_pinned` is kept as a top-level key because
+        consumers read it, but it is now computed from that assessment.
+
+        The SCOPE is stated. This bridge is not the transport that grades a
+        scored run, and a record that omits that invites the opposite reading --
+        that the graded judge was unpinned via this path. `tests/test.sh` invokes
+        rubric_judge_cli.py, which reaches a model over the local `codex` or
+        `claude` CLI and never imports this module; the only importers are
+        harness/Makefile and scripts/judge_smoke_test.py. So this record covers
+        the smoke and preflight path. The graded path has its own record, in
+        rubric_judge_cli.pin_record, and neither substitutes for the other.
         """
+        assessment = pin_assessment(self.server_identity)
         return {
             "judge_backend": "codex-bridge",
             "root": self.root,
@@ -231,11 +369,18 @@ class BridgeStatus:
             "authenticated": self.authenticated,
             "model_available": self.model_available,
             "models_listed": self.models_listed,
-            "backend_pinned": False,
+            "backend_pinned": assessment["pinned"],
+            "pin_assessment": assessment,
+            "covers": "smoke-and-preflight",
+            "grading_path": (
+                "not this module. A scored run grades through "
+                "rubric_judge_cli.py over the local codex or claude CLI; see "
+                "rubric_judge_cli.pin_record for that path's pin record"
+            ),
             "backend_note": (
-                "local bridge over a ChatGPT-authenticated Codex login, which upstream "
-                "describes as not a documented stable third-party API; the judge is "
-                "therefore not pinned"
+                "local bridge over a ChatGPT-authenticated Codex login; "
+                f"{_UPSTREAM_STABILITY_NOTE}, so the documented_stable_api "
+                "criterion fails and the backend is not pinnable"
             ),
         }
 
@@ -282,8 +427,18 @@ def check(
     want = model or DEFAULT_BRIDGE_MODEL
     token = api_key(key)
 
+    identity: dict = {}
     try:
-        status, _body = _get(f"{base}/health", timeout)
+        status, health_body = _get(f"{base}/health", timeout)
+        # Best-effort. A body that is not JSON, or JSON that names no version,
+        # leaves identity empty, and pin_assessment reports that criterion as
+        # unmet rather than inventing a build.
+        try:
+            parsed = json.loads(health_body)
+            if isinstance(parsed, dict):
+                identity = parsed
+        except (ValueError, json.JSONDecodeError):
+            identity = {}
     except (urllib.error.URLError, OSError, ValueError) as e:
         return BridgeStatus(
             base, want, False, False, False, [],
@@ -331,7 +486,7 @@ def check(
         detail = "authenticated, but the model listing returned nothing parsable"
     else:
         detail = f"authenticated and {want!r} is served"
-    return BridgeStatus(base, want, True, True, available, listed, detail)
+    return BridgeStatus(base, want, True, True, available, listed, detail, identity)
 
 
 def preflight(
@@ -354,6 +509,18 @@ def preflight(
     bridge serves a fixed pair and refuses everything else before it contacts
     upstream, so continuing would fail every criterion.
     """
+    stale = mounted_secret_leak()
+    if stale is not None:
+        raise BridgeUnavailable(
+            f"{stale} exists. That directory is bind-mounted read-only at "
+            "/harness/scoring, and task.toml sets [verifier] environment_mode = "
+            "'shared', so the verifier runs in the same container as the graded "
+            "agent and the file is agent-readable for the whole run. It carries "
+            "the bridge API key. Nothing in the container reads it -- "
+            "rubric_judge_cli.py does not import this module -- so it is "
+            f"exposure with no consumer. Delete it; `make judge-config` now "
+            f"writes {JUDGE_BACKEND_CONFIG}, which is not mounted anywhere."
+        )
     if require_auth_file and not CODEX_AUTH_JSON.is_file():
         raise BridgeUnavailable(
             f"{CODEX_AUTH_JSON} does not exist, so the bridge has no Codex credentials "
