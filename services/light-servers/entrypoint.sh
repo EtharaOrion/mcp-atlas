@@ -182,10 +182,20 @@ SERVER_CMDS["LightZendesk"]="fastmcp run /app/software/LightZendesk/app.py --tra
 SERVER_CMDS["LightZillow"]="fastmcp run /app/software/LightZillow/app.py --transport http --host 0.0.0.0 --port 9143"
 SERVER_CMDS["LightZoom"]="fastmcp run /app/software/LightZoom/app.py --transport http --host 0.0.0.0 --port 9144"
 
+_log_file=""
+if [ -n "${OUTPUT_DIR:-}" ]; then
+    _log_file="${OUTPUT_DIR}/server_logs.log"
+    > "$_log_file"
+fi
+
 if [ -z "${ENABLED_SERVERS:-}" ]; then
     echo "Starting all ${#SERVER_CMDS[@]} servers..."
     for name in "${!SERVER_CMDS[@]}"; do
-        eval "${SERVER_CMDS[$name]}" &
+        if [ -n "$_log_file" ]; then
+            eval "${SERVER_CMDS[$name]}" 2>&1 | awk -v n="$name" '{print "["n"] "$0; fflush()}' >> "$_log_file" &
+        else
+            eval "${SERVER_CMDS[$name]}" &
+        fi
         PIDS+=($!)
     done
 else
@@ -199,7 +209,11 @@ else
             continue
         fi
         echo "Starting $name..."
-        eval "$cmd" &
+        if [ -n "$_log_file" ]; then
+            eval "$cmd" 2>&1 | awk -v n="$name" '{print "["n"] "$0; fflush()}' >> "$_log_file" &
+        else
+            eval "$cmd" &
+        fi
         PIDS+=($!)
     done
 fi
@@ -213,6 +227,9 @@ fi
 # that DID come up are still usable, and the health lines are the evidence of
 # which is which. Exiting here would replace a partial fleet with no fleet.
 echo "Servers started. Probing readiness..."
+if [ -n "${OUTPUT_DIR:-}" ]; then
+    export HEALTH_LOG="${OUTPUT_DIR}/light_servers_health_probe.log"
+fi
 python3 /app/health_check.py || true
 
 wait || true

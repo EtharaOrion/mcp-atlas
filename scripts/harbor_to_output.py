@@ -798,42 +798,92 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     _ls_tc_path = ldir / "light-servers-tool-calls.log"
     _ls_health_path = ldir / "light-servers-health.log"
     if not _ls_tc_path.exists():
-        _light_calls = [r for r in stream["trace"] if r.get("raw_tool", "").startswith("mcp__Light")]
+        _all_calls = stream["trace"]
         _tc_lines = []
-        for _r in _light_calls:
+        for _r in _all_calls:
             _st = "ERROR" if _r["is_error"] else "OK"
             _tc_lines.append(f"[step={_r['step']}] [{_st}] {_r['raw_tool']} args={json.dumps(_r['arguments'], ensure_ascii=False)}")
             if _r["result"]:
                 _tc_lines.append(f"  result: {_r['result'][:500]}")
         _ls_tc_path.write_text(
-            "\n".join(_tc_lines) + "\n" if _tc_lines else "# no mcp__Light* tool calls recorded in this run\n",
+            "\n".join(_tc_lines) + "\n" if _tc_lines else "# no tool calls recorded in this run\n",
             encoding="utf-8",
         )
     if not _ls_health_path.exists():
         _srv_map: dict[str, dict] = {}
         for _r in stream["trace"]:
             _raw = _r.get("raw_tool", "")
-            if not _raw.startswith("mcp__Light"):
+            if not _raw.startswith("mcp__"):
                 continue
             _parts = _raw.split("__")
             _srv = _parts[1] if len(_parts) >= 2 else _raw
-            _entry = _srv_map.setdefault(_srv, {"ok": 0, "error": 0, "tools": set()})
+            _entry = _srv_map.setdefault(_srv, {"ok": 0, "error": 0, "tools": set(), "port": 0})
             _entry["tools"].add(_parts[2] if len(_parts) >= 3 else _raw)
             if _r["is_error"]:
                 _entry["error"] += 1
             else:
                 _entry["ok"] += 1
-        _health_lines = []
+        _ep = REPO / "services" / "light-servers" / "entrypoint.sh"
+        _ep_cmd_re = re.compile(r'^SERVER_CMDS\["([^"]+)"\]="(.*)"')
+        _ep_port_re = re.compile(r'--port\s+(\d+)')
+        if _ep.exists():
+            for _line in _ep.read_text(encoding="utf-8").splitlines():
+                _m = _ep_cmd_re.match(_line.strip())
+                if _m:
+                    _name = _m.group(1)
+                    _pm2 = _ep_port_re.search(_m.group(2))
+                    _port = int(_pm2.group(1)) if _pm2 else 0
+                    if _name not in _srv_map:
+                        _srv_map[_name] = {"ok": 0, "error": 0, "tools": set(), "port": _port}
+                    elif _srv_map[_name].get("port", 0) == 0:
+                        _srv_map[_name]["port"] = _port
+        _probe_path = REPO / "output" / "light_servers_health_probe.log"
+        _probe_re = re.compile(r'^\[HEALTH\] (UP  |DOWN)  (\S+)\s+:(\d+)(.*?)$')
+        _probe_results: dict[str, str] = {}
+        _probe_enabled: set[str] = set()
+        if _probe_path.exists():
+            for _pline in _probe_path.read_text(encoding="utf-8").splitlines():
+                _pm = _probe_re.match(_pline)
+                if _pm:
+                    _probe_results[_pm.group(2)] = "UP" if _pm.group(1).rstrip() == "UP" else "DOWN"
+                    if _pm.group(2) in _srv_map and _srv_map[_pm.group(2)].get("port", 0) == 0:
+                        _srv_map[_pm.group(2)]["port"] = int(_pm.group(3))
+                    if "(not enabled)" not in (_pm.group(4) or ""):
+                        _probe_enabled.add(_pm.group(2))
+        _grp: dict[str, list[str]] = {s: [] for s in ("HEALTHY", "DEGRADED", "UP", "DOWN", "NOT_ENABLED", "UNKNOWN")}
         for _srv, _info in sorted(_srv_map.items()):
-            _status = "DEGRADED" if _info["error"] > 0 and _info["ok"] == 0 else ("HEALTHY" if _info["ok"] > 0 else "UNKNOWN")
-            _health_lines.append(
-                f"{_srv}: {_status}  calls_ok={_info['ok']}  calls_err={_info['error']}"
-                f"  tools=[{', '.join(sorted(_info['tools']))}]"
+            if _info["ok"] > 0:
+                _status = "HEALTHY"
+            elif _info["error"] > 0:
+                _status = "DEGRADED"
+            elif _probe_results:
+                _ps = _probe_results.get(_srv)
+                if _ps == "UP":
+                    _status = "UP"
+                elif _srv not in _probe_enabled:
+                    _status = "NOT_ENABLED"
+                else:
+                    _status = "DOWN"
+            else:
+                _status = "UNKNOWN"
+            _port_str = f":{_info['port']}" if _info.get("port") else ""
+            _tools_str = f"[{', '.join(sorted(_info['tools']))}]" if _info["tools"] else "[]"
+            _grp[_status].append(
+                f"{_srv}{_port_str}  calls_ok={_info['ok']}  calls_err={_info['error']}  tools={_tools_str}"
             )
+        _health_lines = []
+        for _st in ("HEALTHY", "DEGRADED", "UP", "DOWN", "NOT_ENABLED", "UNKNOWN"):
+            if _grp[_st]:
+                _health_lines.append(f"# --- {_st} ({len(_grp[_st])}) ---")
+                for _e in _grp[_st]:
+                    _health_lines.append(f"{_st}  {_e}")
         _ls_health_path.write_text(
-            "\n".join(_health_lines) + "\n" if _health_lines else "# no mcp__Light* tools called in this run\n",
+            "\n".join(_health_lines) + "\n" if _health_lines else "# no servers tracked in this run\n",
             encoding="utf-8",
         )
+    _srv_logs_file = REPO / "output" / "server_logs.log"
+    if _srv_logs_file.is_file():
+        _copy(_srv_logs_file, ldir / "server_logs.log")
     if ctrf is not None and not (vdir / "ctrf.json").exists():
         _dump(vdir / "ctrf.json", ctrf)
     if ctrf is not None and not (ldir / "verifier-ctrf.json").exists():

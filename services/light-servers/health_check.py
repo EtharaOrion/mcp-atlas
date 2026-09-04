@@ -38,6 +38,13 @@ loaded. That is the honest limit of a socket probe, and it is still the
 difference between "the process is up" and "the process died on import", which
 is the failure this exists to catch.
 
+WHY RESULTS ARE WRITTEN INCREMENTALLY. The probe file is written line-by-line
+as each future completes (via as_completed) rather than batch-flushed at the
+end. This ensures partial results survive a SIGTERM: when docker-compose tears
+down the container after the agent run, whatever servers had already responded
+are recorded. Servers still being retried at teardown time are simply absent
+from the probe file; harbor_to_output.py treats those as UNKNOWN.
+
 Env:
     ENABLED_SERVERS   comma-separated subset, the same variable entrypoint.sh
                       reads. Unset means every server was launched.
@@ -55,10 +62,12 @@ from __future__ import annotations
 
 import os
 import re
+import signal
 import socket
 import sys
+import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 ENTRYPOINT = os.environ.get("HEALTH_ENTRYPOINT", "/app/entrypoint.sh")
 INTERVAL = float(os.environ.get("HEALTH_INTERVAL", "2.0"))
@@ -74,13 +83,39 @@ DEADLINE_CAP = 900.0
 _CMD_RE = re.compile(r'^SERVER_CMDS\["([^"]+)"\]="(.*)"\s*$')
 _PORT_RE = re.compile(r"--port\s+(\d+)")
 
-_lines: list[str] = []
+_log_fh = None
+_log_lock = threading.Lock()
+
+
+def _open_log() -> None:
+    global _log_fh
+    try:
+        os.makedirs(os.path.dirname(LOG_PATH) or ".", exist_ok=True)
+        _log_fh = open(LOG_PATH, "w")
+    except OSError as exc:
+        print(f"[HEALTH] could not open {LOG_PATH}: {exc}", file=sys.stderr, flush=True)
+
+
+def _close_log() -> None:
+    if _log_fh is not None:
+        try:
+            _log_fh.close()
+        except OSError:
+            pass
+
+
+def _on_sigterm(sig, frame) -> None:
+    _close_log()
+    sys.exit(0)
 
 
 def log(msg: str) -> None:
-    """One line to stdout (docker logs) and to the buffer that becomes the file."""
-    _lines.append(msg)
+    """One line to stdout (docker logs) and immediately to the log file."""
     print(msg, flush=True)
+    if _log_fh is not None:
+        with _log_lock:
+            _log_fh.write(msg + "\n")
+            _log_fh.flush()
 
 
 def parse_server_ports(path: str) -> dict[str, int]:
@@ -158,23 +193,14 @@ def make_probe(give_up_at: float):
     return probe
 
 
-def _flush() -> None:
-    try:
-        os.makedirs(os.path.dirname(LOG_PATH) or ".", exist_ok=True)
-        with open(LOG_PATH, "w") as fh:
-            fh.write("\n".join(_lines) + "\n")
-    except OSError as exc:
-        # Never fatal. The volume may not be mounted (bare `docker run`), and a
-        # health report that reached stdout has already done its main job.
-        print(f"[HEALTH] could not write {LOG_PATH}: {exc}", file=sys.stderr,
-              flush=True)
-
-
 def main() -> int:
+    _open_log()
+    signal.signal(signal.SIGTERM, _on_sigterm)
+
     ports = parse_server_ports(ENTRYPOINT)
     if not ports:
         log("[HEALTH] no servers found to probe")
-        _flush()
+        _close_log()
         return 1
 
     enabled = enabled_names(ports)
@@ -188,25 +214,32 @@ def main() -> int:
 
     started = time.monotonic()
     now = time.monotonic()
-    # One worker per server: these are almost entirely idle waiting on connect,
-    # and capping the pool would serialise the retry sleeps, turning a bounded
-    # wait into a sum of waits across the fleet.
-    with ThreadPoolExecutor(max_workers=max(1, len(ports))) as pool:
-        hot = pool.map(make_probe(now + deadline), launched.values())
-        cold = pool.map(make_probe(now), idle.values())
-        results = dict(zip(launched, hot))
-        results.update(zip(idle, cold))
 
-    # Sorted by port, not by completion order: this log is meant to be read and
-    # diffed across runs, and a race-ordered list is neither.
+    results: dict[str, bool] = {}
+    with ThreadPoolExecutor(max_workers=max(1, len(ports))) as pool:
+        fut_to_name: dict = {}
+        for name, port in launched.items():
+            fut_to_name[pool.submit(make_probe(now + deadline), port)] = name
+        for name, port in idle.items():
+            fut_to_name[pool.submit(make_probe(now), port)] = name
+
+        # Write each result immediately as its future completes so the probe
+        # file survives a SIGTERM mid-run (results are in completion order,
+        # not port order -- harbor_to_output.py parses with regex, order is
+        # irrelevant).
+        for fut in as_completed(fut_to_name):
+            name = fut_to_name[fut]
+            ok = fut.result()
+            results[name] = ok
+            port = ports[name]
+            tag = "" if name in enabled else "  (not enabled)"
+            log(f"[HEALTH] {'UP  ' if ok else 'DOWN'}  {name:<24} :{port}{tag}")
+
     down_enabled, up_idle = [], []
     for name, port in sorted(ports.items(), key=lambda kv: kv[1]):
-        ok = results[name]
-        tag = "" if name in enabled else "  (not enabled)"
-        log(f"[HEALTH] {'UP  ' if ok else 'DOWN'}  {name:<24} :{port}{tag}")
-        if name in enabled and not ok:
+        if name in enabled and not results[name]:
             down_enabled.append(f"{name}:{port}")
-        elif name not in enabled and ok:
+        elif name not in enabled and results.get(name):
             up_idle.append(f"{name}:{port}")
 
     up_total = sum(1 for v in results.values() if v)
@@ -223,7 +256,8 @@ def main() -> int:
         # a line: a stale container on the same network can shadow a port and
         # answer tool calls the task never intended to expose.
         log(f"[HEALTH] UP but not enabled (unexpected): {', '.join(up_idle)}")
-    _flush()
+
+    _close_log()
     return 1 if down_enabled else 0
 
 
