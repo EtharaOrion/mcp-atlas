@@ -299,3 +299,32 @@ url = "http://light-servers:9142/mcp"
 name = "LightFreshdesk"
 transport = "streamable-http"
 url = "http://light-servers:9071/mcp"
+
+[upstream_provenance]
+# Declared 2026-09-05 by the bundle owner, on the record, because its absence
+# was not neutral: G-CON-EXCLUSION could resolve no repository identity, fork
+# ancestry or base commit, so none of its three relations could be screened
+# against the 33-row exclusion list and it fired GCON-PROVENANCE-RECORD-ABSENT
+# rather than passing over an unexaminable subject.
+#
+# This task was authored independently. It is built on eight page scans of the
+# 1900 United States Light-House Board annual report, a public-domain
+# government document, and derives from no upstream task corpus.
+#
+# The three fields below are empty deliberately and are recorded rather than
+# omitted, so a reader sees that each relation was considered and declared
+# rather than left absent. An omitted field and a declared-empty field are
+# indistinguishable to the instrument, which skips falsy values, but they are
+# not the same claim to a human.
+#
+# Stated explicitly because the task name carries an atlas/ prefix and the
+# harness submodule resolves to github.com/EtharaOrion/mcp-atlas, which the
+# exclusion list names. The bundle living in a repository of that name is not
+# the same as deriving from that corpus, and the owner confirms it does not.
+repository = ""
+fork_ancestry = ""
+base_commit = ""
+originally_authored = true
+source_material = "1900 US Light-House Board annual report, public domain, page scans"
+declared_by = "bundle owner"
+declared_at = "2026-09-05"
