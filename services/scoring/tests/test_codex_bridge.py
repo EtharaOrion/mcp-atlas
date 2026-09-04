@@ -49,6 +49,11 @@ def _models(*ids: str) -> str:
     return json.dumps({"data": [{"id": i} for i in ids]})
 
 
+# What the remote /v1/models endpoint advertises, which is deliberately NOT
+# the same as what codex_bridge will route. CODEX_MODELS is now ("gpt-5.6-sol",)
+# alone, so keeping luna here exercises the realistic case of a server offering
+# a model the bridge refuses. Do not "fix" this to match CODEX_MODELS: aligning
+# them would delete the only coverage of that divergence.
 _SERVED = _models("gpt-5.6-sol", "gpt-5.6-luna")
 
 
@@ -72,7 +77,12 @@ def auth_present(monkeypatch, tmp_path):
 def test_codex_models_route_through_anthropic():
     """codex-bridge has no chat/completions, so `openai/` would 404 on every call."""
     assert cb.provider_route("gpt-5.6-sol") == "anthropic/gpt-5.6-sol"
-    assert cb.provider_route("gpt-5.6-luna") == "anthropic/gpt-5.6-luna"
+    # gpt-5.6-luna was served here and not by rubric_judge_cli, so it routed
+    # through the bridge and was then refused at the CLI that does the grading.
+    # The CLI is authoritative; a model this bridge advertises but the grading
+    # path cannot reach is the dangerous direction, so luna is refused here now.
+    with pytest.raises(cb.BridgeUnavailable):
+        cb.provider_route("gpt-5.6-luna")
 
 
 def test_a_bare_non_codex_model_is_refused():

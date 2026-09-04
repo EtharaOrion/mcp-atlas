@@ -49,7 +49,15 @@ DEFAULT_OPENAI_BASE_URL = f"{DEFAULT_BRIDGE_ROOT}/v1"
 # The bridge serves exactly these two and rejects anything else with
 # CODEX_MODEL_UNAVAILABLE before it contacts upstream, so a typo fails fast
 # rather than after a full eval.
-CODEX_MODELS = ("gpt-5.6-sol", "gpt-5.6-luna")
+# The models this bridge will route. Must agree with
+# rubric_judge_cli.CODEX_MODELS, which is the authoritative list because the
+# judge grades over the local codex CLI rather than over this bridge. The two
+# disagreed -- this carried gpt-5.6-luna and the CLI did not -- so a JUDGE_MODEL
+# of gpt-5.6-luna was accepted for routing here and rejected at the CLI, which
+# is one half of C-GAP-JUDGE-TRANSPORT-UNPINNED. luna is removed rather than
+# added to the CLI: the CLI is authoritative, and a bridge that advertises a
+# model the grading path cannot reach is the more dangerous direction.
+CODEX_MODELS = ("gpt-5.6-sol",)
 DEFAULT_BRIDGE_MODEL = "gpt-5.6-sol"
 
 # Where the bridge stores the key it generates on first use (0600, in a 0700
@@ -101,7 +109,7 @@ def provider_route(model: str) -> str:
     raise BridgeUnavailable(
         f"{model!r} is not a model this judge can reach. codex-bridge serves "
         f"{list(CODEX_MODELS)} and exposes no chat/completions route, so a bare "
-        "name outside that pair would fail on every criterion. Use one of those, "
+        "name outside that list would fail on every criterion. Use one of those, "
         "or give an explicit litellm provider prefix to target another backend."
     )
 

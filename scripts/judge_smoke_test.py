@@ -51,7 +51,8 @@ STUB_REASON = "stub judge reply"
 class _Handler(BaseHTTPRequestHandler):
     """The three routes the judge path touches, shaped like codex-bridge."""
 
-    served_models = ["gpt-5.6-sol", "gpt-5.6-luna"]
+    # Mirrors codex_bridge.CODEX_MODELS, which is the single served model.
+    served_models = ["gpt-5.6-sol"]
     seen_paths: list[str] = []
 
     def log_message(self, *args):  # keep the smoke output readable

@@ -28,7 +28,7 @@ immediately.
 |---|---|
 | Bind | `127.0.0.1:3456` (`CODEX_BRIDGE_HOST` / `CODEX_BRIDGE_PORT`) |
 | Health | `GET /health` — the only route not needing a key |
-| Models | `gpt-5.6-sol` (default), `gpt-5.6-luna` — a fixed pair |
+| Models | `gpt-5.6-sol` only. `gpt-5.6-luna` was served here and not by `rubric_judge_cli`, so it routed and was then refused at the CLI that grades; removed 2026-09-05 to agree with the authoritative list |
 | Judge transport | `POST /v1/messages` (Anthropic Messages) |
 
 ## Two judges, two transports
@@ -107,7 +107,7 @@ that decides this:
 
 ```python
 gpt-5.6-sol        -> anthropic/gpt-5.6-sol
-gpt-5.6-luna       -> anthropic/gpt-5.6-luna
+gpt-5.6-luna       -> BridgeUnavailable # no longer served, see Models above
 openai/foo         -> openai/foo        # explicit provider preserved
 some-other-model   -> BridgeUnavailable # refused, see below
 ```

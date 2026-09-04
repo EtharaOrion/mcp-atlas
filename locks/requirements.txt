@@ -1,0 +1,162 @@
+# harness/locks/requirements.txt
+#
+# Named requirements.txt, and living in its own directory, because that is
+# the only filename trivy's pip analyzer recognises. Named .lock it parsed as
+# nothing and the instrument reported zero results over a file it could not
+# read, which is a worse failure than the absent scanner it replaced: a clean
+# result and an unreadable subject are indistinguishable downstream. The
+# developer-facing harness/requirements.txt is untouched and still declares
+# intent with floating bounds.
+#
+# Resolved versions for the harness Python surface, generated from the
+# harness/.venv interpreter that actually runs it.
+#
+# requirements.txt declares every dependency with a floating lower bound
+# (aiohttp>=3.9, pandas>=2.0, ...) and carried no lockfile. A range does
+# not resolve to a version, so a vulnerability database has nothing to
+# match against and the dependency scanner reported on what it could
+# resolve rather than failing: C-GAP-FLOATING-PYTHON-SPECS-UNRESOLVABLE.
+# This file gives it something to match.
+#
+# Generated, not hand-maintained. requirements.txt stays the declaration
+# of intent; this is the resolution of it at a point in time. Regenerate
+# when the venv is rebuilt, and treat a diff here as a tracked input
+# delta rather than noise.
+#
+# NOT covered: harness/services/cc-bridge/requirements.txt, which carries
+# four floating specs (fastapi, uvicorn, anthropic, httpx) and has no
+# environment on this host to resolve against. That half of the gap
+# stands.
+
+aiofile==3.12.3
+aiohappyeyeballs==2.7.1
+aiohttp==3.14.3
+aiosignal==1.4.0
+annotated-doc==0.0.5
+annotated-types==0.8.0
+anyio==4.14.2
+ast-grep-cli==0.45.3
+attrs==26.1.0
+Authlib==1.8.0
+beartype==0.22.9
+boto3==1.43.83
+botocore==1.43.83
+cachetools==7.1.8
+caio==0.12.2
+certifi==2026.7.22
+cffi==2.1.1
+charset-normalizer==3.5.1
+click==8.5.0
+colorlog==6.12.0
+contourpy==1.3.3
+cryptography==50.0.1
+cycler==0.12.1
+cyclopts==4.23.3
+datasets==5.0.1
+dill==0.4.1
+distro==1.9.0
+dnspython==2.8.0
+docstring_parser==0.18.0
+email-validator==2.3.0
+exceptiongroup==1.3.1
+fastmcp==4.0.0
+fastmcp-slim==4.0.0
+fastuuid==0.14.0
+filelock==3.32.4
+fonttools==4.63.0
+frozenlist==1.8.0
+fsspec==2026.6.0
+griffelib==2.2.0
+h11==0.16.0
+headroom-ai==0.37.0
+hf-xet==1.6.0
+httpcore==1.0.9
+httpcore2==2.12.0
+httpx==0.28.1
+httpx2==2.12.0
+huggingface_hub==1.29.0
+idna==3.19
+importlib_metadata==8.9.0
+iniconfig==2.3.0
+jaraco.classes==3.4.0
+jaraco.context==6.1.2
+jaraco.functools==4.6.0
+Jinja2==3.1.6
+jiter==0.16.0
+jmespath==1.1.0
+joserfc==1.7.5
+jsonref==1.1.0
+jsonschema==4.26.0
+jsonschema-path==0.5.0
+jsonschema-specifications==2025.9.1
+keyring==25.7.0
+kiwisolver==1.5.1
+Levenshtein==0.27.4
+litellm==1.98.0
+markdown-it-py==4.2.0
+MarkupSafe==3.0.3
+matplotlib==3.11.1
+mcp==2.1.1
+mcp-types==2.1.1
+mdurl==0.1.2
+more-itertools==11.1.0
+multidict==6.7.1
+multiprocess==0.70.19
+nest-asyncio==1.6.0
+numpy==2.5.2
+openai==2.54.0
+openapi-pydantic==0.5.1
+opentelemetry-api==1.44.0
+packaging==26.3
+pandas==3.0.5
+pathable==0.6.0
+pillow==12.3.0
+platformdirs==4.11.6
+pluggy==1.6.0
+propcache==0.5.2
+py-key-value-aio==0.4.5
+pyarrow==25.0.1
+pycparser==3.0
+pydantic==2.13.5
+pydantic-settings==2.15.0
+pydantic_core==2.46.5
+Pygments==2.21.0
+PyJWT==2.13.0
+pyparsing==3.3.2
+pyperclip==1.11.0
+pytest==9.1.1
+python-dateutil==2.9.0.post0
+python-dotenv==1.2.3
+python-multipart==0.0.32
+PyYAML==6.0.3
+RapidFuzz==3.14.6
+referencing==0.37.0
+regex==2026.8.31
+requests==2.34.2
+rich==15.0.0
+rich-rst==2.1.0
+rpds-py==2026.6.3
+s3transfer==0.19.2
+shellingham==1.5.4
+shortuuid==1.0.13
+six==1.17.0
+sniffio==1.3.1
+sse-starlette==3.4.8
+starlette==1.6.0
+tenacity==9.1.4
+tiktoken==0.14.0
+tokenizers==0.23.1
+tomlkit==0.15.1
+tqdm==4.70.0
+truststore==0.10.4
+typer==0.27.2
+typing-inspection==0.4.4
+typing_extensions==4.16.0
+uncalled-for==0.4.0
+urllib3==2.7.0
+uvicorn==0.52.4
+watchfiles==1.2.0
+websockets==17.1
+xxhash==4.0.1
+yarl==1.24.5
+zipp==4.1.0
