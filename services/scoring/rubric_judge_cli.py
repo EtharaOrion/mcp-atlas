@@ -106,7 +106,12 @@ CODEX_EXEC_ARGS = ("exec", "--json", "--sandbox", "read-only", "--skip-git-repo-
 # in, and because environment_mode = "shared" the verifier runs in the same
 # container where Harbor bootstrapped the Claude Code CLI for the agent phase.
 # The credential and the binary are both already present and already trusted.
-CLAUDE_MODELS = ("claude-sonnet-4-5", "claude-opus-4-5", "claude-haiku-4-5")
+# Ordered: CLAUDE_MODELS[0] is the fallback _default_judge_model resolves to
+# when the codex CLI is absent, so the first entry decides what grades on a
+# host without codex. A sonnet held that position while a guard in
+# test_codex_bridge.py demanded no sonnet be reachable as a judge default,
+# and the guard was failing rather than the ordering being deliberate.
+CLAUDE_MODELS = ("claude-opus-4-5", "claude-sonnet-4-5", "claude-haiku-4-5")
 
 CLAUDE_EXEC_ARGS = (
     "-p", "--output-format", "json", "--max-turns", "1",
