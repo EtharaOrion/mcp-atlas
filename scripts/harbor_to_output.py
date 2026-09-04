@@ -671,10 +671,12 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
 
     _producer = _orig_rew.get("producer")
     if _producer not in ("host_rubric_pass", "container_test"):
-        raise ValueError(
-            f"reward.json missing or unknown producer field: {_producer!r}; "
-            "cannot rescale safely"
+        print(
+            f"[harbor_to_output] WARNING: reward.json producer={_producer!r}; "
+            "host rubric was not run or refused to grade -- treating trial as unscored (reward=0)",
+            file=sys.stderr,
         )
+        _producer = "unscored"
 
     # The reward is the weighted ledger the verifier already computed, scaled to
     # a percentage. It is NOT recomputed here.
@@ -699,13 +701,16 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
             # a strictly worse number -- see above.
             parts = [p for p in (test_pct, rubric_pct) if p is not None]
             final_reward = round(sum(parts) / len(parts), 2) if parts else None
-    else:
-        # container_test: binary gate path; scored key holds 0 or 1; no x100 rescale
+    elif _producer == "container_test":
+        # binary gate path; scored key holds 0 or 1; no x100 rescale
         _ledger_reward = _orig_rew.get("scored", _orig_rew.get("reward", 0))
         final_reward = _ledger_reward
+    else:
+        final_reward = 0
     reward_pct_doc = {
         **_orig_rew,
         "reward": final_reward,
+        **({"producer": "unscored"} if _producer == "unscored" else {}),
     }
 
     failure_class, failure_reason = classify_failure(
