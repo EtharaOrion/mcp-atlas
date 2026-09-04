@@ -137,7 +137,7 @@ def make_delivery(
     model_name: str = pass_sum.get("model", "")
     model_dst = traj_dst / _short_model(model_name)
 
-    for run_dir in sorted(traj_src.glob("Run_*")):
+    for run_dir in sorted(traj_src.glob("run_*")):
         dst_run = model_dst / _run_label(run_dir.name)
         dst_run.mkdir(parents=True)
 

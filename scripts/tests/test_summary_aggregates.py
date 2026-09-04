@@ -132,13 +132,13 @@ def test_unmeasured_channel_reports_null_not_zero(tmp_path):
 
 
 def _convert_with_trial_reward(tmp_path: Path, trial_reward: dict) -> dict:
-    """Reshape one trial carrying `trial_reward`, returning its Run_1 detail.json."""
+    """Reshape one trial carrying `trial_reward`, returning its run_1 detail.json."""
     job, out = _build_job(
         tmp_path, [{"completion_rate": 0.9, "misbehave_rate": 0.0, "reward": 0.0}], trial_reward
     )
     written = h2o.convert_job(job, out, ks=[], run_offset=0)
     assert written
-    return json.loads((written[0] / "trajectory" / "Run_1" / "verifier" / "detail.json").read_text())
+    return json.loads((written[0] / "trajectory" / "run_1" / "verifier" / "detail.json").read_text())
 
 
 def test_scored_zero_records_a_machine_readable_reason(tmp_path):

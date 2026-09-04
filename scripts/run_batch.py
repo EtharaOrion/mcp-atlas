@@ -84,7 +84,7 @@ def _existing_runs(traj_dir: Path) -> int:
     if not traj_dir.is_dir():
         return 0
     nums = [int(p.name[4:]) for p in traj_dir.iterdir()
-            if p.is_dir() and p.name.startswith("Run_") and p.name[4:].isdigit()]
+            if p.is_dir() and p.name.startswith("run_") and p.name[4:].isdigit()]
     return max(nums) if nums else 0
 
 
@@ -144,7 +144,7 @@ def build_units(cp: ckpt.Checkpoint, tasks: Iterable[Path], args: argparse.Names
                 "base_offset": base,
                 # run_task.sh takes the offset, i.e. the run number minus one.
                 "run_offset": run_no - 1,
-                "run_dir": str(output_dir / slug / "trajectory" / f"Run_{run_no}"),
+                "run_dir": str(output_dir / slug / "trajectory" / f"run_{run_no}"),
                 "job_dir": str(output_dir / slug),
             })
     return specs

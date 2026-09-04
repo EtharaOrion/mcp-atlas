@@ -27,7 +27,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 echo "$JOB $STAGE_ARG" >> "$FAKE_LOG"
-RUN_DIR="$OUTPUT_DIR/$JOB/trajectory/Run_$((RUN_OFFSET+1))"
+RUN_DIR="$OUTPUT_DIR/$JOB/trajectory/run_$((RUN_OFFSET+1))"
 if [ -n "${FAIL_STAGE:-}" ] && [ "$STAGE_ARG" = "$FAIL_STAGE" ]; then
   echo "stage $STAGE_ARG blew up"
   exit 1
@@ -92,19 +92,19 @@ def env(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 
 def test_units_append_after_existing_runs(env, tmp_path):
-    """A batch adds to a task's history; it never reuses a Run_N."""
-    (env.output / "alpha" / "trajectory" / "Run_1").mkdir(parents=True)
-    (env.output / "alpha" / "trajectory" / "Run_2").mkdir(parents=True)
+    """A batch adds to a task's history; it never reuses a run_N."""
+    (env.output / "alpha" / "trajectory" / "run_1").mkdir(parents=True)
+    (env.output / "alpha" / "trajectory" / "run_2").mkdir(parents=True)
     args = rb.parse_args(env.argv("--n", "2", "--model", "m1"))
     cp = ckpt.Checkpoint.open(tmp_path / "cp", batch_id="b", steps=rb.STEPS)
     specs = rb.build_units(cp, rb.discover_tasks(args), args)
     cp.release_lock()
 
     alpha = [s for s in specs if s["task_slug"] == "alpha"]
-    assert [Path(s["run_dir"]).name for s in alpha] == ["Run_3", "Run_4"]
+    assert [Path(s["run_dir"]).name for s in alpha] == ["run_3", "run_4"]
     assert [s["run_offset"] for s in alpha] == [2, 3]
     beta = [s for s in specs if s["task_slug"] == "beta"]
-    assert [Path(s["run_dir"]).name for s in beta] == ["Run_1", "Run_2"]
+    assert [Path(s["run_dir"]).name for s in beta] == ["run_1", "run_2"]
 
 
 def test_run_numbering_is_frozen_at_first_plan(env, tmp_path):
@@ -114,14 +114,14 @@ def test_run_numbering_is_frozen_at_first_plan(env, tmp_path):
     cp = ckpt.Checkpoint.open(tmp_path / "cp", batch_id="b", steps=rb.STEPS)
     cp.plan_units(rb.build_units(cp, tasks, args))
 
-    # The batch runs, so Run_1 now exists on disk...
-    (env.output / "alpha" / "trajectory" / "Run_1").mkdir(parents=True)
+    # The batch runs, so run_1 now exists on disk...
+    (env.output / "alpha" / "trajectory" / "run_1").mkdir(parents=True)
     again = rb.build_units(cp, tasks, args)
     cp.plan_units(again)
     cp.release_lock()
 
     alpha = next(s for s in again if s["task_slug"] == "alpha")
-    assert Path(alpha["run_dir"]).name == "Run_1"  # not Run_2
+    assert Path(alpha["run_dir"]).name == "run_1"  # not run_2
     assert cp.unit("alpha::m1::run-1")["run_offset"] == 0
 
 
@@ -150,8 +150,8 @@ def test_full_batch_runs_every_stage_once(env):
     assert doc["totals"]["completed"] == 2
     u = env.unit("alpha::m1::run-1")
     assert u["status"] == "completed"
-    assert u["outputs"]["run_dir"].endswith("alpha/trajectory/Run_1")
-    assert u["steps"]["reshape"]["artifact"].endswith("Run_1")
+    assert u["outputs"]["run_dir"].endswith("alpha/trajectory/run_1")
+    assert u["steps"]["reshape"]["artifact"].endswith("run_1")
     # No receipt was written, so finance is skipped rather than claimed.
     assert u["steps"]["finance"]["status"] == "skipped"
 
@@ -174,7 +174,7 @@ def test_rerunning_a_complete_batch_does_no_work(env):
 def test_attempts_of_one_task_each_get_their_own_run_dir(env):
     assert rb.main(env.argv("--n", "3", "--model", "m1", "--task", str(env.tasks / "alpha"))) == 0
     runs = sorted(p.name for p in (env.output / "alpha" / "trajectory").iterdir())
-    assert runs == ["Run_1", "Run_2", "Run_3"]
+    assert runs == ["run_1", "run_2", "run_3"]
 
 
 # ---------------------------------------------------------------------------
@@ -241,7 +241,7 @@ def test_changing_the_model_refuses_to_resume_the_batch(env, capsys):
 def test_deleted_run_dir_redoes_reshape_but_not_the_agent(env):
     import shutil
     assert rb.main(env.argv("--n", "1", "--model", "m1")) == 0
-    shutil.rmtree(env.output / "alpha" / "trajectory" / "Run_1")
+    shutil.rmtree(env.output / "alpha" / "trajectory" / "run_1")
     env.stages_log.write_text("")
 
     assert rb.main(env.argv("--n", "1", "--model", "m1")) == 0
@@ -250,7 +250,7 @@ def test_deleted_run_dir_redoes_reshape_but_not_the_agent(env):
 
 
 def test_harbor_evidence_survives_reshape_consuming_the_raw_trials(tmp_path):
-    unit = {"run_dir": str(tmp_path / "out/alpha/trajectory/Run_1"),
+    unit = {"run_dir": str(tmp_path / "out/alpha/trajectory/run_1"),
             "job_dir": str(tmp_path / "out/alpha"), "task_slug": "alpha"}
     step = {"job_dir": unit["job_dir"]}
     assert rb._harbor_evidence(unit, step) is False          # nothing on disk yet
@@ -271,7 +271,7 @@ def test_harbor_evidence_survives_reshape_consuming_the_raw_trials(tmp_path):
 def test_no_reconcile_skips_the_disk_check(env):
     import shutil
     assert rb.main(env.argv("--n", "1", "--model", "m1")) == 0
-    shutil.rmtree(env.output / "alpha" / "trajectory" / "Run_1")
+    shutil.rmtree(env.output / "alpha" / "trajectory" / "run_1")
     env.stages_log.write_text("")
     assert rb.main(env.argv("--n", "1", "--model", "m1", "--no-reconcile")) == 0
     assert env.stages() == []
@@ -351,7 +351,7 @@ def test_reshape_that_leaves_no_run_dir_fails(env, monkeypatch):
     assert rb.main(env.argv("--n", "1", "--model", "m1")) == 0
     # Drop the run dir so reconcile demotes reshape, then make reshape a no-op:
     # it must not be able to claim success over a directory that is not there.
-    shutil.rmtree(env.output / "alpha" / "trajectory" / "Run_1")
+    shutil.rmtree(env.output / "alpha" / "trajectory" / "run_1")
     monkeypatch.setenv("NO_ARTIFACTS", "1")
     assert rb.main(env.argv("--n", "1", "--model", "m1")) == 1
     st = env.unit("alpha::m1::run-1")["steps"]["reshape"]
@@ -366,7 +366,7 @@ def test_reshape_hint_stays_plain_while_the_raw_trial_is_still_there(env, tmp_pa
     """Only the unrecoverable case gets the expensive-remedy advice."""
     job = env.output / "alpha"
     (job / "alpha__abc123").mkdir(parents=True)
-    unit = {"run_dir": str(job / "trajectory" / "Run_1"),
+    unit = {"run_dir": str(job / "trajectory" / "run_1"),
             "job_dir": str(job), "task_slug": "alpha"}
     msg = rb._reshape_failure_hint(unit, tmp_path / "x.log")
     assert "did not produce" in msg and "already consumed" not in msg
@@ -382,7 +382,7 @@ def test_dry_run_never_mutates_the_checkpoint(env, monkeypatch):
     import shutil
     assert rb.main(env.argv("--n", "1", "--model", "m1")) == 0
     # beta's output disappears, so reconcile has something it would demote
-    shutil.rmtree(env.output / "beta" / "trajectory" / "Run_1")
+    shutil.rmtree(env.output / "beta" / "trajectory" / "run_1")
     env.stages_log.write_text("")
     before = env.checkpoint()
 

@@ -1,7 +1,7 @@
 """Stage plumbing in scripts/run_task.sh.
 
 Harbor itself is stubbed on PATH, so these cover what the script decides -- the
-Run_N a stage owns, the state it hands to the next stage, the runs it protects
+run_N a stage owns, the state it hands to the next stage, the runs it protects
 from being wiped -- without building a container.
 """
 import json
@@ -95,8 +95,8 @@ def test_harbor_stage_records_state_for_the_next_stage(env):
 
 
 def test_explicit_run_offset_beats_what_is_on_disk(env):
-    (env.output / "alpha" / "trajectory" / "Run_1").mkdir(parents=True)
-    (env.output / "alpha" / "trajectory" / "Run_2").mkdir(parents=True)
+    (env.output / "alpha" / "trajectory" / "run_1").mkdir(parents=True)
+    (env.output / "alpha" / "trajectory" / "run_2").mkdir(parents=True)
     env.run("harbor", RUN_OFFSET=0)
     assert env.state()["run_offset"] == 0
 
@@ -104,19 +104,19 @@ def test_explicit_run_offset_beats_what_is_on_disk(env):
 def test_offset_falls_back_to_counting_existing_runs(env):
     """A bare run_task.sh, with no driver deciding for it, still appends."""
     for n in (1, 2, 3):
-        (env.output / "alpha" / "trajectory" / f"Run_{n}").mkdir(parents=True)
+        (env.output / "alpha" / "trajectory" / f"run_{n}").mkdir(parents=True)
     env.run("harbor")
     assert env.state()["run_offset"] == 3
 
 
 def test_earlier_runs_are_stashed_outside_the_job_dir(env):
     """Harbor may clear output/<job>/ wholesale, stash included, if it lives there."""
-    (env.output / "alpha" / "trajectory" / "Run_1").mkdir(parents=True)
-    (env.output / "alpha" / "trajectory" / "Run_1" / "marker").write_text("keep me")
+    (env.output / "alpha" / "trajectory" / "run_1").mkdir(parents=True)
+    (env.output / "alpha" / "trajectory" / "run_1" / "marker").write_text("keep me")
     env.run("harbor", RUN_OFFSET=1)
     stash = Path(env.state()["stash_dir"])
     assert stash == env.output / ".stash" / "alpha"
-    assert (stash / "Run_1" / "marker").read_text() == "keep me"
+    assert (stash / "run_1" / "marker").read_text() == "keep me"
     assert env.output / "alpha" not in stash.parents
 
 

@@ -557,7 +557,8 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     if reward is None:
         reward = _load(ver / "reward.json", {}).get("reward") if (ver / "reward.json").exists() else None
     exception = tres.get("exception_info")
-    passed = reward is not None and reward >= threshold
+    threshold_eff = threshold * 100 if (reward is not None and reward > 1) else threshold
+    passed = reward is not None and reward >= threshold_eff
 
     # The agent stream is JSON-lines, but Harbor hardcodes a .txt name
     # (harbor/agents/installed/claude_code.py tees to /logs/agent/claude-code.txt).
@@ -743,7 +744,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
                                                          session_id=tres.get("id"), usage=usage))
 
     # ---- trajectory/Run_N (Harbor-shaped) ---------------------------------
-    run_dir = out_task / "trajectory" / f"Run_{run_no}"
+    run_dir = out_task / "trajectory" / f"run_{run_no}"
     run_dir.mkdir(parents=True, exist_ok=True)
     if _copy(ag / "claude-code.jsonl", run_dir / "agent" / "claude-code.jsonl"):
         # Drop the stale .txt twin a pre-rename reshape may have left behind.
@@ -1033,7 +1034,7 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
     if traj_root.is_dir():
         trials += sorted(
             (p for p in traj_root.iterdir()
-             if p.is_dir() and (p / "config.json").exists() and not re.match(r'^Run_\d+$', p.name)),
+             if p.is_dir() and (p / "config.json").exists() and not re.match(r'^run_\d+$', p.name)),
             key=lambda p: int(p.name.split("_")[-1]) if p.name.split("_")[-1].isdigit() else 0)
     by_task: dict[str, list[Path]] = {}
     for t in trials:
@@ -1067,7 +1068,7 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
             # each trial dir becomes trajectory/Run_N, nothing is copied twice.
             moved = []
             for i, t in enumerate(tdirs):
-                dst = out_task / "trajectory" / f"Run_{i + 1 + run_offset}"
+                dst = out_task / "trajectory" / f"run_{i + 1 + run_offset}"
                 if t.resolve() != dst.resolve():
                     dst.parent.mkdir(parents=True, exist_ok=True)
                     if dst.exists():
@@ -1076,9 +1077,9 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
                 moved.append(dst)
             tdirs = moved
         else:
-            if out_task.exists():
+            if run_offset == 0 and out_task.exists():
                 shutil.rmtree(out_task)
-            out_task.mkdir(parents=True)
+            out_task.mkdir(parents=True, exist_ok=True)
         raw_trials = out_task / ".raw" / f"trials_{slug}"
         if raw_trials.exists() and run_offset == 0:
             shutil.rmtree(raw_trials)
@@ -1213,7 +1214,7 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
         _traj_dir = out_task / "trajectory"
         _disk_rewards = []
         if _traj_dir.is_dir():
-            for _rd in sorted(_traj_dir.glob("Run_*"),
+            for _rd in sorted(_traj_dir.glob("run_*"),
                               key=lambda p: int(p.name.split("_")[-1]) if p.name.split("_")[-1].isdigit() else 0):
                 _rw = _load(_rd / "verifier" / "reward.json", {}) or {}
                 if _rw.get("reward") is not None:
@@ -1222,7 +1223,10 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
             _tw = (_load(task_dir / "tests" / "test_weights.json", {}) if task_dir else {}) or {}
             _thr = _tw.get("threshold", PASS_THRESHOLD_DEFAULT)
             n = len(_disk_rewards)
-            c = sum(1 for r in _disk_rewards if r >= _thr)
+            # host_rubric_pass stores rewards as 0-100 percentages; container_test uses 0-1.
+            # Threshold is always 0-1, so scale it to match the reward range.
+            _thr_scaled = _thr * 100 if any(r > 1 for r in _disk_rewards) else _thr
+            c = sum(1 for r in _disk_rewards if r >= _thr_scaled)
             rewards = _disk_rewards
         # Empty ks means "auto": scale k to however many runs this task has
         # actually accumulated, so pass@k needs no --at retuning when the
@@ -1266,7 +1270,7 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
                           "traj_tests": e["judge"]["components"]["traj_tests"]["value"],
                           "failure_class": e["failure_class"]} for e in eps],
         })
-        with (raw_trials / "pairs.jsonl").open("w", encoding="utf-8") as fh:
+        with (raw_trials / "pairs.jsonl").open("a" if run_offset > 0 else "w", encoding="utf-8") as fh:
             for r in recs:
                 fh.write(json.dumps(r["pair"], ensure_ascii=False) + "\n")
         _dump(raw_trials / "failure_analysis.json", [r["failure"] for r in recs])

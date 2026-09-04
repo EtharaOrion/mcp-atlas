@@ -109,12 +109,12 @@ def test_step_is_flushed_while_still_running(tmp_path):
         mid = json.loads(path.read_text())
         assert mid["units"][0]["steps"]["harbor_run"]["status"] == "running"
         st.record(artifact="output/alpha/.raw", exit_code=0)
-        st.output(run_dir="output/alpha/trajectory/Run_1")
+        st.output(run_dir="output/alpha/trajectory/run_1")
     after = json.loads(path.read_text())["units"][0]
     assert after["steps"]["harbor_run"]["status"] == "completed"
     assert after["steps"]["harbor_run"]["artifact"] == "output/alpha/.raw"
     assert after["steps"]["harbor_run"]["exit_code"] == 0
-    assert after["outputs"]["run_dir"] == "output/alpha/trajectory/Run_1"
+    assert after["outputs"]["run_dir"] == "output/alpha/trajectory/run_1"
     assert "duration_s" in after["steps"]["harbor_run"]
     c.release_lock()
 
@@ -292,14 +292,14 @@ def test_fingerprint_is_order_insensitive(tmp_path):
 
 def test_reconcile_demotes_steps_whose_artifact_vanished(tmp_path):
     """Rule 3: the filesystem outranks the checkpoint."""
-    art = tmp_path / "output" / "alpha" / "trajectory" / "Run_1"
+    art = tmp_path / "output" / "alpha" / "trajectory" / "run_1"
     art.mkdir(parents=True)
     c = _open(tmp_path)
     c.plan_units(UNITS)
     with c.step("alpha::run-1", "preflight"):
         pass  # no artifact recorded -> nothing to check -> left alone
     with c.step("alpha::run-1", "reshape") as st:
-        st.record(artifact="output/alpha/trajectory/Run_1")
+        st.record(artifact="output/alpha/trajectory/run_1")
 
     assert c.reconcile(root=tmp_path) == []
 
@@ -484,7 +484,7 @@ def test_cli_reconcile_demotes(tmp_path, capsys):
     c = _open(tmp_path)
     c.plan_units(UNITS)
     with c.step("alpha::run-1", "reshape") as st:
-        st.record(artifact="gone/Run_1")
+        st.record(artifact="gone/run_1")
     c.release_lock()
     assert cp.main(["reconcile", str(tmp_path / "batch"), "--root", str(tmp_path)]) == 0
     assert "demoted alpha::run-1:reshape" in capsys.readouterr().out

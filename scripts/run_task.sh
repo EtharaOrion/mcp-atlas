@@ -151,7 +151,7 @@ resolve_run_offset() {
   if [ -n "${RUN_OFFSET:-}" ]; then echo "$RUN_OFFSET"; return; fi
   local last=""
   if [ -d "$TRAJ_DIR" ]; then
-    last="$(ls "$TRAJ_DIR" 2>/dev/null | grep -E '^Run_[0-9]+$' | sed 's/Run_//' | sort -n | tail -1 || true)"
+    last="$(ls "$TRAJ_DIR" 2>/dev/null | grep -E '^run_[0-9]+$' | sed 's/run_//' | sort -n | tail -1 || true)"
   fi
   echo "${last:-0}"
 }
@@ -372,7 +372,7 @@ stage_harbor() {
   # clear it, and those runs are other units' trajectories.
   if [ -d "$TRAJ_DIR" ]; then
     mkdir -p "$STASH_DIR"
-    cp -r "$TRAJ_DIR"/Run_* "$STASH_DIR/" 2>/dev/null || true
+    cp -r "$TRAJ_DIR"/run_* "$STASH_DIR/" 2>/dev/null || true
     local _job_out="$OUTPUT_DIR/$JOB"
     [ -f "$_job_out/summary.json" ]      && cp "$_job_out/summary.json"      "$STASH_DIR/.summary.json"      2>/dev/null || true
     [ -f "$_job_out/pass_summary.json" ] && cp "$_job_out/pass_summary.json" "$STASH_DIR/.pass_summary.json" 2>/dev/null || true
@@ -600,7 +600,7 @@ stage_reshape() {
   [ -n "$stash" ] || stash="$STASH_DIR"
   if [ -d "$stash" ]; then
     mkdir -p "$TRAJ_DIR"
-    for run_dir in "$stash"/Run_*; do
+    for run_dir in "$stash"/run_*; do
       [ -d "$run_dir" ] || continue
       run_name="$(basename "$run_dir")"
       [ -d "$TRAJ_DIR/$run_name" ] || cp -r "$run_dir" "$TRAJ_DIR/$run_name"
@@ -617,7 +617,7 @@ stage_reshape() {
   "${conv[@]}"
   # Relative to the job dir this state file sits in — keeps host-local paths
   # out of everything the pipeline writes (informational only, never read back).
-  state_put run_dir "trajectory/Run_$((offset+1))"
+  state_put run_dir "trajectory/run_$((offset+1))"
 }
 
 # finance API: report trajectory usage (after the runs are done).
@@ -647,9 +647,9 @@ stage_finance() {
   [ -n "$offset" ] || offset="$(resolve_run_offset)"
   # Prefer the reshaped tree; fall back to the job dir for bundles whose
   # task.toml name already matches their directory.
-  local run_dir="$OUTPUT_DIR/$OUT_SLUG/trajectory/Run_$((offset+1))"
-  if [ ! -d "$run_dir" ] && [ -d "$OUTPUT_DIR/$JOB/trajectory/Run_$((offset+1))" ]; then
-    run_dir="$OUTPUT_DIR/$JOB/trajectory/Run_$((offset+1))"
+  local run_dir="$OUTPUT_DIR/$OUT_SLUG/trajectory/run_$((offset+1))"
+  if [ ! -d "$run_dir" ] && [ -d "$OUTPUT_DIR/$JOB/trajectory/run_$((offset+1))" ]; then
+    run_dir="$OUTPUT_DIR/$JOB/trajectory/run_$((offset+1))"
   fi
   python3 scripts/finance_reporter.py \
     --run-dir "$run_dir" \
