@@ -787,6 +787,47 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     vdir.mkdir(parents=True, exist_ok=True)
     ldir = run_dir / "logs"
     ldir.mkdir(parents=True, exist_ok=True)
+    # Fallback: generate light-server log files from parsed stream when the
+    # shared server_logs volume is absent (tasks that don't mount it).
+    _ls_tc_path = ldir / "light-servers-tool-calls.log"
+    _ls_health_path = ldir / "light-servers-health.log"
+    if not _ls_tc_path.exists():
+        _light_calls = [r for r in stream["trace"] if r.get("raw_tool", "").startswith("mcp__Light")]
+        _tc_lines = []
+        for _r in _light_calls:
+            _st = "ERROR" if _r["is_error"] else "OK"
+            _tc_lines.append(f"[step={_r['step']}] [{_st}] {_r['raw_tool']} args={json.dumps(_r['arguments'], ensure_ascii=False)}")
+            if _r["result"]:
+                _tc_lines.append(f"  result: {_r['result'][:500]}")
+        _ls_tc_path.write_text(
+            "\n".join(_tc_lines) + "\n" if _tc_lines else "# no mcp__Light* tool calls recorded in this run\n",
+            encoding="utf-8",
+        )
+    if not _ls_health_path.exists():
+        _srv_map: dict[str, dict] = {}
+        for _r in stream["trace"]:
+            _raw = _r.get("raw_tool", "")
+            if not _raw.startswith("mcp__Light"):
+                continue
+            _parts = _raw.split("__")
+            _srv = _parts[1] if len(_parts) >= 2 else _raw
+            _entry = _srv_map.setdefault(_srv, {"ok": 0, "error": 0, "tools": set()})
+            _entry["tools"].add(_parts[2] if len(_parts) >= 3 else _raw)
+            if _r["is_error"]:
+                _entry["error"] += 1
+            else:
+                _entry["ok"] += 1
+        _health_lines = []
+        for _srv, _info in sorted(_srv_map.items()):
+            _status = "DEGRADED" if _info["error"] > 0 and _info["ok"] == 0 else ("HEALTHY" if _info["ok"] > 0 else "UNKNOWN")
+            _health_lines.append(
+                f"{_srv}: {_status}  calls_ok={_info['ok']}  calls_err={_info['error']}"
+                f"  tools=[{', '.join(sorted(_info['tools']))}]"
+            )
+        _ls_health_path.write_text(
+            "\n".join(_health_lines) + "\n" if _health_lines else "# no mcp__Light* tools called in this run\n",
+            encoding="utf-8",
+        )
     if ctrf is not None and not (vdir / "ctrf.json").exists():
         _dump(vdir / "ctrf.json", ctrf)
     if ctrf is not None and not (ldir / "verifier-ctrf.json").exists():
