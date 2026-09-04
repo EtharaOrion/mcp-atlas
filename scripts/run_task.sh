@@ -408,6 +408,7 @@ stage_harbor() {
   HARBOR_OUTPUT_OFF=1 command harbor "${args[@]}" \
     || echo "[run_task] harbor exited non-zero; reshaping whatever landed" >&2
   state_put harbor_done 1
+  state_put host_rubric_done 0
 }
 
 # Grade the rubric channel on the host, between harbor and reshape.
@@ -607,8 +608,8 @@ stage_reshape() {
       [ -d "$TRAJ_DIR/$run_name" ] || cp -r "$run_dir" "$TRAJ_DIR/$run_name"
     done
     local _job_out="$OUTPUT_DIR/$JOB"
-    [ -f "$stash/.summary.json" ]      && [ ! -f "$_job_out/summary.json" ]      && cp "$stash/.summary.json"      "$_job_out/summary.json"
-    [ -f "$stash/.pass_summary.json" ] && [ ! -f "$_job_out/pass_summary.json" ] && cp "$stash/.pass_summary.json" "$_job_out/pass_summary.json"
+    if [ -f "$stash/.summary.json" ]      && [ ! -f "$_job_out/summary.json" ];      then cp "$stash/.summary.json"      "$_job_out/summary.json";      fi
+    if [ -f "$stash/.pass_summary.json" ] && [ ! -f "$_job_out/pass_summary.json" ]; then cp "$stash/.pass_summary.json" "$_job_out/pass_summary.json"; fi
     rm -rf "$stash"
   fi
 
