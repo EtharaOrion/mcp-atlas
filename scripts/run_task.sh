@@ -660,7 +660,9 @@ stage_finance() {
 # --- dispatch -----------------------------------------------------------------
 
 if [ -f "$REPO/.env" ]; then
-  set -a; source "$REPO/.env"; set +a
+  set -a
+  source <(grep -E '^[A-Za-z_][A-Za-z0-9_]*=' "$REPO/.env" | grep -v '\*\|(\|)')
+  set +a
 fi
 
 resolve_auth
