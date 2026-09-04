@@ -752,8 +752,9 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     run_dir = out_task / "trajectory" / f"run_{run_no}"
     run_dir.mkdir(parents=True, exist_ok=True)
     if _copy(ag / "claude-code.jsonl", run_dir / "agent" / "claude-code.jsonl"):
-        # Drop the stale .txt twin a pre-rename reshape may have left behind.
         (run_dir / "agent" / "claude-code.txt").unlink(missing_ok=True)
+    elif _copy(ag / "claude-code.txt", run_dir / "agent" / "claude-code.jsonl"):
+        pass
     _copy(ag / "oracle.txt", run_dir / "agent" / "oracle.txt")
     _copy(ag / "trajectory.json", run_dir / "agent" / "trajectory.json")
     for f in ("config.json", "result.json"):
