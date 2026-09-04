@@ -49,7 +49,28 @@ except ImportError:  # pragma: no cover - container layout
             return messages
 
 CODEX_MODELS = _codex_cli.CODEX_MODELS
-_DEFAULT_JUDGE_MODEL = os.environ.get("JUDGE_MODEL") or "gpt-5.6-sol"
+
+
+def _default_judge_model() -> str:
+    """Delegate model resolution to the module that owns the transport.
+
+    This read the JUDGE_MODEL environment variable directly, defaulting to a
+    hardcoded model name, which is a
+    second reader of the same setting and drifts from the first in the case
+    that matters. `rubric_judge_cli._default_judge_model` resolves against the
+    CLI actually installed here, falling back to the codex model only when the
+    codex CLI is reachable and to a claude model when it is not. The hardcoded
+    default could therefore name a model this host cannot run, which surfaces
+    as every criterion failing to grade rather than as a configuration error.
+
+    The subprocess plumbing is already imported from `rubric_judge_cli` so
+    there is one implementation rather than two that drift; resolution belongs
+    on the same side of that line for the same reason.
+    """
+    return _codex_cli._default_judge_model()
+
+
+_DEFAULT_JUDGE_MODEL = _default_judge_model()
 
 _JUDGE_SYSTEM_PROMPT = (
     'You grade AI agent trajectories against rubric criteria. '
