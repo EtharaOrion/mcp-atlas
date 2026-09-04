@@ -693,6 +693,41 @@ def _parse_judge_json(text: str):
     return None
 
 
+def _criterion_weight(c: dict) -> float:
+    """The point value of one criterion, or refuse.
+
+    This read `c.get("score", 1)`. A rubric carrying its point values under
+    `weight` rather than `score` therefore graded every criterion at 1.0: the
+    shipped bundle declares thirteen criteria at 5, fourteen at 3 and twenty
+    penalties at -5 or -3, and all forty-eight were scored equal. Nothing
+    failed. The run produced a plausible number, and `per_criterion` emitted a
+    field named `weight` reading 1.0, so the breakdown corroborated the flat
+    weighting it had just invented.
+
+    A default is the wrong shape for this. The point value is not an optional
+    decoration the grader can supply a sensible guess for; it is the thing
+    being weighted by, and guessing it silently converts a misshapen rubric
+    into a confident wrong score. `score` is the field TASK_BUNDLE.md 2.10
+    specifies, `weight` is accepted because shipped bundles carry it, and a
+    criterion with neither is refused rather than assumed.
+    """
+    for field in ("score", "weight"):
+        if c.get(field) is not None:
+            try:
+                return float(c[field])
+            except (TypeError, ValueError):
+                raise ValueError(
+                    f"rubric criterion {c.get('number')!r} has non-numeric "
+                    f"{field}={c[field]!r}"
+                ) from None
+    raise ValueError(
+        f"rubric criterion {c.get('number')!r} declares neither 'score' nor "
+        "'weight'; refusing to grade it at an assumed value. TASK_BUNDLE.md "
+        "2.10 specifies 'score', signed, on the closed domain "
+        "{-5,-3,-1,1,3,5}."
+    )
+
+
 def _compute_scores(criteria: list[dict], results: list[dict]) -> dict:
     by_num = {str(r.get("number", "")): r for r in results}
     pos_total = pos_earned = neg_total = neg_hit = 0.0
@@ -700,7 +735,7 @@ def _compute_scores(criteria: list[dict], results: list[dict]) -> dict:
 
     for c in criteria:
         num = str(c.get("number", ""))
-        weight = float(c.get("score", 1))
+        weight = _criterion_weight(c)
         is_pos = bool(c.get("is_positive", True))
         r = by_num.get(num, {})
         satisfied = bool(r.get("satisfied", False))
