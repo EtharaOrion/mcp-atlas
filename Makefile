@@ -122,3 +122,24 @@ finance-usage: # POST one run's token/cost usage to the Finance API
 
 build-light-servers: # build light-servers Docker image (all software + utility servers bundled in services/light-servers/)
 	docker build -t light-servers:latest services/light-servers/
+
+# ---------------------------------------------------------------------------
+# zbridge — GLM-5.3 via z.ai (Anthropic-to-GLM proxy + OpenAI adapter)
+# Requires ZB_ZAI_API_KEY and ZB_BRIDGE_SECRET in .env
+# ---------------------------------------------------------------------------
+.PHONY: run-zbridge run-zbridge-adapter eval-glm
+
+run-zbridge: # start zbridge proxy on port 8766 (Anthropic→GLM translator)
+	bash scripts/start_zbridge.sh
+
+run-zbridge-adapter: # start zbridge OpenAI-compat adapter on port 4001
+	@test -f .env && set -a && source .env && set +a; \
+	cd services/zbridge-adapter && \
+	ZBRIDGE_URL=$${ZBRIDGE_URL:-http://127.0.0.1:8766} \
+	ZB_BRIDGE_SECRET=$${ZB_BRIDGE_SECRET} \
+	ZBRIDGE_ADAPTER_PORT=$${ZBRIDGE_ADAPTER_PORT:-4001} \
+	python zbridge_adapter.py
+
+eval-glm: # run eval through zbridge adapter (usage: make eval-glm MODEL=claude-sonnet-4-6 OUTPUT=output/glm.csv)
+	LLM_BASE_URL=$${LLM_BASE_URL:-http://localhost:4001} \
+	python run_eval.py --model "$(MODEL)" --output "$(OUTPUT)"

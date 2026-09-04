@@ -217,6 +217,55 @@ async def run_one_task(
         }
 
 
+async def check_zbridge_credentials(args: argparse.Namespace) -> None:
+    missing = [v for v in ("ZB_ZAI_API_KEY", "ZB_BRIDGE_SECRET") if not os.getenv(v)]
+    if missing:
+        print(
+            f"ERROR: zbridge credentials missing: {', '.join(missing)}. "
+            "Set them in harness/.env before running with GLM-5.3.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    zbridge_url = os.getenv("ZBRIDGE_URL", "http://127.0.0.1:8766")
+    adapter_port = os.getenv("ZBRIDGE_ADAPTER_PORT", "4001")
+    adapter_url = os.getenv("LLM_BASE_URL", f"http://localhost:{adapter_port}")
+    # Strip /v1/chat/completions suffix if present so we hit /health cleanly.
+    adapter_base = adapter_url.rstrip("/").removesuffix("/v1/chat/completions")
+
+    checks = [
+        (f"{zbridge_url}/health", "zbridge proxy"),
+        (f"{adapter_base}/health", "zbridge adapter"),
+    ]
+    try:
+        async with aiohttp.ClientSession() as session:
+            for url, label in checks:
+                try:
+                    async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as resp:
+                        if resp.status != 200:
+                            print(
+                                f"ERROR: {label} returned HTTP {resp.status} at {url}. "
+                                "Start it with `make run-zbridge` / `make run-zbridge-adapter`.",
+                                file=sys.stderr,
+                            )
+                            sys.exit(1)
+                except Exception as exc:
+                    print(
+                        f"ERROR: {label} not reachable at {url} "
+                        f"({exc.__class__.__name__}: {exc}). "
+                        "Start it with `make run-zbridge` / `make run-zbridge-adapter`.",
+                        file=sys.stderr,
+                    )
+                    sys.exit(1)
+    except SystemExit:
+        raise
+    except Exception as exc:
+        print(f"ERROR: zbridge credential check failed: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"Credential check: zbridge proxy and adapter are up. ZB_ZAI_API_KEY is set.")
+
+
 async def check_sandbox_health() -> None:
     """Pre-flight check: confirm the MCP sandbox is up and every server works.
 
@@ -275,6 +324,9 @@ def write_run_config(args: argparse.Namespace) -> None:
 
 async def run_all(args: argparse.Namespace) -> None:
     tasks = load_tasks(args.input, args.num_tasks)
+
+    if args.model == "glm-5.3" or os.getenv("LLM_BASE_URL"):
+        await check_zbridge_credentials(args)
 
     if not args.skip_health_check:
         await check_sandbox_health()

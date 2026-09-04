@@ -179,15 +179,32 @@ check_credentials() {
   case "$STAGE" in reshape|finance) return 0 ;; esac
   local fail=0
 
-  if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && [ -z "${ANTHROPIC_API_KEY:-}" ]; then
-    echo "[run_task] ERROR: no Claude Code credentials found" >&2
-    echo "[run_task]   Log in with: claude login   or set CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_API_KEY" >&2
-    fail=1
-  elif ! command -v claude >/dev/null 2>&1; then
-    echo "[run_task] ERROR: Claude Code token is set but 'claude' binary not found in PATH" >&2
-    fail=1
+  if [ "${CC_MODE:-}" = "zbridge" ]; then
+    if [ -z "${ZB_ZAI_API_KEY:-}" ]; then
+      echo "[run_task] ERROR: CC_MODE=zbridge but ZB_ZAI_API_KEY is not set" >&2
+      echo "[run_task]   Add ZB_ZAI_API_KEY=<your-z.ai-key> to harness/.env" >&2
+      fail=1
+    else
+      echo "[run_task] zbridge: ZB_ZAI_API_KEY OK"
+    fi
+    if [ -z "${ZB_BRIDGE_SECRET:-}" ]; then
+      echo "[run_task] ERROR: CC_MODE=zbridge but ZB_BRIDGE_SECRET is not set" >&2
+      echo "[run_task]   Add ZB_BRIDGE_SECRET=<any-local-secret> to harness/.env" >&2
+      fail=1
+    else
+      echo "[run_task] zbridge: ZB_BRIDGE_SECRET OK"
+    fi
   else
-    echo "[run_task] claude: credentials OK"
+    if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+      echo "[run_task] ERROR: no Claude Code credentials found" >&2
+      echo "[run_task]   Log in with: claude login   or set CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_API_KEY" >&2
+      fail=1
+    elif ! command -v claude >/dev/null 2>&1; then
+      echo "[run_task] ERROR: Claude Code token is set but 'claude' binary not found in PATH" >&2
+      fail=1
+    else
+      echo "[run_task] claude: credentials OK"
+    fi
   fi
 
   if ! command -v codex >/dev/null 2>&1; then
@@ -356,6 +373,9 @@ stage_harbor() {
   if [ -d "$TRAJ_DIR" ]; then
     mkdir -p "$STASH_DIR"
     cp -r "$TRAJ_DIR"/Run_* "$STASH_DIR/" 2>/dev/null || true
+    local _job_out="$OUTPUT_DIR/$JOB"
+    [ -f "$_job_out/summary.json" ]      && cp "$_job_out/summary.json"      "$STASH_DIR/.summary.json"      2>/dev/null || true
+    [ -f "$_job_out/pass_summary.json" ] && cp "$_job_out/pass_summary.json" "$STASH_DIR/.pass_summary.json" 2>/dev/null || true
     state_put stash_dir "$STASH_DIR"
   fi
 
@@ -372,6 +392,7 @@ stage_harbor() {
   # claude_code agent reads from this environment and forwards into the
   # container (empty values are dropped, so a failed proxy start is a no-op).
   ensure_cc_bridge
+  [ "${CC_MODE:-}" = "zbridge" ] && ensure_zbridge
   ensure_bundle_headroom
   route_agent_through_proxy
   local args=(run -y --path "$TASK" --agent "$AGENT" --jobs-dir "$OUTPUT_DIR" --job-name "$JOB" \
@@ -461,6 +482,42 @@ ensure_cc_bridge() {
   echo "[run_task] WARNING: cc-bridge did not come up in 10s; check $bridge_dir/logs/cc_bridge.log" >&2
 }
 
+ensure_zbridge() {
+  local port="${ZB_PORT:-8766}"
+  if curl -sf -m 2 "http://127.0.0.1:$port/health" >/dev/null 2>&1; then
+    echo "[run_task] zbridge already running on :$port"
+  else
+    local zbridge_dir="$REPO/zbridge"
+    if [ ! -f "$zbridge_dir/pyproject.toml" ]; then
+      echo "[run_task] ERROR: zbridge not found at $zbridge_dir" >&2
+      exit 3
+    fi
+    echo "[run_task] starting zbridge on :$port"
+    local log_dir="$zbridge_dir/logs"
+    mkdir -p "$log_dir"
+    (cd "$zbridge_dir" && \
+      ZB_ZAI_API_KEY="$ZB_ZAI_API_KEY" \
+      ZB_BRIDGE_SECRET="${ZB_BRIDGE_SECRET:-local}" \
+      ZB_PORT="$port" ZB_HOST="127.0.0.1" \
+      ZB_MODEL_ALIAS_JSON="${ZB_MODEL_ALIAS_JSON:-}" \
+      ZB_UPSTREAM_URL="${ZB_UPSTREAM_URL:-https://api.z.ai/api/coding/paas/v4/chat/completions}" \
+      nohup python -m zbridge --port "$port" --host 127.0.0.1 \
+        >"$log_dir/zbridge.log" 2>&1 &)
+    local i=0
+    while [ $i -lt 15 ]; do
+      sleep 1; i=$((i+1))
+      curl -sf -m 1 "http://127.0.0.1:$port/health" >/dev/null 2>&1 && {
+        echo "[run_task] zbridge ready on :$port"; break
+      }
+    done
+    curl -sf -m 1 "http://127.0.0.1:$port/health" >/dev/null 2>&1 || {
+      echo "[run_task] WARNING: zbridge did not come up in 15s; check $log_dir/zbridge.log" >&2
+    }
+  fi
+  export ANTHROPIC_BASE_URL="http://host.docker.internal:$port"
+  echo "[run_task] agent routed through zbridge ($ANTHROPIC_BASE_URL)"
+}
+
 ensure_bundle_headroom() {
   [ "${GRADER_HEADROOM_ENABLED:-false}" = "true" ] || return 0
   [ "${HEADROOM_AUTO_WIRE:-1}" = "1" ] || return 0
@@ -534,13 +591,11 @@ stage_reshape() {
   stage_host_rubric
   local offset; offset="$(state_get run_offset)"
   [ -n "$offset" ] || offset="$(resolve_run_offset)"
-  local conv=(python3 scripts/harbor_to_output.py "$OUTPUT_DIR/$JOB" \
-              --output-dir "$OUTPUT_DIR" --at "$AT" --run-offset "$offset")
-  [ -n "${COPY_TO:-}" ] && conv+=(--copy-to "$COPY_TO")
-  "${conv[@]}"
 
-  # Put back the Run_* dirs harbor may have wiped. Never overwrite: the run
-  # this invocation just produced is the newer truth for its own Run_N.
+  # Restore stash BEFORE reshape so harbor_to_output.py reads the accumulated
+  # summary.json and prior Run_N dirs. Harbor may have cleared the job dir,
+  # which wipes summary.json; without it the reshaper sees n=1 on every run
+  # and keeps overwriting pass@1.json instead of emitting pass@2.json, pass@3.json, ...
   local stash; stash="$(state_get stash_dir)"
   [ -n "$stash" ] || stash="$STASH_DIR"
   if [ -d "$stash" ]; then
@@ -550,8 +605,16 @@ stage_reshape() {
       run_name="$(basename "$run_dir")"
       [ -d "$TRAJ_DIR/$run_name" ] || cp -r "$run_dir" "$TRAJ_DIR/$run_name"
     done
+    local _job_out="$OUTPUT_DIR/$JOB"
+    [ -f "$stash/.summary.json" ]      && [ ! -f "$_job_out/summary.json" ]      && cp "$stash/.summary.json"      "$_job_out/summary.json"
+    [ -f "$stash/.pass_summary.json" ] && [ ! -f "$_job_out/pass_summary.json" ] && cp "$stash/.pass_summary.json" "$_job_out/pass_summary.json"
     rm -rf "$stash"
   fi
+
+  local conv=(python3 scripts/harbor_to_output.py "$OUTPUT_DIR/$JOB" \
+              --output-dir "$OUTPUT_DIR" --at "$AT" --run-offset "$offset")
+  [ -n "${COPY_TO:-}" ] && conv+=(--copy-to "$COPY_TO")
+  "${conv[@]}"
   # Relative to the job dir this state file sits in — keeps host-local paths
   # out of everything the pipeline writes (informational only, never read back).
   state_put run_dir "trajectory/Run_$((offset+1))"
@@ -595,6 +658,10 @@ stage_finance() {
 }
 
 # --- dispatch -----------------------------------------------------------------
+
+if [ -f "$REPO/.env" ]; then
+  set -a; source "$REPO/.env"; set +a
+fi
 
 resolve_auth
 check_credentials
