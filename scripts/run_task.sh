@@ -380,6 +380,7 @@ stage_harbor() {
   fi
 
   rm -f "$OUTPUT_DIR/$JOB/lock.json"
+  rm -f "$OUTPUT_DIR/$JOB/config.json"
   # SETUP_MULT multiplies Harbor's agent-setup timeout (base 360s). Setup is
   # `apt-get install curl procps` followed by
   # `curl downloads.claude.ai/.../bootstrap.sh | bash`, so it is network-bound
@@ -661,7 +662,7 @@ stage_finance() {
 
 if [ -f "$REPO/.env" ]; then
   set -a
-  source <(grep -E '^[A-Za-z_][A-Za-z0-9_]*=' "$REPO/.env" | grep -v '\*\|(\|)')
+  source <(sed 's/[[:space:]]*$//' "$REPO/.env" | grep -E '^[A-Za-z_][A-Za-z0-9_]*=[A-Za-z0-9_./:@~-]*$')
   set +a
 fi
 
