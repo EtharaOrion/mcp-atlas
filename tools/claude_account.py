@@ -149,6 +149,8 @@ def fetch_profile(refresh: bool = False) -> tuple[dict | None, str]:
         "Accept": "application/json",
     })
     try:
+        if req.type not in ("http", "https"):
+            raise ValueError(f"refusing non-HTTP(S) URL scheme: {req.full_url!r}")
         with urllib.request.urlopen(req, timeout=TIMEOUT_SEC) as resp:
             profile = json.loads(resp.read().decode())
     except urllib.error.HTTPError as exc:

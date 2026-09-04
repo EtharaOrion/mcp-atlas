@@ -253,6 +253,8 @@ def _get(url: str, timeout: float, key: str | None = None) -> tuple[int, str]:
         req.add_header("x-api-key", key)
         req.add_header("Authorization", f"Bearer {key}")
     try:
+        if req.type not in ("http", "https"):
+            raise ValueError(f"refusing non-HTTP(S) URL scheme: {req.full_url!r}")
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return resp.status, resp.read().decode("utf-8", errors="replace")
     except urllib.error.HTTPError as e:

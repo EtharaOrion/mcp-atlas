@@ -54,6 +54,8 @@ class _SandboxClient:
             method="POST",
         )
         try:
+            if req.type not in ("http", "https"):
+                raise ValueError(f"refusing non-HTTP(S) URL scheme: {req.full_url!r}")
             with urllib.request.urlopen(req) as resp:
                 raw = json.loads(resp.read().decode())
         except urllib.error.HTTPError as e:

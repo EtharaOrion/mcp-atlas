@@ -34,9 +34,15 @@ import json
 import re
 import shutil
 import sys
-import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
+
+# junit.xml is container-side output the graded agent can influence, so it is
+# untrusted input. defusedxml refuses external entities and entity expansion.
+# Required, not optional: falling back to the stdlib parser when it is absent
+# would silently downgrade to the weaker default on the one input that matters.
+from defusedxml.ElementTree import parse as _xml_parse
+
 
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "services" / "mcp_eval"))
@@ -433,7 +439,7 @@ def _junit_to_ctrf(junit_path: Path, tw_comp: dict | None = None) -> dict | None
         return None
     weights = (tw_comp or {}).get("tests") or {}
     try:
-        tree = ET.parse(junit_path)
+        tree = _xml_parse(junit_path)
     except Exception:
         return None
     root = tree.getroot()

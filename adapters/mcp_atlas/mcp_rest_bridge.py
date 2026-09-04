@@ -80,6 +80,8 @@ def _post(path: str, payload: dict | None = None):
         headers={"Content-Type": "application/json"},
         method="POST",
     )
+    if req.type not in ("http", "https"):
+        raise ValueError(f"refusing non-HTTP(S) URL scheme: {req.full_url!r}")
     with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as resp:
         return json.loads(resp.read().decode("utf-8"))
 

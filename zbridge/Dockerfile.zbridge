@@ -9,6 +9,15 @@ RUN pip install --no-cache-dir --disable-pip-version-check \
 WORKDIR /app
 COPY zbridge /app/zbridge
 
+# Drop privileges. Port 8766 is unprivileged and /app is read-only code, so
+# nothing here needs root. uid 10001 matches the account the sibling
+# agent-environment and light-servers images already create, which matters
+# because a uid mismatch between images in one compose network makes grading
+# fail silently on file ownership rather than loudly.
+RUN useradd --system --create-home --uid 10001 app \
+    && chown -R app:app /app
+USER app
+
 ENV PYTHONPATH=/app \
     PYTHONUNBUFFERED=1 \
     ZB_HOST=0.0.0.0 \

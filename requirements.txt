@@ -13,3 +13,4 @@ pytest>=7.0
 pyyaml>=6.0
 litellm>=1.50
 headroom-ai>=0.37.0
+defusedxml>=0.7.1

@@ -372,4 +372,13 @@ if __name__ == "__main__":
     import uvicorn
 
     port = int(os.environ.get("ZBRIDGE_ADAPTER_PORT", "4001"))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    # Loopback by default. This adapter is launched on the host by
+    # `make run-zbridge-adapter` and its only consumer is LLM_BASE_URL, which
+    # the Makefile sets to http://localhost:4001. No container reaches it: no
+    # Dockerfile builds it and no compose file references the port, so binding
+    # every interface exposed it to the local network for no reason any caller
+    # needed. The sibling cc_bridge keeps 0.0.0.0 deliberately, because the
+    # agent container really does reach it through host.docker.internal.
+    # Overridable for anyone who does need a wider bind.
+    host = os.environ.get("ZBRIDGE_ADAPTER_HOST", "127.0.0.1")
+    uvicorn.run(app, host=host, port=port)

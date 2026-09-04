@@ -816,4 +816,10 @@ if __name__ == "__main__":
     import uvicorn
 
     port = int(os.environ.get("CC_BRIDGE_PORT", "4000"))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    # Default stays 0.0.0.0 on purpose, unlike the zbridge adapter. The agent
+    # container reaches this bridge through host.docker.internal, which
+    # resolves to the host's docker-bridge address rather than loopback, so a
+    # loopback bind would make it unreachable and break every containerized
+    # run. Exposed as an override so a host-only operator can narrow it.
+    host = os.environ.get("CC_BRIDGE_HOST", "0.0.0.0")  # noqa: S104
+    uvicorn.run(app, host=host, port=port)

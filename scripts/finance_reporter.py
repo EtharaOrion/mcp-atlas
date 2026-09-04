@@ -314,6 +314,10 @@ def headers() -> dict:
 def post(url: str, payload: dict) -> tuple[int, str]:
     body = json.dumps(payload).encode()
     last = ""
+    # Checked once, outside the retry loop: a rejected scheme is not transient,
+    # so retrying it only masks the refusal behind the generic backoff path.
+    if urllib.request.Request(url).type not in ("http", "https"):
+        raise ValueError(f"refusing non-HTTP(S) URL scheme: {url!r}")
     for attempt in range(1, RETRIES + 1):
         req = urllib.request.Request(url, data=body, headers=headers(), method="POST")
         try:

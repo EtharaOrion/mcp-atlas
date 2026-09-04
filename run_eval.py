@@ -59,6 +59,10 @@ csv.field_size_limit(sys.maxsize)
 HARNESS_URL = os.getenv("HARNESS_URL", "http://localhost:3001")
 SANDBOX_URL = os.getenv("MCP_SANDBOX_URL", "http://localhost:1984")
 DEFAULT_DATASET = "ScaleAI/MCP-Atlas"
+# Resolved from the HuggingFace dataset API on 2026-09-04, when the dataset
+# last changed on 2026-08-03. Bump this deliberately and record why; do not
+# drop it, because an unpinned corpus makes two runs incomparable.
+DATASET_REVISION = "8c563b55d7c967755f474299848049834d624617"
 DEFAULT_SANDBOX_IMAGE = "ghcr.io/scaleapi/mcp-atlas:1.2.7"
 
 
@@ -104,7 +108,11 @@ def load_tasks(input_path: str | None, num_tasks: int | None) -> list[dict[str, 
     else:
         from datasets import load_dataset
         print(f"Loading {DEFAULT_DATASET} from HuggingFace...")
-        ds = load_dataset(DEFAULT_DATASET, split="train")
+        # Revision pinned. An unpinned load_dataset resolves whatever the
+        # dataset's default branch points at on the day it runs, so the
+        # evaluation corpus can change between two runs that report the same
+        # numbers. Pinning is what makes a score comparable across time.
+        ds = load_dataset(DEFAULT_DATASET, split="train", revision=DATASET_REVISION)
         rows = list(ds)
         print(f"Loaded {len(rows)} tasks from {DEFAULT_DATASET}")
     if num_tasks:

@@ -155,7 +155,7 @@ resolve_run_offset() {
   if [ -n "${RUN_OFFSET:-}" ]; then echo "$RUN_OFFSET"; return; fi
   local last=""
   if [ -d "$TRAJ_DIR" ]; then
-    last="$(ls "$TRAJ_DIR" 2>/dev/null | grep -E '^run_[0-9]+$' | sed 's/run_//' | sort -n | tail -1 || true)"
+    last="$(cd "$TRAJ_DIR" && printf '%s\n' run_* | grep -E '^run_[0-9]+$' | sed 's/run_//' | sort -n | tail -1 || true)"
   fi
   echo "${last:-0}"
 }
@@ -567,13 +567,19 @@ stage_host_rubric() {
     _tokens="$trial/verifier/judge_tokens.json"
     _codex_graded=0
     if [ -s "$_tokens" ]; then
-      _codex_graded=$(python3 - "$_tokens" <<'PYEOF'
+      # 2>/dev/null and the fallback belong on the command line. Placed after
+      # the heredoc terminator they parsed as a bare redirection with no
+      # command, so python3's stderr was never actually suppressed and the
+      # || echo 0 fallback could never fire. Downstream behaviour is unchanged:
+      # a failed probe yields 0 where it previously yielded the empty string,
+      # and both take the same non-"1" branch.
+      _codex_graded=$(python3 - "$_tokens" 2>/dev/null <<'PYEOF' || echo 0
 import json,sys
 d=json.load(open(sys.argv[1]))
 m=(d[0] if isinstance(d,list) else d).get('model_name','')
 print(1 if m.startswith('gpt') else 0)
 PYEOF
-      2>/dev/null || echo 0)
+)
     fi
     if [ "${FORCE_HOST_RUBRIC:-0}" != "1" ] \
        && [ -s "$trial/verifier/rubric_breakdown.json" ] \
@@ -673,7 +679,16 @@ stage_finance() {
 if [ -f "$REPO/.env" ]; then
   _env_tmp=$(mktemp)
   sed 's/[[:space:]]*$//' "$REPO/.env" | grep -E '^[A-Za-z_][A-Za-z0-9_]*=[A-Za-z0-9_./:@~-]*$' > "$_env_tmp"
-  set -a; source "$_env_tmp"; set +a
+  # The sourced path is a runtime temp file, so there is nothing to follow
+  # statically. The directive states that rather than silencing a real doubt.
+  # It has to sit immediately above the source command itself: a directive
+  # binds to the next command, and while these three were on one line that
+  # next command was `set -a`, which is why the earlier placement had no
+  # effect.
+  set -a
+  # shellcheck source=/dev/null
+  source "$_env_tmp"
+  set +a
   rm -f "$_env_tmp"
 fi
 

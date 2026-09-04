@@ -109,6 +109,8 @@ def run_judge_via_proxy(judge_mod: dict, agent_prompt: str, agent_response: str,
         method="POST",
     )
     try:
+        if req.type not in ("http", "https"):
+            raise ValueError(f"refusing non-HTTP(S) URL scheme: {req.full_url!r}")
         with urllib.request.urlopen(req, timeout=120) as resp:
             payload = json.loads(resp.read())
     except urllib.error.HTTPError as e:

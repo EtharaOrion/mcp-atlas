@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Sourced from ~/.zshrc. Makes every `harbor run …` land directly in
 #
 #     /Users/macbookpro/Documents/mcp-atlas/output/<task>/

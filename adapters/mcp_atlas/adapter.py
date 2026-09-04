@@ -466,7 +466,10 @@ class MCPAtlasLoader:
 
     def _load_hf(self) -> Iterator[MCPAtlasRecord]:
         from datasets import load_dataset  # type: ignore[import]
-        for row in load_dataset("ScaleAI/MCP-Atlas", split="train"):
+        # Revision pinned; see run_eval.DATASET_REVISION for the reasoning.
+        for row in load_dataset(
+            "ScaleAI/MCP-Atlas", split="train", revision="8c563b55d7c967755f474299848049834d624617"
+        ):
             yield self._make_record(
                 row["TASK"], row["PROMPT"], row["GTFA_CLAIMS"],
                 tools_raw=row.get("ENABLED_TOOLS"),

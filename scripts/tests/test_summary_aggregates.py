@@ -62,6 +62,10 @@ def _build_job(
         if trial_reward is not None:
             verifier = trial / "verifier"
             verifier.mkdir()
+            # harbor_to_output refuses a reward.json whose producer it does not
+            # recognise, so a fixture omitting the field is rejected before any
+            # aggregate is computed. Default it; a test may still pin its own.
+            trial_reward = {"producer": "host_rubric_pass", **trial_reward}
             (verifier / "reward.json").write_text(json.dumps(trial_reward))
     out = tmp_path / "out"
     out.mkdir()
@@ -69,7 +73,7 @@ def _build_job(
 
 
 def _convert(tmp_path: Path, per_trial: list[dict]) -> tuple[dict, list[dict]]:
-    job, out = _build_job(tmp_path, per_trial)
+    job, out = _build_job(tmp_path, per_trial, {"reward": 0.0, "scored": True})
     written = h2o.convert_job(job, out, ks=[], run_offset=0)
     assert written, "convert_job produced no task output"
     task = written[0]
