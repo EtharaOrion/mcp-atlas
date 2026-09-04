@@ -7,6 +7,9 @@ wheels/
 tasks/
 output/
 delivery_output/
+# World data injected into light-servers at boot. Never committed: it is
+# per-run input, and anything it contains leaves the run inside trajectory.json.
+corpus_additions/
 *.egg-info
 
 # Virtual environments

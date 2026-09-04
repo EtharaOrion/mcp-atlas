@@ -41,6 +41,14 @@ def _load_criteria(rubric_path: Path) -> list[dict]:
     nothing. Raising turns a silent wrong answer into a loud one, and matches
     rubric_judge._load_rubric, which refuses rather than returning empty.
     """
+    """Load the bundle rubric, or refuse.
+
+    An unrecognised shape used to return an empty list. That is the worst
+    available outcome: zero criteria grade cleanly, _compute_scores divides a
+    zero pool, and the run reports a finished rubric channel that judged
+    nothing. Raising turns a silent wrong answer into a loud one, and matches
+    rubric_judge._load_rubric, which refuses rather than returning empty.
+    """
     raw = json.loads(rubric_path.read_text())
     if isinstance(raw, list):
         return raw

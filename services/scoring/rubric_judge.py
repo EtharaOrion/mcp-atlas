@@ -113,6 +113,27 @@ def _load_rubric(rubric_path: Path) -> list[dict[str, Any]]:
     this is the live case rather than a hypothetical. Refusing keeps the
     previous protection the shape error was giving by accident, and says why.
     """
+    """Load a rubric in any shape this project ships, or refuse with a reason.
+
+    Three shapes exist. A bare list and `{"rubric": [...]}` are this module's
+    own; `{"criteria": [...]}` is what the task bundles under dataset/ carry and
+    what `rubric_judge_cli` reads. Only the first two were accepted here, so
+    calling `score_rubric` directly on a shipped rubric failed on the shape.
+
+    The bundle shape is not a rename of the other two, and that is the part
+    worth being careful about. It keys criteria by `number` rather than `id`,
+    and carries `score` on the closed domain {-5,-3,-1,1,3,5} together with an
+    `is_positive` flag, where this module expects a non-negative `weight`.
+    Those are translated below.
+
+    `is_positive: false` is not translated, because there is nothing here to
+    translate it into. `rubric_judge_cli` grades penalty criteria against a
+    separate negative pool; this module scalarizes a single weighted mean and
+    has no such pool, so a penalty criterion admitted here would be scored as
+    if satisfying it were good. Both shipped bundles contain such criteria, so
+    this is the live case rather than a hypothetical. Refusing keeps the
+    previous protection the shape error was giving by accident, and says why.
+    """
     data = yaml.safe_load(rubric_path.read_text())
     if isinstance(data, dict) and "rubric" in data:
         return list(data["rubric"])
