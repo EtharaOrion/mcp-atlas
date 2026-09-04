@@ -668,6 +668,13 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     except Exception:
         _orig_rew = {}
 
+    _producer = _orig_rew.get("producer")
+    if _producer not in ("host_rubric_pass", "container_test"):
+        raise ValueError(
+            f"reward.json missing or unknown producer field: {_producer!r}; "
+            "cannot rescale safely"
+        )
+
     # The reward is the weighted ledger the verifier already computed, scaled to
     # a percentage. It is NOT recomputed here.
     #
@@ -680,15 +687,21 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     # line reported 90.4, because it averaged the two channels the agent did
     # well on and ignored the one it did not. Anything reading pass_summary.json
     # as the headline number got the flattering figure.
-    _ledger_reward = _orig_rew.get("reward")
-    if isinstance(_ledger_reward, (int, float)):
-        final_reward = round(float(_ledger_reward) * 100, 2)
+    if _producer == "host_rubric_pass":
+        # weighted ledger path: rescale to percentage
+        _ledger_reward = _orig_rew.get("reward")
+        if isinstance(_ledger_reward, (int, float)):
+            final_reward = round(float(_ledger_reward) * 100, 2)
+        else:
+            # No reward.json (a trial that died before the verifier wrote one).
+            # Fall back to the old average rather than reporting nothing, but it is
+            # a strictly worse number -- see above.
+            parts = [p for p in (test_pct, rubric_pct) if p is not None]
+            final_reward = round(sum(parts) / len(parts), 2) if parts else None
     else:
-        # No reward.json (a trial that died before the verifier wrote one).
-        # Fall back to the old average rather than reporting nothing, but it is
-        # a strictly worse number -- see above.
-        parts = [p for p in (test_pct, rubric_pct) if p is not None]
-        final_reward = round(sum(parts) / len(parts), 2) if parts else None
+        # container_test: binary gate path; scored key holds 0 or 1; no x100 rescale
+        _ledger_reward = _orig_rew.get("scored", _orig_rew.get("reward", 0))
+        final_reward = _ledger_reward
     reward_pct_doc = {
         **_orig_rew,
         "reward": final_reward,

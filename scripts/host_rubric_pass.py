@@ -199,7 +199,8 @@ def main() -> int:
     (verifier / "reward.json").write_text(json.dumps(
         {"reward": reward,
          "completion_rate": out.get("completion_rate", 0.0),
-         "misbehave_rate": out.get("misbehave_rate", 0.0)}, indent=2))
+         "misbehave_rate": out.get("misbehave_rate", 0.0),
+         "producer": "host_rubric_pass"}, indent=2))
 
     # Harbor recorded its own reward before this pass ran, so its result.json
     # still holds the rubric-less number. Leaving both on disk means one trial
