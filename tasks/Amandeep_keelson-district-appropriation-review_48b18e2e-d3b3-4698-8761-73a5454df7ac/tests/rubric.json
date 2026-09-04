@@ -8,7 +8,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "critically_important",
-   "weight": 5
+   "weight": 5,
+   "score": 5
   },
   {
    "number": "2",
@@ -17,7 +18,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "critically_important",
-   "weight": 5
+   "weight": 5,
+   "score": 5
   },
   {
    "number": "3",
@@ -26,7 +28,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "important",
-   "weight": 3
+   "weight": 3,
+   "score": 3
   },
   {
    "number": "4",
@@ -35,7 +38,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "critically_important",
-   "weight": 5
+   "weight": 5,
+   "score": 5
   },
   {
    "number": "5",
@@ -44,7 +48,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "critically_important",
-   "weight": 5
+   "weight": 5,
+   "score": 5
   },
   {
    "number": "6",
@@ -53,7 +58,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "critically_important",
-   "weight": 5
+   "weight": 5,
+   "score": 5
   },
   {
    "number": "7",
@@ -62,7 +68,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "critically_important",
-   "weight": 5
+   "weight": 5,
+   "score": 5
   },
   {
    "number": "8",
@@ -71,7 +78,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "important",
-   "weight": 3
+   "weight": 3,
+   "score": 3
   },
   {
    "number": "9",
@@ -80,7 +88,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "critically_important",
-   "weight": 5
+   "weight": 5,
+   "score": 5
   },
   {
    "number": "10",
@@ -89,7 +98,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "critically_important",
-   "weight": 5
+   "weight": 5,
+   "score": 5
   },
   {
    "number": "11",
@@ -98,7 +108,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "critically_important",
-   "weight": 5
+   "weight": 5,
+   "score": 5
   },
   {
    "number": "12",
@@ -107,7 +118,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "important",
-   "weight": 3
+   "weight": 3,
+   "score": 3
   },
   {
    "number": "13",
@@ -116,7 +128,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "important",
-   "weight": 3
+   "weight": 3,
+   "score": 3
   },
   {
    "number": "14",
@@ -125,7 +138,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "critically_important",
-   "weight": 5
+   "weight": 5,
+   "score": 5
   },
   {
    "number": "15",
@@ -134,7 +148,8 @@
    "evaluation_target": "final_answer",
    "is_positive": true,
    "importance": "important",
-   "weight": 3
+   "weight": 3,
+   "score": 3
   },
   {
    "number": "16",
@@ -143,7 +158,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "critically_important",
-   "weight": 5
+   "weight": 5,
+   "score": 5
   },
   {
    "number": "17",
@@ -152,7 +168,8 @@
    "evaluation_target": "final_answer",
    "is_positive": true,
    "importance": "important",
-   "weight": 3
+   "weight": 3,
+   "score": 3
   },
   {
    "number": "18",
@@ -161,7 +178,8 @@
    "evaluation_target": "final_answer",
    "is_positive": true,
    "importance": "important",
-   "weight": 3
+   "weight": 3,
+   "score": 3
   },
   {
    "number": "19",
@@ -170,7 +188,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "critically_important",
-   "weight": 5
+   "weight": 5,
+   "score": 5
   },
   {
    "number": "20",
@@ -179,7 +198,8 @@
    "evaluation_target": "final_answer",
    "is_positive": true,
    "importance": "important",
-   "weight": 3
+   "weight": 3,
+   "score": 3
   },
   {
    "number": "21",
@@ -188,7 +208,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "critically_important",
-   "weight": 5
+   "weight": 5,
+   "score": 5
   },
   {
    "number": "22",
@@ -197,7 +218,8 @@
    "evaluation_target": "final_answer",
    "is_positive": true,
    "importance": "important",
-   "weight": 3
+   "weight": 3,
+   "score": 3
   },
   {
    "number": "23",
@@ -206,7 +228,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "important",
-   "weight": 3
+   "weight": 3,
+   "score": 3
   },
   {
    "number": "24",
@@ -215,7 +238,8 @@
    "evaluation_target": "final_answer",
    "is_positive": true,
    "importance": "important",
-   "weight": 3
+   "weight": 3,
+   "score": 3
   },
   {
    "number": "25",
@@ -224,7 +248,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "important",
-   "weight": 3
+   "weight": 3,
+   "score": 3
   },
   {
    "number": "26",
@@ -233,7 +258,8 @@
    "evaluation_target": "final_answer",
    "is_positive": true,
    "importance": "important",
-   "weight": 3
+   "weight": 3,
+   "score": 3
   },
   {
    "number": "27",
@@ -242,7 +268,8 @@
    "evaluation_target": "trajectory",
    "is_positive": true,
    "importance": "important",
-   "weight": 3
+   "weight": 3,
+   "score": 3
   },
   {
    "number": "28",
@@ -251,7 +278,8 @@
    "evaluation_target": "final_answer",
    "is_positive": true,
    "importance": "minor",
-   "weight": 1
+   "weight": 1,
+   "score": 1
   },
   {
    "number": "29",
@@ -260,7 +288,8 @@
    "evaluation_target": "trajectory",
    "is_positive": false,
    "importance": "critically_important",
-   "weight": -5
+   "weight": -5,
+   "score": -5
   },
   {
    "number": "30",
@@ -269,7 +298,8 @@
    "evaluation_target": "trajectory",
    "is_positive": false,
    "importance": "critically_important",
-   "weight": -5
+   "weight": -5,
+   "score": -5
   },
   {
    "number": "31",
@@ -278,7 +308,8 @@
    "evaluation_target": "trajectory",
    "is_positive": false,
    "importance": "critically_important",
-   "weight": -5
+   "weight": -5,
+   "score": -5
   },
   {
    "number": "32",
@@ -287,7 +318,8 @@
    "evaluation_target": "trajectory",
    "is_positive": false,
    "importance": "critically_important",
-   "weight": -5
+   "weight": -5,
+   "score": -5
   },
   {
    "number": "33",
@@ -296,7 +328,8 @@
    "evaluation_target": "trajectory",
    "is_positive": false,
    "importance": "important",
-   "weight": -3
+   "weight": -3,
+   "score": -3
   },
   {
    "number": "34",
@@ -305,7 +338,8 @@
    "evaluation_target": "trajectory",
    "is_positive": false,
    "importance": "critically_important",
-   "weight": -5
+   "weight": -5,
+   "score": -5
   },
   {
    "number": "35",
@@ -314,7 +348,8 @@
    "evaluation_target": "trajectory",
    "is_positive": false,
    "importance": "important",
-   "weight": -3
+   "weight": -3,
+   "score": -3
   },
   {
    "number": "36",
@@ -323,7 +358,8 @@
    "evaluation_target": "trajectory",
    "is_positive": false,
    "importance": "critically_important",
-   "weight": -5
+   "weight": -5,
+   "score": -5
   },
   {
    "number": "37",
@@ -332,7 +368,8 @@
    "evaluation_target": "trajectory",
    "is_positive": false,
    "importance": "critically_important",
-   "weight": -5
+   "weight": -5,
+   "score": -5
   },
   {
    "number": "38",
@@ -341,7 +378,8 @@
    "evaluation_target": "trajectory",
    "is_positive": false,
    "importance": "important",
-   "weight": -3
+   "weight": -3,
+   "score": -3
   },
   {
    "number": "39",
@@ -350,7 +388,8 @@
    "evaluation_target": "final_answer",
    "is_positive": false,
    "importance": "important",
-   "weight": -3
+   "weight": -3,
+   "score": -3
   },
   {
    "number": "40",
@@ -359,7 +398,8 @@
    "evaluation_target": "final_answer",
    "is_positive": false,
    "importance": "important",
-   "weight": -3
+   "weight": -3,
+   "score": -3
   },
   {
    "number": "41",
@@ -368,7 +408,8 @@
    "evaluation_target": "final_answer",
    "is_positive": false,
    "importance": "important",
-   "weight": -3
+   "weight": -3,
+   "score": -3
   },
   {
    "number": "42",
@@ -377,7 +418,8 @@
    "evaluation_target": "final_answer",
    "is_positive": false,
    "importance": "important",
-   "weight": -3
+   "weight": -3,
+   "score": -3
   },
   {
    "number": "43",
@@ -386,7 +428,8 @@
    "evaluation_target": "final_answer",
    "is_positive": false,
    "importance": "important",
-   "weight": -3
+   "weight": -3,
+   "score": -3
   },
   {
    "number": "44",
@@ -395,7 +438,8 @@
    "evaluation_target": "final_answer",
    "is_positive": false,
    "importance": "important",
-   "weight": -3
+   "weight": -3,
+   "score": -3
   },
   {
    "number": "45",
@@ -404,7 +448,8 @@
    "evaluation_target": "final_answer",
    "is_positive": false,
    "importance": "important",
-   "weight": -3
+   "weight": -3,
+   "score": -3
   },
   {
    "number": "46",
@@ -413,7 +458,8 @@
    "evaluation_target": "final_answer",
    "is_positive": false,
    "importance": "important",
-   "weight": -3
+   "weight": -3,
+   "score": -3
   },
   {
    "number": "47",
@@ -422,7 +468,8 @@
    "evaluation_target": "final_answer",
    "is_positive": false,
    "importance": "important",
-   "weight": -3
+   "weight": -3,
+   "score": -3
   },
   {
    "number": "48",
@@ -431,7 +478,8 @@
    "evaluation_target": "final_answer",
    "is_positive": false,
    "importance": "important",
-   "weight": -3
+   "weight": -3,
+   "score": -3
   }
  ]
 }
