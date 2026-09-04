@@ -135,9 +135,11 @@ def make_delivery(
         _copy_masked(passk_src, traj_dst / passk_src.name)
 
     model_name: str = pass_sum.get("model", "")
-    model_dst = traj_dst / _short_model(model_name)
 
     for run_dir in sorted(traj_src.glob("run_*")):
+        report = _load(run_dir / "report.json", {})
+        run_model = report.get("model") or model_name
+        model_dst = traj_dst / _short_model(run_model)
         dst_run = model_dst / _run_label(run_dir.name)
         dst_run.mkdir(parents=True)
 
@@ -154,8 +156,6 @@ def make_delivery(
 
         if (run_dir / "config.json").exists():
             _copy_masked(run_dir / "config.json", dst_run / "config.json")
-
-        report = _load(run_dir / "report.json", {})
         judge_tokens = _load(run_dir / "verifier" / "judge_tokens.json", {})
         # rubric_judge_cli writes judge_tokens.json as a LIST of per-call
         # entries (one per codex exec); older judges wrote one dict. Merge a
@@ -192,7 +192,7 @@ def make_delivery(
 
         rubric = report.get("rubric", [])
         score_data = {
-            "model": report.get("model", model_name),
+            "model": report.get("model", run_model),
             "run_index": report.get("run_index", 1),
             "rubric_weights_percentage": report.get("rubric_weights_percentage", 0),
             "total": len(rubric),
