@@ -66,7 +66,11 @@ esac
 SLUG="$(basename "$TASK")"
 
 AGENT="${AGENT:-claude-code}"
-MODEL="${MODEL:-claude-opus-5}"
+if [ "${CC_MODE:-}" = "zbridge" ]; then
+  MODEL="${MODEL:-claude-sonnet-4-6}"
+else
+  MODEL="${MODEL:-claude-opus-5}"
+fi
 N="${N:-1}"
 BUILD_MULT="${BUILD_MULT:-3}"
 SETUP_MULT="${SETUP_MULT:-3}"   # agent-setup timeout multiplier (360s base -> 18m)
@@ -475,13 +479,13 @@ ensure_cc_bridge() {
   CC_BRIDGE_PORT="$port" nohup "$py" "$bridge_dir/cc_bridge.py" \
     >"$bridge_dir/logs/cc_bridge.log" 2>&1 &
   local i=0
-  while [ $i -lt 10 ]; do
+  while [ $i -lt 180 ]; do
     sleep 1; i=$((i+1))
     curl -sf -m 1 "http://127.0.0.1:$port/health" >/dev/null 2>&1 && {
       echo "[run_task] cc-bridge ready on :$port (pid $!)"; return 0
     }
   done
-  echo "[run_task] WARNING: cc-bridge did not come up in 10s; check $bridge_dir/logs/cc_bridge.log" >&2
+  echo "[run_task] WARNING: cc-bridge did not come up in 180s; check $bridge_dir/logs/cc_bridge.log" >&2
 }
 
 ensure_zbridge() {
@@ -499,9 +503,9 @@ ensure_zbridge() {
     mkdir -p "$log_dir"
     (cd "$zbridge_dir" && \
       ZB_ZAI_API_KEY="$ZB_ZAI_API_KEY" \
-      ZB_BRIDGE_SECRET="${ZB_BRIDGE_SECRET:-local}" \
+      ZB_BRIDGE_SECRET="" \
       ZB_PORT="$port" ZB_HOST="127.0.0.1" \
-      ZB_MODEL_ALIAS_JSON="${ZB_MODEL_ALIAS_JSON:-}" \
+      ZB_MODEL_ALIAS_JSON='{"claude-sonnet-4-6":"glm-5.3","claude-opus-4-7":"glm-5.3","claude-haiku-4-5-20251001":"glm-5.3","claude-haiku-4-5":"glm-5.3","claude-3-5-sonnet-latest":"glm-5.3","claude-3-opus-latest":"glm-5.3"}' \
       ZB_UPSTREAM_URL="${ZB_UPSTREAM_URL:-https://api.z.ai/api/coding/paas/v4/chat/completions}" \
       nohup python -m zbridge --port "$port" --host 127.0.0.1 \
         >"$log_dir/zbridge.log" 2>&1 &)
@@ -550,43 +554,48 @@ route_agent_through_proxy() {
 
 stage_host_rubric() {
   [ "$(state_get host_rubric_done)" = "1" ] && { echo "[run_task] host rubric already graded; skipping"; return 0; }
-  local trial
   # Trial dirs are named after the TASK slug, not the job: JOB=Input_1_oracle
   # still produces Input_1__PMNhXaa. Globbing on "$JOB__*" therefore found
   # nothing whenever JOB was overridden, and the pass skipped itself with
   # "no trial dir" while the run looked fine.
-  trial="$(find "$OUTPUT_DIR/$JOB" -maxdepth 1 -type d -name "*__*" 2>/dev/null | head -1)"
-  if [ -z "$trial" ]; then
-    echo "[run_task] no trial dir under $OUTPUT_DIR/$JOB; skipping host rubric" >&2
-    return 0
-  fi
-  local _tokens="$trial/verifier/judge_tokens.json"
-  local _codex_graded=0
-  if [ -s "$_tokens" ]; then
-    _codex_graded=$(python3 - "$_tokens" <<'PYEOF'
+  # Loop over ALL trial dirs: Harbor may produce >1 when run with --n-attempts N.
+  local py; py="$REPO/.venv/bin/python"; [ -x "$py" ] || py=python3
+  local trial _codex_graded _tokens any_graded=0 seen=0
+  while IFS= read -r trial; do
+    [ -n "$trial" ] || continue
+    seen=$((seen+1))
+    _tokens="$trial/verifier/judge_tokens.json"
+    _codex_graded=0
+    if [ -s "$_tokens" ]; then
+      _codex_graded=$(python3 - "$_tokens" <<'PYEOF'
 import json,sys
 d=json.load(open(sys.argv[1]))
 m=(d[0] if isinstance(d,list) else d).get('model_name','')
 print(1 if m.startswith('gpt') else 0)
 PYEOF
-    2>/dev/null || echo 0)
-  fi
-  if [ "${FORCE_HOST_RUBRIC:-0}" != "1" ] \
-     && [ -s "$trial/verifier/rubric_breakdown.json" ] \
-     && [ "$_codex_graded" = "1" ]; then
-    echo "[run_task] rubric already graded in-container by codex; skipping host pass"
-    state_put host_rubric_done 1
+      2>/dev/null || echo 0)
+    fi
+    if [ "${FORCE_HOST_RUBRIC:-0}" != "1" ] \
+       && [ -s "$trial/verifier/rubric_breakdown.json" ] \
+       && [ "$_codex_graded" = "1" ]; then
+      echo "[run_task] rubric already graded in-container by codex for $(basename "$trial"); skipping"
+      any_graded=1
+      continue
+    fi
+    if "$py" "$REPO/scripts/host_rubric_pass.py" --trial "$trial" --task "$TASK"; then
+      any_graded=1
+    else
+      # A failed rubric is not a failed run: Channel A and the state channel are
+      # already graded and still worth reporting. Leave the checkpoint unset so a
+      # rerun retries this without repeating the agent phase.
+      echo "[run_task] host rubric pass failed for $(basename "$trial"); rubric channel stays UNSCORED" >&2
+    fi
+  done < <(find "$OUTPUT_DIR/$JOB" -maxdepth 1 -type d -name "*__*" 2>/dev/null | sort)
+  if [ "$seen" -eq 0 ]; then
+    echo "[run_task] no trial dir under $OUTPUT_DIR/$JOB; skipping host rubric" >&2
     return 0
   fi
-  local py; py="$REPO/.venv/bin/python"; [ -x "$py" ] || py=python3
-  if "$py" "$REPO/scripts/host_rubric_pass.py" --trial "$trial" --task "$TASK"; then
-    state_put host_rubric_done 1
-  else
-    # A failed rubric is not a failed run: Channel A and the state channel are
-    # already graded and still worth reporting. Leave the checkpoint unset so a
-    # rerun retries this without repeating the agent phase.
-    echo "[run_task] host rubric pass failed; rubric channel stays UNSCORED" >&2
-  fi
+  [ "$any_graded" = "1" ] && state_put host_rubric_done 1
 }
 
 stage_reshape() {
@@ -662,9 +671,10 @@ stage_finance() {
 # --- dispatch -----------------------------------------------------------------
 
 if [ -f "$REPO/.env" ]; then
-  set -a
-  source <(sed 's/[[:space:]]*$//' "$REPO/.env" | grep -E '^[A-Za-z_][A-Za-z0-9_]*=[A-Za-z0-9_./:@~-]*$')
-  set +a
+  _env_tmp=$(mktemp)
+  sed 's/[[:space:]]*$//' "$REPO/.env" | grep -E '^[A-Za-z_][A-Za-z0-9_]*=[A-Za-z0-9_./:@~-]*$' > "$_env_tmp"
+  set -a; source "$_env_tmp"; set +a
+  rm -f "$_env_tmp"
 fi
 
 resolve_auth
