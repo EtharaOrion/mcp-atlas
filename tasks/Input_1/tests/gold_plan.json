@@ -1,0 +1,55 @@
+[
+  [
+    {
+      "server_name": "LightSecurity",
+      "tool_name": "list_alarms",
+      "dependencies": []
+    },
+    {
+      "server_name": "LightGmail",
+      "tool_name": "list_messages",
+      "dependencies": []
+    }
+  ],
+  [
+    {
+      "server_name": "LightSecurity",
+      "tool_name": "list_sensors",
+      "dependencies": [0]
+    },
+    {
+      "server_name": "LightGmail",
+      "tool_name": "get_thread",
+      "dependencies": [1]
+    }
+  ],
+  [
+    {
+      "server_name": "LightSecurity",
+      "tool_name": "get_sensor",
+      "dependencies": [2]
+    },
+    {
+      "server_name": "LightSecurity",
+      "tool_name": "list_events",
+      "dependencies": [2]
+    },
+    {
+      "server_name": "LightSecurity",
+      "tool_name": "list_access_logs",
+      "dependencies": [2]
+    },
+    {
+      "server_name": "LightGmail",
+      "tool_name": "get_message",
+      "dependencies": [3]
+    }
+  ],
+  [
+    {
+      "server_name": "LightSecurity",
+      "tool_name": "resolve_alarm",
+      "dependencies": [4, 5, 6, 7]
+    }
+  ]
+]

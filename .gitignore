@@ -4,7 +4,13 @@ __pycache__/
 build/
 dist/
 wheels/
-tasks/
+# tasks/ was ignored here, grouped with the Python build artifacts above, and
+# it is not one. It is the graded task corpus the harness actually runs from,
+# so ignoring it left the bytes being graded untracked and unversioned while
+# the delivered copies under dataset/ and samples/ were committed: two Harbor
+# bundles that no commit describes, which is C-GAP-HARNESS-TASK-CORPUS-GITIGNORED.
+# A run is not reproducible from the repository if the corpus it grades is not
+# in the repository.
 output/
 delivery_output/
 # World data injected into light-servers at boot. Never committed: it is
