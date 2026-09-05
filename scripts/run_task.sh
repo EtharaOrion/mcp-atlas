@@ -628,7 +628,13 @@ stage_reshape() {
     rm -rf "$stash"
   fi
 
-  local conv=(python3 scripts/harbor_to_output.py "$OUTPUT_DIR/$JOB" \
+  # harbor_to_output.py imports defusedxml, which is declared in
+  # requirements.txt and installed in the repo venv, not in a bare system
+  # python3. Reshape used to invoke python3 directly and died on the import
+  # while the host-rubric stage above resolved its interpreter correctly, so
+  # the same selection is used here.
+  local py; py="$REPO/.venv/bin/python"; [ -x "$py" ] || py=python3
+  local conv=("$py" scripts/harbor_to_output.py "$OUTPUT_DIR/$JOB" \
               --output-dir "$OUTPUT_DIR" --at "$AT" --run-offset "$offset")
   [ -n "${COPY_TO:-}" ] && conv+=(--copy-to "$COPY_TO")
   "${conv[@]}"
