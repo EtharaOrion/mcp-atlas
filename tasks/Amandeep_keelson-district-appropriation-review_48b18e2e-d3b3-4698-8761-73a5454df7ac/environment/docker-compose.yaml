@@ -35,7 +35,17 @@ services:
     # NOT publicly hosted, so a third party cannot fetch these bytes at all.
     # Reproducibility needs the dependency set and base image pinned first;
     # until then this pin detects drift and does not enable independent rebuild.
-    image: localhost:5000/light-servers@sha256:f278b02d9f3b435d39f43decf44fee5850bcfe286b6222325e034698cdafdc16
+    # Re-pinned 2026-09-05. The prior digest f278b02d named an image that
+    # exists on no machine here: the local registry serves nothing under it and
+    # `docker pull` by that digest fails, which is what stopped run_task.sh at
+    # preflight. 2808fea7 is the manifest the local registry actually holds and
+    # `docker pull` by this digest succeeds.
+    #
+    # Note for whoever pins next: `docker manifest inspect` FAILS against a
+    # plain-HTTP registry even when the image is present, so it is not a valid
+    # check here. `docker pull <exact reference from this file>` is the one that
+    # decides, because it is the operation the harness itself performs.
+    image: localhost:5000/light-servers@sha256:2808fea71413fd351cee6280d2cf2a69e5b81fdbd6b1edf88187ccf841a964f5
     expose:
       - "9020"    # LightBudget
       - "9015"    # LightNotes
