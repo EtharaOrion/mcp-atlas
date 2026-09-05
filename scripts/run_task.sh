@@ -366,7 +366,45 @@ ensure_image() {
     || { echo "[run_task] failed to refresh $img from $ctx" >&2; exit 3; }
 }
 
+# The interpreter that can import harbor. `harbor` is installed as a uv tool, so
+# it has its own venv; the repo .venv cannot import it and neither can the system
+# python3. Without this the network preflight would degrade to a warn on the one
+# machine it most needs to run on.
+harbor_python() {
+  local bin real
+  bin="$(command -v harbor 2>/dev/null)" || return 1
+  real="$(python3 -c "import os,sys;print(os.path.realpath(sys.argv[1]))" "$bin" 2>/dev/null)" || return 1
+  local cand="$(dirname "$real")/python"
+  [ -x "$cand" ] && { echo "$cand"; return 0; }
+  return 1
+}
+
 stage_preflight() {
+  # FIRST, before the image build and long before the agent phase: prove Harbor
+  # can enforce this task's network policy. Harbor itself only checks this in
+  # Trial.__init__, i.e. after Trial.create() has made the trial directory and
+  # after the environment image has been built -- so an unenforceable policy
+  # costs a full build, then aborts, then leaves a trial dir with no config.json
+  # that harbor_to_output.py silently skips. Needs no docker, costs ~0.3s.
+  #
+  # PREFLIGHT_NETWORK_OFF=1 bypasses it.
+  if [ -z "${PREFLIGHT_NETWORK_OFF:-}" ]; then
+    # No silent fallback to python3: without harbor importable the checker
+    # degrades to a warn and exits 0, so the gate would report "go" having
+    # verified nothing -- the exact silent skip it exists to prevent.
+    local _hpy
+    _hpy="$(harbor_python)" || {
+      echo "[run_task] cannot locate harbor's python (is harbor installed?);" >&2
+      echo "           refusing to run an unverified network policy." >&2
+      echo "           bypass with PREFLIGHT_NETWORK_OFF=1" >&2
+      exit 2
+    }
+    "$_hpy" "$REPO/scripts/preflight_network.py" "$TASK" || {
+      echo "[run_task] network policy preflight failed — refusing to build or run" >&2
+      exit 2
+    }
+  fi
+
   if ! docker info >/dev/null 2>&1; then
     echo "[run_task] docker not running — starting OrbStack/Docker"
     open -a OrbStack 2>/dev/null || open -a Docker 2>/dev/null || true
@@ -432,8 +470,68 @@ stage_harbor() {
     [ -n "$THINKING_DISPLAY" ] && args+=(--ak "thinking_display=$THINKING_DISPLAY")
   fi
   echo "[run_task] harbor ${args[*]}"
+  local _hrc=0
   HARBOR_OUTPUT_OFF=1 command harbor "${args[@]}" \
-    || echo "[run_task] harbor exited non-zero; reshaping whatever landed" >&2
+    || { _hrc=$?; echo "[run_task] harbor exited $_hrc; checking whether a trial actually ran" >&2; }
+
+  # A trial DIRECTORY is not a trial that RAN. Harbor creates it in
+  # Trial.create(), before the environment is built and before
+  # Trial.__init__ validates the network policy -- so an aborted trial leaves a
+  # directory containing nothing.
+  #
+  # Nothing downstream notices. harbor_to_output.py:1129 selects trials with
+  # `(p / "config.json").exists()`, so an empty trial dir is SILENTLY SKIPPED:
+  # convert_job returns [], reshape exits 0, and stage_finance then looks for a
+  # trajectory/run_N that was never written. The visible symptom is a task that
+  # gained no Run_N for no stated reason, thirty lines below the real error.
+  #
+  # stage_harbor removes $JOB/config.json before running, so what is checked
+  # here is always this invocation's.
+  local _job_dir="$OUTPUT_DIR/$JOB"
+  local _trial=""
+  if [ -d "$_job_dir" ]; then
+    # `|| true` is load-bearing: this script runs under `set -euo pipefail`, and
+    # with no trial directory to match, `ls` fails, pipefail propagates that past
+    # `head`, and the assignment's non-zero status kills the script THROUGH set -e
+    # -- silently, because ls's stderr is discarded. That is the exact failure
+    # mode this guard exists to report, so introducing it here would be a
+    # self-inflicted version of the bug. Caught by
+    # scripts/tests/test_run_task_stages.py, whose harbor stub makes no trial dir.
+    _trial="$(ls -td "$_job_dir"/*__*/ 2>/dev/null | head -1)" || true
+    _trial="${_trial%/}"
+  fi
+  if [ -n "$_trial" ] && [ ! -f "$_trial/config.json" ]; then
+    echo >&2
+    echo "==> AGENT PHASE DID NOT RUN" >&2
+    echo "    $_trial exists but has no config.json, so Harbor aborted before the" >&2
+    echo "    trial started. The cause is in the harbor output above -- scroll to the" >&2
+    echo "    LAST line of the traceback, which names it." >&2
+    echo >&2
+    echo "    Most common: [agent].network_mode differs from [environment]." >&2
+    echo "    network_mode and the docker provider cannot switch policy after start." >&2
+    echo "    Diagnose with:" >&2
+    echo "      scripts/preflight_network.py $TASK" >&2
+    echo >&2
+    echo "    Refusing to reshape: an empty trial dir is skipped without comment and" >&2
+    echo "    would leave this task silently missing a run." >&2
+    exit "${_hrc:-1}"
+  fi
+  # Harbor exiting NON-ZERO with no trial directory at all: nothing ran and
+  # nothing can be graded, so stop rather than let reshape find nothing.
+  # A zero exit with no trial directory is a different animal -- harbor believes
+  # it succeeded -- so that one is reported loudly and left to proceed, because
+  # blocking on it would mean asserting a harbor contract this script does not
+  # own. Loud either way; the thing being prevented is silence, not progress.
+  if [ -z "$_trial" ] && [ ! -d "$_job_dir/trajectory" ]; then
+    if [ "$_hrc" -ne 0 ]; then
+      echo >&2
+      echo "==> NO TRIAL DIRECTORY: harbor exited $_hrc and produced nothing to grade." >&2
+      echo "    Check the harbor output above." >&2
+      exit "$_hrc"
+    fi
+    echo "[run_task] WARNING: harbor exited 0 but left no trial directory in" >&2
+    echo "           $_job_dir — reshape will have nothing to convert." >&2
+  fi
   state_put harbor_done 1
   state_put host_rubric_done 0
 }
