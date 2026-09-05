@@ -3,6 +3,8 @@
 
 services:
   main:
+    environment:
+      GRADER_HEADROOM_ENABLED: "true"
     build:
       context: .
       dockerfile: Dockerfile
