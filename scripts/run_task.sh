@@ -799,6 +799,8 @@ if [ -f "$REPO/.env" ]; then
   rm -f "$_env_tmp"
 fi
 
+python3 "$REPO/scripts/patch_harbor.py"
+
 resolve_auth
 check_credentials
 
