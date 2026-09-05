@@ -1292,11 +1292,26 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
         if run_offset > 0:
             prev_ps = _load(out_task / "pass_summary.json", {}) or {}
             per_run = (prev_ps.get("per_run") or []) + per_run
+        # A trial whose Channel A never produced a value did not score zero --
+        # it never graded. The environment failed to build, the agent never
+        # started, the run died before test_outputs.py ran. Averaging those in
+        # as real zeros understates the model: one recorded 4-run job published
+        # 33.93 where the two trials that actually ran averaged 67.86, and
+        # nothing in this file said which was which.
+        #
+        # They stay in per_run -- losing them would hide infrastructure trouble
+        # -- but they are excluded from every average, and the counts below say
+        # how many there were so a reader can see the difference.
+        completed = [p for p in per_run if p.get("test_weights_percentage") is not None]
+        errored = [p for p in per_run if p.get("test_weights_percentage") is None]
         pass_summary = {
             "model": model, "runs": n,
-            "average_combined_score": _mean([p["combined_score"] for p in per_run]),
-            "average_test_weights_percentage": _mean([p["test_weights_percentage"] for p in per_run]),
-            "average_rubric_weights_percentage": (_mean(_rp) if (_rp := [p["rubric_weights_percentage"] for p in per_run if p["rubric_weights_percentage"] is not None]) else None),
+            "runs_completed": len(completed),
+            "runs_errored": len(errored),
+            "errored_run_indices": [p.get("run_index") for p in errored],
+            "average_combined_score": _mean([p["combined_score"] for p in completed]),
+            "average_test_weights_percentage": _mean([p["test_weights_percentage"] for p in completed]),
+            "average_rubric_weights_percentage": (_mean(_rp) if (_rp := [p["rubric_weights_percentage"] for p in completed if p["rubric_weights_percentage"] is not None]) else None),
             "per_run": per_run,
         }
         _dump(out_task / "pass_summary.json", pass_summary)

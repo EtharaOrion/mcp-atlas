@@ -72,6 +72,13 @@ else
   MODEL="${MODEL:-claude-opus-5}"
 fi
 N="${N:-1}"
+# Pin the rubric grader for the whole run. Left unset, rubric_judge_cli picks a
+# model from whichever CLI the machine has, so the host pass grades on
+# gpt-5.6-sol while an in-container pass grades on a Claude model -- one
+# recorded job has 42 trials on the former and 1 on the latter, with nothing
+# marking the odd one out. The judge is a benchmark property; it should not
+# depend on where a stage happened to run.
+export JUDGE_MODEL="${JUDGE_MODEL:-gpt-5.6-sol}"
 BUILD_MULT="${BUILD_MULT:-3}"
 SETUP_MULT="${SETUP_MULT:-3}"   # agent-setup timeout multiplier (360s base -> 18m)
 AGENT_HEADROOM_ENABLED="${AGENT_HEADROOM_ENABLED:-false}"  # agent-path compression: OFF
@@ -169,11 +176,27 @@ resolve_run_offset() {
 resolve_auth() {
   [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && return 0
   [ -n "${ANTHROPIC_API_KEY:-}" ] && return 0
+  SRC=""
   TOKEN="$(security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null \
            | python3 -c 'import sys,json; print(json.load(sys.stdin)["claudeAiOauth"]["accessToken"])' 2>/dev/null || true)"
+  [ -n "$TOKEN" ] && SRC="keychain"
+
+  # Linux has no keychain: the claude CLI writes the same JSON structure to
+  # ~/.claude/.credentials.json instead. Read it here rather than expecting the
+  # operator to export the token by hand -- the access token is short-lived
+  # (hours) and the CLI refreshes it in place, so a value exported once into a
+  # shell profile goes stale mid-batch. That surfaces as the agent failing to
+  # authenticate deep inside a paid trial, which reads like a bad agent rather
+  # than an expired credential. Resolving per invocation always picks up
+  # whatever the CLI last refreshed.
+  if [ -z "$TOKEN" ] && [ -s "$HOME/.claude/.credentials.json" ]; then
+    TOKEN="$(python3 -c 'import json,os; print(json.load(open(os.path.expanduser("~/.claude/.credentials.json")))["claudeAiOauth"]["accessToken"])' 2>/dev/null || true)"
+    [ -n "$TOKEN" ] && SRC="~/.claude/.credentials.json"
+  fi
+
   if [ -n "$TOKEN" ]; then
     export CLAUDE_CODE_OAUTH_TOKEN="$TOKEN"
-    echo "[run_task] using Claude Code OAuth token from keychain"
+    echo "[run_task] using Claude Code OAuth token from $SRC"
   else
     echo "[run_task] WARNING: no CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_API_KEY — agent + judge will fail auth" >&2
   fi
@@ -417,8 +440,9 @@ stage_harbor() {
 
 # Grade the rubric channel on the host, between harbor and reshape.
 #
-# The in-container judge cannot do it: task.toml pins JUDGE_MODEL=gpt-5.6-sol,
-# and codex does not exist in python:3.12-slim. Putting one there would mean
+# The in-container judge cannot do it on the pinned grader: gpt-5.6-sol runs
+# over codex, and codex does not exist in python:3.12-slim. Putting one there
+# would mean
 # mounting this machine's ChatGPT credential into the container the agent just
 # ran in under bypassPermissions, and Harbor cannot isolate the verifier from
 # that container either -- environment_mode='separate' restarts light-servers

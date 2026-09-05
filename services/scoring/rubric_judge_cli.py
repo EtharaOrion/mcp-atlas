@@ -615,13 +615,21 @@ def _default_judge_model() -> str:
     pinned = os.getenv("JUDGE_MODEL", "").strip()
     if pinned:
         return pinned
-    if _codex_cli():
-        return CODEX_MODELS[0]
-    if _claude_cli():
-        return CLAUDE_MODELS[0]
-    # Neither present: keep the historical default so the error names the
-    # Codex path, which is the one an operator on a workstation expects.
-    return CODEX_MODELS[0]
+
+    # Nothing pinned: the model now depends on which CLI this machine happens
+    # to have, so the same rubric can be graded by different judges across
+    # trials of one job. That is a benchmark property changing underfoot, and
+    # it has already happened -- one recorded run was graded by
+    # claude-sonnet-4-5 while the other 42 used gpt-5.6-sol, with nothing in
+    # the logs to say so. The fallback stays, because the container genuinely
+    # has no codex binary and grading nothing would be worse; but it announces
+    # itself so the divergence is visible at the point it is decided.
+    chosen = CODEX_MODELS[0] if _codex_cli() else (
+        CLAUDE_MODELS[0] if _claude_cli() else CODEX_MODELS[0])
+    print(f"[rubric-judge] WARNING: JUDGE_MODEL is not set; falling back to "
+          f"'{chosen}' based on which CLI is installed here. Pin JUDGE_MODEL "
+          f"to keep the grader constant across trials.", file=sys.stderr)
+    return chosen
 
 
 async def _run_judge(
