@@ -3,7 +3,7 @@
 # (same layout complex-mcp's --layout harbor writer produces).
 #
 #   scripts/run_task.sh tasks/xenon-atomic-cube                 # claude-code + opus-5 (defaults)
-#   MODEL=claude-sonnet-4-6 N=3 scripts/run_task.sh tasks/foo   # 3 attempts, pass@k over them
+#   CC_MODE=zbridge N=3 scripts/run_task.sh tasks/foo            # 3 attempts via GLM-5.3 (zbridge)
 #   AGENT=oracle scripts/run_task.sh tasks/foo                  # oracle gate
 #   COPY_TO=/some/dir scripts/run_task.sh tasks/foo           # optional extra mirror
 #
@@ -67,7 +67,7 @@ SLUG="$(basename "$TASK")"
 
 AGENT="${AGENT:-claude-code}"
 if [ "${CC_MODE:-}" = "zbridge" ]; then
-  MODEL="${MODEL:-claude-sonnet-4-6}"
+  MODEL="${MODEL:-claude-3-5-sonnet-latest}"
 else
   MODEL="${MODEL:-claude-opus-5}"
 fi
@@ -80,7 +80,7 @@ N="${N:-1}"
 # depend on where a stage happened to run.
 export JUDGE_MODEL="${JUDGE_MODEL:-gpt-5.6-sol}"
 BUILD_MULT="${BUILD_MULT:-3}"
-SETUP_MULT="${SETUP_MULT:-3}"   # agent-setup timeout multiplier (360s base -> 18m)
+SETUP_MULT="${SETUP_MULT:-6}"
 AGENT_HEADROOM_ENABLED="${AGENT_HEADROOM_ENABLED:-false}"  # agent-path compression: OFF
 OUTPUT_DIR="${OUTPUT_DIR:-$REPO/output}"
 AT="${AT:-auto}"   # pass@k ks for the reshaper; auto = every k from 1..N runs
@@ -531,7 +531,7 @@ ensure_zbridge() {
       ZB_PORT="$port" ZB_HOST="127.0.0.1" \
       ZB_MODEL_ALIAS_JSON='{"claude-sonnet-4-6":"glm-5.3","claude-opus-4-7":"glm-5.3","claude-haiku-4-5-20251001":"glm-5.3","claude-haiku-4-5":"glm-5.3","claude-3-5-sonnet-latest":"glm-5.3","claude-3-opus-latest":"glm-5.3"}' \
       ZB_UPSTREAM_URL="${ZB_UPSTREAM_URL:-https://api.z.ai/api/coding/paas/v4/chat/completions}" \
-      nohup python -m zbridge --port "$port" --host 127.0.0.1 \
+      nohup uv run python -m zbridge --port "$port" --host 127.0.0.1 \
         >"$log_dir/zbridge.log" 2>&1 &)
     local i=0
     while [ $i -lt 15 ]; do

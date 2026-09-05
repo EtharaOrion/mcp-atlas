@@ -55,7 +55,7 @@ def _load_criteria(rubric_path: Path) -> list[dict]:
     )
 
 
-def _render_trajectory(traj: dict, max_chars: int = 10000) -> str:
+def _render_trajectory(traj: dict) -> str:
     parts: list[str] = []
     for step in traj.get("steps", []):
         args = step.get("arguments", {})
@@ -66,8 +66,7 @@ def _render_trajectory(traj: dict, max_chars: int = 10000) -> str:
     final = traj.get("final_message", "")
     if final:
         parts.append(f"Final: {final[:2000]}")
-    joined = "\n".join(parts)
-    return joined[:max_chars] + ("\n...[truncated]" if len(joined) > max_chars else "")
+    return "\n".join(parts)
 
 
 # _OUTPUT_SCHEMA lived here. It was the Agent SDK's structured-output

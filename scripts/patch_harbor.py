@@ -52,6 +52,22 @@ REPLACEMENT_ARGMAX_3 = '                f"/logs/agent/claude-code.txt; rm -f {_i
 ALREADY_PATCHED_MARKER_ARGMAX = "_instr_file"
 
 
+ANCHOR_COLLECT = """\
+        if step_cfg is not None:
+            hooks.extend(step_cfg.verifier.collect)
+        return hooks"""
+REPLACEMENT_COLLECT = """\
+        if step_cfg is not None:
+            hooks.extend(step_cfg.verifier.collect)
+        # harbor-patch: builtin collect
+        _BUILTIN_CMD = "python3 /harness/scoring/collect_artifacts.py"
+        if not any(_BUILTIN_CMD in h.command for h in hooks):
+            from harbor.models.task.config import VerifierCollectConfig as _VCC
+            hooks.append(_VCC(command=_BUILTIN_CMD))
+        return hooks"""
+ALREADY_PATCHED_MARKER_COLLECT = "harbor-patch: builtin collect"
+
+
 def find_harbor_claude_code() -> Path:
     import shutil
     import subprocess
@@ -89,6 +105,15 @@ def find_harbor_claude_code() -> Path:
     raise RuntimeError(
         f"Could not locate harbor/agents/installed/claude_code.py in pipx venv at {venv_root}"
     )
+
+
+def find_harbor_trial() -> Path:
+    claude_code = find_harbor_claude_code()
+    harbor_pkg_dir = claude_code.parent.parent.parent
+    trial = harbor_pkg_dir / "trial" / "trial.py"
+    if trial.exists():
+        return trial
+    raise RuntimeError(f"Could not locate harbor/trial/trial.py (tried {trial})")
 
 
 def main() -> None:
@@ -131,6 +156,28 @@ def main() -> None:
         print(f"[patch_harbor] Written: {target}")
     else:
         print(f"[patch_harbor] Nothing to do: {target}")
+
+    trial = find_harbor_trial()
+    trial_text = trial.read_text(encoding="utf-8")
+    trial_changed = False
+
+    if ALREADY_PATCHED_MARKER_COLLECT in trial_text:
+        print(f"[patch_harbor] Collect hook: already applied")
+    elif ANCHOR_COLLECT not in trial_text:
+        print(
+            f"[patch_harbor] ERROR: Anchor for collect hook not found in {trial}\n"
+            "Harbor may have been updated and this patch needs revision.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    else:
+        trial_text = trial_text.replace(ANCHOR_COLLECT, REPLACEMENT_COLLECT, 1)
+        trial_changed = True
+        print(f"[patch_harbor] Collect hook: applied")
+
+    if trial_changed:
+        trial.write_text(trial_text, encoding="utf-8")
+        print(f"[patch_harbor] Written: {trial}")
 
 
 if __name__ == "__main__":
