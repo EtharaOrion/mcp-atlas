@@ -23,6 +23,32 @@ def _to_float(v, default=0.0):
         return default
 
 
+def _normalize_airport(a):
+    iata = a.get("iata_code") or a.get("iataCode", "")
+    city = a.get("city") or a.get("city_name") or ""
+    country_code = a.get("country_code") or a.get("countryCode", "")
+    return {
+        **a,
+        "iata_code": iata,
+        "city_name": city,
+        "city_code": a.get("city_code") or city,
+        "country_name": a.get("country_name") or country_code,
+        "country_code": country_code,
+        "timezone": a.get("timezone") or "+00:00",
+    }
+
+
+def _normalize_airline(a):
+    iata = a.get("iata_code") or a.get("iataCode", "")
+    return {
+        **a,
+        "iata_code": iata,
+        "icao_code": a.get("icao_code") or a.get("icaoCode") or iata,
+        "business_name": a.get("business_name") or a.get("businessName", ""),
+        "common_name": a.get("common_name") or a.get("commonName", ""),
+    }
+
+
 class AmadeusSession:
     """Deterministic sandbox for the Amadeus mock, ported from the FastAPI service.
 
@@ -45,6 +71,8 @@ class AmadeusSession:
             # Seedless: world loaded verbatim from the frozen snapshot.
             restore_into(self, Path(__file__).resolve().parent / "world.pkl")
             self.os = connect_os(os_cfg)
+        self.airports = [_normalize_airport(a) for a in self.airports]
+        self.airlines = [_normalize_airline(a) for a in self.airlines]
 
     def get_session_dict(self):
         return {"offers": self.offers}

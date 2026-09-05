@@ -108,7 +108,7 @@ class HubspotSession:
             pipelines[pid]["stages"].append({
                 "id": r["stage_id"],
                 "label": r["stage_label"],
-                "displayOrder": _strict_int(r["display_order"]),
+                "displayOrder": _strict_int(r.get("display_order", r.get("displayOrder", 0))),
                 "metadata": {"isClosed": str(_strict_bool(r["closed"])).lower(),
                              "probability": str(_opt_float(r.get("probability"), default=0.0))},
             })

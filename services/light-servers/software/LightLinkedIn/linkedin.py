@@ -59,11 +59,12 @@ class LinkedinSession:
         return ''.join(self.rng.choices(alphabet, k=10))
 
     def _coerce_post(self, r: Dict[str, Any]) -> Dict[str, Any]:
-        out = {k: v for k, v in r.items() if k not in ("like_count", "comment_count", "share_count")}
+        social = r.get("socialDetail") or {}
+        out = {k: v for k, v in r.items() if k not in ("like_count", "comment_count", "share_count", "socialDetail")}
         out["socialDetail"] = {
-            "likeCount": _to_int(r.get("like_count")),
-            "commentCount": _to_int(r.get("comment_count")),
-            "shareCount": _to_int(r.get("share_count")),
+            "likeCount": _to_int(social.get("likeCount", r.get("like_count", 0))),
+            "commentCount": _to_int(social.get("commentCount", r.get("comment_count", 0))),
+            "shareCount": _to_int(social.get("shareCount", r.get("share_count", 0))),
         }
         return out
 

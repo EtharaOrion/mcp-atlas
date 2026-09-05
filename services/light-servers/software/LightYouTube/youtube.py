@@ -115,17 +115,18 @@ class YoutubeSession:
     def _coerce_playlists(self, rows):
         out = []
         for r in rows:
+            pid = r.get("playlist_id") or r.get("id", "")
             out.append({
-                "id": r["playlist_id"],
+                "id": pid,
                 "snippet": {
                     "publishedAt": r["publishedAt"],
                     "channelId": r["channelId"],
                     "title": r["title"],
                     "description": r["description"],
                     "thumbnails": {
-                        "default": {"url": f"https://i.ytimg.com/vi/playlist_{r['playlist_id']}/default.jpg", "width": 120, "height": 90},
-                        "medium": {"url": f"https://i.ytimg.com/vi/playlist_{r['playlist_id']}/mqdefault.jpg", "width": 320, "height": 180},
-                        "high": {"url": f"https://i.ytimg.com/vi/playlist_{r['playlist_id']}/hqdefault.jpg", "width": 480, "height": 360},
+                        "default": {"url": f"https://i.ytimg.com/vi/playlist_{pid}/default.jpg", "width": 120, "height": 90},
+                        "medium": {"url": f"https://i.ytimg.com/vi/playlist_{pid}/mqdefault.jpg", "width": 320, "height": 180},
+                        "high": {"url": f"https://i.ytimg.com/vi/playlist_{pid}/hqdefault.jpg", "width": 480, "height": 360},
                     },
                     "channelTitle": self._CHANNEL_TITLE,
                 },

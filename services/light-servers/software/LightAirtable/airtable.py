@@ -94,7 +94,7 @@ class AirtableSession:
 
     def _resolve_table(self, base_id, table_id_or_name):
         for t in self.tables:
-            if t["baseId"] != base_id:
+            if t.get("baseId", t.get("base_id")) != base_id:
                 continue
             if t["id"] == table_id_or_name or t["name"].lower() == str(table_id_or_name).lower():
                 return t
@@ -120,7 +120,8 @@ class AirtableSession:
     # --- API methods -------------------------------------------------------
     def list_bases(self) -> Dict[str, Any]:
         return {"status": "ok", "output": {"bases": [{
-            "id": b["id"], "name": b["name"], "permissionLevel": b["permissionLevel"],
+            "id": b["id"], "name": b["name"],
+            "permissionLevel": b.get("permissionLevel", b.get("permission_level")),
         } for b in self.bases]}}
 
     def list_tables(self, base_id: str) -> Dict[str, Any]:
@@ -128,12 +129,12 @@ class AirtableSession:
             return {"status": "failed", "output": f"Base {base_id} not found"}
         tables = []
         for t in self.tables:
-            if t["baseId"] != base_id:
+            if t.get("baseId", t.get("base_id")) != base_id:
                 continue
             tables.append({
                 "id": t["id"],
                 "name": t["name"],
-                "primaryFieldId": t["primaryFieldId"],
+                "primaryFieldId": t.get("primaryFieldId", t.get("primary_field_id", "")),
                 "fields": self._field_meta.get(t["id"], []),
             })
         return {"status": "ok", "output": {"tables": tables}}
