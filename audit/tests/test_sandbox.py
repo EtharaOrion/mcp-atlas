@@ -577,9 +577,16 @@ def test_conformance_needs_two_runs():
         sb.conformance([_exec(dict(BASE))])
 
 
-def test_rubric_judge_failed_is_not_treated_as_stable():
-    """test.sh now writes the judge's real error there, so it varies."""
-    assert "verifier/rubric_judge_failed.txt" not in sb.STABLE_ARTIFACTS
+def test_rubric_judge_failed_is_stable_for_now():
+    """Written before the file was measured; measurement overrode the guess.
+
+    test.sh now writes the judge's real error there, and that error is the same
+    every run ("codex CLI not found on PATH"), so the file is byte-stable and
+    belongs in the checked set. It stops being stable the moment
+    RUBRIC-COMPILATION is fixed -- and conformance failing at that point is
+    correct, because the delivered set really will have changed.
+    """
+    assert "verifier/rubric_judge_failed.txt" in sb.STABLE_ARTIFACTS
 
 
 # ---------------------------------------------------------------------------
@@ -644,3 +651,53 @@ def test_consistency_is_serialised():
     d = json.loads(_rw(0.500875).to_json())
     assert d["reward_consistent"] is True
     assert d["ledger_reward"] == pytest.approx(0.500908, abs=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# the delivered artifact set
+#
+# harbor_to_output.py copies verifier files by ALLOWLIST. A file missing from
+# it never reaches the delivered tree no matter what the trial dir holds, and
+# dropping it from PRUNE_FROM_VERIFIER does not help. That combination made
+# three independent readers conclude Channel A had gone unscored when it had
+# not, so the allowlist is pinned here.
+
+EVIDENCE_FILES = ("reward_channel_a.json", "grade_report.md",
+                  "rubric_judge_failed.txt", "rubric_judge.log")
+
+
+def _reshaper_source() -> str:
+    return (sb.REPO / "scripts" / "harbor_to_output.py").read_text()
+
+
+@pytest.mark.parametrize("name", EVIDENCE_FILES)
+def test_reshaper_copies_the_reward_evidence(name):
+    src = _reshaper_source()
+    start = src.index('for f in ("ctrf.json"')
+    allowlist = src[start:src.index("_copy(ver / f", start)]
+    assert f'"{name}"' in allowlist, (
+        f"{name} is not in harbor_to_output.py's verifier copy allowlist, so it "
+        "will not reach the delivered tree"
+    )
+
+
+def test_reward_channel_a_is_no_longer_pruned():
+    src = _reshaper_source()
+    line = next(l for l in src.splitlines() if l.startswith("PRUNE_FROM_VERIFIER"))
+    assert "reward_channel_a.json" not in line
+
+
+def test_stable_set_matches_what_was_measured():
+    """Measured across three identical oracle runs on 2026-09-05."""
+    assert sb.STABLE_ARTIFACTS == frozenset({
+        "artifacts/index.json", "artifacts/manifest.json",
+        "logs/light-servers-health.log", "verifier/end_env.json",
+        "verifier/grade_report.md", "verifier/state_channel.json",
+        "verifier/rubric_judge_failed.txt", "verifier/rubric_judge.log",
+    })
+
+
+def test_reward_channel_a_is_delivered_but_not_hash_checked():
+    """It embeds rubric and reward, which move with the judge. Presence is
+    covered by set membership; its content by reward_consistent."""
+    assert "verifier/reward_channel_a.json" not in sb.STABLE_ARTIFACTS

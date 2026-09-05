@@ -77,7 +77,19 @@ STABLE_ARTIFACTS = frozenset({
     "verifier/end_env.json",
     "verifier/grade_report.md",
     "verifier/state_channel.json",
+    # Stable for a reason that will not last: the in-container rubric judge
+    # fails identically on every run ("codex CLI not found on PATH"), so both
+    # files carry the same bytes each time. When RUBRIC-COMPILATION is fixed
+    # they will change or disappear, and this check SHOULD fail then -- that is
+    # a delivered-set change and conformance exists to notice it. Re-measure
+    # and update deliberately at that point rather than pre-emptively.
+    "verifier/rubric_judge_failed.txt",
+    "verifier/rubric_judge.log",
 })
+
+# Delivered and auditable, but NOT hash-checkable: reward_channel_a.json embeds
+# the run's rubric and reward values, which move with the judge. Set membership
+# covers its presence; its content is checked by reward_consistent instead.
 
 
 class SandboxError(RuntimeError):

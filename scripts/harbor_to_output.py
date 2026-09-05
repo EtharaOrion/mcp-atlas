@@ -822,9 +822,25 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
           run_dir / "logs" / "light-servers-health.log")
     _copy(ver / "light-servers-tool_calls.log",
           run_dir / "logs" / "light-servers-tool-calls.log")
+    # This is an ALLOWLIST, not a filter: anything absent here never reaches the
+    # delivered tree, however present it is in the trial dir. The four names on
+    # the second line were added 2026-09-05 because their absence made the
+    # delivered run unauditable in exactly the ways that mattered:
+    #   reward_channel_a.json   the Channel A ledger -- earned, pos_total, tests
+    #                           missed, guards tripped. detail.json keeps only
+    #                           the folded scalar, so without this there is no
+    #                           way to check the largest reward component.
+    #   grade_report.md         the host grader's own account of the score.
+    #   rubric_judge_failed.txt why the in-container rubric judge gave up.
+    #   rubric_judge.log        that judge's full output.
+    # Dropping reward_channel_a.json from PRUNE_FROM_VERIFIER was necessary but
+    # not sufficient: a file that is never copied cannot be un-pruned, and three
+    # independent readers concluded Channel A had gone unscored when it had not.
     for f in ("ctrf.json", "reward.json", "test-stdout.txt", "detail.json",
               "rubric_breakdown.json", "judge_tokens.json",
-              "state_channel.json", "end_env.json"):
+              "state_channel.json", "end_env.json",
+              "reward_channel_a.json", "grade_report.md",
+              "rubric_judge_failed.txt", "rubric_judge.log"):
         _copy(ver / f, run_dir / "verifier" / f)
     vdir = run_dir / "verifier"
     vdir.mkdir(parents=True, exist_ok=True)
