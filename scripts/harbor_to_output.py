@@ -106,7 +106,17 @@ PRUNE_FROM_OUTPUT = ("trial.log", "lock.json")
 # source, see _junit_to_ctrf) and dropped afterwards. Tasks now emit
 # verifier/ctrf.json directly via services/scoring/ctrf_pytest_plugin.py, so no
 # new run produces this file at all — the prune only catches older job dirs.
-PRUNE_FROM_VERIFIER = ("junit.xml", "reward_channel_a.json")
+#
+# reward_channel_a.json USED TO BE pruned here and no longer is. It carries the
+# Channel A ledger the in-container grader computed -- earned, pos_total, the
+# tests missed and the guards tripped -- and detail.json keeps only the folded
+# scalar. Deleting it left no way to audit how traj_tests reached its value from
+# the delivered tree, and because the prune also swept the raw run, no way to
+# recover it either. Measured 2026-09-05: two independent readers checking
+# whether Channel A had been scored found the file absent from run_dir and
+# concluded it had not been, when it had. Keeping it costs a few KB and makes
+# the largest reward component checkable.
+PRUNE_FROM_VERIFIER = ("junit.xml",)
 
 
 def _prune(*paths: Path) -> None:
@@ -563,7 +573,10 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     if reward is None:
         reward = _load(ver / "reward.json", {}).get("reward") if (ver / "reward.json").exists() else None
     exception = tres.get("exception_info")
-    threshold_eff = threshold * 100 if (reward is not None and reward > 1) else threshold
+    # No rescale: `reward` and `threshold` are both unit-interval now. The
+    # previous form, `threshold * 100 if reward > 1`, existed only to absorb the
+    # host path's x100 and would silently double-compensate once that was fixed.
+    threshold_eff = threshold
     passed = reward is not None and reward >= threshold_eff
 
     # The agent stream is JSON-lines, but Harbor hardcodes a .txt name
@@ -697,10 +710,24 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     # well on and ignored the one it did not. Anything reading pass_summary.json
     # as the headline number got the flattering figure.
     if _producer == "host_rubric_pass":
-        # weighted ledger path: rescale to percentage
+        # The ledger is already a fraction; it is reported as one.
+        #
+        # This line multiplied by 100 until 2026-09-05, which put the two
+        # producers on two scales through one field: host_rubric_pass emitted
+        # 0-100 and container_test emitted 0-1, so what `reward` meant depended
+        # on which verifier had run. Line ~566 compensated with
+        # `threshold * 100 if reward > 1`, which is why nothing ever failed
+        # loudly. Four declarations say the channel is a unit interval:
+        # tests/test_weights.json threshold 0.7, audit/preregistration.yaml
+        # bound [0.0, 1.0], the in-container reward_channel_a.json which writes
+        # fractions, and the audit surface which refuses a reward outside [0,1].
+        # One emitter disagreed with all four, so the emitter was wrong.
+        #
+        # Measured before and after on the same oracle trajectory: 51.25 -> 0.5125.
+        # The percentage is still available under reward_percentage for display.
         _ledger_reward = _orig_rew.get("reward")
         if isinstance(_ledger_reward, (int, float)):
-            final_reward = round(float(_ledger_reward) * 100, 2)
+            final_reward = round(float(_ledger_reward), 6)
         else:
             # No reward.json (a trial that died before the verifier wrote one).
             # Fall back to the old average rather than reporting nothing, but it is
@@ -716,6 +743,10 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     reward_pct_doc = {
         **_orig_rew,
         "reward": final_reward,
+        # Kept so a reader that wants the percentage does not reintroduce the
+        # ambiguity by multiplying `reward` itself.
+        "reward_percentage": (round(final_reward * 100, 2)
+                              if isinstance(final_reward, (int, float)) else None),
         **({"producer": "unscored"} if _producer == "unscored" else {}),
     }
 

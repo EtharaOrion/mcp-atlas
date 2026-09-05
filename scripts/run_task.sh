@@ -606,7 +606,17 @@ PYEOF
     echo "[run_task] no trial dir under $OUTPUT_DIR/$JOB; skipping host rubric" >&2
     return 0
   fi
-  [ "$any_graded" = "1" ] && state_put host_rubric_done 1
+  # `[ ... ] && state_put` as the LAST statement makes this function return 1
+  # whenever nothing graded, and stage_reshape calls it first under `set -e` --
+  # so a failed rubric aborted the whole reshape stage, exactly the outcome the
+  # comment above says must not happen. Measured 2026-09-05: the `empty` sandbox
+  # variant produces no gradeable trajectory, host_rubric_pass failed as it
+  # should, and reshape then died before writing run_dir, leaving the previous
+  # variant's run recorded as this one's. Keep the branch non-fatal.
+  if [ "$any_graded" = "1" ]; then
+    state_put host_rubric_done 1
+  fi
+  return 0
 }
 
 stage_reshape() {

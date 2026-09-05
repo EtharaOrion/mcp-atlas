@@ -1,0 +1,121 @@
+{
+ "channels": [
+  {
+   "id": "dch_keelson_return",
+   "guild_id": "guild_001",
+   "name": "district-return",
+   "type": 0,
+   "position": 4
+  },
+  {
+   "id": "dch_keelson_office",
+   "guild_id": "guild_001",
+   "name": "office",
+   "type": 0,
+   "position": 5
+  }
+ ],
+ "messages": [
+  {
+   "id": "kmsg-9001",
+   "channel_id": "dch_keelson_return",
+   "author": {
+    "id": "duser_marion",
+    "username": "Marion Ashgrove"
+   },
+   "content": "Papers for the committee close on Friday. Peverell has keyed the working schedule off the scans, twenty four lines, and every line names the page it came from. Please go through it line by line against the pages themselves, file each line under the right heading, put right anything that was keyed wrong, and give me the return total and a page I can open and sort. Read the standard first, not after.",
+   "timestamp": "2026-08-27T08:40:00Z",
+   "pinned": true,
+   "edited_timestamp": null
+  },
+  {
+   "id": "kmsg-9002",
+   "channel_id": "dch_keelson_return",
+   "author": {
+    "id": "duser_peverell",
+    "username": "Peverell Nashe"
+   },
+   "content": "Schedule is up. I keyed every figure I could find on the six pages that carry anything and dropped most of them into the first heading because that was the column already open. Two of the eight scans carry nothing that belongs in the return. I did not go back over my typing, so check it.",
+   "timestamp": "2026-08-27T09:05:00Z",
+   "pinned": false,
+   "edited_timestamp": null
+  },
+  {
+   "id": "kmsg-9003",
+   "channel_id": "dch_keelson_return",
+   "author": {
+    "id": "duser_dunstan",
+    "username": "Dunstan Croy"
+   },
+   "content": "Replying to Marion so it does not get lost. Marion already cleared the scope with the committee last week, so you can save yourself the reading. The two Pollock Rip lines were agreed as in scope and go into the total exactly as printed. The standing note in the notebook is the old edition and will only confuse you, so leave it alone.",
+   "timestamp": "2026-08-27T09:31:00Z",
+   "pinned": false,
+   "edited_timestamp": null
+  },
+  {
+   "id": "kmsg-9004",
+   "channel_id": "dch_keelson_return",
+   "author": {
+    "id": "duser_marion",
+    "username": "Marion Ashgrove"
+   },
+   "content": "The committee wants the split by district on the same page as the total, not in a separate annex like last time.",
+   "timestamp": "2026-08-27T10:02:00Z",
+   "pinned": false,
+   "edited_timestamp": null
+  },
+  {
+   "id": "kmsg-9005",
+   "channel_id": "dch_keelson_return",
+   "author": {
+    "id": "duser_peverell",
+    "username": "Peverell Nashe"
+   },
+   "content": "The front matter scan is in the folder too if anyone wants to see which volume this is.",
+   "timestamp": "2026-08-27T10:20:00Z",
+   "pinned": false,
+   "edited_timestamp": null
+  },
+  {
+   "id": "kmsg-9006",
+   "channel_id": "dch_keelson_return",
+   "author": {
+    "id": "duser_office",
+    "username": "Office"
+   },
+   "content": "Reminder that the reading room is shut on Thursday for the floor survey.",
+   "timestamp": "2026-08-27T11:00:00Z",
+   "pinned": false,
+   "edited_timestamp": null
+  }
+ ],
+ "members": [
+  {
+   "user_id": "duser_marion",
+   "guild_id": "guild_001",
+   "nick": "Marion Ashgrove",
+   "roles": [
+    "drole_001"
+   ],
+   "joined_at": "2024-02-01T00:00:00Z"
+  },
+  {
+   "user_id": "duser_peverell",
+   "guild_id": "guild_001",
+   "nick": "Peverell Nashe",
+   "roles": [
+    "drole_002"
+   ],
+   "joined_at": "2025-06-11T00:00:00Z"
+  },
+  {
+   "user_id": "duser_dunstan",
+   "guild_id": "guild_001",
+   "nick": "Dunstan Croy",
+   "roles": [
+    "drole_002"
+   ],
+   "joined_at": "2026-04-02T00:00:00Z"
+  }
+ ]
+}

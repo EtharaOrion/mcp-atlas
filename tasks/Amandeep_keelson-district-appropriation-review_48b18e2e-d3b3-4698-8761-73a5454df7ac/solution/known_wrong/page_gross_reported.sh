@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+# KNOWN-WRONG CONTROL: page_gross_reported
+#
+# THE MISREADING
+#   summed every dollar figure on the six pages and stopped: no exclusion was
+#   applied, so estimates, stated cost limits, earlier-act appropriations and
+#   light-vessel money all counted toward the return total.
+#
+# CORRECTED 2026-09-05. An earlier revision implemented this by dropping all
+# seventeen writes, which made it the empty submission wearing a control's
+# name: it scored 0.0, tying the no-op, and rewarddefinition requires every
+# known-wrong to score strictly above the floor. A control that files nothing
+# tests the same thing the no-op already tests. It now files the three keying
+# corrections and omits the fourteen classifications, which is a wrong answer
+# rather than an absent one.
+#
+# DOCUMENTED TOTAL REACHED
+#   309,380
+#
+# Quoted from the REACHABLE WRONG TOTALS table in ../solve.sh. The figure is not
+# recomputed here: this control's job is to produce the wrong run, and the graded
+# tests decide what it scores.
+#
+# WHY IT IS A DROP-IN REPLACEMENT FOR solve.sh
+#   A sandbox grades a negative control by substituting it for the submission and
+#   running the bundle. So this is the same bash entry point, the same client
+#   code, and the same trajectory format as the oracle, with exactly one rule
+#   broken. Anything the two runs share is held fixed by construction rather than
+#   by an author remembering to hold it.
+#
+# WHY IT PERFORMS THE WRITES
+#   An earlier revision of these controls only printed a tool-call plan. That was
+#   wrong in a way that mattered: tests/state_dump.py grades end state, so a
+#   control that narrates without mutating fails for the same reason as every
+#   other narrating control, and "the suite rejects this specific misreading"
+#   becomes indistinguishable from "the suite rejects anything that wrote
+#   nothing". The negative half of G-RUB-REPLAY would have passed vacuously.
+#
+# GENERATED from tests/oracle.json. audit/tests/test_known_wrong_controls.py
+# fails if this drifts from the oracle it mutates.
+set -euo pipefail
+
+mkdir -p /logs/agent
+
+python3 - <<'PYEOF' > /logs/agent/oracle.txt
+import asyncio, json, os, sys
+
+SEED = 6111
+PLAN = [
+    {
+        "call": "update_transaction",
+        "args": {
+            "txid": "lhb-105",
+            "amount": 30000.0
+        }
+    },
+    {
+        "call": "update_transaction",
+        "args": {
+            "txid": "lhb-114",
+            "amount": 4500.0
+        }
+    },
+    {
+        "call": "update_transaction",
+        "args": {
+            "txid": "lhb-119",
+            "amount": 15000.0
+        }
+    }
+]
+DROPPED = ["lhb-101", "lhb-102", "lhb-103", "lhb-104", "lhb-109", "lhb-111", "lhb-113", "lhb-115", "lhb-117", "lhb-118", "lhb-120", "lhb-121", "lhb-122", "lhb-124"]          # what this control refuses to file, and why it is wrong
+
+URL = os.environ.get("LIGHTBUDGET_URL", "http://light-servers:9020/mcp")
+
+
+def _client_factory():
+    import mcp.client.streamable_http as m
+    for name in ("streamablehttp_client", "streamable_http_client"):
+        fn = getattr(m, name, None)
+        if fn is not None:
+            return fn
+    raise ImportError("no streamable-http client in mcp.client.streamable_http")
+
+
+def _text(result):
+    for block in getattr(result, "content", []) or []:
+        t = getattr(block, "text", None)
+        if t:
+            return t
+    return ""
+
+
+async def run() -> int:
+    from mcp.client.session import ClientSession
+
+    if not DROPPED:
+        print("this control drops nothing, so it is the oracle and proves nothing",
+              file=sys.stderr)
+        return 2
+
+    emitted = []
+    connect = _client_factory()
+    async with connect(URL) as streams:
+        read, write = streams[0], streams[1]
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            login = await session.call_tool("login", {"os_cfg": {}, "seed": SEED})
+            sid = (json.loads(_text(login)) or {}).get("session_id")
+            if not sid:
+                print("login returned no session_id", file=sys.stderr)
+                return 3
+            emitted.append(("mcp__LightBudget__login", {"os_cfg": {}, "seed": SEED}, _text(login)))
+
+            for call in PLAN:
+                args = dict(call.get("args") or {})
+                args["session_id"] = sid
+                out = await session.call_tool(call["call"], args)
+                emitted.append(("mcp__LightBudget__" + call["call"], args, _text(out)))
+
+    for i, (name, args, out) in enumerate(emitted):
+        cid = "control_call_%d" % i
+        print(json.dumps({"type": "message", "message": {
+            "role": "assistant", "content": "",
+            "tool_calls": [{"id": cid, "type": "function",
+                            "function": {"name": name, "arguments": json.dumps(args)}}],
+        }}))
+        print(json.dumps({"type": "message", "message": {"role": "tool", "tool_call_id": cid, "content": out or "ok"}}))
+
+    print(json.dumps({
+        "type": "result",
+        "result": ("Filed the district appropriation return. The return total is "
+                   "309380."),
+    }))
+    return 0
+
+
+try:
+    sys.exit(asyncio.run(run()))
+except Exception as exc:  # noqa: BLE001
+    print(f"control replay failed: {type(exc).__name__}: {exc}", file=sys.stderr)
+    sys.exit(1)
+PYEOF
