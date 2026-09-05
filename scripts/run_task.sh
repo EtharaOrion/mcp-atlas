@@ -720,6 +720,70 @@ PYEOF
   [ "$any_graded" = "1" ] && state_put host_rubric_done 1
 }
 
+# --- internet audit -----------------------------------------------------------
+# These bundles are closed-world: every fact the agent needs is served by the
+# light-servers sidecars or sits under the read-only /workspace/data mount. A run
+# that answered from the open web did not solve the task -- but it grades exactly
+# as though it had, because the reward is computed from the same tool calls
+# either way and no channel looks at where a fact came from.
+#
+# Harbor cannot prevent this on the docker provider, and the two settings that
+# look like they would both fail:
+#
+#   network_mode = "no-network"   detaches the compose bridge as well, so the MCP
+#                                 sidecars go unreachable and the agent starts
+#                                 with zero tools (grade 0).
+#   network_mode = "allowlist"    the docker provider declares
+#                                 network_allowlist=False; Harbor cannot express
+#                                 a host allowlist here at all.
+#
+# So the posture is detect-and-block rather than prevent: the container keeps
+# working network (Claude Code needs api.anthropic.com regardless), and any use
+# of it BY THE MODEL is read back off the trajectory and refuses the run.
+#
+# Runs after reshape on purpose. harbor_to_output.py synthesizes agent/trajectory.json
+# from the raw stream when Harbor did not publish one (harbor_to_output.py:744),
+# so this is the first point where every run is guaranteed to have one to audit.
+#
+#   INTERNET_AUDIT_OFF=1   skip entirely
+#   INTERNET_AUDIT_WARN=1  report findings but do not block
+stage_netaudit() {
+  [ -z "${INTERNET_AUDIT_OFF:-}" ] || return 0
+
+  local flags=()
+  [ -n "${INTERNET_AUDIT_WARN:-}" ] && flags+=(--warn-only)
+
+  local traj run_dir dirty=0 seen=0
+  # `[Rr]un_*` because the reshaper writes run_N while older stashed trees carry
+  # Run_N; auditing only one casing would skip half a resumed task in silence.
+  for traj in "$TRAJ_DIR"/[Rr]un_*/agent/trajectory.json; do
+    [ -f "$traj" ] || continue
+    seen=$((seen+1))
+    run_dir="$(dirname "$(dirname "$traj")")"
+    # ${flags[@]+...} is load-bearing under `set -u`: bash 3.2 on macOS treats a
+    # bare "${flags[@]}" on an empty array as unbound and kills the script.
+    python3 "$REPO/scripts/detect_internet_use.py" "$traj" \
+      --json "$run_dir/internet_audit.json" ${flags[@]+"${flags[@]}"} || dirty=1
+  done
+
+  if [ "$seen" -eq 0 ]; then
+    echo "[run_task] internet audit: no trajectory found under $TRAJ_DIR" >&2
+    return 0
+  fi
+
+  if [ "$dirty" -ne 0 ]; then
+    echo >&2
+    echo "==> BLOCKED: THE MODEL USED THE INTERNET" >&2
+    echo "    This task is closed-world -- the answer must come from the MCP" >&2
+    echo "    sidecars and /workspace/data, not the open web. Findings are listed" >&2
+    echo "    above and saved to each run's internet_audit.json." >&2
+    echo >&2
+    echo "    Not delivering this run. To inspect without blocking:" >&2
+    echo "      INTERNET_AUDIT_WARN=1 scripts/run_task.sh ..." >&2
+    exit 2
+  fi
+}
+
 stage_reshape() {
   stage_host_rubric
   local offset; offset="$(state_get run_offset)"
@@ -751,6 +815,9 @@ stage_reshape() {
   # Relative to the job dir this state file sits in — keeps host-local paths
   # out of everything the pipeline writes (informational only, never read back).
   state_put run_dir "trajectory/run_$((offset+1))"
+
+  # After conversion, before anything is delivered or reported.
+  stage_netaudit
 }
 
 # finance API: report trajectory usage (after the runs are done).

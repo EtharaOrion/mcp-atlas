@@ -17,6 +17,17 @@ import {
 import { getAgentCompletionStrategy, type BaseCompletionResult } from './completion-strategy';
 import { MCPClient, createMCPClient } from '../helpers/mcp-client';
 import { SandboxMCPClient } from '../helpers/mcp-client/sandbox-client';
+import {
+  applySummary,
+  buildSummaryRequest,
+  compactToBudget,
+  isHeadroomEnabled,
+  measurePrompt,
+  planCompaction,
+  projectTokensAfter,
+  resolveThresholdTokens,
+  type ContextWindowManagement,
+} from './context-headroom';
 import { logger } from '../../logger';
 import { config } from '../../config';
 import { z } from 'zod';
@@ -37,7 +48,14 @@ interface RunAgentAPIOptions {
   llmBaseUrl?: string;
   extraLlmParams?: Record<string, any>;
   taskId?: string;
-  contextWindowManagement?: 'compact';
+  contextWindowManagement?: ContextWindowManagement;
+  contextWindowTokens?: number;
+  condenserTokenFraction?: number;
+  condenserKeepFirst?: number;
+  /** Condense older turns with an LLM summary instead of discarding them. */
+  condenserSummarize?: boolean;
+  /** Model used for that summary; defaults to the agent's own model. */
+  condenserModel?: string;
   toolOutputCap?: number;
   maxToolCalls?: number;
 }
@@ -50,56 +68,11 @@ function capToolContent(content: any[], cap: number): any[] {
   const fullText = content.map((c: any) => c.text || '').join('');
   if (fullText.length <= cap) return content;
   const truncatedText = fullText.slice(0, cap) + `\n\n[Tool output truncated to ${cap} chars. Original was ${fullText.length} chars.]`;
-  return [{ type: 'text', text: truncatedText }];
-}
-
-const COMPACT_KEEP_FULL_TURNS = 2;
-const COMPACT_TRUNCATE_THRESHOLD = 1500;
-
-/**
- * Compact messages by truncating old tool results to reduce context size.
- * Keeps full tool results for the last 2 turns.
- * Older tool results longer than 1500 chars are truncated to the first 1500 chars.
- * Only called when contextWindowManagement === 'compact'.
- */
-function compactMessages(messages: Message[], currentTurn: number): Message[] {
-  if (currentTurn <= COMPACT_KEEP_FULL_TURNS) return messages;
-
-  // Find turn boundaries: each assistant message with tool_calls starts a new turn
-  const turnStarts: number[] = [];
-  for (let i = 0; i < messages.length; i++) {
-    const msg = messages[i] as any;
-    if (msg.role === 'assistant' && msg.tool_calls?.length > 0) {
-      turnStarts.push(i);
-    }
-  }
-
-  // Determine which turns to truncate (all except the last COMPACT_KEEP_FULL_TURNS)
-  const turnsToTruncate = turnStarts.length - COMPACT_KEEP_FULL_TURNS;
-  if (turnsToTruncate <= 0) return messages;
-
-  const truncateBeforeIdx = turnStarts[turnsToTruncate];
-
-  return messages.map((msg, idx) => {
-    if (idx >= truncateBeforeIdx) return msg;
-    const m = msg as any;
-    if (m.role === 'tool') {
-      const contentStr = Array.isArray(m.content)
-        ? m.content.map((c: any) => c.text || '').join('')
-        : String(m.content || '');
-      if (contentStr.length > COMPACT_TRUNCATE_THRESHOLD) {
-        const truncatedText = contentStr.slice(0, COMPACT_TRUNCATE_THRESHOLD) + `\n\n[Tool call output too large, truncated to ${COMPACT_TRUNCATE_THRESHOLD} chars. Original was ${contentStr.length} chars.]`;
-        const truncated = {
-          ...m,
-          content: Array.isArray(m.content)
-            ? [{ type: 'text', text: truncatedText }]
-            : truncatedText,
-        };
-        return truncated as Message;
-      }
-    }
-    return msg;
-  });
+  // Cap the text, keep everything else. An image is not text volume and cannot
+  // be reconstructed from a note about how many characters were cut, so the
+  // cap must not be the thing that deletes it.
+  const preserved = content.filter((c: any) => c?.type !== 'text');
+  return [{ type: 'text', text: truncatedText }, ...preserved];
 }
 
 function* handleCompletionError(error: any, mcpClient: MCPClient): Generator<AgentOutput> {
@@ -142,10 +115,16 @@ async function* runMcpAgent({
   extraLlmParams,
   taskId,
   contextWindowManagement,
+  contextWindowTokens = config.contextWindowTokens,
+  condenserTokenFraction = config.condenserTokenFraction,
+  condenserKeepFirst = config.condenserKeepFirst,
+  condenserSummarize = config.condenserSummarize,
+  condenserModel,
   toolOutputCap,
   maxToolCalls = DEFAULT_MAX_TOOL_CALLS,
 }: RunAgentAPIOptions): AsyncGenerator<AgentOutput, void, unknown> {
   // Log agent loop configuration
+  const headroomEnabled = isHeadroomEnabled(contextWindowManagement);
   const sandboxInfo = mcpClient instanceof SandboxMCPClient ? mcpClient.sandboxInfo : null;
   logger.info('=== STARTING AGENT LOOP ===', {
     taskId,
@@ -154,6 +133,15 @@ async function* runMcpAgent({
     maxTurns,
     maxToolCalls,
     toolOutputCap,
+    contextWindowManagement: contextWindowManagement ?? 'off (default)',
+    contextWindowTokens: headroomEnabled ? contextWindowTokens : null,
+    condenserTokenFraction: headroomEnabled ? condenserTokenFraction : null,
+    condenserKeepFirst: headroomEnabled ? condenserKeepFirst : null,
+    condenserSummarize: headroomEnabled ? condenserSummarize : null,
+    condenserModel: headroomEnabled && condenserSummarize ? (condenserModel || model) : null,
+    compactionThresholdTokens: headroomEnabled
+      ? resolveThresholdTokens(contextWindowTokens, condenserTokenFraction)
+      : null,
     messageCount: messages.length,
     sandboxId: sandboxInfo?.sandboxId,
     sandboxTags: sandboxInfo?.sandboxTags,
@@ -186,6 +174,20 @@ async function* runMcpAgent({
   let totalCompletionTokens = 0;
   let totalCostUsd: number | null = null;
   let costTracked = false;
+  // Summarizer spend is tracked apart from the agent's, the way goku gives the
+  // condenser its own usage_id: it is overhead of context management, not work
+  // the agent did, and conflating them makes both numbers unreadable.
+  let summarizerPromptTokens = 0;
+  let summarizerCompletionTokens = 0;
+  let summarizerCalls = 0;
+
+  // Headroom bookkeeping: the last measured prompt size and how many messages
+  // have been appended since, so the next prompt can be projected from a real
+  // measurement rather than re-estimated from scratch every turn.
+  let lastPromptTokens: number | undefined;
+  let lastPromptChars: number | undefined;
+  let lastPromptImages: number | undefined;
+  let messageCountAtLastCall = 0;
 
   for (let i = 0; i < maxTurns; i++) {
     // Check tool call limit before next LLM call
@@ -200,23 +202,223 @@ async function* runMcpAgent({
     let turnUsage: BaseCompletionResult['usage'];
     let lastFinishReason: string | undefined;
     let lastExtra: Record<string, any> | undefined;
+    // How many messages the prompt we are about to send contains. Committed as
+    // the headroom anchor only if this call comes back with usage.
+    let promptMessageCount = allMessages.length;
+    let promptChars = 0;
+    let promptImages = 0;
     try {
       // Get the appropriate strategy based on model and strategy parameter
       const completionStrategy = getAgentCompletionStrategy(model, strategy, llmBaseUrl);
 
-      // Apply context compaction if enabled — truncate old tool results to save context space
+      // Context-window headroom — compaction fires on the projected token size
+      // of the prompt we are about to send, not on a turn count, so it stays
+      // idle until the conversation actually approaches the model's window.
       let messagesToSend = allMessages;
-      if (contextWindowManagement === 'compact') {
-        messagesToSend = compactMessages(allMessages, i);
-        if (messagesToSend !== allMessages) {
-          const originalChars = allMessages.reduce((sum, m) => sum + JSON.stringify(m).length, 0);
-          const compactedChars = messagesToSend.reduce((sum, m) => sum + JSON.stringify(m).length, 0);
-          const saved = originalChars - compactedChars;
-          if (saved > 0) {
-            logger.info(`[${taskId}] Compact: ${originalChars} → ${compactedChars} chars (saved ${saved}, ${(saved/originalChars*100).toFixed(1)}%)`);
-            yield { type: 'compaction' as any, data: { turn: i + 1, originalChars, compactedChars, savedChars: saved, savedPct: Math.round(saved / originalChars * 100) } };
+      if (headroomEnabled) {
+        // Try the summary first when enabled: computing a reduction only to
+        // throw it away costs a full pass over the conversation.
+        const trySummaryFirst = condenserSummarize;
+        const plan = planCompaction(allMessages, {
+          skipReduction: trySummaryFirst,
+          turnIndex: i,
+          lastPromptTokens,
+          lastPromptChars,
+          lastPromptImages,
+          messageCountAtLastCall,
+          contextWindowTokens,
+          condenserTokenFraction,
+          keepFirst: condenserKeepFirst,
+        });
+        const decision = plan.decision;
+        let outcome = plan.outcome;
+        messagesToSend = plan.messagesToSend;
+        let summarized = false;
+
+        // Summarize before falling back to discarding. One LLM call turns the
+        // older turns into a carried-forward brief, so the findings survive
+        // even though the raw text does not. Any failure drops straight back
+        // to the truncate/drop result already computed above — headroom
+        // protection must never depend on a second network call succeeding.
+        if (trySummaryFirst && decision.shouldCompact && decision.trigger === 'token-budget') {
+          const summaryRequest = buildSummaryRequest(allMessages, condenserKeepFirst);
+          if (summaryRequest) {
+            try {
+              const summarizerModel = condenserModel || model;
+              const summaryResult = await getAgentCompletionStrategy(summarizerModel, strategy, llmBaseUrl)
+                .createCompletion({
+                  model: summarizerModel,
+                  messages: summaryRequest.messages,
+                  tools: [],
+                  extraLlmParams,
+                });
+              const summaryText = typeof (summaryResult.message as any)?.content === 'string'
+                ? ((summaryResult.message as any).content as string).trim()
+                : '';
+              if (summaryText.length > 0) {
+                messagesToSend = applySummary(allMessages, summaryText, summaryRequest);
+                summarized = true;
+                summarizerCalls++;
+                if (summaryResult.usage) {
+                  summarizerPromptTokens += summaryResult.usage.prompt_tokens ?? 0;
+                  summarizerCompletionTokens += summaryResult.usage.completion_tokens ?? 0;
+                }
+                logger.info(
+                  `[${taskId}] Condensed ${summaryRequest.reducibleToolIndices.length} tool result(s) ` +
+                  `into a ${summaryText.length}-char summary via ${summarizerModel}`,
+                );
+              } else {
+                logger.warn(`[${taskId}] Summarizer returned nothing; falling back to truncation`);
+              }
+            } catch (summaryError: any) {
+              logger.warn(
+                `[${taskId}] Summarizer call failed, falling back to truncation: ` +
+                `${summaryError?.message || String(summaryError)}`,
+              );
+            }
           }
         }
+
+        // Summary skipped, impossible or failed — run the reduction the plan
+        // deferred, so headroom protection never hinges on a second network
+        // call succeeding.
+        if (!summarized && trySummaryFirst && decision.shouldCompact && decision.trigger === 'token-budget') {
+          outcome = compactToBudget(allMessages, {
+            promptTokensBefore: decision.promptTokensBefore,
+            thresholdTokens: decision.thresholdTokens!,
+            keepFirst: condenserKeepFirst,
+            charsPerToken: decision.charsPerToken,
+          });
+          if (outcome.changed) messagesToSend = outcome.messages;
+        }
+
+        // Reported and persisted together: any reduction we apply is always
+        // logged, so context is never dropped from the conversation silently.
+        if (messagesToSend !== allMessages) {
+          // Text only — image payloads are billed per item, so counting their
+          // bytes here would make every saving look negligible beside them.
+          const originalChars = measurePrompt(allMessages).textChars;
+          const compactedChars = measurePrompt(messagesToSend).textChars;
+          const saved = originalChars - compactedChars;
+          // The backstop path has no outcome to report, so project its result
+          // the same way compactToBudget does.
+          // Measured from what we are actually sending, so the number always
+          // describes the path that ran rather than the one that did not.
+          const estimatedTokensAfter = summarized || !outcome
+            ? projectTokensAfter(decision.promptTokensBefore, saved, decision.charsPerToken)
+            : outcome.estimatedTokensAfter;
+          logger.info(
+            `[${taskId}] Compact (${summarized ? 'summary' : 'truncate'}, ${decision.trigger}, ` +
+            `usage from ${decision.usageSource}): ` +
+            `${decision.promptTokensBefore} → ~${estimatedTokensAfter} tokens ` +
+            `vs threshold ${decision.thresholdTokens ?? 'n/a'}/${decision.contextWindowTokens ?? 'n/a'}; ` +
+            `${originalChars} → ${compactedChars} chars (saved ${saved}, ${(saved/originalChars*100).toFixed(1)}%)`,
+          );
+          if (!summarized && outcome && outcome.droppedCount > 0) {
+            // Never discard context silently — name what was thrown away.
+            logger.warn(`[${taskId}] Compact dropped ${outcome.droppedCount} tool result(s) entirely`, {
+              toolCallIds: outcome.droppedToolCallIds,
+            });
+          }
+          if (decision.thresholdTokens !== null && estimatedTokensAfter > decision.thresholdTokens) {
+            logger.warn(`[${taskId}] Compact could not get under ${decision.thresholdTokens} tokens; sending ~${estimatedTokensAfter}`);
+          }
+          yield {
+            type: 'compaction' as any,
+            data: {
+              turn: i + 1,
+              trigger: decision.trigger,
+              // 'summary' = older turns condensed by an LLM call, findings kept.
+              // 'truncate' = they were cut down and, if needed, discarded.
+              method: summarized ? 'summary' : 'truncate',
+              summarizerCalls,
+              summarizerPromptTokens,
+              summarizerCompletionTokens,
+              usageSource: decision.usageSource,
+              // Calibrated from the provider's own accounting once a turn has
+              // reported usage; the CHARS_PER_TOKEN default until then.
+              charsPerToken: Number(decision.charsPerToken.toFixed(3)),
+              promptTokensBefore: decision.promptTokensBefore,
+              thresholdTokens: decision.thresholdTokens,
+              contextWindowTokens: decision.contextWindowTokens,
+              estimatedTokensAfter,
+              keepFirst: condenserKeepFirst,
+              capApplied: summarized ? null : outcome?.capApplied ?? null,
+              truncatedResults: summarized ? 0 : outcome?.truncatedCount ?? null,
+              droppedResults: summarized ? 0 : outcome?.droppedCount ?? 0,
+              droppedToolCallIds: summarized ? [] : outcome?.droppedToolCallIds ?? [],
+              // False when even the tightest reduction could not reach the
+              // threshold — the floor is keepFirst plus the turns we keep whole.
+              fitsThreshold: decision.thresholdTokens === null
+                ? null
+                : estimatedTokensAfter <= decision.thresholdTokens,
+              originalChars,
+              compactedChars,
+              savedChars: saved,
+              savedPct: originalChars > 0 ? Math.round(saved / originalChars * 100) : 0,
+            },
+          };
+
+          // Persist the reduction: the compacted history becomes the running
+          // conversation, so the prompt_tokens we measure next turn describes
+          // what allMessages actually holds and the projection stays honest.
+          // The trajectory keeps its own references to the untouched originals.
+          if (messagesToSend.length === allMessages.length) {
+            for (let k = 0; k < allMessages.length; k++) allMessages[k] = messagesToSend[k];
+          } else {
+            allMessages.length = 0;
+            for (const m of messagesToSend) allMessages.push(m);
+          }
+          messagesToSend = allMessages;
+        } else if (decision.shouldCompact) {
+          // Over budget with nothing reducible — an oversized opening prompt,
+          // or a single tool result larger than the window. Silence here would
+          // be the worst case: the call goes out doomed and fails at the
+          // provider with an opaque error. Say so instead.
+          logger.warn(
+            `[${taskId}] Over context budget and nothing could be reduced: ` +
+            `~${decision.promptTokensBefore} tokens vs threshold ${decision.thresholdTokens} ` +
+            `(window ${decision.contextWindowTokens}). Everything eligible is inside keepFirst ` +
+            `(${condenserKeepFirst}) or the last ${2} turns. Consider tool_output_cap.`,
+          );
+          yield {
+            type: 'compaction' as any,
+            data: {
+              turn: i + 1,
+              trigger: decision.trigger,
+              usageSource: decision.usageSource,
+              charsPerToken: Number(decision.charsPerToken.toFixed(3)),
+              promptTokensBefore: decision.promptTokensBefore,
+              thresholdTokens: decision.thresholdTokens,
+              contextWindowTokens: decision.contextWindowTokens,
+              estimatedTokensAfter: decision.promptTokensBefore,
+              keepFirst: condenserKeepFirst,
+              capApplied: null,
+              truncatedResults: 0,
+              droppedResults: 0,
+              droppedToolCallIds: [],
+              fitsThreshold: false,
+              // Nothing was reduced, so there is no before/after to report.
+              originalChars: null,
+              compactedChars: null,
+              savedChars: 0,
+              savedPct: 0,
+              reason: 'nothing-reducible',
+            },
+          };
+        }
+      }
+
+      // Read back what we actually send: its message count anchors the next
+      // projection, and its char size calibrates chars-per-token against the
+      // prompt_tokens the provider bills for it. Only when headroom is on —
+      // measuring serializes the whole conversation, and a caller who never
+      // asked for compaction must not pay that on every turn.
+      if (headroomEnabled) {
+        promptMessageCount = messagesToSend.length;
+        const sent = measurePrompt(messagesToSend);
+        promptChars = sent.textChars;
+        promptImages = sent.imageCount;
       }
 
       // Retry on transient errors (503, 429, network errors) up to 3 times
@@ -332,6 +534,14 @@ async function* runMcpAgent({
     // completion, or looping again) skips it.
     stepCounter++;
     if (turnUsage) {
+      // Anchor and measurement move together. If a turn returns no usage we
+      // keep the older pair, so the next projection still accounts for every
+      // message appended since the last real measurement instead of silently
+      // dropping the turns in between.
+      lastPromptTokens = turnUsage.prompt_tokens;
+      lastPromptChars = promptChars;
+      lastPromptImages = promptImages;
+      messageCountAtLastCall = promptMessageCount;
       totalPromptTokens += turnUsage.prompt_tokens;
       totalCompletionTokens += turnUsage.completion_tokens;
       if (turnUsage.cost_usd != null) {
@@ -488,6 +698,11 @@ export async function handleRunMCPAgentEval(body: z.infer<typeof RunAgentAPIRequ
     extraLlmParams: body.extra_llm_params,
     taskId,
     contextWindowManagement: body.context_window_management,
+    contextWindowTokens: body.context_window_tokens,
+    condenserSummarize: body.condenser_summarize,
+    condenserModel: body.condenser_model,
+    condenserTokenFraction: body.condenser_token_fraction,
+    condenserKeepFirst: body.condenser_keep_first,
     toolOutputCap: body.tool_output_cap,
     maxToolCalls: body.max_tool_calls,
   });

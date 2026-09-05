@@ -133,7 +133,24 @@ export const RunAgentAPIRequestBodySchema = z.object({
   task_id: z.string().optional(),
   llm_base_url: z.string().optional(),
   extra_llm_params: z.record(z.string(), z.any()).optional(),
-  context_window_management: z.enum(['compact']).optional(),
+  // 'compact' is the historical spelling and keeps working; 'headroom' is the
+  // same behaviour under a clearer name; 'off' is an explicit off switch,
+  // identical to omitting the field.
+  context_window_management: z.enum(['compact', 'headroom', 'off']).optional(),
+  // Headroom knobs. Compaction fires once the projected prompt exceeds
+  // context_window_tokens * condenser_token_fraction — by default the full
+  // 1M window. The first condenser_keep_first messages are never truncated.
+  // Validated rather than clamped: a typo'd fraction (80 for 0.8) would push
+  // the threshold past the window and silently disable headroom, so it is
+  // rejected at the boundary instead. 0 is allowed and means "no budget",
+  // which falls back to the turn-count backstop.
+  context_window_tokens: z.number().int().nonnegative().optional(),
+  condenser_token_fraction: z.number().min(0).max(1).optional(),
+  condenser_keep_first: z.number().int().nonnegative().optional(),
+  // Condense older turns into an LLM summary instead of discarding them
+  // (default true), and optionally use a cheaper model to do it.
+  condenser_summarize: z.boolean().optional(),
+  condenser_model: z.string().optional(),
   tool_output_cap: z.number().optional(),
   max_tool_calls: z.number().optional(),
 });

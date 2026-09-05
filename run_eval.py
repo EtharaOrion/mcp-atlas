@@ -156,6 +156,16 @@ async def run_one_task(
             body["tool_output_cap"] = args.tool_output_cap
         if args.context_window_management:
             body["context_window_management"] = args.context_window_management
+        if args.context_window_tokens is not None:
+            body["context_window_tokens"] = args.context_window_tokens
+        if args.condenser_token_fraction is not None:
+            body["condenser_token_fraction"] = args.condenser_token_fraction
+        if args.condenser_keep_first is not None:
+            body["condenser_keep_first"] = args.condenser_keep_first
+        if args.no_condenser_summary:
+            body["condenser_summarize"] = False
+        if args.condenser_model:
+            body["condenser_model"] = args.condenser_model
         if args.extra_llm_params:
             body["extra_llm_params"] = args.extra_llm_params
         if args.system_prompt:
@@ -309,6 +319,11 @@ def write_run_config(args: argparse.Namespace) -> None:
         "max_tool_calls": args.max_tool_calls,
         "tool_output_cap": args.tool_output_cap,
         "context_window_management": args.context_window_management,
+        "context_window_tokens": args.context_window_tokens,
+        "condenser_token_fraction": args.condenser_token_fraction,
+        "condenser_keep_first": args.condenser_keep_first,
+        "condenser_summarize": not args.no_condenser_summary,
+        "condenser_model": args.condenser_model,
         "reasoning_effort": extra.get("reasoning_effort"),
         "extra_llm_params": args.extra_llm_params,
         "concurrency": args.concurrency,
@@ -445,9 +460,44 @@ def main() -> None:
              "it back to the model (default: uncapped)",
     )
     parser.add_argument(
-        "--context-window-management", choices=["compact"], default=None,
+        "--context-window-management", choices=["compact", "headroom", "off"], default=None,
         help="Context-window strategy when the conversation grows large: "
-             "'compact' summarizes older turns (default: off)",
+             "'compact'/'headroom' compact older tool results once the measured "
+             "prompt crosses --condenser-token-fraction of --context-window-tokens; "
+             "'off' disables it explicitly (default: off)",
+    )
+    parser.add_argument(
+        "--disable-condenser", action="store_true",
+        help="Force context-window management off, overriding "
+             "--context-window-management.",
+    )
+    parser.add_argument(
+        "--context-window-tokens", type=int, default=None,
+        help="Model context window in tokens used to size the compaction "
+             "threshold (harness default: 1000000)",
+    )
+    parser.add_argument(
+        "--condenser-token-fraction", type=float, default=None,
+        help="Fraction of the context window at which compaction fires "
+             "(harness default: 1.0 → compacts once the projected prompt "
+             "passes the full 1000000-token window; lower it to leave margin "
+             "for the completion)",
+    )
+    parser.add_argument(
+        "--no-condenser-summary", action="store_true",
+        help="Discard older tool results instead of condensing them with an LLM "
+             "summary. Cheaper (no extra LLM call per compaction) but the "
+             "discarded content is unrecoverable.",
+    )
+    parser.add_argument(
+        "--condenser-model", default=None,
+        help="Model used to write the compaction summary (default: the agent's "
+             "own model). Point this at a cheaper model to cut the overhead.",
+    )
+    parser.add_argument(
+        "--condenser-keep-first", type=int, default=None,
+        help="Never truncate the first N messages, i.e. the system prompt and "
+             "task statement (harness default: 2)",
     )
     parser.add_argument(
         "--system-prompt", default=None,
@@ -464,6 +514,23 @@ def main() -> None:
         help="Skip the pre-flight MCP-sandbox health check before the run.",
     )
     args = parser.parse_args()
+
+    # The off switch is real: --disable-condenser wins over whatever
+    # --context-window-management asked for, and 'off' is normalised to None so
+    # the harness sees no context_window_management field at all.
+    if args.disable_condenser:
+        args.context_window_management = None
+    elif args.context_window_management == "off":
+        args.context_window_management = None
+
+    # Reject out-of-range knobs here rather than letting them through to silently
+    # disable headroom (a fraction of 80 would put the threshold past the window).
+    if args.condenser_token_fraction is not None and not 0 <= args.condenser_token_fraction <= 1:
+        parser.error("--condenser-token-fraction must be between 0 and 1 (e.g. 0.8)")
+    if args.context_window_tokens is not None and args.context_window_tokens < 0:
+        parser.error("--context-window-tokens must not be negative")
+    if args.condenser_keep_first is not None and args.condenser_keep_first < 0:
+        parser.error("--condenser-keep-first must not be negative")
 
     if args.extra_llm_params:
         try:
