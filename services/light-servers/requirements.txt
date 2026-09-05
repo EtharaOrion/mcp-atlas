@@ -13,3 +13,5 @@ beautifulsoup4
 lxml
 jinja2
 python-Levenshtein
+jsonschema
+pydantic
