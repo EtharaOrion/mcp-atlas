@@ -68,6 +68,36 @@ REPLACEMENT_COLLECT = """\
 ALREADY_PATCHED_MARKER_COLLECT = "harbor-patch: builtin collect"
 
 
+ANCHOR_JUDGE_MODEL_1 = """\
+                override_env=self.config.verifier.env or None,
+                logger=self.logger,
+                verifier_env=env,
+                step_name=step_name,"""
+REPLACEMENT_JUDGE_MODEL_1 = """\
+                _ov_env = dict(self.config.verifier.env or {})
+                _ov_env.setdefault("JUDGE_MODEL", "gpt-5.6-sol")
+                override_env=_ov_env or None,
+                logger=self.logger,
+                verifier_env=env,
+                step_name=step_name,"""
+
+ANCHOR_JUDGE_MODEL_2 = """\
+                    override_env=self.config.verifier.env or None,
+                    logger=self.logger,
+                    verifier_env=env,
+                    step_name=step_cfg.name if step_cfg is not None else None,
+                    skip_tests_upload=True,"""
+REPLACEMENT_JUDGE_MODEL_2 = """\
+                    _ov_env = dict(self.config.verifier.env or {})
+                    _ov_env.setdefault("JUDGE_MODEL", "gpt-5.6-sol")
+                    override_env=_ov_env or None,
+                    logger=self.logger,
+                    verifier_env=env,
+                    step_name=step_cfg.name if step_cfg is not None else None,
+                    skip_tests_upload=True,"""
+ALREADY_PATCHED_MARKER_JUDGE_MODEL = '_ov_env.setdefault("JUDGE_MODEL"'
+
+
 ANCHOR_FALLBACK = """\
         CliFlag(
             "fallback_model",
@@ -196,6 +226,21 @@ def main() -> None:
         trial_text = trial_text.replace(ANCHOR_COLLECT, REPLACEMENT_COLLECT, 1)
         trial_changed = True
         print(f"[patch_harbor] Collect hook: applied")
+
+    if ALREADY_PATCHED_MARKER_JUDGE_MODEL in trial_text:
+        print(f"[patch_harbor] JUDGE_MODEL inject: already applied")
+    elif ANCHOR_JUDGE_MODEL_1 not in trial_text:
+        print(
+            f"[patch_harbor] ERROR: Anchor for JUDGE_MODEL inject not found in {trial}\n"
+            "Harbor may have been updated and this patch needs revision.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    else:
+        trial_text = trial_text.replace(ANCHOR_JUDGE_MODEL_1, REPLACEMENT_JUDGE_MODEL_1, 1)
+        trial_text = trial_text.replace(ANCHOR_JUDGE_MODEL_2, REPLACEMENT_JUDGE_MODEL_2, 1)
+        trial_changed = True
+        print(f"[patch_harbor] JUDGE_MODEL inject: applied")
 
     if trial_changed:
         trial.write_text(trial_text, encoding="utf-8")
