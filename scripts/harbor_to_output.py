@@ -1348,14 +1348,13 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
             "task": task_name, "n": n, "c": c,
             "pass@1": round(pass_at_k(n, c, 1), 6),
             "pass@k": {str(k): round(pass_at_k(n, c, k), 6) for k in ks_eff},
-            "pass^k": {str(k): round(pass_hat_k(n, c, k), 6) for k in ks_eff},
             "mean_reward_per_trial": _mean(rewards),
             "failure_breakdown": hist,
         }]
         passk = {
             "model": model, "tasks": 1, "passed": c, "accuracy": round(c / n, 6) if n else 0.0,
             "mean_reward_per_trial": _mean(rewards),
-            "mean_pass@k": per_task[0]["pass@k"], "mean_pass^k": per_task[0]["pass^k"],
+            "mean_pass@k": {str(i + 1): round(r, 6) for i, r in enumerate(rewards)},
             "failure_mode_histogram": hist, "per_task": per_task,
             "attempts_per_task": n, "at": ks_eff,
         }
@@ -1368,6 +1367,10 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
                 _old.unlink()
         _dump(out_task / passk_name, passk)
         _dump(raw_trials / "passk_summary.json", passk)
+        if _evals:
+            for _eval_data in _evals.values():
+                _eval_data["pass_at_k"] = per_task[0]["pass@k"]
+            _dump(out_task / "result.json", _top_res)
 
         # .raw summary / pairs / failure_analysis
         _dump(raw_trials / "summary.json", {
@@ -1375,7 +1378,7 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "metrics": {"n": n, "c": c, "pass@1": round(pass_at_k(n, c, 1), 6),
                         "p_hat": round(c / n, 6) if n else 0.0, "ci95": wilson_ci(c, n),
-                        "pass@k": per_task[0]["pass@k"], "pass^k": per_task[0]["pass^k"],
+                        "pass@k": per_task[0]["pass@k"],
                         "failure_breakdown": hist},
             "attempts": [{"attempt": e["index"], "passed": e["passed"], "reward": e["judge"]["reward"],
                           "rubric_score": e["judge"]["rubric_score"],

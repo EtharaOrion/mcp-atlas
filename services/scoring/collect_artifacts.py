@@ -43,6 +43,9 @@ DEFAULT_EXCLUDE = "data"
 DEFAULT_MAX_FILE = 100 * 1024 * 1024
 DEFAULT_MAX_TOTAL = 500 * 1024 * 1024
 
+_SKIP_DIRS = frozenset({"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "node_modules", ".git"})
+_SKIP_EXTS = frozenset({".pyc", ".pyo"})
+
 
 def _int_env(name: str, default: int) -> int:
     try:
@@ -70,6 +73,10 @@ def collect(src: Path, dest: Path, excluded: set[str],
         except ValueError:  # pragma: no cover - rglob always yields descendants
             continue
         if rel.parts and rel.parts[0] in excluded:
+            continue
+        if any(part in _SKIP_DIRS for part in rel.parts):
+            continue
+        if path.suffix in _SKIP_EXTS:
             continue
         # Symlinks, sockets and FIFOs are not evidence and can point outside
         # the workspace; is_file() follows links, so test for the link first.

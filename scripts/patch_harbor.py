@@ -68,6 +68,14 @@ REPLACEMENT_COLLECT = """\
 ALREADY_PATCHED_MARKER_COLLECT = "harbor-patch: builtin collect"
 
 
+ANCHOR_FALLBACK = """\
+        CliFlag(
+            "fallback_model",
+            cli="--fallback-model",
+            type="str",
+        ),"""
+
+
 def find_harbor_claude_code() -> Path:
     import shutil
     import subprocess
@@ -150,6 +158,20 @@ def main() -> None:
         text = text.replace(ANCHOR_ARGMAX_3, REPLACEMENT_ARGMAX_3, 1)
         changed = True
         print(f"[patch_harbor] ARG_MAX fix: applied")
+
+    if '"fallback_model"' not in text:
+        print(f"[patch_harbor] Fallback model removal: already done")
+    elif ANCHOR_FALLBACK not in text:
+        print(
+            f"[patch_harbor] ERROR: Anchor for fallback_model removal not found in {target}\n"
+            "Harbor may have been updated and this patch needs revision.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    else:
+        text = text.replace(ANCHOR_FALLBACK, "", 1)
+        changed = True
+        print(f"[patch_harbor] Fallback model removal: applied")
 
     if changed:
         target.write_text(text, encoding="utf-8")
