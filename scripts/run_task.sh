@@ -75,6 +75,11 @@ N="${N:-1}"
 BUILD_MULT="${BUILD_MULT:-3}"
 SETUP_MULT="${SETUP_MULT:-3}"   # agent-setup timeout multiplier (360s base -> 18m)
 AGENT_HEADROOM_ENABLED="${AGENT_HEADROOM_ENABLED:-false}"  # agent-path compression: OFF
+# tiktoken vocab is fetched over the network on first use. The grader gives it
+# 10s and silently falls back to token *estimation* when the download stalls,
+# so a cold cache quietly changes how compression decisions get made. The
+# repo-local cache is pre-populated; point the library at it.
+export TIKTOKEN_CACHE_DIR="${TIKTOKEN_CACHE_DIR:-$REPO/.cache/tiktoken}"
 OUTPUT_DIR="${OUTPUT_DIR:-$REPO/output}"
 AT="${AT:-auto}"   # pass@k ks for the reshaper; auto = every k from 1..N runs
 JOB="${JOB:-$SLUG}"   # job dir == output/<task>/ (reshaped in place by the converter)

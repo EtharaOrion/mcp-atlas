@@ -66,7 +66,7 @@ services:
       COMPLEXMCP_WORLD_DATA: "/world_data"
       WORKSPACE_ROOT: "/workspace"
       PYTHONPATH: "/app"
-      ENABLED_SERVERS: ""
+      ENABLED_SERVERS: "LightBudget,LightNotes,LightDiscord,LightGmail,LightDrive,LightConfluence,LightCalendar,LightTasks,LightJira,LightZendesk,LightFreshdesk"
     healthcheck:
       test: ["CMD", "python3", "-c", "import socket;[socket.create_connection(('localhost',p),timeout=3).close() for p in (9020,9015,9063,9074,9041,9060,9008,9014,9086,9142,9071)]"]
       interval: 5s
