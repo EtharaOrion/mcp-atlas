@@ -39,6 +39,8 @@ import os
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 DEFAULT_OUT = "/logs/verifier/ctrf.json"
 DEFAULT_WEIGHTS = "/tests/test_weights.json"
 
@@ -66,12 +68,33 @@ class CtrfReporter:
         self.weights = weights
         # name -> {"status": str, "duration": float seconds}
         self.results: dict[str, dict[str, Any]] = {}
+        # name -> value the test body returned (None for assert-style tests)
+        self.returns: dict[str, Any] = {}
         self.order: list[str] = []
 
     @staticmethod
     def _name(nodeid: str) -> str:
         """Bare function name, parametrize suffix stripped -- JUnit's name attr."""
         return nodeid.rsplit("::", 1)[-1].split("[")[0]
+
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_pyfunc_call(self, pyfuncitem):
+        """Run the test body once and keep whatever it returned.
+
+        A test written as `return <bool>` rather than `assert` always passes as
+        far as pytest is concerned -- its only failure signals are a raised
+        exception and a failed assert. Reporting that as a pass makes this file
+        say 90/90 for a run the grader scored 0.42, which is worse than saying
+        nothing. The bundles are overwhelmingly return-style, so the return
+        value is the verdict wherever there is one.
+
+        Returning True claims the call so the body runs exactly once.
+        """
+        argnames = getattr(pyfuncitem, "_fixtureinfo", None)
+        argnames = getattr(argnames, "argnames", ()) or ()
+        kwargs = {name: pyfuncitem.funcargs[name] for name in argnames}
+        self.returns[pyfuncitem.name] = pyfuncitem.obj(**kwargs)
+        return True
 
     def pytest_runtest_logreport(self, report) -> None:
         name = self._name(report.nodeid)
@@ -88,6 +111,12 @@ class CtrfReporter:
             entry["status"] = "failed"
         elif report.skipped and entry["status"] != "failed":
             entry["status"] = "skipped"
+        elif report.when == "call":
+            # A test that raised never reached its return statement, so only a
+            # test pytest already considers passed can be overruled here.
+            verdict = self.returns.get(name)
+            if verdict is not None and not bool(verdict):
+                entry["status"] = "failed"
 
     def pytest_collectreport(self, report) -> None:
         """A collection error is a failure for every test it swallowed."""

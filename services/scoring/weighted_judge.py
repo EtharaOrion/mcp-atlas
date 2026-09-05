@@ -131,21 +131,59 @@ def load_weights(path: str | Path | None) -> Weights:
 #
 # Embedded as text rather than shipped as a file because this module is copied
 # verbatim into every task bundle as tests/weighted_judge.py, so it has to stay
-# self-contained. The recording rule is the one this grader has always used:
-# a test's verdict is its call phase, and a setup or teardown failure counts as
-# a fail because the body never ran.
+# self-contained.
+#
+# A test's verdict is its RETURN VALUE when it returns one, and otherwise its
+# call-phase outcome. Both styles exist in the bundles and they must both grade
+# honestly:
+#
+#   assert style   def test_x(): assert cond      -> returns None, verdict is
+#                                                    the pytest outcome
+#   return style   def test_x(): return cond      -> verdict is bool(cond)
+#
+# Reading only the pytest outcome silently mis-scores every return-style test,
+# because a function that returns instead of asserting ALWAYS passes in pytest
+# -- pytest's only failure signals are a raised exception or a failed assert.
+# The bundles are overwhelmingly return-style (88 of 90 tests in one, 59 of 61
+# in another) and they run pytest with
+# `-W ignore::pytest.PytestReturnNotNoneWarning`, so nothing warned either. The
+# effect was not a missing score but a fabricated one: every goal recorded as
+# met and every guard as tripped, whatever the agent actually did.
+#
+# pytest_pyfunc_call runs the function itself and returns True to claim the
+# call, so the body executes exactly once -- calling it here and letting pytest
+# call it again would double every side effect the test performs.
 _COLLECTOR_PLUGIN = '''\
 import json
 import os
 
+import pytest
+
 _OUT = os.environ["MCPATLAS_GRADER_RESULTS"]
 _results = {}
+_returns = {}
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_pyfunc_call(pyfuncitem):
+    """Run the test body once and keep whatever it returned."""
+    argnames = getattr(pyfuncitem, "_fixtureinfo", None)
+    argnames = getattr(argnames, "argnames", ()) or ()
+    kwargs = {name: pyfuncitem.funcargs[name] for name in argnames}
+    _returns[pyfuncitem.name] = pyfuncitem.obj(**kwargs)
+    return True
 
 
 def pytest_runtest_logreport(report):
     name = report.nodeid.rsplit("::", 1)[-1]
     if report.when == "call":
-        _results[name] = report.outcome == "passed"
+        # A test that raised never reached its return statement, so the pytest
+        # outcome is the only truth available for it.
+        verdict = _returns.get(name)
+        if report.outcome == "passed" and verdict is not None:
+            _results[name] = bool(verdict)
+        else:
+            _results[name] = report.outcome == "passed"
     elif report.when in ("setup", "teardown") and report.outcome == "failed":
         _results[name] = False
 
