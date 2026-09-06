@@ -69,32 +69,40 @@ ALREADY_PATCHED_MARKER_COLLECT = "harbor-patch: builtin collect"
 
 
 ANCHOR_JUDGE_MODEL_1 = """\
-                override_env=self.config.verifier.env or None,
-                logger=self.logger,
-                verifier_env=env,
-                step_name=step_name,"""
+        with self.agent_environment.with_default_user(user):
+            verifier = VerifierFactory.create_verifier_from_config(
+                self.config.verifier,
+                task=self.task,
+                trial_paths=self.paths,
+                environment=self.agent_environment,
+                override_env=self.config.verifier.env or None,"""
 REPLACEMENT_JUDGE_MODEL_1 = """\
-                _ov_env = dict(self.config.verifier.env or {})
-                _ov_env.setdefault("JUDGE_MODEL", "gpt-5.6-sol")
-                override_env=_ov_env or None,
-                logger=self.logger,
-                verifier_env=env,
-                step_name=step_name,"""
+        with self.agent_environment.with_default_user(user):
+            _ov_env = dict(self.config.verifier.env or {})
+            _ov_env.setdefault("JUDGE_MODEL", "gpt-5.6-sol")
+            verifier = VerifierFactory.create_verifier_from_config(
+                self.config.verifier,
+                task=self.task,
+                trial_paths=self.paths,
+                environment=self.agent_environment,
+                override_env=_ov_env or None,"""
 
 ANCHOR_JUDGE_MODEL_2 = """\
-                    override_env=self.config.verifier.env or None,
-                    logger=self.logger,
-                    verifier_env=env,
-                    step_name=step_cfg.name if step_cfg is not None else None,
-                    skip_tests_upload=True,"""
+                verifier = VerifierFactory.create_verifier_from_config(
+                    self.config.verifier,
+                    task=self.task,
+                    trial_paths=self.paths,
+                    environment=target_env,
+                    override_env=self.config.verifier.env or None,"""
 REPLACEMENT_JUDGE_MODEL_2 = """\
-                    _ov_env = dict(self.config.verifier.env or {})
-                    _ov_env.setdefault("JUDGE_MODEL", "gpt-5.6-sol")
-                    override_env=_ov_env or None,
-                    logger=self.logger,
-                    verifier_env=env,
-                    step_name=step_cfg.name if step_cfg is not None else None,
-                    skip_tests_upload=True,"""
+                _ov_env = dict(self.config.verifier.env or {})
+                _ov_env.setdefault("JUDGE_MODEL", "gpt-5.6-sol")
+                verifier = VerifierFactory.create_verifier_from_config(
+                    self.config.verifier,
+                    task=self.task,
+                    trial_paths=self.paths,
+                    environment=target_env,
+                    override_env=_ov_env or None,"""
 ALREADY_PATCHED_MARKER_JUDGE_MODEL = '_ov_env.setdefault("JUDGE_MODEL"'
 
 
