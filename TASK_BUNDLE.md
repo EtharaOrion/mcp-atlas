@@ -100,12 +100,27 @@ Where both the agent and the verifier execute.
 
 ```dockerfile
 FROM python:3.12-slim
-RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends curl procps && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir pytest "claude-agent-sdk>=0.1.45"
+RUN curl -fsSL https://downloads.claude.ai/claude-code-releases/bootstrap.sh | bash \
+    && ln -sf /root/.local/bin/claude /usr/local/bin/claude \
+    && chmod -R a+rX /root/.local && chmod a+x /root \
+    && claude --version
 ```
 
 `claude-agent-sdk` transitively provides `mcp` and `anyio`, which is what lets `state_dump.py`
 speak MCP from the verifier. There is no `httpx` and no `requests`.
+
+**The CLI must be pre-baked, and `procps` must be present.** Harbor's
+`ClaudeCode.install()` normally installs both inside the container during agent
+setup, over the network. Under network isolation (§2.5) there is no route out at
+that point, so both installs are done here at build time, where the network is
+still open, and `scripts/patch_harbor.py` turns harbor's installer into a no-op
+whenever `claude` is already on PATH.
+
+`/usr/local/bin`, not `~/.local/bin`: `bootstrap.sh` installs into the HOME of
+whoever runs it (root, during build), but a bundle that ends with `USER app`
+runs the agent as that user. `/usr/local/bin` is on PATH for both.
 
 ### 2.5 `environment/docker-compose.yaml` — the world
 
@@ -139,6 +154,42 @@ Mounts on `main`, and what each is for:
 | `ENABLED_SERVERS` | `filesystem,LightEtsy,LightGmail` | Which apps to start |
 
 Ports are per-app and fixed: **LightEtsy `9067`**, **LightGmail `9074`**.
+
+#### Network isolation
+
+Bundles are closed-world: the answer comes from the sidecars and
+`/workspace/data`, never the open web. That is enforced, not merely audited.
+
+`scripts/run_task.sh` passes `services/egress-proxy/overlay.yaml` to harbor as
+`--extra-docker-compose`. Harbor lands it after the bundle's own compose
+(`docker.py:277`), so it applies to every task without any bundle declaring
+anything. It makes the project's default network `internal: true` — stripping
+`main` and `light-servers` of any route off the bridge — and adds one squid
+sidecar that spans both that network and a second, ordinary one. Squid's
+allowlist is `api.anthropic.com` and nothing else.
+
+The agent is root in most bundles and can rewrite its own environment, but it
+cannot attach itself to a network it was not placed on, so unsetting
+`HTTPS_PROXY` gains it nothing.
+
+**`network_mode` in `task.toml` must stay `"public"` in both `[agent]` and
+`[environment]`,** and `"public"` here does not mean the agent can reach the web.
+`network_mode` decides only whether the container has a network at all:
+`"no-network"` sets `services.main.network_mode: none`, a whole-namespace detach
+that takes the sidecars with it and grades the run 0, and `"allowlist"` is
+rejected outright by the docker provider. Where the network may *go* is this
+overlay's question, not harbor's.
+
+A second layer sits above the routing block: while isolation is on, the agent
+is started with `--disallowedTools WebSearch,WebFetch`, so those tools are
+absent from its tool list rather than present-and-failing. The block does not
+depend on it — an agent run without that flag is still isolated — but it saves
+the turn the model would otherwise spend discovering the failure. Override the
+list with `DISALLOWED_TOOLS`.
+
+`NETWORK_ISOLATION_OFF=1` disables both. `scripts/detect_internet_use.py` still
+audits every trajectory afterwards and still blocks delivery, because
+configuration regresses quietly.
 
 ### 2.6 `tests/test.sh` — the verifier entrypoint
 

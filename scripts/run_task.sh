@@ -12,6 +12,7 @@
 # Env overrides: AGENT (claude-code) MODEL (claude-opus-5) N (1) JOB (<task slug>)
 #                OUTPUT_DIR (<repo>/output) COPY_TO (unset) BUILD_MULT (3) AT (1)
 #                STAGE (all) RUN_OFFSET (auto)
+#                NETWORK_ISOLATION_OFF (unset) DISALLOWED_TOOLS (WebSearch,WebFetch)
 #
 # Stages. The default STAGE=all runs the four below in order, which is the
 # original one-shot behaviour. They are separable because their costs differ by
@@ -89,6 +90,18 @@ JOB="${JOB:-$SLUG}"   # job dir == output/<task>/ (reshaped in place by the conv
 # "summarized" = readable thinking summaries in message text; "" = signature-only blocks with empty content (measured 2026-09-03)
 THINKING="${THINKING:-adaptive}"
 THINKING_DISPLAY="${THINKING_DISPLAY:-summarized}"
+
+# Web tools withheld from the agent while network isolation is on. Harbor turns
+# this into `--disallowedTools` (claude_code.py:84-86), so the tools are absent
+# from the tool list rather than present-and-failing.
+#
+# These two are the whole list on purpose. Bash is NOT here: the tasks need it
+# for real local work, and its egress is already dead at the routing layer and
+# still audited by detect_internet_use.py afterwards. Denying it would break
+# tasks to buy nothing.
+#
+# Set to empty to pass no --disallowedTools at all.
+DISALLOWED_TOOLS="${DISALLOWED_TOOLS-WebSearch,WebFetch}"
 
 # The absolute pin the compose comment has always claimed existed. Without it,
 # compose falls through to ${SCORING_DIR:-../../../services/scoring}, which is
@@ -316,6 +329,7 @@ image_build_context() {
   case "${1%%:*}" in
     light-servers)     echo "$REPO/services/light-servers" ;;
     agent-environment) echo "$REPO/services/agent-environment" ;;
+    egress-proxy)      echo "$REPO/services/egress-proxy" ;;
   esac
 }
 
@@ -464,10 +478,29 @@ stage_harbor() {
   local args=(run -y --path "$TASK" --agent "$AGENT" --jobs-dir "$OUTPUT_DIR" --job-name "$JOB" \
               --environment-build-timeout-multiplier "$BUILD_MULT" \
               --agent-setup-timeout-multiplier "$SETUP_MULT" --n-attempts "$N")
+  # Must come after the proxy helpers above: they decide whether the agent is
+  # pointed at host.docker.internal, which network isolation cannot route to.
+  local _iso; _iso="$(network_isolation_overlay)"
+  [ -n "$_iso" ] && args+=(--extra-docker-compose "$_iso")
   [ "$AGENT" != "oracle" ] && args+=(--model "$MODEL")
   if [ "$AGENT" = "claude-code" ]; then
     [ -n "$THINKING" ] && args+=(--ak "thinking=$THINKING")
     [ -n "$THINKING_DISPLAY" ] && args+=(--ak "thinking_display=$THINKING_DISPLAY")
+    # Second layer under the routing block, not a replacement for it. The
+    # overlay already makes these tools fail, but failing costs a turn: the
+    # model picks WebFetch, waits out a connection error, and reasons about it
+    # before trying the sidecars. Denying them means they never appear in the
+    # tool list, so that turn is never spent.
+    #
+    # Deliberately NOT the whole defence. This is agent configuration, and an
+    # agent can be run without it (AGENT=oracle, a future adapter, a hand
+    # `harbor run`); the network block holds regardless. Both layers stay.
+    #
+    # Only when the block is on: with NETWORK_ISOLATION_OFF=1 the operator has
+    # asked for an open run, and silently keeping the web tools off would make
+    # that run mean something different from what they asked for.
+    [ -n "$_iso" ] && [ -n "$DISALLOWED_TOOLS" ] \
+      && args+=(--ak "disallowed_tools=$DISALLOWED_TOOLS")
   fi
   echo "[run_task] harbor ${args[*]}"
   local _hrc=0
@@ -674,6 +707,43 @@ route_agent_through_proxy() {
   echo "[run_task]   alias (sonnet/opus/haiku/subagent) to $MODEL -- claude_code.py:1358."
 }
 
+# Echo the path of the network-isolation compose overlay, or nothing if the run
+# should stay on the open network. Callers append it as --extra-docker-compose,
+# which harbor lands AFTER the task's own compose (docker.py:277), so one file
+# covers every bundle without editing any of them.
+#
+# See services/egress-proxy/squid.conf for why the block lives in compose rather
+# than in task.toml's network_mode.
+network_isolation_overlay() {
+  [ -z "${NETWORK_ISOLATION_OFF:-}" ] || { echo "[run_task] network isolation OFF (NETWORK_ISOLATION_OFF set)" >&2; return 0; }
+
+  local overlay="$REPO/services/egress-proxy/overlay.yaml"
+  [ -f "$overlay" ] || {
+    echo "[run_task] network isolation overlay missing at $overlay" >&2
+    echo "[run_task]   refusing to run open-network by accident; set NETWORK_ISOLATION_OFF=1 to allow it" >&2
+    exit 2
+  }
+
+  # Both of these point the agent at host.docker.internal, which an internal
+  # network has no route to. Failing here is the whole point: the alternative is
+  # an agent phase that dies on its first model call and reads like an outage.
+  if [ "${CC_MODE:-}" = "zbridge" ] || [ "${AGENT_HEADROOM_ENABLED:-false}" = "true" ]; then
+    echo "[run_task] REFUSING: network isolation cannot coexist with a host-side proxy." >&2
+    echo "[run_task]   CC_MODE=${CC_MODE:-unset} AGENT_HEADROOM_ENABLED=${AGENT_HEADROOM_ENABLED:-unset}" >&2
+    echo "[run_task]   Both route the agent through host.docker.internal, which main" >&2
+    echo "[run_task]   cannot reach once its default network is internal." >&2
+    echo "[run_task]   Run without them, or set NETWORK_ISOLATION_OFF=1 to drop the block." >&2
+    exit 2
+  fi
+
+  # stdout is the return channel here, and ensure_image narrates its build to
+  # stdout. Without the redirect its progress lines end up inside the overlay
+  # path and harbor is handed a -f that does not exist.
+  ensure_image "egress-proxy:latest" >&2
+  echo "[run_task] network isolation ON -- egress allowlist: api.anthropic.com" >&2
+  echo "$overlay"
+}
+
 stage_host_rubric() {
   [ "$(state_get host_rubric_done)" = "1" ] && { echo "[run_task] host rubric already graded; skipping"; return 0; }
   # Trial dirs are named after the TASK slug, not the job: JOB=Input_1_oracle
@@ -737,9 +807,18 @@ PYEOF
 #                                 network_allowlist=False; Harbor cannot express
 #                                 a host allowlist here at all.
 #
-# So the posture is detect-and-block rather than prevent: the container keeps
-# working network (Claude Code needs api.anthropic.com regardless), and any use
-# of it BY THE MODEL is read back off the trajectory and refuses the run.
+# Neither of those is where the block lives now. network_isolation_overlay()
+# above passes services/egress-proxy/overlay.yaml as --extra-docker-compose,
+# which makes the project's default network `internal: true` and leaves one
+# squid sidecar as the only route out, allowlisting api.anthropic.com. That is a
+# Compose-level answer to a question Harbor's network_mode cannot express:
+# network_mode says whether the container has a network, the overlay says where
+# that network may go.
+#
+# This audit stays anyway, as a backstop. Prevention can regress silently -- a
+# missing overlay, NETWORK_ISOLATION_OFF left set, an allowlist widened to
+# unblock a run -- and the trajectory is the one place that shows what the model
+# actually reached. It costs nothing on a clean run.
 #
 # Runs after reshape on purpose. harbor_to_output.py synthesizes agent/trajectory.json
 # from the raw stream when Harbor did not publish one (harbor_to_output.py:744),

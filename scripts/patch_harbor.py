@@ -106,6 +106,49 @@ REPLACEMENT_JUDGE_MODEL_2 = """\
 ALREADY_PATCHED_MARKER_JUDGE_MODEL = '_ov_env.setdefault("JUDGE_MODEL"'
 
 
+# --- Pre-baked Claude Code CLI ------------------------------------------------
+# ClaudeCode.install() reaches the network twice inside the container: apt-get
+# for curl/procps, then a bootstrap.sh download from downloads.claude.ai. Both
+# run BEFORE the agent phase, and both die once the container's default network
+# is `internal: true` (services/egress-proxy/overlay.yaml).
+#
+# The bundles pre-bake the CLI at build time instead, where the network is still
+# open, so these two commands have nothing left to do. They are made no-ops
+# rather than deleted: an image WITHOUT a baked CLI still installs normally, so
+# a bundle that forgets the Dockerfile line degrades to the old behaviour rather
+# than failing to start an agent.
+#
+# The guard is plain shell on purpose. Probing from Python would mean parsing an
+# exec result whose shape is not part of harbor's contract.
+_Q = chr(34)
+
+ANCHOR_PREBAKE_ROOT = (
+    '                ' + _Q + 'if command -v apk &> /dev/null; then' + _Q + '\n'
+    '                ' + _Q + '  apk add --no-cache curl bash nodejs npm procps;' + _Q
+)
+
+REPLACEMENT_PREBAKE_ROOT = (
+    '                ' + _Q + 'if command -v claude &> /dev/null; then' + _Q + '\n'
+    "                '  echo " + _Q + "harbor-patch: claude pre-baked; skipping apt" + _Q + ";'\n"
+    '                ' + _Q + ' elif command -v apk &> /dev/null; then' + _Q + '\n'
+    '                ' + _Q + '  apk add --no-cache curl bash nodejs npm procps;' + _Q
+)
+
+ANCHOR_PREBAKE_AGENT = (
+    '                ' + _Q + 'set -euo pipefail; ' + _Q + '\n'
+    '                ' + _Q + 'if command -v apk &> /dev/null; then' + _Q
+)
+
+REPLACEMENT_PREBAKE_AGENT = (
+    '                ' + _Q + 'set -euo pipefail; ' + _Q + '\n'
+    '                ' + _Q + 'if command -v claude &> /dev/null; then' + _Q + '\n'
+    "                '  echo " + _Q + "harbor-patch: claude pre-baked; skipping bootstrap" + _Q + ";'\n"
+    '                ' + _Q + ' elif command -v apk &> /dev/null; then' + _Q
+)
+
+ALREADY_PATCHED_MARKER_PREBAKE = "harbor-patch: claude pre-baked"
+
+
 ANCHOR_FALLBACK = """\
         CliFlag(
             "fallback_model",
@@ -184,12 +227,30 @@ def main() -> None:
     if ALREADY_PATCHED_MARKER_ARGMAX in text:
         print(f"[patch_harbor] ARG_MAX fix: already applied")
     elif ANCHOR_ARGMAX_1 not in text:
+        # A drifted anchor is not a reason to take the whole harness down.
+        #
+        # This used to sys.exit(1), which meant a patch that no longer applies
+        # blocked every stage of every run -- run_task.sh calls this script
+        # unconditionally at dispatch, under `set -e`. Harbor 0.13.2 passes the
+        # instruction inline as shlex.quote(instruction) (claude_code.py:1258,
+        # :1414), while these anchors target an instruction_env_var form from a
+        # different harbor release, so on this install the patch cannot apply at
+        # all and the harness could not run anything.
+        #
+        # What is lost by continuing: the instruction goes on the command line,
+        # so a bundle whose instruction.md approaches ARG_MAX (1 MiB on Linux)
+        # would fail with "Argument list too long". Bundles here are ~1.5 KB, so
+        # the warning is the proportionate response -- but it is printed loudly
+        # rather than swallowed, because the day a bundle does get large this is
+        # the only notice anyone gets.
         print(
-            f"[patch_harbor] ERROR: Anchor for ARG_MAX fix not found in {target}\n"
-            "Harbor may have been updated and this patch needs revision.",
+            f"[patch_harbor] WARNING: ARG_MAX fix NOT applied -- anchor not found in {target}\n"
+            "  This harbor passes the instruction on the command line. Fine for the\n"
+            "  bundles in this repo (~1.5 KB); a bundle approaching ARG_MAX (1 MiB)\n"
+            "  would fail with 'Argument list too long'. Re-anchor this patch if that\n"
+            "  ever happens.",
             file=sys.stderr,
         )
-        sys.exit(1)
     else:
         text = text.replace(ANCHOR_ARGMAX_1, REPLACEMENT_ARGMAX_1, 1)
         text = text.replace(ANCHOR_ARGMAX_2, REPLACEMENT_ARGMAX_2, 1)
@@ -210,6 +271,21 @@ def main() -> None:
         text = text.replace(ANCHOR_FALLBACK, "", 1)
         changed = True
         print(f"[patch_harbor] Fallback model removal: applied")
+
+    if ALREADY_PATCHED_MARKER_PREBAKE in text:
+        print(f"[patch_harbor] Pre-baked CLI guard: already applied")
+    elif ANCHOR_PREBAKE_ROOT not in text or ANCHOR_PREBAKE_AGENT not in text:
+        print(
+            f"[patch_harbor] ERROR: Anchor for pre-baked CLI guard not found in {target}\n"
+            "Harbor may have updated and this patch needs revision.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    else:
+        text = text.replace(ANCHOR_PREBAKE_ROOT, REPLACEMENT_PREBAKE_ROOT, 1)
+        text = text.replace(ANCHOR_PREBAKE_AGENT, REPLACEMENT_PREBAKE_AGENT, 1)
+        changed = True
+        print(f"[patch_harbor] Pre-baked CLI guard: applied")
 
     if changed:
         target.write_text(text, encoding="utf-8")

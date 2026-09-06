@@ -28,7 +28,21 @@ about why, because the obvious fix does not work:
 
 And the agent is Claude Code driven by CLAUDE_CODE_OAUTH_TOKEN, so it must keep
 reaching api.anthropic.com regardless. There is no Harbor setting that means
-"sidecars and the API, nothing else". So the posture here is DETECT, not prevent:
+"sidecars and the API, nothing else".
+
+There is now a block, but it lives BELOW Harbor rather than in it:
+services/egress-proxy/overlay.yaml is passed as --extra-docker-compose and makes
+the compose project's default network `internal: true`, leaving a single squid
+sidecar as the only route out with api.anthropic.com as its whole allowlist.
+That is the distinction Harbor's network_mode cannot draw -- network_mode says
+whether the container has a network, the overlay says where that network may go.
+
+This scanner stays anyway, and stays blocking. Prevention is configuration and
+configuration regresses quietly: an overlay that stopped being passed,
+NETWORK_ISOLATION_OFF exported in a shell weeks ago, an allowlist widened to get
+one run unstuck. The trajectory is the only artifact that records what the model
+actually reached, so it remains the thing that decides whether a run ships. The
+posture is PREVENT AND DETECT:
 the container keeps working network, and any use of it by the MODEL is caught
 from the recorded trajectory and blocks the run.
 

@@ -1,0 +1,76 @@
+# Network isolation for the agent phase.
+#
+# Passed to harbor as --extra-docker-compose by scripts/run_task.sh, which lands
+# it at harbor/environments/docker/docker.py:277 -- AFTER the task's own
+# environment/docker-compose.yaml and before the mounts overlay. That ordering is
+# what lets one file cover every bundle without editing any of them.
+#
+# Harbor authors no `networks:` key anywhere and never runs `docker network`; it
+# only hands an ordered list of -f files to `docker compose`. So the project's
+# network topology is ours to state here, and nothing upstream contests it.
+#
+# WHAT THIS DOES
+#
+#   default   the network every service already sits on implicitly, redeclared
+#             `internal: true`. Docker then attaches no gateway to it, so main
+#             and light-servers keep talking to each other and lose every route
+#             off the bridge. Neither service needs a `networks:` key for this;
+#             overriding the implicit default reaches them both.
+#
+#   egress    a second, ordinary bridge. Only egress-proxy joins it, so it is
+#             the single path out of the project.
+#
+# The agent runs as root and can edit its own environment, but it cannot attach
+# itself to a network it was not placed on. Unsetting HTTPS_PROXY therefore
+# gains it nothing -- there is no route to unset it toward. That is the whole
+# reason the block lives in the routing table rather than in env vars.
+#
+# network_mode in task.toml stays "public" and MUST stay "public": it is the
+# only value that appends no Harbor overlay. Setting "no-network" here would add
+# services.main.network_mode: none, which detaches main from the bridge
+# entirely, takes light-servers with it, and grades the run 0 with no MCP tools.
+# See services/egress-proxy/squid.conf for the full argument.
+#
+# Disable with NETWORK_ISOLATION_OFF=1 (scripts/run_task.sh).
+
+networks:
+  default:
+    internal: true
+  egress:
+    driver: bridge
+
+services:
+  main:
+    environment:
+      # Belt to the routing table's braces. The route is what enforces the
+      # policy; these just tell well-behaved clients where the door is, so a
+      # denied host reports a proxy 403 instead of a DNS timeout.
+      HTTP_PROXY: "http://egress-proxy:3128"
+      HTTPS_PROXY: "http://egress-proxy:3128"
+      http_proxy: "http://egress-proxy:3128"
+      https_proxy: "http://egress-proxy:3128"
+      # Sidecar traffic must not be proxied -- it never leaves the bridge, and
+      # routing it through squid would fail the allowlist. Mirrors the
+      # INTERNAL_HOSTS set in scripts/detect_internet_use.py.
+      NO_PROXY: "light-servers,main,egress-proxy,localhost,127.0.0.1,::1"
+      no_proxy: "light-servers,main,egress-proxy,localhost,127.0.0.1,::1"
+    depends_on:
+      # Compose merges this into the task file's own depends_on mapping. Without
+      # it the agent can start before squid is listening, and the first model
+      # call fails as a connection refused that reads like an outage.
+      egress-proxy:
+        condition: service_healthy
+
+  egress-proxy:
+    image: egress-proxy:latest
+    # Built by `make build-egress-proxy`. Never `build:` here -- a task project
+    # would rebuild it per run, and run_task.sh checks the tag exists up front.
+    networks:
+      - default
+      - egress
+    healthcheck:
+      test: ["CMD", "squid", "-k", "check", "-f", "/etc/squid/squid.conf"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+      start_period: 10s

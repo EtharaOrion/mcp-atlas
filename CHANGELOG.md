@@ -1,5 +1,59 @@
 # Changelog
 
+## Unreleased — Network isolation for the agent phase
+
+The agent container can no longer reach the open web while a trajectory runs.
+Previously this was audited after the fact and not prevented, so a run that
+looked something up on the web burned a full agent phase before
+`detect_internet_use.py` refused to deliver it.
+
+### Added
+
+- **`services/egress-proxy/`** — a squid sidecar whose allowlist is
+  `api.anthropic.com` and nothing else, plus `overlay.yaml`, a compose overlay
+  that makes the project's default network `internal: true` and leaves the proxy
+  as the only route out. `scripts/run_task.sh` passes it to harbor as
+  `--extra-docker-compose`, which lands after the bundle's own compose
+  (`docker.py:277`), so it covers every task without editing any bundle.
+  Disable with `NETWORK_ISOLATION_OFF=1`; build with `make build-egress-proxy`.
+- **`scripts/tests/test_network_isolation.py`** — asserts the overlay resolves
+  to an internal default network with `main` on it alone, that every bundle
+  stays `network_mode = "public"`, and that every bundle pre-bakes the CLI.
+- **Web tools denied while isolation is on.** `run_task.sh` passes
+  `--ak disallowed_tools=WebSearch,WebFetch`, which harbor turns into
+  `--disallowedTools` (`claude_code.py:84-86`). The routing block already made
+  these fail; denying them means the model never spends a turn discovering that.
+  Borrowed from WildClawBench's `tools.deny`. Override with `DISALLOWED_TOOLS`;
+  automatically skipped under `NETWORK_ISOLATION_OFF=1`, so an explicitly open
+  run still means what it says. `Bash` is deliberately not on the list — tasks
+  need it, and its egress is dead at the router and audited afterwards.
+
+### Fixed
+
+- **Three of four bundles could never run.** `Input_1`,
+  `bull-street-lot-expense-claim` and `draft-side-table-lot-price` declared
+  `[agent] network_mode = "no-network"` against `[environment] ... = "public"`.
+  The docker provider cannot switch policy after start, so the trial aborted
+  before the agent phase; and had it started, `no-network` detaches `main` from
+  the compose bridge, taking the MCP sidecars with it. All three now declare
+  `"public"`, with egress blocked by the overlay instead.
+- **`bull-street-lot-expense-claim`'s image could not build at all.** Its
+  `pip install` line had `\ ` (escaped space) mid-line instead of a trailing
+  line continuation, so `openpyxl python-docx pypdf` parsed as a Dockerfile
+  instruction: `unknown instruction: openpyxl`.
+
+### Changed
+
+- **Task Dockerfiles pre-bake the Claude Code CLI and `procps`.** Harbor's
+  `ClaudeCode.install()` fetched both over the network inside the container
+  during agent setup, which isolation makes unreachable. `scripts/patch_harbor.py`
+  now guards that installer so it no-ops when `claude` is already on PATH — a
+  bundle that omits the pre-bake still installs the old way rather than failing.
+- **`detect_internet_use.py` is now a backstop rather than the only defence.**
+  Behaviour and exit codes unchanged; the docstring records that the block moved
+  into compose and why the scanner still runs.
+
+
 ## Unreleased — Harbor adapter repair
 
 The MCP-Atlas -> Harbor adapter emitted bundles that could never run. All of

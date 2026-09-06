@@ -123,6 +123,9 @@ finance-usage: # POST one run's token/cost usage to the Finance API
 build-light-servers: # build light-servers Docker image (all software + utility servers bundled in services/light-servers/)
 	docker build -t light-servers:latest services/light-servers/
 
+build-egress-proxy: # build the egress allowlist proxy (network isolation for the agent phase)
+	docker build -t egress-proxy:latest services/egress-proxy/
+
 # ---------------------------------------------------------------------------
 # zbridge — GLM-5.3 via z.ai (Anthropic-to-GLM proxy + OpenAI adapter)
 # Requires ZB_ZAI_API_KEY and ZB_BRIDGE_SECRET in .env
