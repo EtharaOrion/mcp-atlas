@@ -1,0 +1,43 @@
+# Amandeep_keelson-district-appropriation-review_48b18e2e-d3b3-4698-8761-73a5454df7ac/solution/provenance.yaml
+#
+# Per-unit provenance carrier for this task bundle, required by G-CON-RECORD.
+# No committed bundle shipped one, so the per-unit provenance atom failed for
+# every bundle and the instrument had no carrier to reconcile against:
+# C-GAP-PROVENANCE-CARRIER-ABSENT-ALL-BUNDLES.
+#
+# This file records what the bundle IS. It does not attest to it. G-CON-RECORD
+# requires a detached solution/provenance.sig beside this file, and until an
+# operator signs it the record rests on self-attestation, which the instrument
+# reports as GCON-CARRIER-UNSIGNED rather than accepting. That is the correct
+# reading: a carrier the audited party wrote and the audited party vouched for
+# establishes nothing an external party can check.
+#
+# The content_digest below excludes this file and its signature, so signing
+# does not change the value being signed over.
+
+# Deliberately carries no `tree` or `source_commit`. Those describe the lane
+# a copy sits in, not the bundle, and embedding them made the promoted copies
+# in dataset/ and samples/ byte-divergent, which D-SAMPLES-DATASET-RECONCILE
+# correctly reported. The carrier describes the bundle; the lane is context
+# the reader already has from the path.
+schema_version: 1
+bundle: Amandeep_keelson-district-appropriation-review_48b18e2e-d3b3-4698-8761-73a5454df7ac
+recorded_at: '2026-09-05T00:20:00Z'
+recorded_by: 'CRUCIBLE audit, authored not attested'
+
+content:
+  method: >-
+    Every regular file under the bundle root excluding .git, __pycache__,
+    .pytest_cache, .venv and results path components, and excluding this
+    carrier and its detached signature; sorted by bundle-relative path;
+    per-file SHA-256; then SHA-256 over the concatenation of
+    '<hex>  <bundle-relative path>' newline-terminated lines.
+  file_count: 30
+  content_digest: e0a2a2b845f86e8d552a42da95aa8de578eda15f87dfa962084b6cebd55f22f3
+
+attestation:
+  signature: solution/provenance.sig
+  signed: false
+  note: >-
+    Absent. Sign with the provenance key over this file, exactly as the parent
+    manifest is signed, and place the detached signature at the path above.

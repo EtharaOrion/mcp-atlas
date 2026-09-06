@@ -1,0 +1,52 @@
+{
+  "incidents": [
+    {
+      "sys_id": "inc-8841-vlt",
+      "number": "INC-8841",
+      "short_description": "Compute cluster degradation – Hartwell Financial Group workloads",
+      "description": "Extended compute cluster degradation affecting Hartwell Financial Group production workloads on cluster vlt-compute-east-4. Incident duration: 4 hours 37 minutes (2026-04-22 21:47 UTC through 2026-04-23 02:24 UTC). SLA threshold breached per §5.1 of customer MSA. Customer filed formal credit request on 2026-04-25. Credit amount pending VP of Support authorization. See signed authorization form (sla_credit_authorization) for final approved credit figure. Incident root cause: firmware regression in storage controller batch VLT-FW-2026-04-19.",
+      "state": "6",
+      "priority": "2",
+      "impact": "2",
+      "urgency": "2",
+      "category": "compute",
+      "subcategory": "cluster_availability",
+      "assigned_to": "u-platform-sre-lead",
+      "opened_by": "u-hartwell-ops",
+      "opened_at": "2026-04-22T21:47:00Z",
+      "updated_at": "2026-06-14T16:45:00Z"
+    },
+    {
+      "sys_id": "inc-9103-vlt",
+      "number": "INC-9103",
+      "short_description": "Network latency spike – Cobalt Systems Ltd region us-west-2",
+      "description": "Transient network latency spike affecting Cobalt Systems Ltd workloads in us-west-2 region. Duration 11 minutes. Below SLA threshold. No credit applicable.",
+      "state": "6",
+      "priority": "3",
+      "impact": "3",
+      "urgency": "3",
+      "category": "network",
+      "subcategory": "latency",
+      "assigned_to": "u-noc-tier2",
+      "opened_by": "u-noc-monitor",
+      "opened_at": "2026-05-09T14:22:00Z",
+      "updated_at": "2026-05-09T14:33:00Z"
+    },
+    {
+      "sys_id": "inc-9241-vlt",
+      "number": "INC-9241",
+      "short_description": "Billing export pipeline delay – Q2 close",
+      "description": "Q2 billing export pipeline stalled for 35 minutes due to upstream dependency timeout. Resolved by on-call engineer. No customer impact.",
+      "state": "6",
+      "priority": "3",
+      "impact": "3",
+      "urgency": "3",
+      "category": "software",
+      "subcategory": "pipeline",
+      "assigned_to": "u-billing-eng",
+      "opened_by": "u-monitor-bot",
+      "opened_at": "2026-07-01T03:12:00Z",
+      "updated_at": "2026-07-01T03:47:00Z"
+    }
+  ]
+}

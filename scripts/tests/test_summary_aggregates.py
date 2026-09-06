@@ -166,9 +166,18 @@ def test_container_supplied_zero_reason_is_not_overwritten(tmp_path):
 
 
 def test_nonzero_reward_carries_no_zero_reason(tmp_path):
-    """Only a zero needs explaining; a scored run must not gain a spurious field."""
+    """Only a zero needs explaining; a scored run must not gain a spurious field.
+
+    `producer` is load-bearing and was not always required. harbor_to_output.py
+    :672-679 trusts a reward only from "host_rubric_pass" or "container_test";
+    anything else is warned about and forced to reward=0 as unscored. Without it
+    the 0.75 below is zeroed, the zero_reason guard fires correctly, and this
+    test fails while appearing to be about zero_reason rather than about a
+    reward that never survived. The sibling tests hide it by supplying 0.0.
+    """
     detail = _convert_with_trial_reward(
-        tmp_path, {"reward": 0.75, "completion_rate": 0.9, "misbehave_rate": 0.0, "scored": True}
+        tmp_path, {"reward": 0.75, "completion_rate": 0.9, "misbehave_rate": 0.0,
+                   "scored": True, "producer": "host_rubric_pass"}
     )
     assert "zero_reason" not in detail
 

@@ -1,0 +1,89 @@
+{
+  "metrics": [
+    {
+      "metric": "veltrix.compute.cpu_utilization",
+      "points": [
+        [1750377600, 68.4],
+        [1750381200, 72.1],
+        [1750384800, 65.8],
+        [1750388400, 70.3]
+      ],
+      "unit": "percent",
+      "host": "compute-cluster-prod-01",
+      "tags": ["env:production", "region:us-east"]
+    },
+    {
+      "metric": "veltrix.api.request_latency_p99",
+      "points": [
+        [1750377600, 124.5],
+        [1750381200, 118.2],
+        [1750384800, 131.0],
+        [1750388400, 119.8]
+      ],
+      "unit": "millisecond",
+      "host": "api-gateway-prod",
+      "tags": ["env:production", "service:api-gateway"]
+    },
+    {
+      "metric": "veltrix.metering.events_processed_per_sec",
+      "points": [
+        [1750377600, 4820],
+        [1750381200, 4915],
+        [1750384800, 4738]
+      ],
+      "unit": "count",
+      "host": "metering-agent-01",
+      "tags": ["env:production", "service:metering"]
+    },
+    {
+      "metric": "veltrix.stripe.sync_lag_seconds",
+      "points": [
+        [1750377600, 4.2],
+        [1750381200, 3.8],
+        [1750384800, 5.1]
+      ],
+      "unit": "second",
+      "host": "stripe-sync-worker-01",
+      "tags": ["env:production", "service:stripe-sync"]
+    }
+  ],
+  "monitors": [
+    {
+      "id": 48291,
+      "name": "High CPU on compute cluster (>85%)",
+      "state": "OK",
+      "type": "metric alert",
+      "query": "avg(last_5m):avg:veltrix.compute.cpu_utilization{env:production} > 85",
+      "created": "2025-11-01T00:00:00Z"
+    },
+    {
+      "id": 48305,
+      "name": "API latency P99 > 500ms",
+      "state": "OK",
+      "type": "metric alert",
+      "query": "avg(last_5m):avg:veltrix.api.request_latency_p99{env:production} > 500",
+      "created": "2025-11-01T00:00:00Z"
+    },
+    {
+      "id": 48340,
+      "name": "Metering agent down",
+      "state": "OK",
+      "type": "service check",
+      "created": "2025-12-15T00:00:00Z"
+    }
+  ],
+  "dashboards": [
+    {
+      "id": "vlt-prod-overview",
+      "title": "Veltrix Production Overview",
+      "url": "/dashboard/vlt-prod-overview",
+      "created_at": "2025-11-01T00:00:00Z"
+    },
+    {
+      "id": "vlt-billing-ops",
+      "title": "Veltrix Billing Ops (Stripe Sync)",
+      "url": "/dashboard/vlt-billing-ops",
+      "created_at": "2026-01-15T00:00:00Z"
+    }
+  ]
+}

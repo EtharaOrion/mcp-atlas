@@ -1,0 +1,30 @@
+{
+  "project": {
+    "id": "vlt-mp-prod-8291",
+    "name": "Veltrix Cloud Production",
+    "timezone": "US/Pacific",
+    "created_at": "2024-01-15T00:00:00Z"
+  },
+  "events": [
+    {"event": "Dashboard Viewed", "count": 12841, "period": "2026-Q2", "unique_users": 1829},
+    {"event": "API Key Created", "count": 394, "period": "2026-Q2", "unique_users": 271},
+    {"event": "Usage Report Downloaded", "count": 228, "period": "2026-Q2", "unique_users": 184},
+    {"event": "Deployment Triggered", "count": 6720, "period": "2026-Q2", "unique_users": 412},
+    {"event": "Alert Rule Created", "count": 103, "period": "2026-Q2", "unique_users": 88}
+  ],
+  "funnels": [
+    {
+      "name": "Trial to Paid Conversion",
+      "steps": ["Trial Started", "First API Call", "Payment Method Added", "First Invoice Paid"],
+      "conversion_rate": 0.34,
+      "period": "2026-Q2"
+    },
+    {
+      "name": "Onboarding Completion",
+      "steps": ["Account Created", "First Deployment", "SSO Configured"],
+      "conversion_rate": 0.61,
+      "period": "2026-Q2"
+    }
+  ],
+  "cohorts": []
+}

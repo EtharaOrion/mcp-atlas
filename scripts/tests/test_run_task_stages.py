@@ -12,6 +12,8 @@ from pathlib import Path
 
 import pytest
 
+from conftest import mirror_harbor_package
+
 REPO = Path(__file__).resolve().parent.parent.parent
 RUN_TASK = REPO / "scripts" / "run_task.sh"
 
@@ -34,6 +36,14 @@ def env(tmp_path):
     stub = bin_dir / "harbor"
     stub.write_text(HARBOR_STUB)
     stub.chmod(0o755)
+
+    # Shadowing `harbor` on PATH also redirects patch_harbor.py, which run_task.sh
+    # runs before dispatch and which resolves the harbor package relative to that
+    # binary. Without a mirrored package it raises, run_task.sh aborts, and every
+    # assertion below fails on an empty argv -- looking like a dispatch bug rather
+    # than a missing fixture. See scripts/tests/conftest.py.
+    if not mirror_harbor_package(tmp_path):
+        pytest.skip("harbor is not installed; cannot mirror its package")
 
     class Env:
         root = tmp_path

@@ -180,16 +180,24 @@ def find_harbor_claude_code() -> Path:
     if candidates:
         return candidates[0]
 
+    # Last resort: ask harbor's own interpreter where the module lives. Both
+    # candidates can be absent -- a `harbor` shim on PATH that is not inside a
+    # venv at all, which is exactly what a test stub looks like. Calling
+    # subprocess.run on a path that does not exist raises FileNotFoundError from
+    # deep inside subprocess, burying the RuntimeError below that actually says
+    # what to do about it. Check first, and let that message be the one the
+    # operator sees.
     venv_python = venv_bin / "python3"
     if not venv_python.exists():
         venv_python = venv_bin / "python"
-    result = subprocess.run(
-        [str(venv_python), "-c",
-         "import harbor.agents.installed.claude_code as m; print(m.__file__)"],
-        capture_output=True, text=True,
-    )
-    if result.returncode == 0 and result.stdout.strip():
-        return Path(result.stdout.strip())
+    if venv_python.exists():
+        result = subprocess.run(
+            [str(venv_python), "-c",
+             "import harbor.agents.installed.claude_code as m; print(m.__file__)"],
+            capture_output=True, text=True,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return Path(result.stdout.strip())
 
     raise RuntimeError(
         f"Could not locate harbor/agents/installed/claude_code.py in pipx venv at {venv_root}"

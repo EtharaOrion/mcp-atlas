@@ -1,0 +1,64 @@
+{
+  "projects": [
+    {
+      "id": "vlt-api",
+      "name": "veltrix-api",
+      "platform": "python",
+      "slug": "veltrix-api",
+      "status": "active"
+    },
+    {
+      "id": "vlt-metering",
+      "name": "veltrix-metering",
+      "platform": "python",
+      "slug": "veltrix-metering",
+      "status": "active"
+    },
+    {
+      "id": "vlt-billing",
+      "name": "veltrix-billing",
+      "platform": "python",
+      "slug": "veltrix-billing",
+      "status": "active"
+    }
+  ],
+  "issues": [
+    {
+      "id": "SENT-4829",
+      "title": "KeyError: 'tenant_id' in usage_aggregator.py",
+      "project": "vlt-metering",
+      "level": "error",
+      "status": "resolved",
+      "culprit": "usage_aggregator.aggregate_batch",
+      "firstSeen": "2026-04-22T08:15:00Z",
+      "lastSeen": "2026-04-22T09:45:00Z",
+      "count": 12,
+      "userCount": 0
+    },
+    {
+      "id": "SENT-5103",
+      "title": "ReadTimeout: Stripe charge sync worker — upstream timeout",
+      "project": "vlt-billing",
+      "level": "warning",
+      "status": "ignored",
+      "culprit": "stripe_sync.worker.sync_batch",
+      "firstSeen": "2026-06-14T11:30:00Z",
+      "lastSeen": "2026-06-14T12:00:00Z",
+      "count": 3,
+      "userCount": 0
+    },
+    {
+      "id": "SENT-5218",
+      "title": "UnboundLocalError: local variable 'overage_rate' referenced before assignment",
+      "project": "vlt-billing",
+      "level": "error",
+      "status": "resolved",
+      "culprit": "billing.trurup_calculator.compute_trurup",
+      "firstSeen": "2026-06-30T17:00:00Z",
+      "lastSeen": "2026-06-30T17:05:00Z",
+      "count": 2,
+      "userCount": 0
+    }
+  ],
+  "events": []
+}

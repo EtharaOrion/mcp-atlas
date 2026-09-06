@@ -1,0 +1,108 @@
+{
+  "conversations": [
+    {
+      "id": "conv-IC-48291",
+      "contact_id": "ic-ct-hfg-001",
+      "state": "resolved",
+      "title": "SLA Credit Request - April 22-23 Outage",
+      "created_at": "2026-04-24T09:15:00Z",
+      "updated_at": "2026-05-03T10:05:00Z",
+      "assignee_id": "admin-lena",
+      "open": false
+    },
+    {
+      "id": "conv-IC-49103",
+      "contact_id": "ic-ct-csl-002",
+      "state": "resolved",
+      "title": "API rate limit increase request",
+      "created_at": "2026-06-18T11:00:00Z",
+      "updated_at": "2026-06-19T09:00:00Z",
+      "assignee_id": "admin-tariq",
+      "open": false
+    },
+    {
+      "id": "conv-IC-49418",
+      "contact_id": "ic-ct-tft-003",
+      "state": "open",
+      "title": "Compute provisioning latency spike",
+      "created_at": "2026-06-28T14:00:00Z",
+      "updated_at": "2026-06-28T16:30:00Z",
+      "assignee_id": "admin-lena",
+      "open": true
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-IC-48291-1",
+      "conversation_id": "conv-IC-48291",
+      "part_type": "comment",
+      "author_type": "user",
+      "author_id": "ic-ct-hfg-001",
+      "body": "Hi Veltrix team — we experienced significant downtime on April 22nd and 23rd affecting our trading systems integration. Based on the SLA terms in our contract, we believe we are entitled to a credit. Our internal estimate puts the impact at roughly $900. Can you initiate the credit process?",
+      "created_at": "2026-04-24T09:15:00Z"
+    },
+    {
+      "id": "part-IC-48291-2",
+      "conversation_id": "conv-IC-48291",
+      "part_type": "comment",
+      "author_type": "admin",
+      "author_id": "admin-lena",
+      "body": "Hi Margaret, I am sorry for the disruption this caused. I have logged this as incident INC-8841 in our system. Given the SLA classification and duration of impact, I will escalate to our VP of Support for formal credit authorization. We aim to respond within 2 business days.",
+      "created_at": "2026-04-24T14:22:00Z"
+    },
+    {
+      "id": "part-IC-48291-3",
+      "conversation_id": "conv-IC-48291",
+      "part_type": "comment",
+      "author_type": "admin",
+      "author_id": "admin-lena",
+      "body": "Update from our team: our VP of Support has completed the review of incident INC-8841 and has authorized a credit for Hartwell Financial Group. The official signed authorization form is being processed and you will receive confirmation along with your records.",
+      "created_at": "2026-05-02T16:30:00Z"
+    },
+    {
+      "id": "part-IC-48291-4",
+      "conversation_id": "conv-IC-48291",
+      "part_type": "comment",
+      "author_type": "user",
+      "author_id": "ic-ct-hfg-001",
+      "body": "Received the authorization form - thank you for handling this promptly. Happy with the resolution.",
+      "created_at": "2026-05-03T10:05:00Z"
+    },
+    {
+      "id": "part-IC-49103-1",
+      "conversation_id": "conv-IC-49103",
+      "part_type": "comment",
+      "author_type": "user",
+      "author_id": "ic-ct-csl-002",
+      "body": "Our services are hitting the 1000 req/min API limit on the compute provisioning endpoint. Can you increase this for our account?",
+      "created_at": "2026-06-18T11:00:00Z"
+    },
+    {
+      "id": "part-IC-49103-2",
+      "conversation_id": "conv-IC-49103",
+      "part_type": "comment",
+      "author_type": "admin",
+      "author_id": "admin-tariq",
+      "body": "Hi James - done. I have bumped your limit to 2500 req/min effective immediately. Let us know if you need further adjustments.",
+      "created_at": "2026-06-19T09:00:00Z"
+    },
+    {
+      "id": "part-IC-49418-1",
+      "conversation_id": "conv-IC-49418",
+      "part_type": "comment",
+      "author_type": "user",
+      "author_id": "ic-ct-tft-003",
+      "body": "We are seeing elevated latency on compute provisioning calls this afternoon - p99 is sitting around 4 seconds. Is there a platform-side issue?",
+      "created_at": "2026-06-28T14:00:00Z"
+    },
+    {
+      "id": "part-IC-49418-2",
+      "conversation_id": "conv-IC-49418",
+      "part_type": "comment",
+      "author_type": "admin",
+      "author_id": "admin-lena",
+      "body": "Hi Samira - we are investigating. Our on-call team has been paged. I will update you as soon as we have more information.",
+      "created_at": "2026-06-28T16:30:00Z"
+    }
+  ]
+}

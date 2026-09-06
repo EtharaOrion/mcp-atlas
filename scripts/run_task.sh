@@ -832,21 +832,65 @@ stage_netaudit() {
   local flags=()
   [ -n "${INTERNET_AUDIT_WARN:-}" ] && flags+=(--warn-only)
 
-  local traj run_dir dirty=0 seen=0
+  local traj run_dir dirty=0 seen=0 empty=0
+  # Iterate RUN DIRECTORIES, not trajectory files.
+  #
+  # This globbed [Rr]un_*/agent/trajectory.json and skipped anything that did not
+  # match. Measured on an 11-run job: 3 runs carried a trajectory and were
+  # audited, 8 did not and were passed over in silence -- and `seen` only warns
+  # when it reaches ZERO, so the job reported three clean audits and said nothing
+  # about the other eight. An unaudited run read exactly like a clean one.
+  #
+  # It also made the proxy log unreachable in the case it matters most.
+  # detect_internet_use.py handles a missing trajectory beside a PRESENT access
+  # log -- that is the run where the transcript was lost but squid still recorded
+  # what was attempted -- and a loop over trajectories can never hand it that
+  # pair. Enumerating run dirs and letting the auditor decide restores it.
+  #
   # `[Rr]un_*` because the reshaper writes run_N while older stashed trees carry
   # Run_N; auditing only one casing would skip half a resumed task in silence.
-  for traj in "$TRAJ_DIR"/[Rr]un_*/agent/trajectory.json; do
-    [ -f "$traj" ] || continue
+  for run_dir in "$TRAJ_DIR"/[Rr]un_*; do
+    [ -d "$run_dir" ] || continue
+    traj="$run_dir/agent/trajectory.json"
+
+    # A run with neither is an aborted trial that produced nothing -- counted and
+    # reported below, not audited, because there is genuinely nothing to read.
+    if [ ! -f "$traj" ] && [ ! -f "$run_dir/logs/egress-access.log" ]; then
+      empty=$((empty+1))
+      continue
+    fi
     seen=$((seen+1))
-    run_dir="$(dirname "$(dirname "$traj")")"
+
+    # squid's own record of this attempt, if the run made one. It is the only
+    # ground truth about what actually reached the proxy; the trajectory scan
+    # alone infers egress from shell verbs and cannot see, say, a requests.get
+    # inside a python heredoc.
+    #
+    # Optional on purpose. NETWORK_ISOLATION_OFF=1 runs have no proxy, and trees
+    # reshaped from before the capture landed have no file -- both audit fine on
+    # the trajectory alone, and forcing the flag would turn a legitimate run
+    # into a hard error.
+    local _alog="$run_dir/logs/egress-access.log"
+    local aflags=()
+    [ -f "$_alog" ] && aflags+=(--access-log "$_alog")
+
     # ${flags[@]+...} is load-bearing under `set -u`: bash 3.2 on macOS treats a
     # bare "${flags[@]}" on an empty array as unbound and kills the script.
     python3 "$REPO/scripts/detect_internet_use.py" "$traj" \
-      --json "$run_dir/internet_audit.json" ${flags[@]+"${flags[@]}"} || dirty=1
+      --json "$run_dir/internet_audit.json" \
+      ${flags[@]+"${flags[@]}"} ${aflags[@]+"${aflags[@]}"} || dirty=1
   done
 
+  # Say what was NOT looked at. The whole failure this loop just stopped making
+  # was silence reading as success, and reporting only the audited runs would
+  # reproduce it one level up.
+  if [ "$empty" -gt 0 ]; then
+    echo "[run_task] internet audit: $seen run(s) audited, $empty with no trajectory" >&2
+    echo "[run_task]   and no proxy log -- nothing to audit, NOT a clean result." >&2
+  fi
+
   if [ "$seen" -eq 0 ]; then
-    echo "[run_task] internet audit: no trajectory found under $TRAJ_DIR" >&2
+    echo "[run_task] internet audit: nothing auditable under $TRAJ_DIR" >&2
     return 0
   fi
 

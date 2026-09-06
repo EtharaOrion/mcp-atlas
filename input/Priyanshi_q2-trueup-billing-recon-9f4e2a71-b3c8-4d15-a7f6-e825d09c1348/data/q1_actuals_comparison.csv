@@ -1,0 +1,5 @@
+account_name,account_id,q1_committed_min_usd,q1_actual_usage_usd,q1_overage_usd,q1_overage_rate,q1_gross_truup_usd,q1_sla_credits_usd,q1_net_truup_usd,notes
+Hartwell Financial Group,acct_VLT7701,6000.00,7800.00,1800.00,1.25,2250.00,0.00,2250.00,No SLA incidents in Q1
+Cobalt Systems Ltd,acct_VLT7702,4800.00,4200.00,0.00,1.25,0.00,0.00,0.00,Usage below committed floor
+Renwick & Associates,acct_VLT7703,3200.00,3850.00,650.00,1.25,812.50,0.00,812.50,Seasonal spike in March
+Thornfield Technologies,acct_VLT7705,14000.00,12100.00,0.00,1.25,0.00,0.00,0.00,Pre-amendment committed tier; no overage

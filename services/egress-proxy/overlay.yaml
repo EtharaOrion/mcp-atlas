@@ -52,8 +52,17 @@ services:
       # Sidecar traffic must not be proxied -- it never leaves the bridge, and
       # routing it through squid would fail the allowlist. Mirrors the
       # INTERNAL_HOSTS set in scripts/detect_internet_use.py.
-      NO_PROXY: "light-servers,main,egress-proxy,localhost,127.0.0.1,::1"
-      no_proxy: "light-servers,main,egress-proxy,localhost,127.0.0.1,::1"
+      NO_PROXY: "light-servers,main,egress-proxy,localhost,127.0.0.1,0.0.0.0,::1"
+      no_proxy: "light-servers,main,egress-proxy,localhost,127.0.0.1,0.0.0.0,::1"
+      # Claude Code reaches more than api.anthropic.com: update checks, feature
+      # flags, and two Datadog intakes for telemetry and error reports. squid
+      # denies all of them, which is correct but wasteful -- each one is a
+      # connection attempt, a 403, and a retry, and every denial lands in
+      # access.log next to the ones an operator is actually looking for.
+      #
+      # This turns the optional traffic off at the source instead. It does not
+      # relax the allowlist: anything still attempted is still denied.
+      CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
     depends_on:
       # Compose merges this into the task file's own depends_on mapping. Without
       # it the agent can start before squid is listening, and the first model
@@ -68,6 +77,31 @@ services:
     networks:
       - default
       - egress
+    volumes:
+      # PER-RUN PROOF OF DENIAL.
+      #
+      # access.log is the only ground truth about what the agent actually tried
+      # and what squid actually refused. Without this mount it is unreachable
+      # from the audit: entrypoint.sh tails it into `docker logs`, but harbor
+      # tears the project down before scripts/run_task.sh reaches stage_netaudit
+      # (docker.py:600, `down --rmi local --volumes --remove-orphans`), and
+      # STAGE=reshape can be run days later against an output tree whose
+      # containers are long gone. So it has to be persisted DURING the run.
+      #
+      # HOST_AGENT_LOGS_PATH is harbor's own per-trial host path for the dir it
+      # mounts at /logs/agent -- exported into the compose environment by
+      # harbor/environments/docker/compose_env.py::legacy_log_mount_env_vars.
+      # Using it rather than a path of our own buys two things: it is distinct
+      # per attempt, so `--n-attempts 3` yields three separate logs with no
+      # positional guessing about which belongs to which run; and it is a bind
+      # mount, so it survives the `--volumes` teardown that would destroy a
+      # named volume.
+      #
+      # `:?` and not a default. A silently-unmounted log reads as "no denials
+      # recorded", which is indistinguishable from "clean run" -- the precise
+      # confusion between configured and verified that this mount exists to
+      # remove. Fail loudly at `compose up` instead.
+      - "${HOST_AGENT_LOGS_PATH:?network isolation needs harbor's per-trial agent log mount (set by harbor; export it by hand if driving compose directly)}:/egress-out"
     healthcheck:
       test: ["CMD", "squid", "-k", "check", "-f", "/etc/squid/squid.conf"]
       interval: 3s

@@ -1,0 +1,67 @@
+{
+  "sources": [
+    {
+      "id": "src-vlt-web",
+      "name": "veltrix-web",
+      "type": "browser",
+      "created_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "src-vlt-api",
+      "name": "veltrix-api-server",
+      "type": "server",
+      "created_at": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "events": [
+    {
+      "event": "Account Plan Upgraded",
+      "properties": {
+        "account_id": "acct_VLT7705",
+        "previous_plan": "enterprise-standard",
+        "new_plan": "enterprise-plus",
+        "committed_spend": 10000
+      },
+      "timestamp": "2026-04-01T00:00:00Z"
+    },
+    {
+      "event": "Feature Used",
+      "properties": {
+        "feature": "multi_region_deployment",
+        "account_id": "acct_VLT7701",
+        "region": "us-east"
+      },
+      "timestamp": "2026-05-12T11:00:00Z"
+    },
+    {
+      "event": "Dashboard Viewed",
+      "properties": {
+        "account_id": "acct_VLT7702",
+        "page": "billing_overview"
+      },
+      "timestamp": "2026-06-03T14:30:00Z"
+    },
+    {
+      "event": "API Key Rotated",
+      "properties": {
+        "account_id": "acct_VLT7703",
+        "reason": "scheduled_rotation"
+      },
+      "timestamp": "2026-06-15T09:00:00Z"
+    }
+  ],
+  "destinations": [
+    {
+      "id": "dest-amplitude",
+      "name": "Amplitude",
+      "enabled": true,
+      "created_at": "2024-03-01T00:00:00Z"
+    },
+    {
+      "id": "dest-mixpanel",
+      "name": "Mixpanel",
+      "enabled": true,
+      "created_at": "2024-03-01T00:00:00Z"
+    }
+  ]
+}

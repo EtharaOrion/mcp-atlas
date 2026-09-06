@@ -1,0 +1,23 @@
+{
+  "properties": [
+    {
+      "id": "G-VLT29481K",
+      "displayName": "Veltrix Cloud Marketing",
+      "timeZone": "America/Los_Angeles",
+      "currencyCode": "USD",
+      "industryCategory": "TECHNOLOGY"
+    }
+  ],
+  "reports": [
+    {"metric": "activeUsers", "value": 4821, "period": "2026-Q2", "dimensions": {"channel": "all"}},
+    {"metric": "sessions", "value": 18430, "period": "2026-Q2", "dimensions": {"channel": "all"}},
+    {"metric": "bounceRate", "value": 0.38, "period": "2026-Q2", "dimensions": {"channel": "all"}},
+    {"metric": "newUsers", "value": 1204, "period": "2026-Q2", "dimensions": {"channel": "all"}},
+    {"metric": "averageSessionDuration", "value": 184.3, "period": "2026-Q2", "dimensions": {"channel": "all"}}
+  ],
+  "audience_segments": [
+    {"name": "Enterprise Trial", "size": 128, "created_at": "2026-04-01T00:00:00Z"},
+    {"name": "SMB Customers", "size": 941, "created_at": "2026-01-01T00:00:00Z"},
+    {"name": "Returning Enterprise Visitors", "size": 382, "created_at": "2026-04-01T00:00:00Z"}
+  ]
+}

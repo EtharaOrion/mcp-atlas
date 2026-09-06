@@ -1,0 +1,223 @@
+[
+ [
+  {
+   "server_name": "LightGmail",
+   "tool_name": "list_messages",
+   "dependencies": []
+  },
+  {
+   "server_name": "LightDrive",
+   "tool_name": "list_files",
+   "dependencies": []
+  },
+  {
+   "server_name": "LightNotes",
+   "tool_name": "list_notes",
+   "dependencies": []
+  },
+  {
+   "server_name": "LightDiscord",
+   "tool_name": "list_guild_channels",
+   "dependencies": []
+  },
+  {
+   "server_name": "LightConfluence",
+   "tool_name": "list_content",
+   "dependencies": []
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "list_categories",
+   "dependencies": []
+  }
+ ],
+ [
+  {
+   "server_name": "LightGmail",
+   "tool_name": "get_message",
+   "dependencies": [
+    0
+   ]
+  },
+  {
+   "server_name": "LightDrive",
+   "tool_name": "get_file",
+   "dependencies": [
+    1
+   ]
+  },
+  {
+   "server_name": "LightNotes",
+   "tool_name": "get_note",
+   "dependencies": [
+    2
+   ]
+  },
+  {
+   "server_name": "LightNotes",
+   "tool_name": "get_note",
+   "dependencies": [
+    2
+   ]
+  },
+  {
+   "server_name": "LightDiscord",
+   "tool_name": "list_channel_messages",
+   "dependencies": [
+    3
+   ]
+  },
+  {
+   "server_name": "LightConfluence",
+   "tool_name": "get_content",
+   "dependencies": [
+    4
+   ]
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "list_transactions",
+   "dependencies": [
+    5
+   ]
+  }
+ ],
+ [
+  {
+   "server_name": "LightBudget",
+   "tool_name": "update_transaction",
+   "dependencies": [
+    8,
+    12
+   ]
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "update_transaction",
+   "dependencies": [
+    8,
+    12
+   ]
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "update_transaction",
+   "dependencies": [
+    8,
+    12
+   ]
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "update_transaction",
+   "dependencies": [
+    8,
+    12
+   ]
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "update_transaction",
+   "dependencies": [
+    8,
+    12
+   ]
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "update_transaction",
+   "dependencies": [
+    8,
+    12
+   ]
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "update_transaction",
+   "dependencies": [
+    8,
+    12
+   ]
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "update_transaction",
+   "dependencies": [
+    8,
+    12
+   ]
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "update_transaction",
+   "dependencies": [
+    8,
+    12
+   ]
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "update_transaction",
+   "dependencies": [
+    8,
+    12
+   ]
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "update_transaction",
+   "dependencies": [
+    8,
+    12
+   ]
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "update_transaction",
+   "dependencies": [
+    8,
+    12
+   ]
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "update_transaction",
+   "dependencies": [
+    8,
+    12
+   ]
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "update_transaction",
+   "dependencies": [
+    8,
+    12
+   ]
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "update_transaction",
+   "dependencies": [
+    8,
+    12
+   ]
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "update_transaction",
+   "dependencies": [
+    8,
+    12
+   ]
+  },
+  {
+   "server_name": "LightBudget",
+   "tool_name": "update_transaction",
+   "dependencies": [
+    8,
+    12
+   ]
+  }
+ ]
+]

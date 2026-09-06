@@ -2,6 +2,7 @@
 """Detect whether the agent reached the public internet, and block the run if it did.
 
     scripts/detect_internet_use.py <trajectory.json> [--json OUT] [--warn-only]
+                                  [--access-log run_N/logs/egress-access.log]
 
 Exit 0 = clean. Exit 2 = the model used the internet; the run is blocked.
 
@@ -77,9 +78,33 @@ from pathlib import Path
 
 # Reachable over the compose bridge, not over the internet. A curl at any of
 # these is the bundle working as designed.
+# Hosts that never leave the compose bridge. Peer definition:
+# services/egress-proxy/overlay.yaml's NO_PROXY is the same set applied to the
+# run rather than to the transcript, and squid.conf's comment makes keeping the
+# two in agreement a standing pact.
+#
+# host.docker.internal is deliberately gone. It was half of the divergence
+# scripts/tests/test_egress_allowlist.py carried as an xfail: this file called it
+# internal, so a call to it passed the audit, while NO_PROXY omitted it, so the
+# same call went to squid and took a 403. Reconciled in the direction the xfail
+# recommended -- `internal: true` leaves the bridge with no gateway, so the
+# host-gateway address has no route no matter what the proxy settings say. A
+# trajectory call to it is a real failed egress attempt and belongs in findings.
+#
+# 0.0.0.0 was the OTHER half, and dropping it too was wrong. The xfail treated
+# both as one case, but they are not: host.docker.internal names a route OFF the
+# container, while 0.0.0.0 as a DESTINATION is a local bind address -- `curl
+# 0.0.0.0:8000` against a server the agent just started is ordinary local work,
+# not egress. Removing it made that a blocking finding, and is_internal() does
+# not otherwise cover it (it matches 127.* and localhost, not 0.0.0.0). It is
+# back here, and added to NO_PROXY to keep the pact whole; sending a bind address
+# to the proxy was never useful anyway.
+#
+# Safe because this scanner reads TRAJECTORY TOOL CALLS only. The cc-bridge and
+# zbridge do use host.docker.internal, but as the Claude Code process's own
+# ANTHROPIC_BASE_URL -- that traffic is never a Bash step and never appears here.
 INTERNAL_HOSTS = {
-    "light-servers", "localhost", "127.0.0.1", "0.0.0.0", "::1",
-    "main", "host.docker.internal",
+    "light-servers", "localhost", "127.0.0.1", "0.0.0.0", "::1", "main",
 }
 
 # Tool names that are internet access by definition -- no argument inspection
@@ -128,7 +153,10 @@ def _c(code: str, s: str) -> str:
     return f"\033[{code}m{s}\033[0m" if sys.stdout.isatty() else s
 
 
-def flag(step: int, tool: str, kind: str, detail: str, evidence: str) -> None:
+def flag(step: int | None, tool: str, kind: str, detail: str, evidence: str) -> None:
+    """step is None for findings that come from the proxy log rather than a
+    trajectory step -- they are real findings and must block, but they have no
+    step number to point at."""
     FINDINGS.append(
         {"step": step, "tool": tool, "kind": kind, "detail": detail,
          "evidence": evidence[:400]}
@@ -151,6 +179,122 @@ def is_internal(host: str) -> bool:
         return True
     # Compose service aliases and loopback ranges are internal by construction.
     return host.startswith("127.") or host.endswith(".local") or host.endswith(".internal")
+
+
+# --------------------------------------------------------------------------
+# PROXY GROUND TRUTH
+#
+# Everything above infers egress from the TRAJECTORY: tool names and shell verbs
+# in the transcript. That inference has a floor. `requests.get(...)` inside a
+# python heredoc carries no verb this scanner knows, and a trajectory that was
+# truncated or never written carries nothing at all.
+#
+# squid's access.log is the other half: not what the model said it would do, but
+# what actually arrived at the proxy and what the proxy did about it. It is
+# written per attempt into the trial's agent-log dir (services/egress-proxy/
+# entrypoint.sh) and reaches the run dir via scripts/harbor_to_output.py.
+# --------------------------------------------------------------------------
+
+# The one host squid lets out. services/egress-proxy/squid.conf is the source of
+# truth and scripts/tests/test_egress_allowlist.py::EXPECTED_ALLOWLIST pins it
+# there; this is the third copy, so change one and look at the other two.
+PROXY_ALLOWLIST = {"api.anthropic.com"}
+
+# Hosts the Claude Code CLI reaches on its own initiative -- update checks,
+# feature flags, telemetry, error reporting. squid denies all of them, which is
+# correct, but the MODEL did not ask for them and a run must not be blocked for
+# the CLI clearing its throat. Enumerated in squid.conf's allowlist comment.
+#
+# overlay.yaml sets CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1, which stops most
+# of this at the source, so in practice these lines are rare. They are listed
+# anyway because a version bump can add one, and the failure mode of NOT listing
+# it is a benchmark that refuses to deliver a clean run.
+#
+# TELEMETRY ONLY. Every host here is infrastructure that carries no content: an
+# update check, a feature-flag fetch, a crash report. A denial to one of them
+# says nothing about the model, so it is recorded and does not block.
+#
+# raw.githubusercontent.com is deliberately NOT here, though squid.conf lists it
+# among the hosts the CLI reaches. It serves CONTENT -- a place to fetch
+# instructions from or park data at -- and a denial there is exactly the event a
+# closed-world benchmark wants to hear about. Classifying it as infrastructure
+# would make the audit silent on the most useful denial it could ever show.
+#
+# The cost is a possible false positive, if the CLI fetches it unprompted
+# despite CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1. That is the right way
+# round: a false positive is loud, lands in internet_audit.json with the
+# offending line attached, and is cleared with INTERNET_AUDIT_WARN=1 while
+# someone decides. A false negative is silent and ships a benchmark result that
+# was never actually checked. Same posture as squid.conf's "add a host here only
+# after seeing it denied in access.log".
+CLI_INFRA_HOSTS = {
+    "platform.claude.com", "claude.ai", "statsig.anthropic.com",
+    "downloads.claude.ai",
+}
+
+CLI_INFRA_SUFFIXES = (".datadoghq.com", ".statsig.com", ".sentry.io")
+
+# squid native format, whitespace separated:
+#   ts elapsed client CODE/STATUS bytes METHOD URL rfc931 hierarchy type
+# Field 3 is the result code, 5 the method, 6 the URL (host:port for CONNECT).
+_ACCESS_MIN_FIELDS = 7
+
+
+def _access_host(url: str) -> str:
+    """Host from an access.log URL field. CONNECT logs host:port, GET logs a URL."""
+    if "://" in url:
+        url = url.split("://", 1)[1]
+    return url.split("/", 1)[0].rsplit(":", 1)[0].strip("[]").lower()
+
+
+def _is_cli_infra(host: str) -> bool:
+    return host in CLI_INFRA_HOSTS or host.endswith(CLI_INFRA_SUFFIXES)
+
+
+def scan_access_log(path: Path) -> list[dict]:
+    """Parse squid's log; flag the attempts the model is answerable for.
+
+    Returned records go into the audit JSON whole -- including the allowed ones,
+    because "api.anthropic.com was reached N times and nothing else was" is the
+    positive evidence that the block was live for this run, which no amount of
+    config assertion can supply.
+    """
+    attempts: list[dict] = []
+    for line in path.read_text(errors="replace").splitlines():
+        f = line.split()
+        if len(f) < _ACCESS_MIN_FIELDS or "/" not in f[3]:
+            continue
+        code = f[3].split("/", 1)[0]
+        status = f[3].split("/", 1)[1]
+        method, url = f[5], f[6]
+        host = _access_host(url)
+        if not host:
+            continue
+        denied = code.endswith("_DENIED") or status in ("403", "407")
+        rec = {"host": host, "method": method, "code": f[3], "denied": denied}
+        attempts.append(rec)
+
+        if _is_cli_infra(host):
+            rec["verdict"] = "cli_infrastructure"
+            continue
+        if not denied and host not in PROXY_ALLOWLIST:
+            # The allowlist did not hold. Worse than a denial: something left.
+            rec["verdict"] = "ALLOWLIST_BREACH"
+            flag(None, "egress-proxy", "allowlist-breach",
+                 f"{host} was NOT denied by the proxy but is not on the allowlist",
+                 line)
+            continue
+        if denied:
+            # The model tried. The auditor already treats attempts as findings
+            # regardless of outcome -- a WebFetch call counts whether or not it
+            # returned -- so a denial is a finding, not an all-clear.
+            rec["verdict"] = "blocked_attempt"
+            flag(None, "egress-proxy", "proxy-denied",
+                 f"{method} {host} was attempted and denied by the egress proxy",
+                 line)
+            continue
+        rec["verdict"] = "allowed"
+    return attempts
 
 
 def scan_command(step: int, cmd: str) -> None:
@@ -276,14 +420,24 @@ def main(argv=None) -> int:
     ap.add_argument("--json", type=Path, help="write findings here for grading")
     ap.add_argument("--warn-only", action="store_true",
                     help="report findings but exit 0 (does not block the run)")
+    ap.add_argument("--access-log", type=Path,
+                    help="squid access.log for this run; adds proxy ground truth "
+                         "to the trajectory inference")
     a = ap.parse_args(argv)
 
     if not a.trajectory.is_file():
         # No trajectory is not evidence of good behaviour, but it is also not
         # evidence of bad. The aborted-trial guard in run_task.sh already fails
         # loudly on a run that produced nothing, so this stays out of its way.
-        print(f"  {_c('33', 'warn')}  no trajectory at {a.trajectory}; nothing to audit")
-        return 0
+        # A missing trajectory is not evidence of good behaviour -- and if the
+        # proxy log survived, it is the better witness anyway. Audit it alone
+        # rather than returning a clean bill for a run nobody can see.
+        print(f"  {_c('33', 'warn')}  no trajectory at {a.trajectory}")
+        if not (a.access_log and a.access_log.is_file()):
+            return 0
+        attempts = scan_access_log(a.access_log)
+        _report(a, total=0, attempts=attempts)
+        return 2 if FINDINGS and not a.warn_only else 0
 
     try:
         traj = json.loads(a.trajectory.read_text())
@@ -295,25 +449,54 @@ def main(argv=None) -> int:
     total = len(normalise(traj))
     _collapse()
 
-    print(f"== internet use audit: {a.trajectory} ==")
-    if not FINDINGS:
-        print(f"  {_c('32', 'ok')}    {total} tool call(s), no internet access")
-    else:
-        for f in FINDINGS:
-            print(f"  {_c('31', 'FAIL')}  step {f['step']}: [{f['kind']}] {f['detail']}")
-            print(f"        {f['evidence'].splitlines()[0][:160]}")
+    # After _collapse(), so proxy findings are never deduplicated against
+    # trajectory ones: a curl the scanner already flagged AND a matching denial
+    # in the log are two independent observations of the same attempt, and
+    # losing the second would cost the corroboration this flag exists to add.
+    attempts = []
+    if a.access_log:
+        if a.access_log.is_file():
+            attempts = scan_access_log(a.access_log)
+        else:
+            print(f"  {_c('33', 'warn')}  no proxy log at {a.access_log}; "
+                  f"trajectory-only audit")
 
-    if a.json:
-        a.json.parent.mkdir(parents=True, exist_ok=True)
-        a.json.write_text(json.dumps(
-            {"used_internet": bool(FINDINGS), "tool_calls": total,
-             "findings": FINDINGS}, indent=2))
+    _report(a, total=total, attempts=attempts)
 
     if FINDINGS and not a.warn_only:
         print(f"\n  blocked: the model used the internet "
               f"({len(FINDINGS)} finding(s)); this task is closed-world.")
         return 2
     return 0
+
+
+def _report(a, *, total: int, attempts: list[dict]) -> None:
+    """Print the audit and write its JSON. Shared by both entry paths above."""
+    print(f"== internet use audit: {a.trajectory} ==")
+    if not FINDINGS:
+        print(f"  {_c('32', 'ok')}    {total} tool call(s), no internet access")
+    else:
+        for f in FINDINGS:
+            where = "proxy" if f["step"] is None else f"step {f['step']}"
+            print(f"  {_c('31', 'FAIL')}  {where}: [{f['kind']}] {f['detail']}")
+            print(f"        {f['evidence'].splitlines()[0][:160]}")
+
+    if attempts:
+        # The positive half of the record. An allowed line to api.anthropic.com
+        # is proof the proxy was in the path at all -- a log with no allowed
+        # lines and no denials means the capture is broken, not that the run
+        # was clean, and only printing the counts makes that visible.
+        allowed = sum(1 for r in attempts if not r["denied"])
+        denied = sum(1 for r in attempts if r["denied"])
+        infra = sum(1 for r in attempts if r.get("verdict") == "cli_infrastructure")
+        print(f"  {_c('32', 'ok')}    proxy log: {len(attempts)} request(s), "
+              f"{allowed} allowed, {denied} denied ({infra} CLI infrastructure)")
+
+    if a.json:
+        a.json.parent.mkdir(parents=True, exist_ok=True)
+        a.json.write_text(json.dumps(
+            {"used_internet": bool(FINDINGS), "tool_calls": total,
+             "findings": FINDINGS, "proxy_attempts": attempts}, indent=2))
 
 
 if __name__ == "__main__":

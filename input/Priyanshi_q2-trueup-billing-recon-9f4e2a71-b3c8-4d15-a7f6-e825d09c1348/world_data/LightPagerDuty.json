@@ -1,0 +1,50 @@
+{
+  "incidents": [
+    {
+      "id": "PD-INC-20260422-001",
+      "title": "Compute cluster degradation — US-East zone",
+      "description": "Multiple tenants reporting elevated latency and partial request failures on the US-East compute cluster. Cause: network fabric misconfiguration following maintenance window.",
+      "status": "resolved",
+      "urgency": "high",
+      "created_at": "2026-04-22T06:30:00Z",
+      "resolved_at": "2026-04-23T02:15:00Z",
+      "service": {"name": "Veltrix Compute — US-East"},
+      "assigned_to": [{"name": "Tariq Osei", "email": "tosei@veltrix.io"}],
+      "escalation_policy": "oncall-platform",
+      "number_of_escalations": 1
+    },
+    {
+      "id": "PD-INC-20260531-002",
+      "title": "Metering agent OOM — metering-agent-01",
+      "description": "Usage metering agent on pod metering-agent-01 hit memory limit and was OOM-killed. Billing events queued; no data loss. Pod restarted automatically.",
+      "status": "resolved",
+      "urgency": "medium",
+      "created_at": "2026-05-31T19:00:00Z",
+      "resolved_at": "2026-05-31T21:30:00Z",
+      "service": {"name": "Veltrix Metering Service"},
+      "assigned_to": [{"name": "Anita Ruiz", "email": "aruiz@veltrix.io"}],
+      "escalation_policy": "oncall-platform",
+      "number_of_escalations": 0
+    },
+    {
+      "id": "PD-INC-20260614-003",
+      "title": "Stripe sync worker timeout — non-critical",
+      "description": "Stripe charge sync worker timed out on a large batch. Charges were not dropped; worker recovered on retry. Root cause: DB lock contention from concurrent migration job.",
+      "status": "resolved",
+      "urgency": "low",
+      "created_at": "2026-06-14T11:30:00Z",
+      "resolved_at": "2026-06-14T13:00:00Z",
+      "service": {"name": "Veltrix Billing Service"},
+      "assigned_to": [{"name": "Anita Ruiz", "email": "aruiz@veltrix.io"}],
+      "escalation_policy": "oncall-billing",
+      "number_of_escalations": 0
+    }
+  ],
+  "services": [
+    {"id": "SVC-COMPUTE-EAST", "name": "Veltrix Compute — US-East", "status": "active"},
+    {"id": "SVC-COMPUTE-WEST", "name": "Veltrix Compute — US-West", "status": "active"},
+    {"id": "SVC-METERING", "name": "Veltrix Metering Service", "status": "active"},
+    {"id": "SVC-API", "name": "Veltrix API Gateway", "status": "active"},
+    {"id": "SVC-BILLING", "name": "Veltrix Billing Service", "status": "active"}
+  ]
+}

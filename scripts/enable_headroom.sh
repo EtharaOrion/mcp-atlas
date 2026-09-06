@@ -58,18 +58,60 @@ changed = []
 
 # --- 1. Dockerfile: the grader's pip line ----------------------------------
 src = dockerfile.read_text()
-pip_lines = [ln for ln in src.splitlines() if re.match(r"RUN\s+pip\s+install", ln)]
-if not pip_lines:
+lines = src.splitlines(keepends=True)
+
+
+def pip_blocks(lines):
+    """Index ranges of each `RUN pip install`, continuations included.
+
+    The pin has to land at the END of the logical line. Appending it to the
+    line that MATCHES leaves it after a trailing backslash when the install is
+    written across several lines:
+
+        RUN pip install --no-cache-dir \\ "headroom-ai>=0.37,<0.38"
+            matplotlib \\
+
+    which ends the continuation, so docker reads the next line as a new
+    instruction and the build dies with `unknown instruction: matplotlib`. This
+    has now happened to two bundles; fixing it in the bundles left the cause in
+    place, so it is fixed here instead.
+    """
+    out, i = [], 0
+    while i < len(lines):
+        if re.match(r"RUN\s+pip\s+install", lines[i]):
+            j = i
+            while lines[j].rstrip().endswith("\\") and j + 1 < len(lines):
+                j += 1
+            out.append((i, j))
+            i = j + 1
+        else:
+            i += 1
+    return out
+
+
+blocks = pip_blocks(lines)
+if not blocks:
     sys.exit("{}: no `RUN pip install` line to extend".format(dockerfile))
 
-for line in pip_lines:
-    if enable and pin not in line:
-        src = src.replace(line, line + " " + pin, 1)
+for start, last in blocks:
+    block = "".join(lines[start:last + 1])
+    if enable and pin not in block:
+        tail = lines[last]
+        if tail.rstrip().endswith("\\"):
+            sys.exit("{}: `RUN pip install` continuation is unterminated".format(dockerfile))
+        nl = "\n" if tail.endswith("\n") else ""
+        lines[last] = tail.rstrip() + " " + pin + nl
         changed.append("{}: + {}".format(dockerfile, pin))
-    elif not enable and pin in line:
-        src = src.replace(line, line.replace(" " + pin, ""), 1)
+    elif not enable and pin in block:
+        # Search the whole block, not just the last line: a file pinned by the
+        # earlier version of this script carries it on the first line instead,
+        # and --disable must clean those up too.
+        for k in range(start, last + 1):
+            if pin in lines[k]:
+                lines[k] = lines[k].replace(" " + pin, "")
+                break
         changed.append("{}: - {}".format(dockerfile, pin))
-dockerfile.write_text(src)
+dockerfile.write_text("".join(lines))
 
 # --- 2. compose: the flag on `main` ----------------------------------------
 # Edited as text, not through a YAML round-trip: these files carry the

@@ -1,0 +1,204 @@
+{
+ "folders": {
+  "fd_keelson": {
+   "fdid": "fd_keelson",
+   "name": "Light-House Board 1900",
+   "parent_id": "fd_root",
+   "path": "/Light-House Board 1900",
+   "created_at": "2026-08-26T15:39"
+  }
+ },
+ "files": {
+  "kfile_01": {
+   "fid": "kfile_01",
+   "name": "light-house-board-1900-page-040.png",
+   "folder_id": "fd_keelson",
+   "path": "/Light-House Board 1900/light-house-board-1900-page-040.png",
+   "size_bytes": 540137,
+   "mime_type": "image/png",
+   "created_at": "2026-08-26T15:40",
+   "updated_at": "2026-08-26T15:40",
+   "is_starred": false,
+   "is_trashed": false,
+   "current_version_id": "kver_01"
+  },
+  "kfile_02": {
+   "fid": "kfile_02",
+   "name": "light-house-board-1900-page-041.png",
+   "folder_id": "fd_keelson",
+   "path": "/Light-House Board 1900/light-house-board-1900-page-041.png",
+   "size_bytes": 540274,
+   "mime_type": "image/png",
+   "created_at": "2026-08-26T15:40",
+   "updated_at": "2026-08-26T15:40",
+   "is_starred": false,
+   "is_trashed": false,
+   "current_version_id": "kver_02"
+  },
+  "kfile_03": {
+   "fid": "kfile_03",
+   "name": "light-house-board-1900-page-042.png",
+   "folder_id": "fd_keelson",
+   "path": "/Light-House Board 1900/light-house-board-1900-page-042.png",
+   "size_bytes": 540411,
+   "mime_type": "image/png",
+   "created_at": "2026-08-26T15:40",
+   "updated_at": "2026-08-26T15:40",
+   "is_starred": false,
+   "is_trashed": false,
+   "current_version_id": "kver_03"
+  },
+  "kfile_04": {
+   "fid": "kfile_04",
+   "name": "light-house-board-1900-page-049.png",
+   "folder_id": "fd_keelson",
+   "path": "/Light-House Board 1900/light-house-board-1900-page-049.png",
+   "size_bytes": 540548,
+   "mime_type": "image/png",
+   "created_at": "2026-08-26T15:40",
+   "updated_at": "2026-08-26T15:40",
+   "is_starred": false,
+   "is_trashed": false,
+   "current_version_id": "kver_04"
+  },
+  "kfile_05": {
+   "fid": "kfile_05",
+   "name": "light-house-board-1900-page-051.png",
+   "folder_id": "fd_keelson",
+   "path": "/Light-House Board 1900/light-house-board-1900-page-051.png",
+   "size_bytes": 540685,
+   "mime_type": "image/png",
+   "created_at": "2026-08-26T15:40",
+   "updated_at": "2026-08-26T15:40",
+   "is_starred": false,
+   "is_trashed": false,
+   "current_version_id": "kver_05"
+  },
+  "kfile_06": {
+   "fid": "kfile_06",
+   "name": "light-house-board-1900-page-057.png",
+   "folder_id": "fd_keelson",
+   "path": "/Light-House Board 1900/light-house-board-1900-page-057.png",
+   "size_bytes": 540822,
+   "mime_type": "image/png",
+   "created_at": "2026-08-26T15:40",
+   "updated_at": "2026-08-26T15:40",
+   "is_starred": false,
+   "is_trashed": false,
+   "current_version_id": "kver_06"
+  },
+  "kfile_07": {
+   "fid": "kfile_07",
+   "name": "light-house-board-1900-page-082.png",
+   "folder_id": "fd_keelson",
+   "path": "/Light-House Board 1900/light-house-board-1900-page-082.png",
+   "size_bytes": 540959,
+   "mime_type": "image/png",
+   "created_at": "2026-08-26T15:40",
+   "updated_at": "2026-08-26T15:40",
+   "is_starred": false,
+   "is_trashed": false,
+   "current_version_id": "kver_07"
+  },
+  "kfile_08": {
+   "fid": "kfile_08",
+   "name": "light-house-board-1900-page-086.png",
+   "folder_id": "fd_keelson",
+   "path": "/Light-House Board 1900/light-house-board-1900-page-086.png",
+   "size_bytes": 541096,
+   "mime_type": "image/png",
+   "created_at": "2026-08-26T15:40",
+   "updated_at": "2026-08-26T15:40",
+   "is_starred": false,
+   "is_trashed": false,
+   "current_version_id": "kver_08"
+  },
+  "kfile_09": {
+   "fid": "kfile_09",
+   "name": "light-house-board-1900-front-matter.pdf",
+   "folder_id": "fd_keelson",
+   "path": "/Light-House Board 1900/light-house-board-1900-front-matter.pdf",
+   "size_bytes": 541233,
+   "mime_type": "application/pdf",
+   "created_at": "2026-08-26T15:40",
+   "updated_at": "2026-08-26T15:40",
+   "is_starred": false,
+   "is_trashed": false,
+   "current_version_id": "kver_09"
+  }
+ },
+ "versions": {
+  "kver_01": {
+   "vid": "kver_01",
+   "file_id": "kfile_01",
+   "version_number": 1,
+   "size_bytes": 540137,
+   "created_at": "2026-08-26T15:40",
+   "comment": "Reading room scan, 150 dots per inch, untouched. Annual report page 40, first district."
+  },
+  "kver_02": {
+   "vid": "kver_02",
+   "file_id": "kfile_02",
+   "version_number": 1,
+   "size_bytes": 540274,
+   "created_at": "2026-08-26T15:40",
+   "comment": "Reading room scan, 150 dots per inch, untouched. Annual report page 41, first district."
+  },
+  "kver_03": {
+   "vid": "kver_03",
+   "file_id": "kfile_03",
+   "version_number": 1,
+   "size_bytes": 540411,
+   "created_at": "2026-08-26T15:40",
+   "comment": "Reading room scan, 150 dots per inch, untouched. Annual report page 42, first district."
+  },
+  "kver_04": {
+   "vid": "kver_04",
+   "file_id": "kfile_04",
+   "version_number": 1,
+   "size_bytes": 540548,
+   "created_at": "2026-08-26T15:40",
+   "comment": "Reading room scan, 150 dots per inch, untouched. Annual report page 49, second district."
+  },
+  "kver_05": {
+   "vid": "kver_05",
+   "file_id": "kfile_05",
+   "version_number": 1,
+   "size_bytes": 540685,
+   "created_at": "2026-08-26T15:40",
+   "comment": "Reading room scan, 150 dots per inch, untouched. Annual report page 51, second district."
+  },
+  "kver_06": {
+   "vid": "kver_06",
+   "file_id": "kfile_06",
+   "version_number": 1,
+   "size_bytes": 540822,
+   "created_at": "2026-08-26T15:40",
+   "comment": "Reading room scan, 150 dots per inch, untouched. Annual report page 57, second district, buoyage narrative."
+  },
+  "kver_07": {
+   "vid": "kver_07",
+   "file_id": "kfile_07",
+   "version_number": 1,
+   "size_bytes": 540959,
+   "created_at": "2026-08-26T15:40",
+   "comment": "Reading room scan, 150 dots per inch, untouched. Annual report page 82, third district, tender narrative."
+  },
+  "kver_08": {
+   "vid": "kver_08",
+   "file_id": "kfile_08",
+   "version_number": 1,
+   "size_bytes": 541096,
+   "created_at": "2026-08-26T15:40",
+   "comment": "Reading room scan, 150 dots per inch, untouched. Annual report page 86, fourth district."
+  },
+  "kver_09": {
+   "vid": "kver_09",
+   "file_id": "kfile_09",
+   "version_number": 1,
+   "size_bytes": 541233,
+   "created_at": "2026-08-26T15:40",
+   "comment": "Reading room scan, 150 dots per inch, untouched. Title page and list of members, same volume."
+  }
+ }
+}

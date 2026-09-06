@@ -1,0 +1,146 @@
+{
+  "customers": [
+    {
+      "Id": "1",
+      "DisplayName": "Hartwell Financial Group",
+      "PrimaryEmailAddr": {"Address": "billing@hartwellfinancial.com"},
+      "Balance": 8400.00,
+      "Active": true,
+      "Notes": "Enterprise Tier 1 — acct_VLT7701; primary contact M. Calloway"
+    },
+    {
+      "Id": "2",
+      "DisplayName": "Cobalt Systems Ltd",
+      "PrimaryEmailAddr": {"Address": "accounts@cobaltsystems.io"},
+      "Balance": 5640.00,
+      "Active": true,
+      "Notes": "Enterprise Tier 1 — acct_VLT7702"
+    },
+    {
+      "Id": "3",
+      "DisplayName": "Renwick & Associates",
+      "PrimaryEmailAddr": {"Address": "ap@renwickassoc.com"},
+      "Balance": 3100.00,
+      "Active": true,
+      "Notes": "Enterprise Tier 1 — acct_VLT7703"
+    },
+    {
+      "Id": "4",
+      "DisplayName": "Dunmore Capital Partners",
+      "PrimaryEmailAddr": {"Address": "finance@dunmorecapital.com"},
+      "Balance": 11200.00,
+      "Active": true,
+      "Notes": "Internal cost center — billed via parent entity annual agreement"
+    },
+    {
+      "Id": "5",
+      "DisplayName": "Thornfield Technologies",
+      "PrimaryEmailAddr": {"Address": "billing@thornfieldtech.com"},
+      "Balance": 13600.00,
+      "Active": true,
+      "Notes": "Enterprise Tier 1 — acct_VLT7705; contract amended April 2026"
+    }
+  ],
+  "invoices": [
+    {
+      "Id": "INV-2026-0041",
+      "DocNumber": "INV-2026-0041",
+      "TxnDate": "2026-04-15",
+      "DueDate": "2026-05-15",
+      "CustomerRef": {"value": "1", "name": "Hartwell Financial Group"},
+      "Line": [
+        {
+          "Amount": 8400.00,
+          "Description": "Q2 FY2026 compute usage — April billing cycle (mirrors Stripe ch_VLT001)",
+          "SalesItemLineDetail": {"ItemRef": {"name": "Compute Usage"}}
+        }
+      ],
+      "TotalAmt": 8400.00,
+      "Balance": 0.00,
+      "Status": "Paid"
+    },
+    {
+      "Id": "INV-2026-0042",
+      "DocNumber": "INV-2026-0042",
+      "TxnDate": "2026-05-03",
+      "DueDate": "2026-06-03",
+      "CustomerRef": {"value": "2", "name": "Cobalt Systems Ltd"},
+      "Line": [
+        {
+          "Amount": 5640.00,
+          "Description": "Q2 FY2026 compute usage — May billing cycle (mirrors Stripe ch_VLT002)",
+          "SalesItemLineDetail": {"ItemRef": {"name": "Compute Usage"}}
+        }
+      ],
+      "TotalAmt": 5640.00,
+      "Balance": 0.00,
+      "Status": "Paid"
+    },
+    {
+      "Id": "INV-2026-0043",
+      "DocNumber": "INV-2026-0043",
+      "TxnDate": "2026-04-28",
+      "DueDate": "2026-05-28",
+      "CustomerRef": {"value": "3", "name": "Renwick & Associates"},
+      "Line": [
+        {
+          "Amount": 3100.00,
+          "Description": "Q2 FY2026 compute usage — April billing cycle (mirrors Stripe ch_VLT003)",
+          "SalesItemLineDetail": {"ItemRef": {"name": "Compute Usage"}}
+        }
+      ],
+      "TotalAmt": 3100.00,
+      "Balance": 0.00,
+      "Status": "Paid"
+    },
+    {
+      "Id": "INV-2026-0044",
+      "DocNumber": "INV-2026-0044",
+      "TxnDate": "2026-05-20",
+      "DueDate": "2026-06-20",
+      "CustomerRef": {"value": "4", "name": "Dunmore Capital Partners"},
+      "Line": [
+        {
+          "Amount": 11200.00,
+          "Description": "Q2 FY2026 compute usage — internal allocation (mirrors Stripe ch_VLT004)",
+          "SalesItemLineDetail": {"ItemRef": {"name": "Compute Usage"}}
+        }
+      ],
+      "TotalAmt": 11200.00,
+      "Balance": 0.00,
+      "Status": "Paid"
+    },
+    {
+      "Id": "INV-2026-0045",
+      "DocNumber": "INV-2026-0045",
+      "TxnDate": "2026-06-10",
+      "DueDate": "2026-07-10",
+      "CustomerRef": {"value": "5", "name": "Thornfield Technologies"},
+      "Line": [
+        {
+          "Amount": 13600.00,
+          "Description": "Q2 FY2026 compute usage — June billing cycle (mirrors Stripe ch_VLT005)",
+          "SalesItemLineDetail": {"ItemRef": {"name": "Compute Usage"}}
+        }
+      ],
+      "TotalAmt": 13600.00,
+      "Balance": 0.00,
+      "Status": "Paid"
+    }
+  ],
+  "vendors": [],
+  "items": [
+    {
+      "Id": "1",
+      "Name": "Compute Usage",
+      "Type": "Service",
+      "UnitPrice": 1.00,
+      "Active": true,
+      "Description": "Cloud compute usage — billed per dollar of metered consumption"
+    }
+  ],
+  "bills": [],
+  "payments": [],
+  "estimates": [],
+  "expenses": []
+}

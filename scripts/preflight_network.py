@@ -38,7 +38,9 @@ this file cannot drift from what `harbor run` will decide.
 from __future__ import annotations
 
 import argparse
+import os
 import importlib
+import re
 import sys
 import tomllib
 from pathlib import Path
@@ -324,6 +326,138 @@ def check(task_dir: Path, env_type: str) -> None:
         elif hosts:
             ok(f"{pfx}{len(hosts)} MCP sidecar host(s) reachable under "
                f"'{plan.agent_phase.network_mode.value}'")
+
+    check_isolation(task_dir, raw)
+
+
+# --------------------------------------------------------------------------
+# NETWORK ISOLATION
+#
+# Everything above asks whether HARBOR can enforce the task's policy. Since the
+# egress block landed, harbor is no longer where the policy lives: task.toml
+# stays network_mode = "public" precisely because that is the value that appends
+# no harbor overlay, and services/egress-proxy/overlay.yaml does the work one
+# layer down in compose.
+#
+# So the checks above can all pass while the run is still guaranteed to fail.
+# These two cover the ways that happens, and both of them fail LATE and
+# illegibly without a gate here -- after the environment image is built, which
+# is the expensive part.
+# --------------------------------------------------------------------------
+
+def _isolation_files(repo: Path) -> tuple[set[str], set[str]] | None:
+    """(allowlisted hosts, hosts exempt from the proxy), or None if no overlay.
+
+    Read out of the shipped config rather than restated, so widening the
+    allowlist or adding a NO_PROXY entry updates this check for free.
+    """
+    overlay = repo / "services" / "egress-proxy" / "overlay.yaml"
+    squid = repo / "services" / "egress-proxy" / "squid.conf"
+    if not overlay.is_file() or not squid.is_file():
+        return None
+    allowed: set[str] = set()
+    for line in squid.read_text().splitlines():
+        line = line.split("#", 1)[0].strip()
+        m = re.match(r"acl\s+\S+\s+dstdomain\s+(.+)$", line)
+        if m:
+            allowed.update(m.group(1).split())
+    no_proxy: set[str] = set()
+    m = re.search(r'^\s*NO_PROXY:\s*"([^"]*)"', overlay.read_text(), re.M)
+    if m:
+        no_proxy = {h.strip() for h in m.group(1).split(",") if h.strip()}
+    return allowed, no_proxy
+
+
+def _captures_access_log(repo: Path) -> bool:
+    """Does the overlay still carry the proxy's access log off the container?
+
+    Checked here rather than left to the test suite because the failure is
+    invisible at run time: a missing mount produces an audit that reports no
+    denials, which reads exactly like a clean run. The trial would be graded and
+    delivered on evidence that was never collected.
+    """
+    overlay = repo / "services" / "egress-proxy" / "overlay.yaml"
+    entrypoint = repo / "services" / "egress-proxy" / "entrypoint.sh"
+    if not overlay.is_file() or not entrypoint.is_file():
+        return False
+    return "/egress-out" in overlay.read_text() and "/egress-out" in entrypoint.read_text()
+
+
+def check_isolation(task_dir: Path, raw: dict) -> None:
+    if os.environ.get("NETWORK_ISOLATION_OFF"):
+        warn("network isolation OFF -- the agent phase runs on the open network",
+             "detect_internet_use.py is the only remaining defence and will "
+             "refuse the run if the model browsed")
+        return
+
+    repo = Path(__file__).resolve().parents[1]
+    files = _isolation_files(repo)
+    if files is None:
+        # run_task.sh refuses outright on a missing overlay; nothing to add.
+        return
+    allowed, no_proxy = files
+
+    # 1. Sidecars the proxy would deny -----------------------------------
+    #
+    # sidecar_hosts() above drops localhost and 127.0.0.1 and treats everything
+    # else as reachable, which was true when the only question was whether the
+    # compose bridge existed. Under isolation a host is reachable only if it
+    # never goes to the proxy (NO_PROXY) or is on the allowlist; anything else
+    # is a 403 that surfaces as an MCP tool that simply does not work.
+    denied = []
+    for srv in raw.get("environment", {}).get("mcp_servers", []) or []:
+        url = srv.get("url") or ""
+        if "://" not in url:
+            continue
+        host = url.split("://", 1)[1].split("/", 1)[0].split(":", 1)[0]
+        if host in no_proxy or host in allowed:
+            continue
+        denied.append(f"{srv.get('name', '?')} -> {host}")
+    if denied:
+        bad("MCP server host(s) the egress proxy will deny: " + "; ".join(denied),
+            "under isolation a host must be in overlay.yaml's NO_PROXY (stays on "
+            "the bridge) or in squid.conf's allowlist (goes out through the "
+            "proxy). Anything else gets a 403 and the tool silently does not work")
+    else:
+        ok("every MCP sidecar host is reachable under network isolation")
+
+    # 2. The CLI the agent phase cannot download -------------------------
+    #
+    # harbor's ClaudeCode.install() fetches it from downloads.claude.ai INSIDE
+    # the container, which the allowlist denies. The trial then dies in agent
+    # setup with an empty /logs/agent -- indistinguishable from an agent that
+    # ran and produced nothing.
+    agent = os.environ.get("AGENT") or "claude-code"
+    if agent != "claude-code":
+        return
+    dockerfile = task_dir / "environment" / "Dockerfile"
+    if not dockerfile.is_file():
+        return
+    body = dockerfile.read_text()
+    missing = []
+    if "downloads.claude.ai" not in body:
+        missing.append("the Claude Code CLI")
+    if "procps" not in body:
+        missing.append("procps (claude shells out to ps/pgrep to kill subtrees)")
+    if not _captures_access_log(repo):
+        bad("the egress overlay does not carry squid's access.log off the container",
+            "without it the run is audited on trajectory inference alone and "
+            "reports 'no denials' whether or not the block held. Restore the "
+            "/egress-out mount in services/egress-proxy/overlay.yaml and the tee "
+            "in entrypoint.sh")
+    else:
+        ok("the proxy's access log is captured per run (proof of denial)")
+
+    if missing:
+        bad(f"{dockerfile} does not pre-bake: " + ", ".join(missing),
+            "build time still has an open network, the agent phase does not. Add "
+            "to the Dockerfile:\n"
+            "          RUN apt-get update && apt-get install -y --no-install-recommends "
+            "curl procps && rm -rf /var/lib/apt/lists/*\n"
+            "          RUN curl -fsSL https://downloads.claude.ai/claude-code-releases/bootstrap.sh | bash \\\n"
+            "              && ln -sf /root/.local/bin/claude /usr/local/bin/claude && claude --version")
+    else:
+        ok("environment image pre-bakes the Claude Code CLI and procps")
 
 
 def main(argv=None) -> int:

@@ -1,0 +1,53 @@
+{
+ "notebooks": {
+  "nb_keelson": {
+   "nbid": "nb_keelson",
+   "name": "Returns and standards",
+   "color": "#8D6E63",
+   "description": "Standing papers of the records trust"
+  }
+ },
+ "notes": {
+  "kn-standard-3": {
+   "nid": "kn-standard-3",
+   "title": "District appropriation return: standard, third edition",
+   "content": "Keelson Maritime Records Trust. Standard for the district appropriation return.\nThird edition, in force from 1 August 2026. It replaces the second edition, which is\nkept for reference only and must not be worked from.\n\n1. What the return covers.\nThe return states the money Congress actually appropriated for work at light-stations,\nas printed in the annual report of the Light-House Board for a single fiscal year. The\nyear runs from 1 July 1899 to 30 June 1900 inclusive. An act approved on any day inside\nthose dates falls in the return. An act approved before 1 July 1899 does not, however\nrecently the report mentions the work or however plainly the money is still being spent.\n\n2. The page decides, not the schedule.\nWhere a line on the working schedule and the printed page disagree about a figure, the\npage is right and the line is wrong. Put the line right before anything is added up.\n\n3. The seven headings. Every line is filed under exactly one of them.\n   Appropriated by act, return year. The report states that a named act, approved inside\n     the year, appropriated the sum. Only lines under this heading are added into the\n     return total.\n   Appropriated by an earlier act. The report states that a sum was appropriated, but the\n     act it names was approved before the year began.\n   Estimated cost. The report says the work is estimated to cost the sum, or that it can\n     be built, established or done for the sum. An estimate is a forecast. No money has\n     been granted.\n   Appropriation requested. The Board recommends that an appropriation of the sum be\n     made, or asks that the sum be appropriated. A request is not a grant, and it stays a\n     request however many years it is renewed.\n   Cost limit stated. The report states a ceiling rather than a sum: the work can be done\n     at a cost not exceeding the figure, or the cost will not exceed it. A ceiling bounds\n     a price. It is not money in hand, even where the Board asks for that same amount in\n     the next sentence.\n   Light-vessel work. The sum was appropriated for a light-vessel, a relief vessel or a\n     tender rather than for a station on shore. These belong to the floating plant return\n     and are left out of this one even where the act falls inside the year.\n   Quantity, not money. The figure on the page is not money at all. Gallons, running feet,\n     tons, horsepower and plain lengths all read like money once somebody has keyed them\n     into a column headed amount, and several of them have been.\n\n4. Reading the wording.\nThe heading is decided by the verb, not by the size of the figure and not by where it\nsits in the paragraph. One paragraph can carry a grant, an estimate, a request and a\nceiling one after another. Read every figure together with the words around it.\n\n5. Renewed recommendations.\nWhere the report renews a recommendation made in an earlier annual report, and it says so\nin small type, the figure inside it is still only a request. Renewing it does not turn it\ninto money.\n\n6. Repeated sums.\nSeveral stations were given the same amount by the same act on the same day. Each station\nis its own appropriation. Do not collapse them into one line, and do not report the amount\nonce and move on.\n\n7. What the return has to state.\nThe total under the first heading; that total split by light-house district; and a bridge\nthat starts from every money figure printed on the pages and takes each heading out of it\nin turn until the total is reached.",
+   "notebook_id": "nb_keelson",
+   "tags": [
+    "standard",
+    "current"
+   ],
+   "is_pinned": true,
+   "is_archived": false,
+   "created_at": "2026-07-28T09:40",
+   "updated_at": "2026-08-01T09:00"
+  },
+  "kn-standard-2": {
+   "nid": "kn-standard-2",
+   "title": "District appropriation return: standard, second edition (superseded)",
+   "content": "Keelson Maritime Records Trust. Standard for the district appropriation return.\nSecond edition. SUPERSEDED by the third edition. Kept for reference only.\n\n1. The return covers every sum the annual report states was appropriated for light-house\nwork, whatever the date of the act that made it. The report is a record of standing\nappropriations as much as of new ones and the return has always read it that way.\n\n2. Work on light-vessels is returned here alongside work at stations. There is no\nseparate floating plant return.\n\n3. Five headings are used: appropriated, estimated, recommended, limit, and other.\n\n4. Quantities that have been keyed into the amount column are struck out by inspection\nbefore the total is taken.",
+   "notebook_id": "nb_keelson",
+   "tags": [
+    "standard",
+    "superseded"
+   ],
+   "is_pinned": false,
+   "is_archived": false,
+   "created_at": "2024-03-11T14:20",
+   "updated_at": "2026-07-28T09:41"
+  },
+  "kn-reading-room": {
+   "nid": "kn-reading-room",
+   "title": "Reading room booking, bound volumes",
+   "content": "Bound volumes are consulted at the table by the window. Volumes are not lent and are not rephotographed on request. Scans already held are the only copy the trust will get of any page.",
+   "notebook_id": "nb_keelson",
+   "tags": [
+    "office"
+   ],
+   "is_pinned": false,
+   "is_archived": false,
+   "created_at": "2026-05-02T11:00",
+   "updated_at": "2026-05-02T11:00"
+  }
+ }
+}

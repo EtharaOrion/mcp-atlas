@@ -51,7 +51,13 @@ def test_overlay_isolates_main(task_toml: Path):
         ["docker", "compose", "-f", str(compose), "-f", str(OVERLAY), "config", "--format", "json"],
         capture_output=True,
         text=True,
-        env={"PATH": "/usr/bin:/bin:/usr/local/bin", "SCORING_DIR": str(REPO / "services" / "scoring")},
+        env={"PATH": "/usr/bin:/bin:/usr/local/bin",
+             "SCORING_DIR": str(REPO / "services" / "scoring"),
+             # Supplied by harbor per trial (compose_env.py::legacy_log_mount_env_vars);
+             # the overlay declares it `:?` so an unmounted proxy log fails at
+             # `compose up` instead of silently producing an empty audit. Any
+             # path works here -- nothing is started.
+             "HOST_AGENT_LOGS_PATH": "/tmp/egress-out-test"},
     )
     if proc.returncode != 0:
         pytest.fail(f"compose config failed:\n{proc.stderr}")
@@ -76,9 +82,64 @@ def test_overlay_isolates_main(task_toml: Path):
         "the proxy must span both networks; it is the only route out"
     )
 
+    # The proxy's access log is the only per-run evidence that the block was
+    # live. It has to leave the container while the container still exists:
+    # harbor tears the project down before run_task.sh reaches stage_netaudit,
+    # so `docker logs` is not available to the audit at any later point.
+    targets = {v.get("target") for v in (proxy.get("volumes") or [])}
+    assert "/egress-out" in targets, (
+        "the proxy does not mount /egress-out, so its access log dies with the "
+        "container and the audit degrades to trajectory inference with no "
+        "ground truth. See services/egress-proxy/overlay.yaml."
+    )
+
     # The sidecars are the reason no-network was unusable. Keep them reachable.
     if "light-servers" in services:
         assert set(services["light-servers"].get("networks") or {}) == {"default"}
+
+
+def test_harbor_still_exports_the_var_the_overlay_mounts():
+    """The overlay's one dependency on harbor internals.
+
+    services/egress-proxy/overlay.yaml mounts ${HOST_AGENT_LOGS_PATH} to carry
+    squid's access log off the container, and that variable is not ours -- harbor
+    derives it in compose_env.py::legacy_log_mount_env_vars from the bind mount
+    it makes at /logs/agent, by taking the target's BASENAME and looking it up in
+    a private suffix table.
+
+    Nothing upstream promises to keep doing that. If harbor renames the mount,
+    drops the legacy export, or changes the table, the overlay's `:?` turns every
+    run into a `compose up` failure -- correct, but the message would point at our
+    file rather than at the harbor change that caused it. This test names the real
+    cause up front.
+
+    Skipped, not failed, when harbor is not importable from this interpreter: the
+    repo venv and harbor's pipx venv have incompatible pydantic_core builds, the
+    same condition preflight_network.py degrades on. Run it under harbor's python
+    to actually exercise the assertions:
+
+        $(dirname $(readlink -f $(command -v harbor)))/python -m pytest ...
+    """
+    pytest.importorskip("harbor", reason="harbor not importable from this interpreter")
+    from harbor.environments.docker.compose_env import (
+        _LEGACY_LOG_MOUNT_SUFFIXES,
+        legacy_log_mount_env_vars,
+    )
+
+    assert _LEGACY_LOG_MOUNT_SUFFIXES.get("agent") == "AGENT_LOGS", (
+        "harbor no longer maps an /logs/agent mount to the AGENT_LOGS legacy name; "
+        f"got {_LEGACY_LOG_MOUNT_SUFFIXES!r}"
+    )
+
+    env = legacy_log_mount_env_vars(
+        [{"type": "bind", "source": "/host/trial/agent", "target": "/logs/agent"}],
+        host_value="source",
+    )
+    assert env.get("HOST_AGENT_LOGS_PATH") == "/host/trial/agent", (
+        "harbor stopped exporting HOST_AGENT_LOGS_PATH as the HOST side of the "
+        f"agent log mount; got {env!r}. services/egress-proxy/overlay.yaml "
+        "interpolates that name and will fail at `compose up`."
+    )
 
 
 @pytest.mark.parametrize("task_toml", BUNDLES, ids=_ids(BUNDLES))

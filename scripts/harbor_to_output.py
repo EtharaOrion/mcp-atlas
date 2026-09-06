@@ -793,6 +793,17 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     _flatten_artifacts(run_dir)
     if _copy(stream_path, run_dir / "logs" / "agent-stream.jsonl"):
         (run_dir / "logs" / "agent-stream.txt").unlink(missing_ok=True)
+    # Squid's access log for this attempt: what the agent actually tried to
+    # reach and what the proxy actually refused. services/egress-proxy/
+    # entrypoint.sh tees it into the trial's own agent-log dir, which is why it
+    # is read from `ag` here rather than collected with `docker logs` -- by the
+    # time anything downstream runs, the proxy container is gone.
+    #
+    # Absent for runs made with NETWORK_ISOLATION_OFF=1, and for trees reshaped
+    # from before the capture landed. Both are legitimate, so this is a plain
+    # _copy whose False return is not an error; stage_netaudit degrades to the
+    # trajectory-only audit when the file does not arrive.
+    _copy(ag / "egress-access.log", run_dir / "logs" / "egress-access.log")
     _copy(ver / "ctrf.json", run_dir / "logs" / "verifier-ctrf.json")
     _copy(ver / "reward.txt", run_dir / "logs" / "verifier-reward.txt")
     _copy(ver / "test-stdout.txt", run_dir / "logs" / "verifier-stdout.txt")
