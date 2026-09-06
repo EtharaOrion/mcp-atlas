@@ -55,17 +55,85 @@ def _load_criteria(rubric_path: Path) -> list[dict]:
     )
 
 
-def _render_trajectory(traj: dict) -> str:
-    parts: list[str] = []
-    for step in traj.get("steps", []):
+# Overall evidence ceiling for one judge prompt, in CHARACTERS.
+#
+# Budget in chars, calibrate against the WORST-CASE chars/token ratio. The ratio
+# is not constant: these steps are json.dumps output and run ~1.8 chars/token,
+# where prose runs ~3.9. Sizing against the average silently overruns on exactly
+# the JSON-dense trajectories that need the room.
+#
+# Measured over 16 recorded trials: median rendered 213,693 chars, max 278,543
+# (~119K and ~155K tokens at 1.8). 300,000 clears the worst observed trial and
+# lands near 167K tokens, leaving margin under a 200K window for the system
+# prompt, the rubric (76 criteria on some bundles) and the reply.
+_EVIDENCE_BUDGET_CHARS = int(os.environ.get("JUDGE_EVIDENCE_BUDGET_CHARS", "300000"))
+
+
+def _render_trajectory(traj: dict, budget: int | None = None) -> str:
+    """Render a trajectory for the judge, whole steps first, budget last.
+
+    There used to be three per-item caps here -- 400 chars of arguments, 400 of
+    response, 2000 of final message. Per-item clipping is uniformly destructive:
+    a 30-char response and a 30KB schedule table were both cut to 400, so the
+    tool results carrying the actual evidence (the figures read, the rows
+    written) were reduced to their opening fragment on every step. Measured, the
+    judge was seeing roughly a tenth of the trajectory, and the part it saw was
+    the beginning -- where an agent reads sources and reasons well, before the
+    late-stage failures the negative criteria are written to catch. Across four
+    bundles not one negative criterion ever fired.
+
+    So: render steps intact and spend a single overall budget instead. When the
+    budget binds, drop whole steps from the middle rather than truncating one --
+    a half-rendered tool call is evidence of nothing -- and always keep the
+    final message complete, since every `evaluation_target: final_answer`
+    criterion is graded on it (measured finals here ran 3,265 and 5,739 chars,
+    so the old 2,000 cap was already cutting half of them away).
+    """
+    budget = _EVIDENCE_BUDGET_CHARS if budget is None else budget
+    steps = traj.get("steps", []) or []
+
+    rendered: list[str] = []
+    for step in steps:
         args = step.get("arguments", {})
         resp = step.get("response", "")
-        args_s = json.dumps(args)[:400] if not isinstance(args, str) else args[:400]
-        resp_s = json.dumps(resp)[:400] if not isinstance(resp, str) else str(resp)[:400]
-        parts.append(f"tool={step.get('tool')} args={args_s} → {resp_s}")
-    final = traj.get("final_message", "")
-    if final:
-        parts.append(f"Final: {final[:2000]}")
+        args_s = json.dumps(args) if not isinstance(args, str) else args
+        resp_s = json.dumps(resp) if not isinstance(resp, str) else str(resp)
+        rendered.append(f"tool={step.get('tool')} args={args_s} → {resp_s}")
+
+    final = traj.get("final_message", "") or ""
+    tail = f"Final: {final}" if final else ""
+
+    # The final message is not negotiable; the steps share what is left.
+    step_budget = max(0, budget - len(tail))
+    total = sum(len(p) + 1 for p in rendered)
+
+    if total > step_budget and rendered:
+        # Keep the opening (how the agent framed the task) and the closing (what
+        # it actually did), and drop from the middle, which is where repetitive
+        # tool churn lives. Dropping the tail instead would remove precisely the
+        # late-run evidence this change exists to expose.
+        head: list[str] = []
+        tail_steps: list[str] = []
+        used = 0
+        i, j = 0, len(rendered) - 1
+        take_head = True
+        while i <= j:
+            cand = rendered[i] if take_head else rendered[j]
+            if used + len(cand) + 1 > step_budget:
+                break
+            used += len(cand) + 1
+            if take_head:
+                head.append(cand); i += 1
+            else:
+                tail_steps.append(cand); j -= 1
+            take_head = not take_head
+        dropped = len(rendered) - len(head) - len(tail_steps)
+        rendered = head + (
+            [f"...[{dropped} of {len(steps)} steps omitted: evidence budget "
+             f"{budget:,} chars exceeded]"] if dropped else []
+        ) + list(reversed(tail_steps))
+
+    parts = rendered + ([tail] if tail else [])
     return "\n".join(parts)
 
 
@@ -798,8 +866,41 @@ def main() -> None:
     traj_ctx = _render_trajectory(traj)
     final_ctx = traj.get("final_message", "")
 
+    # Say how much evidence actually went in. Without this the only way to know
+    # the judge was reading a fraction of the trajectory was to diff its input
+    # token count against the log on disk -- which is how the 10k cap survived
+    # as long as it did. ~1.8 chars/token is the worst-case (JSON-dense) ratio;
+    # prose runs nearer 3.9, so this over-estimates rather than surprising us.
+    _n_steps = len(traj.get("steps") or [])
+    _omitted = "...[" in traj_ctx and "steps omitted" in traj_ctx
+    print(f"[judge] evidence {len(traj_ctx):,} chars (~{len(traj_ctx)//1.8:,.0f} tok "
+          f"worst-case) over {_n_steps} steps, budget {_EVIDENCE_BUDGET_CHARS:,}"
+          + ("  ** BUDGET BOUND: steps omitted **" if _omitted else ""))
+
     print(f"Grading {len(criteria)} criteria with {a.model}")
     results = asyncio.run(_run_judge(criteria, traj_ctx, final_ctx, a.model))
+
+    # A judge that answered but whose reply would not parse must not leave a
+    # breakdown of silent falses behind. wraysbury run 5 billed 2,937 output
+    # tokens, wrote no verdicts, and published reward 0 with the best Channel A
+    # of its eight trials -- the only trace was the token bill. Fail loudly and
+    # write nothing, so the reader records the trial as UNSCORED rather than as
+    # an agent that satisfied nothing.
+    if not results:
+        marker = _out_path.parent / "rubric_judge_failed.txt"
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        marker.write_text(
+            f"judge produced no parseable verdicts\n"
+            f"model: {a.model}\n"
+            f"criteria: {len(criteria)}\n"
+            f"evidence chars: {len(traj_ctx)}\n"
+            f"steps: {_n_steps}\n"
+            f"budget bound: {_omitted}\n"
+        )
+        print(f"ERROR: judge returned no parseable verdicts for {len(criteria)} "
+              f"criteria; rubric channel is UNSCORED. See {marker}", file=sys.stderr)
+        raise SystemExit(1)
+
     doc = _compute_scores(criteria, results)
 
     _out_path.parent.mkdir(parents=True, exist_ok=True)

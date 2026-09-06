@@ -599,8 +599,27 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         traj_w = tw_src["traj_tests"].get("weight", 0)
     if rubric_w == 0 and tw_src.get("rubric"):
         rubric_w = tw_src["rubric"].get("weight", 0)
-    if rubric_val is None and rubric_w > 0:
-        rubric_val = 0.0
+    # rubric_val is None when the judge produced no score: it crashed, its reply
+    # would not parse, or it refused an empty trajectory. That is UNSCORED, not
+    # zero. Coercing it here published "failed every criterion" for runs nobody
+    # graded -- wraysbury run 5 billed 2,937 judge output tokens, wrote no
+    # rubric_breakdown.json, and published reward 0 while holding the best
+    # Channel A of its eight trials (25.76%), dragging the job average from ~54
+    # to 47.5.
+    #
+    # Leaving it None routes the component through the ledger's own `unscored`
+    # path, which drops it from both the numerator and the denominator -- the
+    # run is then scored on the channels that did measure something, and the
+    # gap is visible instead of silently counted against the agent.
+    #
+    # An all-empty-justification breakdown is the same thing wearing a file:
+    # the judge wrote rows but cast no verdicts, so treat it as unscored too.
+    if rubric_val is not None and rubric_rows:
+        _judged = [r for r in rubric_rows
+                   if str(r.get("justification") or r.get("rationale") or "").strip()]
+        if not _judged:
+            rubric_val = None
+            rubric_rows = []
 
     if not traj_rows and ctrf is not None:
         _fresh = _build_detail(ctrf, weights, breakdown, traj_val, rubric_val, traj_w, rubric_w)
