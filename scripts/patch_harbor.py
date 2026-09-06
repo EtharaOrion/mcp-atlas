@@ -148,6 +148,27 @@ REPLACEMENT_PREBAKE_AGENT = (
 
 ALREADY_PATCHED_MARKER_PREBAKE = "harbor-patch: claude pre-baked"
 
+# Harbor has its own early return at the top of install():
+#
+#     if await self._installed_claude_satisfies_version(environment):
+#         return
+#
+# Verified present in 0.13.2, 0.20.0 and 0.21.0 -- it is NOT new, so its
+# presence alone does not mean the guard below is unnecessary. This patch was
+# written anyway, which implies harbor's check does not fire in this harness
+# (its probe runs through environment.exec, not exec_as_agent, so a claude that
+# is pre-baked for one user can be invisible to the other).
+#
+# So this constant is used only as a FALLBACK: it is consulted when the anchors
+# are gone, to distinguish "harbor restructured and still has some protection"
+# from "no protection at all". Where the anchors still match, the patch is
+# applied as before. Order matters -- see the prebake block in main().
+#
+# What changed in 0.21.0: the inline `apk add --no-cache curl bash nodejs npm
+# procps` root block that ANCHOR_PREBAKE_ROOT targets was replaced by a call to
+# ensure_system_dependencies(), so that anchor can never match again there.
+NATIVE_PREBAKE_GUARD = "_installed_claude_satisfies_version"
+
 
 ANCHOR_FALLBACK = """\
         CliFlag(
@@ -214,6 +235,18 @@ def find_harbor_trial() -> Path:
 
 
 def main() -> None:
+    # --audit reports every patch's status without writing anything, and always
+    # exits 0. Use it after a harbor upgrade: a normal run stops at the first
+    # unapplicable patch, so drift is discovered one patch at a time.
+    audit = "--audit" in sys.argv or "--check" in sys.argv
+
+    # Anchors that could not be applied. Collected rather than exited on, so one
+    # invocation reports all of them. Same reasoning as the ARG_MAX warning
+    # below, extended to the rest: run_task.sh calls this unconditionally under
+    # `set -e`, so an early sys.exit(1) blocks every stage of every run AND
+    # hides whatever else drifted.
+    failures: list[str] = []
+
     target = find_harbor_claude_code()
     text = target.read_text(encoding="utf-8")
     changed = False
@@ -222,11 +255,10 @@ def main() -> None:
         print(f"[patch_harbor] Thinking flags: already patched")
     elif ANCHOR not in text:
         print(
-            f"[patch_harbor] ERROR: Anchor for thinking flags not found in {target}\n"
-            "Harbor may have been updated and this patch needs revision.",
+            f"[patch_harbor] Thinking flags: NOT applied -- anchor not found in {target}",
             file=sys.stderr,
         )
-        sys.exit(1)
+        failures.append(f"thinking flags  ({target.name})")
     else:
         text = text.replace(ANCHOR, ANCHOR + PATCH, 1)
         changed = True
@@ -270,11 +302,10 @@ def main() -> None:
         print(f"[patch_harbor] Fallback model removal: already done")
     elif ANCHOR_FALLBACK not in text:
         print(
-            f"[patch_harbor] ERROR: Anchor for fallback_model removal not found in {target}\n"
-            "Harbor may have been updated and this patch needs revision.",
+            f"[patch_harbor] Fallback model removal: NOT applied -- anchor not found in {target}",
             file=sys.stderr,
         )
-        sys.exit(1)
+        failures.append(f"fallback_model removal  ({target.name})")
     else:
         text = text.replace(ANCHOR_FALLBACK, "", 1)
         changed = True
@@ -282,26 +313,48 @@ def main() -> None:
 
     if ALREADY_PATCHED_MARKER_PREBAKE in text:
         print(f"[patch_harbor] Pre-baked CLI guard: already applied")
-    elif ANCHOR_PREBAKE_ROOT not in text or ANCHOR_PREBAKE_AGENT not in text:
-        print(
-            f"[patch_harbor] ERROR: Anchor for pre-baked CLI guard not found in {target}\n"
-            "Harbor may have updated and this patch needs revision.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-    else:
+    elif ANCHOR_PREBAKE_ROOT in text and ANCHOR_PREBAKE_AGENT in text:
         text = text.replace(ANCHOR_PREBAKE_ROOT, REPLACEMENT_PREBAKE_ROOT, 1)
         text = text.replace(ANCHOR_PREBAKE_AGENT, REPLACEMENT_PREBAKE_AGENT, 1)
         changed = True
         print(f"[patch_harbor] Pre-baked CLI guard: applied")
+    elif NATIVE_PREBAKE_GUARD in text:
+        # Anchors gone (harbor >= 0.21.0 restructured install()), but harbor's
+        # own _installed_claude_satisfies_version early return is still there.
+        # Non-fatal: blocking every run over a patch that has no place left to
+        # apply is worse than proceeding on harbor's own protection. Loud
+        # because that protection is not identical -- harbor probes via
+        # environment.exec, so if a run now fails during agent setup trying to
+        # reach the network, this line is the first place to look.
+        print(
+            f"[patch_harbor] Pre-baked CLI guard: NOT applied -- anchors gone from {target.name};\n"
+            "  relying on harbor's own _installed_claude_satisfies_version early return.\n"
+            "  If agent setup starts failing on network access, re-anchor this patch.",
+            file=sys.stderr,
+        )
+    else:
+        print(
+            f"[patch_harbor] Pre-baked CLI guard: NOT applied -- anchor not found in {target}",
+            file=sys.stderr,
+        )
+        failures.append(f"pre-baked CLI guard  ({target.name})")
 
-    if changed:
+    if changed and not audit:
         target.write_text(text, encoding="utf-8")
         print(f"[patch_harbor] Written: {target}")
+    elif changed:
+        print(f"[patch_harbor] Would write (audit): {target}")
     else:
         print(f"[patch_harbor] Nothing to do: {target}")
 
-    trial = find_harbor_trial()
+    # A missing trial.py is itself drift worth reporting, not a traceback.
+    try:
+        trial = find_harbor_trial()
+    except RuntimeError as exc:
+        print(f"[patch_harbor] trial.py: NOT found -- {exc}", file=sys.stderr)
+        failures.append("trial.py not found (collect hook + JUDGE_MODEL inject unapplied)")
+        _report(failures, audit)
+        return
     trial_text = trial.read_text(encoding="utf-8")
     trial_changed = False
 
@@ -309,11 +362,10 @@ def main() -> None:
         print(f"[patch_harbor] Collect hook: already applied")
     elif ANCHOR_COLLECT not in trial_text:
         print(
-            f"[patch_harbor] ERROR: Anchor for collect hook not found in {trial}\n"
-            "Harbor may have been updated and this patch needs revision.",
+            f"[patch_harbor] Collect hook: NOT applied -- anchor not found in {trial}",
             file=sys.stderr,
         )
-        sys.exit(1)
+        failures.append(f"collect hook  ({trial.name})")
     else:
         trial_text = trial_text.replace(ANCHOR_COLLECT, REPLACEMENT_COLLECT, 1)
         trial_changed = True
@@ -323,20 +375,49 @@ def main() -> None:
         print(f"[patch_harbor] JUDGE_MODEL inject: already applied")
     elif ANCHOR_JUDGE_MODEL_1 not in trial_text:
         print(
-            f"[patch_harbor] ERROR: Anchor for JUDGE_MODEL inject not found in {trial}\n"
-            "Harbor may have been updated and this patch needs revision.",
+            f"[patch_harbor] JUDGE_MODEL inject: NOT applied -- anchor not found in {trial}",
             file=sys.stderr,
         )
-        sys.exit(1)
+        failures.append(f"JUDGE_MODEL inject  ({trial.name})")
     else:
         trial_text = trial_text.replace(ANCHOR_JUDGE_MODEL_1, REPLACEMENT_JUDGE_MODEL_1, 1)
         trial_text = trial_text.replace(ANCHOR_JUDGE_MODEL_2, REPLACEMENT_JUDGE_MODEL_2, 1)
         trial_changed = True
         print(f"[patch_harbor] JUDGE_MODEL inject: applied")
 
-    if trial_changed:
+    if trial_changed and not audit:
         trial.write_text(trial_text, encoding="utf-8")
         print(f"[patch_harbor] Written: {trial}")
+    elif trial_changed:
+        print(f"[patch_harbor] Would write (audit): {trial}")
+
+    _report(failures, audit)
+
+
+def _report(failures: list[str], audit: bool) -> None:
+    """Print one consolidated verdict and set the exit code.
+
+    Every patch is attempted before this runs, so a harbor upgrade yields the
+    full list of drifted anchors in one go instead of one per invocation.
+    """
+    if not failures:
+        print("[patch_harbor] All patches accounted for.")
+        return
+
+    print(f"\n[patch_harbor] ---- {len(failures)} patch(es) could not be applied ----",
+          file=sys.stderr)
+    for name in failures:
+        print(f"  MISS  {name}", file=sys.stderr)
+    print(
+        "\n  Harbor's source has drifted from these anchors -- most likely it was\n"
+        "  upgraded. For each one, either re-anchor it against the new source, or\n"
+        "  confirm harbor now provides the behaviour natively and detect that\n"
+        "  instead (see NATIVE_PREBAKE_GUARD for the worked example).\n"
+        "  Re-run with --audit to re-check without writing.",
+        file=sys.stderr,
+    )
+    if not audit:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
