@@ -773,7 +773,14 @@ def main() -> None:
     routing_error = _preflight(a.model)
     if routing_error:
         print(routing_error, file=sys.stderr)
-        sys.exit(2)
+        _out_path.parent.mkdir(parents=True, exist_ok=True)
+        _out_path.write_text(
+            json.dumps(
+                {"score": 0.0, "rc": 0.0, "rb": 0.0, "rubric_passed": False, "per_criterion": []},
+                indent=2,
+            )
+        )
+        sys.exit(0)
 
     criteria = _load_criteria(rubric_path)
     if not criteria:
