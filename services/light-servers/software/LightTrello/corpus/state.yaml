@@ -119,67 +119,103 @@ cards:
   labels:
   - partnerships
 boards:
-- id: board_001
-  name: Heritage Woodworks Projects
-  desc: Main project board
+- id: 60b1000000000000000000b1
+  name: Historic Homes Tour 2026
+  desc: Planning board for the spring Historic Homes Tour.
   closed: false
-  url: https://trello.com/b/abc123/heritage-woodworks-projects
+  id_organization: 5e0a000000000000000000f1
+  url: https://trello.com/b/shpa26t/historic-homes-tour-2026
+  member_ids:
+  - 5f1a000000000000000000a1
+  - 5f1a000000000000000000a2
+  prefs:
+    permissionLevel: private
+- id: 60b1000000000000000000b2
+  name: Member Events 2026
+  desc: Lecture series, member table, and post-event follow-up.
+  closed: false
+  id_organization: 5e0a000000000000000000f1
+  url: https://trello.com/b/shpa26m/member-events-2026
+  member_ids:
+  - 5f1a000000000000000000a1
+  - 5f1a000000000000000000a2
   prefs:
     permissionLevel: private
 lists:
-- id: trlist_001
-  board_id: board_001
+- id: 61c1000000000000000000c1
+  id_board: 60b1000000000000000000b1
   name: To Do
   closed: false
   pos: 1
-- id: trlist_002
-  board_id: board_001
+- id: 61c1000000000000000000c2
+  id_board: 60b1000000000000000000b1
   name: In Progress
   closed: false
   pos: 2
-- id: trlist_003
-  board_id: board_001
+- id: 61c1000000000000000000c3
+  id_board: 60b1000000000000000000b1
+  name: Done
+  closed: false
+  pos: 3
+- id: 61c1000000000000000000c4
+  id_board: 60b1000000000000000000b2
+  name: To Do
+  closed: false
+  pos: 1
+- id: 61c1000000000000000000c5
+  id_board: 60b1000000000000000000b2
+  name: In Progress
+  closed: false
+  pos: 2
+- id: 61c1000000000000000000c6
+  id_board: 60b1000000000000000000b2
   name: Done
   closed: false
   pos: 3
 members:
-- id: trmem_001
-  fullName: James Ashcroft
-  username: jamesashcroft
-  email: james@ashcroftwoodworks.com
+- id: 5f1a000000000000000000a1
+  fullName: Josephine Halloway
+  username: josephinehalloway
+  email: josephine.halloway@shpa-savannah.org
+- id: 5f1a000000000000000000a2
+  fullName: Amos Jeremiah
+  username: amosjeremiah
+  email: amos.jeremiah@shpa-savannah.org
 checklists:
 - id: cl_checklist01
   id_card: 62d1000000000000000000d1
-  name: Acceptance Criteria
+  id_board: 60b1000000000000000000b1
+  name: Owner sign-off
   pos: 1000
   check_items:
   - id: ci_0001
     id_checklist: cl_checklist01
-    name: Unit tests passing
+    name: Habersham Street house confirmed
     state: complete
     pos: 1000
   - id: ci_0002
     id_checklist: cl_checklist01
-    name: Code review approved
-    state: incomplete
+    name: Jones Street pair confirmed
+    state: complete
     pos: 2000
   - id: ci_0003
     id_checklist: cl_checklist01
-    name: Documentation updated
-    state: incomplete
+    name: Access times agreed with each owner
+    state: complete
     pos: 3000
 - id: cl_checklist02
   id_card: 62d1000000000000000000d2
-  name: Launch Checklist
+  id_board: 60b1000000000000000000b1
+  name: Booklet run
   pos: 1000
   check_items:
   - id: ci_0004
     id_checklist: cl_checklist02
-    name: Staging environment tested
+    name: Proof approved
     state: complete
     pos: 1000
   - id: ci_0005
     id_checklist: cl_checklist02
-    name: Rollback plan documented
-    state: incomplete
+    name: Full run delivered
+    state: complete
     pos: 2000

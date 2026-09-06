@@ -66,4 +66,10 @@ app.listen(config.port, () => {
   logger.info(`MCP Evaluation Server listening on port ${config.port}`)
   logger.info(`LLM Base URL: ${config.llmBaseUrl}`)
   logger.info(`MCP Sandbox URL: ${config.mcpSandboxUrl}`)
+  // Say which sink is active, so "there is no log file" is never a mystery.
+  logger.info(
+    logger.fileLoggingEnabled
+      ? 'Log file: on (HARNESS_LOG_FILE set) -- writing to logs/'
+      : 'Log file: off -- console only. Set HARNESS_LOG_FILE=1 to write logs/server_<ts>.log'
+  )
 })

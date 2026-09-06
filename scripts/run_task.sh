@@ -69,6 +69,10 @@ SLUG="$(basename "$TASK")"
 AGENT="${AGENT:-claude-code}"
 if [ "${CC_MODE:-}" = "zbridge" ]; then
   MODEL="${MODEL:-claude-3-5-sonnet-latest}"
+elif [ "${CC_MODE:-}" = "zai" ]; then
+  # z.ai's Anthropic-native endpoint takes the model name verbatim, so there is
+  # no alias table to route through the way zbridge needs one.
+  MODEL="${MODEL:-glm-5.3}"
 else
   MODEL="${MODEL:-claude-opus-5}"
 fi
@@ -218,6 +222,18 @@ resolve_auth() {
 check_credentials() {
   case "$STAGE" in reshape|finance) return 0 ;; esac
   local fail=0
+
+  if [ "${CC_MODE:-}" = "zai" ]; then
+    # No bridge secret: nothing local sits in front of the model, so the z.ai
+    # key is the only credential involved.
+    if [ -z "${ZB_ZAI_API_KEY:-}" ]; then
+      echo "[run_task] ERROR: CC_MODE=zai but ZB_ZAI_API_KEY is not set" >&2
+      echo "[run_task]   Add ZB_ZAI_API_KEY=<your-z.ai-key> to harness/.env" >&2
+      fail=1
+    else
+      echo "[run_task] zai: ZB_ZAI_API_KEY OK"
+    fi
+  fi
 
   if [ "${CC_MODE:-}" = "zbridge" ]; then
     if [ -z "${ZB_ZAI_API_KEY:-}" ]; then
@@ -473,6 +489,7 @@ stage_harbor() {
   # container (empty values are dropped, so a failed proxy start is a no-op).
   ensure_cc_bridge
   [ "${CC_MODE:-}" = "zbridge" ] && ensure_zbridge
+  [ "${CC_MODE:-}" = "zai" ] && route_agent_to_zai
   ensure_bundle_headroom
   route_agent_through_proxy
   local args=(run -y --path "$TASK" --agent "$AGENT" --jobs-dir "$OUTPUT_DIR" --job-name "$JOB" \
@@ -645,7 +662,13 @@ ensure_cc_bridge() {
 
 ensure_zbridge() {
   local port="${ZB_PORT:-8766}"
-  if curl -sf -m 2 "http://127.0.0.1:$port/health" >/dev/null 2>&1; then
+  # zbridge serves /healthz (bridge.py), NOT /health -- the adapter on :4001 and
+  # cc-bridge on :4000 are the ones with /health. Probing /health here 404s on a
+  # perfectly healthy bridge, so this guard never fired: every run fell through
+  # to the start branch and spawned a second uvicorn, which could not bind the
+  # port but did truncate the live bridge's log on its way out (the redirect
+  # below is `>`), destroying its startup warnings.
+  if curl -sf -m 2 "http://127.0.0.1:$port/healthz" >/dev/null 2>&1; then
     echo "[run_task] zbridge already running on :$port"
   else
     local zbridge_dir="$REPO/zbridge"
@@ -660,6 +683,7 @@ ensure_zbridge() {
       ZB_ZAI_API_KEY="$ZB_ZAI_API_KEY" \
       ZB_BRIDGE_SECRET="" \
       ZB_PORT="$port" ZB_HOST="127.0.0.1" \
+      ZB_THINKING_SIG_KEY="${ZB_THINKING_SIG_KEY:-yuji-harness-zbridge-v1}" \
       ZB_MODEL_ALIAS_JSON='{"claude-sonnet-4-6":"glm-5.3","claude-opus-4-7":"glm-5.3","claude-haiku-4-5-20251001":"glm-5.3","claude-haiku-4-5":"glm-5.3","claude-3-5-sonnet-latest":"glm-5.3","claude-3-opus-latest":"glm-5.3"}' \
       ZB_UPSTREAM_URL="${ZB_UPSTREAM_URL:-https://api.z.ai/api/coding/paas/v4/chat/completions}" \
       nohup uv run python -m zbridge --port "$port" --host 127.0.0.1 \
@@ -667,16 +691,39 @@ ensure_zbridge() {
     local i=0
     while [ $i -lt 15 ]; do
       sleep 1; i=$((i+1))
-      curl -sf -m 1 "http://127.0.0.1:$port/health" >/dev/null 2>&1 && {
+      curl -sf -m 1 "http://127.0.0.1:$port/healthz" >/dev/null 2>&1 && {
         echo "[run_task] zbridge ready on :$port"; break
       }
     done
-    curl -sf -m 1 "http://127.0.0.1:$port/health" >/dev/null 2>&1 || {
+    curl -sf -m 1 "http://127.0.0.1:$port/healthz" >/dev/null 2>&1 || {
       echo "[run_task] WARNING: zbridge did not come up in 15s; check $log_dir/zbridge.log" >&2
     }
   fi
   export ANTHROPIC_BASE_URL="http://host.docker.internal:$port"
   echo "[run_task] agent routed through zbridge ($ANTHROPIC_BASE_URL)"
+}
+
+# Point the agent straight at z.ai's Anthropic-protocol endpoint, with no
+# translation in the path.
+#
+# zbridge exists because /api/coding/paas/v4 speaks OpenAI, and an OpenAI
+# `usage` object has to be reshaped into Anthropic's input/cache_read/
+# cache_creation split before Claude Code can read it. /api/anthropic already
+# speaks Anthropic, so prompt and cache counts arrive correct with no
+# reconstruction -- which is why trajectories taken this way report real
+# total_cached_tokens instead of zero.
+#
+# The trade is billing, not correctness: /api/coding/paas/v4 is the coding-plan
+# subscription, /api/anthropic is the standard metered API. Same key, different
+# meter. Pick the mode that matches the budget you mean to spend.
+route_agent_to_zai() {
+  export ANTHROPIC_BASE_URL="${ZAI_ANTHROPIC_URL:-https://api.z.ai/api/anthropic}"
+  export ANTHROPIC_AUTH_TOKEN="$ZB_ZAI_API_KEY"
+  # Claude Code prefers ANTHROPIC_API_KEY when both are set, and a stale one
+  # from the operator's shell would silently bill the wrong account.
+  unset ANTHROPIC_API_KEY
+  echo "[run_task] agent routed direct to z.ai ($ANTHROPIC_BASE_URL)"
+  echo "[run_task]   no zbridge in the path -- usage/cache come back native"
 }
 
 ensure_bundle_headroom() {
@@ -694,8 +741,61 @@ ensure_bundle_headroom() {
   esac
 }
 
+# Headroom proxy dedicated to the zbridge chain: agent -> headroom -> zbridge
+# -> z.ai. The plain :8787 proxy forwards to api.anthropic.com, so pointing a
+# GLM run at it made Claude Code ask Anthropic for "glm-5.3" and die with
+# "issue with the selected model" before a single tool call -- zbridge sat idle
+# while the run burnt an hour. A second proxy on its own port, with
+# ANTHROPIC_TARGET_API_URL aimed at zbridge, keeps agent-path compression AND
+# the GLM routing. The :8787 proxy is left untouched (it may be serving an
+# interactive session).
+ensure_headroom_zbridge_chain() {
+  local zport="${ZB_PORT:-8766}"
+  local port="${ZB_HEADROOM_PROXY_PORT:-8788}"
+  if curl -sf -m 2 "http://127.0.0.1:$port/health" >/dev/null 2>&1; then
+    # stderr, not stdout: this function's stdout IS the port, captured by
+    # command substitution. A stray line here lands inside ANTHROPIC_BASE_URL
+    # and the agent dies with "API Error: Invalid URL".
+    echo "[run_task] headroom->zbridge proxy already running on :$port" >&2
+    echo "$port"; return 0
+  fi
+  command -v headroom >/dev/null 2>&1 || {
+    echo "[run_task] headroom CLI not on PATH; cannot chain to zbridge" >&2
+    echo ""; return 1
+  }
+  local log_dir="$REPO/zbridge/logs"; mkdir -p "$log_dir"
+  echo "[run_task] starting headroom->zbridge proxy on :$port" >&2
+  (ANTHROPIC_TARGET_API_URL="http://127.0.0.1:$zport" \
+     headroom proxy --port "$port" --host 127.0.0.1 \
+     >"$log_dir/headroom-zbridge.log" 2>&1 &)
+  local i=0
+  while [ $i -lt 20 ]; do
+    sleep 1; i=$((i+1))
+    curl -sf -m 1 "http://127.0.0.1:$port/health" >/dev/null 2>&1 && { echo "$port"; return 0; }
+  done
+  echo "[run_task] headroom->zbridge proxy did not come up; see $log_dir/headroom-zbridge.log" >&2
+  echo ""; return 1
+}
+
 route_agent_through_proxy() {
   [ "$AGENT_HEADROOM_ENABLED" = "true" ] || return 0
+
+  # zbridge mode: chain through a headroom proxy that forwards to zbridge, not
+  # the Anthropic-bound one. Without this the export below would silently
+  # overwrite the ANTHROPIC_BASE_URL ensure_zbridge just set.
+  if [ "${CC_MODE:-}" = "zbridge" ]; then
+    local chained; chained="$(ensure_headroom_zbridge_chain)" || true
+    if [ -z "$chained" ]; then
+      echo "[run_task] keeping direct zbridge route; agent-path compression OFF" >&2
+      return 0
+    fi
+    export ANTHROPIC_BASE_URL="http://host.docker.internal:$chained"
+    echo "[run_task] agent routed through headroom->zbridge ($ANTHROPIC_BASE_URL -> :${ZB_PORT:-8766})"
+    echo "[run_task]   NOTE: setting ANTHROPIC_BASE_URL makes harbor pin every model"
+    echo "[run_task]   alias (sonnet/opus/haiku/subagent) to $MODEL -- claude_code.py:1358."
+    return 0
+  fi
+
   if ! curl -sf -m 3 "http://127.0.0.1:$HEADROOM_PROXY_PORT/health" >/dev/null 2>&1; then
     echo "[run_task] no headroom proxy on :$HEADROOM_PROXY_PORT; running direct" >&2
     echo "[run_task]   start one with: headroom proxy --port $HEADROOM_PROXY_PORT" >&2
@@ -727,6 +827,13 @@ network_isolation_overlay() {
   # Both of these point the agent at host.docker.internal, which an internal
   # network has no route to. Failing here is the whole point: the alternative is
   # an agent phase that dies on its first model call and reads like an outage.
+  if [ "${CC_MODE:-}" = "zai" ]; then
+    echo "[run_task] REFUSING: CC_MODE=zai needs api.z.ai, which the egress" >&2
+    echo "[run_task]   allowlist does not carry (squid.conf allows api.anthropic.com" >&2
+    echo "[run_task]   only). Set NETWORK_ISOLATION_OFF=1, or add api.z.ai to" >&2
+    echo "[run_task]   services/egress-proxy/squid.conf if it belongs there." >&2
+    exit 2
+  fi
   if [ "${CC_MODE:-}" = "zbridge" ] || [ "${AGENT_HEADROOM_ENABLED:-false}" = "true" ]; then
     echo "[run_task] REFUSING: network isolation cannot coexist with a host-side proxy." >&2
     echo "[run_task]   CC_MODE=${CC_MODE:-unset} AGENT_HEADROOM_ENABLED=${AGENT_HEADROOM_ENABLED:-unset}" >&2

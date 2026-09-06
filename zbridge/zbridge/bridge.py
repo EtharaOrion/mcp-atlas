@@ -36,6 +36,7 @@ from .translate import (
     TranslationError,
     anthropic_to_glm_request,
     glm_to_anthropic_response,
+    map_usage,
 )
 
 _LOG = logging.getLogger("zbridge")
@@ -277,7 +278,13 @@ async def _forward_stream_passthrough(
     api_key = key_provider.get()
 
     async def gen():
-        translator = SseTranslator(model=cfg.default_model, thinking_sig_key=cfg.thinking_sig_key)
+        translator = SseTranslator(
+            model=cfg.default_model,
+            thinking_sig_key=cfg.thinking_sig_key,
+            usage_mapper=lambda u: map_usage(
+                u, cfg.cache_write_attribution, cfg.cache_block_tokens
+            ),
+        )
         try:
             async with client.stream(
                 "POST", cfg.upstream_url,
@@ -423,6 +430,9 @@ async def _forward_stream_buffered(
             translator = SseTranslator(
                 model=cfg.default_model,
                 thinking_sig_key=cfg.thinking_sig_key,
+                usage_mapper=lambda u: map_usage(
+                    u, cfg.cache_write_attribution, cfg.cache_block_tokens
+                ),
             )
             for out in translator.feed(buffered):
                 if tee is not None:

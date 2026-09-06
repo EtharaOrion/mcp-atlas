@@ -55,6 +55,12 @@ def anthropic_to_glm_request(
 
     if "stream" in body:
         out["stream"] = bool(body["stream"])
+        if out["stream"]:
+            # OpenAI-compatible endpoints omit `usage` entirely from a streamed
+            # response unless this is asked for. Without it the terminal chunk
+            # carries no prompt/cached counts, so every streamed turn reports
+            # input_tokens=0 and cache_read_input_tokens=0 downstream.
+            out["stream_options"] = {"include_usage": True}
     if "temperature" in body:
         out["temperature"] = body["temperature"]
     if "top_p" in body:

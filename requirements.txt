@@ -12,4 +12,4 @@ httpx>=0.28
 pytest>=7.0
 pyyaml>=6.0
 litellm>=1.50
-headroom-ai>=0.37.0
+headroom-ai>=0.37,<0.38   # keep in lockstep with tasks/*/environment/Dockerfile

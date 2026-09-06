@@ -8,9 +8,11 @@ The class is stateful and NOT reentrant. `bridge.py` allocates one per incoming
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import secrets
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from typing import Any
 
 # Same map as translate.py, duplicated intentionally so this module stays leaf.
@@ -45,9 +47,20 @@ class SseTranslator:
             client.send(out_chunk)
     """
 
-    def __init__(self, model: str = "glm-5.3", thinking_sig_key: bytes | None = None):
+    def __init__(
+        self,
+        model: str = "glm-5.3",
+        thinking_sig_key: bytes | None = None,
+        usage_mapper: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
+    ):
         self.model = model
         self.thinking_sig_key = thinking_sig_key
+        # Injected rather than imported so this module stays a leaf (see the
+        # duplicated _FINISH_REASON_MAP above). bridge.py hands in
+        # translate.map_usage bound to the configured cache attribution, which
+        # is what converts z.ai's prompt/cached counts into Anthropic's
+        # input/cache_read/cache_creation split.
+        self.usage_mapper = usage_mapper
 
         self._carry = b""
 
@@ -58,6 +71,10 @@ class SseTranslator:
         # Scalar block (thinking XOR text — mutually exclusive)
         self._current_scalar: str | None = None  # "thinking" | "text" | None
         self._current_scalar_index: int = -1
+        # Reasoning text of the open thinking block, kept so the block can be
+        # signed at close (the signature covers the whole block, and the text
+        # is not known until the last delta has arrived).
+        self._thinking_buf: list[str] = []
 
         # Tool blocks — may be multiple open concurrently, keyed by GLM index
         self._open_tools: dict[int, tuple[int, str, str]] = {}
@@ -67,6 +84,7 @@ class SseTranslator:
         self._next_index = 0
         self._output_tokens_estimate = 0
         self._pending_usage: dict[str, Any] | None = None
+        self._pending_finish: str | None = None
 
         self._msg_id = f"msg_{secrets.token_hex(12)}"
 
@@ -92,6 +110,11 @@ class SseTranslator:
         """
         if self._terminal_emitted or self._errored:
             return
+        if self._pending_finish is not None:
+            # Upstream EOF'd after finish_reason but before [DONE]. The turn is
+            # complete; emit its real terminal rather than the drop error.
+            yield from self._flush_terminal()
+            return
         if not self._started:
             return
         yield from self._close_all_open_blocks()
@@ -116,7 +139,7 @@ class SseTranslator:
             payload = line[len(b"data:"):].strip()
             if payload == b"[DONE]":
                 if not self._terminal_emitted:
-                    yield from self._synthesize_terminal()
+                    yield from self._flush_terminal()
                 return
             try:
                 data = json.loads(payload)
@@ -130,6 +153,13 @@ class SseTranslator:
         if not self._started:
             yield from self._emit_message_start(data)
             self._started = True
+
+        # `stream_options.include_usage` delivers usage in its own trailing
+        # chunk with an empty `choices` list, so it has to be picked up here
+        # rather than off the finish_reason chunk.
+        upstream_usage = data.get("usage")
+        if isinstance(upstream_usage, dict):
+            self._pending_usage = upstream_usage
 
         for choice in (data.get("choices") or []):
             if not isinstance(choice, dict):
@@ -151,7 +181,10 @@ class SseTranslator:
                 yield from self._delta_tool_calls(tc_list)
 
             if finish:
-                yield from self._emit_terminal(finish, data.get("usage"))
+                # Hold the terminal frame: the usage chunk arrives AFTER this
+                # one, and message_delta is the only place those counts can go.
+                # [DONE], EOF, or close() flushes it.
+                self._pending_finish = finish
                 return
 
     # -----------------------------------------------------------------
@@ -172,6 +205,7 @@ class SseTranslator:
                 "index": self._current_scalar_index,
                 "content_block": {"type": "thinking", "thinking": "", "signature": ""},
             })
+        self._thinking_buf.append(text)
         yield _event("content_block_delta", {
             "type": "content_block_delta",
             "index": self._current_scalar_index,
@@ -239,14 +273,40 @@ class SseTranslator:
     # Close helpers
     # -----------------------------------------------------------------
 
+    def _emit_thinking_signature(self) -> Iterator[bytes]:
+        """Sign the thinking block that is about to close.
+
+        content_block_start ships signature="" because the reasoning text is
+        not known until the final delta, so the real value arrives as a
+        signature_delta the way Anthropic streams it. Same HMAC as
+        translate.py's non-streaming path, so a given reasoning string signs
+        identically whether the client streamed the response or not.
+        """
+        if not self.thinking_sig_key:
+            return
+        reasoning = "".join(self._thinking_buf)
+        if not reasoning:
+            return
+        sig = hmac.new(
+            self.thinking_sig_key, reasoning.encode("utf-8"), hashlib.sha256
+        ).hexdigest()[:24]
+        yield _event("content_block_delta", {
+            "type": "content_block_delta",
+            "index": self._current_scalar_index,
+            "delta": {"type": "signature_delta", "signature": sig},
+        })
+
     def _close_current_scalar(self) -> Iterator[bytes]:
         if self._current_scalar is not None and self._current_scalar_index >= 0:
+            if self._current_scalar == "thinking":
+                yield from self._emit_thinking_signature()
             yield _event("content_block_stop", {
                 "type": "content_block_stop",
                 "index": self._current_scalar_index,
             })
         self._current_scalar = None
         self._current_scalar_index = -1
+        self._thinking_buf = []
 
     def _close_all_open_tools(self) -> Iterator[bytes]:
         for glm_idx in self._open_tools_order:
@@ -288,16 +348,30 @@ class SseTranslator:
             },
         })
 
+    def _flush_terminal(self) -> Iterator[bytes]:
+        """Emit the deferred terminal, or synthesise one (rule 5.5)."""
+        if self._pending_finish is not None:
+            yield from self._emit_terminal(self._pending_finish, self._pending_usage)
+        else:
+            yield from self._synthesize_terminal()
+
     def _emit_terminal(self, finish: str, usage: Any) -> Iterator[bytes]:
         yield from self._close_all_open_blocks()
         stop_reason = _FINISH_REASON_MAP.get(finish, "end_turn")
         out_tokens = 0
+        out_usage: dict[str, Any] | None = None
         if isinstance(usage, dict):
             out_tokens = int(usage.get("completion_tokens", 0) or 0)
+            if self.usage_mapper is not None:
+                # Full Anthropic split: input_tokens excludes cache reads, and
+                # cache fields appear only when upstream reported cached_tokens.
+                out_usage = self.usage_mapper(usage)
+        if out_usage is None:
+            out_usage = {"output_tokens": out_tokens}
         yield _event("message_delta", {
             "type": "message_delta",
             "delta": {"stop_reason": stop_reason, "stop_sequence": None},
-            "usage": {"output_tokens": out_tokens},
+            "usage": out_usage,
         })
         yield _event("message_stop", {"type": "message_stop"})
         self._terminal_emitted = True

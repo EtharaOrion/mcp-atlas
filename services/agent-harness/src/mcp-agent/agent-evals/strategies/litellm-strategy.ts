@@ -64,9 +64,10 @@ export class LiteLLMAgentCompletionStrategy
       messageCount: payload.messages.length,
       toolCount: payload.tools?.length || 0,
     });
-    logger.verbose('LiteLLM Strategy - Full payload', {
-      payload: JSON.stringify(payload),
-    });
+    // Pass the object, not a pre-stringified one: logger.verbose() serialises
+    // its meta argument itself, so stringifying here made every quote a \" and
+    // inflated the written bytes ~2x on top of the payload's own growth.
+    logger.verbose('LiteLLM Strategy - Full payload', { payload });
 
     for (let attempt = 0; attempt <= MAX_429_RETRIES; attempt++) {
       try {
