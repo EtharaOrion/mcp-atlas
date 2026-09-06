@@ -191,14 +191,23 @@ def make_delivery(
         _dump(ver_dst / "reward.json", {"reward": reward_val})
 
         rubric = report.get("rubric", [])
+        # harbor_to_output writes this key PRESENT and NULL when the rubric
+        # channel went ungraded (the host rubric pass refuses to grade an empty
+        # trajectory), so `.get(key, 0)` returned None and the division below
+        # raised TypeError. Coercing it to 0 would be worse than the crash: it
+        # would publish "this run scored 0%" for a run that was never scored at
+        # all, which is precisely the claim the reward ledger declines to make.
+        # Unscored stays null, and the delivery bundle says so.
+        rubric_pct = report.get("rubric_weights_percentage")
         score_data = {
             "model": report.get("model", run_model),
             "run_index": report.get("run_index", 1),
-            "rubric_weights_percentage": report.get("rubric_weights_percentage", 0),
+            "rubric_weights_percentage": rubric_pct,
             "total": len(rubric),
             "passed": sum(1 for r in rubric if _rubric_cleared(r)),
             "failed": sum(1 for r in rubric if not _rubric_cleared(r)),
-            "reward": round(report.get("rubric_weights_percentage", 0) / 100, 4),
+            "reward": round(rubric_pct / 100, 4) if rubric_pct is not None else None,
+            "scored": rubric_pct is not None,
             "rubric": rubric,
             "judge_model": judge_tokens.get("model_name", ""),
             "judge_usage": report.get("judge_usage", {}),

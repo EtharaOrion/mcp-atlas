@@ -1045,6 +1045,11 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     }
     episode = {
         "index": run_no, "name": task_name, "passed": passed, "gradeable": reward is not None,
+        # "scored" is narrower than "gradeable": a trial can carry a verifier
+        # result and still go ungraded when the host rubric pass refuses an
+        # empty trajectory. Aggregates use this to keep unscored trials out of
+        # the mean instead of averaging them in as zeros.
+        "scored": _producer != "unscored",
         "judge": judge,
         "valid_tool_calls": stream["valid"], "invalid_tool_calls": stream["invalid"],
         "error_tool_calls": stream["error"],
@@ -1059,6 +1064,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
             "final_answer": stream["final_answer"], "reward": final_reward, "passed": passed}
     per_run = {"run_index": run_no, "include_multimodal": False,
                "test_weights_percentage": test_pct, "rubric_weights_percentage": rubric_pct,
+               "scored": _producer != "unscored",
                "combined_score": final_reward}
     # Safe here: ctrf was resolved at the top of this function, so a legacy
     # XML-only job still reshapes correctly — it just does not ship the XML.
@@ -1234,6 +1240,13 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
         n = len(all_eps)
         c = sum(1 for e in all_eps if e["passed"])
         rewards = [e["judge"]["reward"] for e in all_eps]
+        # Episodes carried forward from an older summary.json predate the
+        # "scored" flag; default them to True so a re-run does not retroactively
+        # drop them from the average. n/c and mean_pass@k stay over all attempts
+        # -- a crashed attempt is still an attempt -- but the reward AVERAGE is
+        # a scored component and only averages trials that were actually scored.
+        scored_rewards = [e["judge"]["reward"] for e in all_eps if e.get("scored", True)]
+        n_unscored = len(all_eps) - len(scored_rewards)
         hist: dict[str, int] = {}
         for e in all_eps:
             hist[e["failure_class"]] = hist.get(e["failure_class"], 0) + 1
@@ -1281,7 +1294,8 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
                        "harbor_job": str(job_dir)},
             "metrics": {
                 "accuracy": _mean([1.0 if e["passed"] else 0.0 for e in all_eps]),
-                "avg_reward": _mean(rewards),
+                "avg_reward": _mean_or_none(scored_rewards),
+                "runs_unscored": n_unscored,
                 # avg_completion_rate and avg_misbehave_rate average the per-trial
                 # values recorded in result.json, because those are the bytes the
                 # aggregate is checked against. An earlier attempt pointed this at
@@ -1354,22 +1368,34 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
         # verifier/reward.json -- so when disk shows more runs than the merge
         # recovered, recount n and c from disk.
         _traj_dir = out_task / "trajectory"
-        _disk_rewards = []
+        _disk_rewards = []          # every attempt that recorded a reward
+        _disk_scored = []           # only the attempts that were actually graded
         if _traj_dir.is_dir():
             for _rd in sorted(_traj_dir.glob("run_*"),
                               key=lambda p: int(p.name.split("_")[-1]) if p.name.split("_")[-1].isdigit() else 0):
                 _rw = _load(_rd / "verifier" / "reward.json", {}) or {}
-                if _rw.get("reward") is not None:
-                    _disk_rewards.append(float(_rw["reward"]))
+                if _rw.get("reward") is None:
+                    continue
+                _disk_rewards.append(float(_rw["reward"]))
+                # producer=="unscored" marks a trial the grader declined to
+                # score (empty trajectory, crash before verify). Its reward
+                # field is a placeholder 0, not a measurement. The attempt still
+                # counts toward n -- an attempt that produced nothing is a failed
+                # attempt for pass@k -- but it must stay out of the reward MEAN,
+                # or infrastructure failures read as agent failures.
+                if _rw.get("producer") != "unscored":
+                    _disk_scored.append(float(_rw["reward"]))
         if len(_disk_rewards) > n:
             _tw = (_load(task_dir / "tests" / "test_weights.json", {}) if task_dir else {}) or {}
             _thr = _tw.get("threshold", PASS_THRESHOLD_DEFAULT)
             n = len(_disk_rewards)
             # host_rubric_pass stores rewards as 0-100 percentages; container_test uses 0-1.
             # Threshold is always 0-1, so scale it to match the reward range.
-            _thr_scaled = _thr * 100 if any(r > 1 for r in _disk_rewards) else _thr
-            c = sum(1 for r in _disk_rewards if r >= _thr_scaled)
+            _thr_scaled = _thr * 100 if any(r > 1 for r in _disk_scored) else _thr
+            c = sum(1 for r in _disk_scored if r >= _thr_scaled)
             rewards = _disk_rewards
+            scored_rewards = _disk_scored
+            n_unscored = len(_disk_rewards) - len(_disk_scored)
         # Empty ks means "auto": scale k to however many runs this task has
         # actually accumulated, so pass@k needs no --at retuning when the
         # attempt count changes.
@@ -1378,12 +1404,15 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
             "task": task_name, "n": n, "c": c,
             "pass@1": round(pass_at_k(n, c, 1), 6),
             "pass@k": {str(k): round(pass_at_k(n, c, k), 6) for k in ks_eff},
-            "mean_reward_per_trial": _mean(rewards),
+            "mean_reward_per_trial": _mean_or_none(scored_rewards),
+            "runs_unscored": n_unscored,
             "failure_breakdown": hist,
         }]
         passk = {
             "model": model, "tasks": 1, "passed": c, "accuracy": round(c / n, 6) if n else 0.0,
-            "mean_reward_per_trial": _mean(rewards),
+            "mean_reward_per_trial": _mean_or_none(scored_rewards),
+            "runs_unscored": n_unscored,
+            # mean_pass@k is per-attempt, so it stays over every attempt.
             "mean_pass@k": {str(i + 1): round(r, 6) for i, r in enumerate(rewards)},
             "failure_mode_histogram": hist, "per_task": per_task,
             "attempts_per_task": n, "at": ks_eff,
@@ -1429,7 +1458,7 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
             f"- Episodes: {n}", "",
             "## Aggregate metrics", "", "| Metric | Value |", "|---|---|",
             f"| Accuracy (reward ≥ threshold) | {m['accuracy']:.4f} |",
-            f"| Avg reward | {m['avg_reward']:.4f} |",
+            f"| Avg reward | {_fmt_metric(m['avg_reward'])} |",
             f"| Avg rubric (Channel B) | {m['avg_rubric_score']:.4f} |",
             f"| Avg traj_tests (Channel A) | {_fmt_metric(m['avg_traj_tests'])} |",
             f"| Avg misbehave rate | {_fmt_metric(m['avg_misbehave_rate'])} |",
@@ -1466,7 +1495,10 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
         # in-place runs). Everything that needs it has been read by now.
         _prune(*(out_task / f for f in PRUNE_FROM_OUTPUT))
         written.append(out_task)
-        print(f"[output] {task_name}: {n} run(s), passed {c}/{n}, mean reward {_mean(rewards)} → {out_task}")
+        _mean_txt = "n/a" if not scored_rewards else f"{_mean_or_none(scored_rewards)}"
+        _unscored_txt = f", {n_unscored} unscored" if n_unscored else ""
+        print(f"[output] {task_name}: {n} run(s), passed {c}/{n}, "
+              f"mean reward {_mean_txt}{_unscored_txt} → {out_task}")
     return written
 
 

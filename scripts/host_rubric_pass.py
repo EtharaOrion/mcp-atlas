@@ -181,24 +181,36 @@ def _sync_harbor_result(trial: Path, reward: float) -> None:
     stale summary is bad, but it is not worth failing a graded run over.
     """
     for path, mutate in (
-        (trial / "result.json", lambda d: d.get("verifier_result", {}).get("rewards")),
+        (trial / "result.json", lambda d: (d.get("verifier_result") or {}).get("rewards")),
         (trial.parent / "result.json", None),
     ):
         try:
             if not path.exists():
                 continue
             doc = json.loads(path.read_text())
+            touched = 0
             if mutate is not None:
                 rewards = mutate(doc)
                 if isinstance(rewards, dict):
                     rewards["reward"] = reward
+                    touched += 1
             else:
-                for ev in (doc.get("stats", {}).get("evals") or {}).values():
+                for ev in ((doc.get("stats") or {}).get("evals") or {}).values():
                     for metric in ev.get("metrics") or []:
                         if isinstance(metric, dict) and "reward" in metric:
                             metric["reward"] = reward
+                            touched += 1
+            if not touched:
+                # No reward field exists to correct -- the trial died before the
+                # verify phase, so there is no stale number here. Say that
+                # instead of printing "synced", which claimed a write that never
+                # happened. The graded reward still lives in verifier/reward.json,
+                # which is what the output pipeline actually reads.
+                print(f"[host-rubric] nothing to sync in {path.name} "
+                      "(no verifier reward recorded); reward.json remains the source")
+                continue
             path.write_text(json.dumps(doc, indent=4))
-            print(f"[host-rubric] synced {path.name} -> {reward:.4f}")
+            print(f"[host-rubric] synced {path.name} -> {reward:.4f} ({touched} field(s))")
         except (OSError, ValueError, AttributeError) as exc:
             print(f"[host-rubric] could not sync {path}: {exc!r}", file=sys.stderr)
 
