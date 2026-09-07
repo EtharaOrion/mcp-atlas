@@ -490,11 +490,24 @@ for svc in (doc.get("services") or {}).values():
 # this checkout are in NO registry -- `docker pull light-servers:latest` 404s --
 # so a pull-only preflight cannot fix the one image every bundle here needs.
 # Anything not named is treated as a registry image and pulled.
+#
+# agent-environment is deliberately NOT here, and dropping it changed nothing.
+# The image that context builds is PUBLISHED as ghcr.io/scaleapi/mcp-atlas:<ver>
+# (`make push`), and that is the name adapter-generated bundles pin for their
+# `mcp-server` sidecar (adapters/mcp_atlas/adapter.py:27,92). `${1%%:*}` on it is
+# "ghcr.io/scaleapi/mcp-atlas", which never matched this case -- so those bundles
+# have always taken the registry-pull path above, which is the correct one.
+#
+# The only string this branch could ever match was the LOCAL `agent-environment`
+# alias, which exists solely for the :1984 REST sandbox that run_all.sh /
+# run_eval.py drive (`make run-docker`, `make shell`, run_all.sh:15) and which
+# nothing on the Harbor path uses. Keeping it only meant preflight could be asked
+# to build a 5.4 GB image no `harbor run` would ever start. Re-add it only if a
+# bundle actually pins that bare name.
 image_build_context() {
   case "${1%%:*}" in
-    light-servers)     echo "$REPO/services/light-servers" ;;
-    agent-environment) echo "$REPO/services/agent-environment" ;;
-    egress-proxy)      echo "$REPO/services/egress-proxy" ;;
+    light-servers) echo "$REPO/services/light-servers" ;;
+    egress-proxy)  echo "$REPO/services/egress-proxy" ;;
   esac
 }
 
