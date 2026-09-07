@@ -10,9 +10,14 @@
 #   scripts/run_task.sh --stage reshape tasks/foo               # one stage only
 #
 # Env overrides: AGENT (claude-code) MODEL (claude-opus-5) N (1) JOB (<task slug>)
-#                OUTPUT_DIR (<repo>/output) COPY_TO (unset) BUILD_MULT (3) AT (1)
-#                STAGE (all) RUN_OFFSET (auto)
+#                OUTPUT_DIR (<repo>/output) COPY_TO (unset) BUILD_MULT (3) AT (auto)
+#                STAGE (all) RUN_OFFSET (auto) SETUP_MULT (6) JUDGE_MODEL (gpt-5.6-sol)
 #                NETWORK_ISOLATION_OFF (unset) DISALLOWED_TOOLS (WebSearch,WebFetch)
+#                CC_MODE (unset -> claude-opus-5; "zbridge" -> glm-5.3 via :8766)
+#                CC_BRIDGE_ENABLED (0)
+#
+# Values may also come from <repo>/.env, which is read as DEFAULTS only: anything
+# already in the environment wins over it.
 #
 # Stages. The default STAGE=all runs the four below in order, which is the
 # original one-shot behaviour. They are separable because their costs differ by
@@ -47,13 +52,50 @@ unset CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN 2>/dev/null || tr
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO"
 
+# .env supplies DEFAULTS for everything below, so it has to be read BEFORE the
+# first setting that depends on it. It used to be sourced down in the dispatch
+# section, ~980 lines after CC_MODE picks the model default -- so the
+# `CC_MODE=zbridge` line env.template tells operators to add was invisible to
+# that decision, and a GLM run asked harbor for claude-opus-5 while the
+# credential check (which runs after the source) reported zbridge. One script,
+# two views of the same variable.
+#
+# Fill-if-unset, never `set -a; source`: the CALLER must win. Sourcing assigned
+# unconditionally, so `NETWORK_ISOLATION_OFF= scripts/run_task.sh ...` lost to
+# the .env value and no .env key could be overridden for a single run.
+# Presence is what is tested (${!k+set}), not emptiness, so an explicitly-empty
+# override is honoured rather than refilled from the file.
+load_dotenv() {
+  [ -f "$REPO/.env" ] || return 0
+  local line key val skipped=""
+  while IFS= read -r line; do
+    key="${line%%=*}"
+    val="${line#*=}"
+    # Conservative value charset, inherited from the `source` implementation this
+    # replaces. Values outside it are still skipped -- but they are now NAMED
+    # instead of vanishing, which is how ZB_MODEL_ALIAS_JSON sat in .env doing
+    # nothing while looking like configuration.
+    case "$val" in
+      *[!A-Za-z0-9_./:@~-]*) skipped="$skipped $key"; continue ;;
+    esac
+    if [ -z "${!key+set}" ]; then
+      export "$key=$val"
+    fi
+  done < <(sed 's/[[:space:]]*$//' "$REPO/.env" | grep -E '^[A-Za-z_][A-Za-z0-9_]*=')
+  if [ -n "$skipped" ]; then
+    echo "[run_task] .env: skipped (value has unsupported characters):$skipped" >&2
+  fi
+  return 0
+}
+load_dotenv
+
 STAGE="${STAGE:-all}"
 TASK=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --stage)   STAGE="${2:?--stage needs a value}"; shift 2;;
     --stage=*) STAGE="${1#*=}"; shift;;
-    -h|--help) sed -n '2,32p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
+    -h|--help) awk 'NR==1{next} /^#/{sub(/^# ?/,""); print; next} {exit}' "$0"; exit 0;;
     *)         TASK="$1"; shift;;
   esac
 done
@@ -68,10 +110,6 @@ SLUG="$(basename "$TASK")"
 
 AGENT="${AGENT:-claude-code}"
 if [ "${CC_MODE:-}" = "zbridge" ]; then
-  MODEL="${MODEL:-claude-3-5-sonnet-latest}"
-elif [ "${CC_MODE:-}" = "zai" ]; then
-  # z.ai's Anthropic-native endpoint takes the model name verbatim, so there is
-  # no alias table to route through the way zbridge needs one.
   MODEL="${MODEL:-glm-5.3}"
 else
   MODEL="${MODEL:-claude-opus-5}"
@@ -223,18 +261,6 @@ check_credentials() {
   case "$STAGE" in reshape|finance) return 0 ;; esac
   local fail=0
 
-  if [ "${CC_MODE:-}" = "zai" ]; then
-    # No bridge secret: nothing local sits in front of the model, so the z.ai
-    # key is the only credential involved.
-    if [ -z "${ZB_ZAI_API_KEY:-}" ]; then
-      echo "[run_task] ERROR: CC_MODE=zai but ZB_ZAI_API_KEY is not set" >&2
-      echo "[run_task]   Add ZB_ZAI_API_KEY=<your-z.ai-key> to harness/.env" >&2
-      fail=1
-    else
-      echo "[run_task] zai: ZB_ZAI_API_KEY OK"
-    fi
-  fi
-
   if [ "${CC_MODE:-}" = "zbridge" ]; then
     if [ -z "${ZB_ZAI_API_KEY:-}" ]; then
       echo "[run_task] ERROR: CC_MODE=zbridge but ZB_ZAI_API_KEY is not set" >&2
@@ -243,13 +269,11 @@ check_credentials() {
     else
       echo "[run_task] zbridge: ZB_ZAI_API_KEY OK"
     fi
-    if [ -z "${ZB_BRIDGE_SECRET:-}" ]; then
-      echo "[run_task] ERROR: CC_MODE=zbridge but ZB_BRIDGE_SECRET is not set" >&2
-      echo "[run_task]   Add ZB_BRIDGE_SECRET=<any-local-secret> to harness/.env" >&2
-      fail=1
-    else
-      echo "[run_task] zbridge: ZB_BRIDGE_SECRET OK"
-    fi
+    # ZB_BRIDGE_SECRET is deliberately NOT required. ensure_zbridge starts the
+    # bridge with it set to "" (bridge.py:134 reads empty as auth-disabled),
+    # because the containerised agent sends no x-zbridge-secret header and a
+    # live gate would 401 every call. Demanding a value here only to discard it
+    # at launch failed runs for a credential that changes nothing.
   else
     if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && [ -z "${ANTHROPIC_API_KEY:-}" ]; then
       echo "[run_task] ERROR: no Claude Code credentials found" >&2
@@ -489,7 +513,6 @@ stage_harbor() {
   # container (empty values are dropped, so a failed proxy start is a no-op).
   ensure_cc_bridge
   [ "${CC_MODE:-}" = "zbridge" ] && ensure_zbridge
-  [ "${CC_MODE:-}" = "zai" ] && route_agent_to_zai
   ensure_bundle_headroom
   route_agent_through_proxy
   local args=(run -y --path "$TASK" --agent "$AGENT" --jobs-dir "$OUTPUT_DIR" --job-name "$JOB" \
@@ -586,20 +609,6 @@ stage_harbor() {
   state_put host_rubric_done 0
 }
 
-# Grade the rubric channel on the host, between harbor and reshape.
-#
-# The in-container judge cannot do it on the pinned grader: gpt-5.6-sol runs
-# over codex, and codex does not exist in python:3.12-slim. Putting one there
-# would mean
-# mounting this machine's ChatGPT credential into the container the agent just
-# ran in under bypassPermissions, and Harbor cannot isolate the verifier from
-# that container either -- environment_mode='separate' restarts light-servers
-# clean and destroys the world the state channel reads. So the container grades
-# everything that needs the live world, and the rubric is graded here.
-#
-# Runs before stage_reshape so harbor_to_output.py copies the corrected reward
-# rather than the rubric-less one. Checkpointed, because a resume must not spend
-# judge quota re-grading a trial it already graded.
 # ---------------------------------------------------------------- agent proxy
 # Route the AGENT's traffic through the Headroom proxy, so its prompts are
 # compressed too. OFF unless AGENT_HEADROOM_ENABLED=true.
@@ -632,6 +641,15 @@ HEADROOM_PROXY_PORT="${HEADROOM_PROXY_PORT:-8787}"
 # untouched -- useful when the bundle is committed and you do not want a run
 # dirtying your working tree.
 ensure_cc_bridge() {
+  # OFF by default. Nothing this script runs reads :4000 -- the agent talks to
+  # api.anthropic.com (or to zbridge), and the rubric judge shells out to the
+  # codex CLI -- so starting it bought nothing, while costing 180s of dead
+  # wall-clock per trial on any host where it cannot boot (a missing fastapi in
+  # services/cc-bridge is enough, and is the state of this machine).
+  #
+  # run_eval.py and adapters/ DO use it, via LLM_BASE_URL. Set
+  # CC_BRIDGE_ENABLED=1 there, or start it by hand.
+  [ "${CC_BRIDGE_ENABLED:-0}" = "1" ] || return 0
   local port="${CC_BRIDGE_PORT:-4000}"
   if curl -sf -m 2 "http://127.0.0.1:$port/health" >/dev/null 2>&1; then
     echo "[run_task] cc-bridge already running on :$port"
@@ -651,13 +669,13 @@ ensure_cc_bridge() {
   CC_BRIDGE_PORT="$port" nohup "$py" "$bridge_dir/cc_bridge.py" \
     >"$bridge_dir/logs/cc_bridge.log" 2>&1 &
   local i=0
-  while [ $i -lt 180 ]; do
+  while [ $i -lt 20 ]; do
     sleep 1; i=$((i+1))
     curl -sf -m 1 "http://127.0.0.1:$port/health" >/dev/null 2>&1 && {
-      echo "[run_task] cc-bridge ready on :$port (pid $!)"; return 0
+      echo "[run_task] cc-bridge ready on :$port"; return 0
     }
   done
-  echo "[run_task] WARNING: cc-bridge did not come up in 180s; check $bridge_dir/logs/cc_bridge.log" >&2
+  echo "[run_task] WARNING: cc-bridge did not come up in 20s; check $bridge_dir/logs/cc_bridge.log" >&2
 }
 
 ensure_zbridge() {
@@ -684,7 +702,7 @@ ensure_zbridge() {
       ZB_BRIDGE_SECRET="" \
       ZB_PORT="$port" ZB_HOST="127.0.0.1" \
       ZB_THINKING_SIG_KEY="${ZB_THINKING_SIG_KEY:-yuji-harness-zbridge-v1}" \
-      ZB_MODEL_ALIAS_JSON='{"claude-sonnet-4-6":"glm-5.3","claude-opus-4-7":"glm-5.3","claude-haiku-4-5-20251001":"glm-5.3","claude-haiku-4-5":"glm-5.3","claude-3-5-sonnet-latest":"glm-5.3","claude-3-opus-latest":"glm-5.3"}' \
+      ZB_MODEL_ALIAS_JSON='{"claude-opus-5":"glm-5.3","claude-sonnet-5":"glm-5.3","claude-sonnet-4-6":"glm-5.3","claude-sonnet-4-5":"glm-5.3","claude-opus-4-8":"glm-5.3","claude-opus-4-7":"glm-5.3","claude-haiku-4-5-20251001":"glm-5.3","claude-haiku-4-5":"glm-5.3","claude-3-5-sonnet-latest":"glm-5.3","claude-3-opus-latest":"glm-5.3"}' \
       ZB_UPSTREAM_URL="${ZB_UPSTREAM_URL:-https://api.z.ai/api/coding/paas/v4/chat/completions}" \
       nohup uv run python -m zbridge --port "$port" --host 127.0.0.1 \
         >"$log_dir/zbridge.log" 2>&1 &)
@@ -701,29 +719,6 @@ ensure_zbridge() {
   fi
   export ANTHROPIC_BASE_URL="http://host.docker.internal:$port"
   echo "[run_task] agent routed through zbridge ($ANTHROPIC_BASE_URL)"
-}
-
-# Point the agent straight at z.ai's Anthropic-protocol endpoint, with no
-# translation in the path.
-#
-# zbridge exists because /api/coding/paas/v4 speaks OpenAI, and an OpenAI
-# `usage` object has to be reshaped into Anthropic's input/cache_read/
-# cache_creation split before Claude Code can read it. /api/anthropic already
-# speaks Anthropic, so prompt and cache counts arrive correct with no
-# reconstruction -- which is why trajectories taken this way report real
-# total_cached_tokens instead of zero.
-#
-# The trade is billing, not correctness: /api/coding/paas/v4 is the coding-plan
-# subscription, /api/anthropic is the standard metered API. Same key, different
-# meter. Pick the mode that matches the budget you mean to spend.
-route_agent_to_zai() {
-  export ANTHROPIC_BASE_URL="${ZAI_ANTHROPIC_URL:-https://api.z.ai/api/anthropic}"
-  export ANTHROPIC_AUTH_TOKEN="$ZB_ZAI_API_KEY"
-  # Claude Code prefers ANTHROPIC_API_KEY when both are set, and a stale one
-  # from the operator's shell would silently bill the wrong account.
-  unset ANTHROPIC_API_KEY
-  echo "[run_task] agent routed direct to z.ai ($ANTHROPIC_BASE_URL)"
-  echo "[run_task]   no zbridge in the path -- usage/cache come back native"
 }
 
 ensure_bundle_headroom() {
@@ -827,13 +822,6 @@ network_isolation_overlay() {
   # Both of these point the agent at host.docker.internal, which an internal
   # network has no route to. Failing here is the whole point: the alternative is
   # an agent phase that dies on its first model call and reads like an outage.
-  if [ "${CC_MODE:-}" = "zai" ]; then
-    echo "[run_task] REFUSING: CC_MODE=zai needs api.z.ai, which the egress" >&2
-    echo "[run_task]   allowlist does not carry (squid.conf allows api.anthropic.com" >&2
-    echo "[run_task]   only). Set NETWORK_ISOLATION_OFF=1, or add api.z.ai to" >&2
-    echo "[run_task]   services/egress-proxy/squid.conf if it belongs there." >&2
-    exit 2
-  fi
   if [ "${CC_MODE:-}" = "zbridge" ] || [ "${AGENT_HEADROOM_ENABLED:-false}" = "true" ]; then
     echo "[run_task] REFUSING: network isolation cannot coexist with a host-side proxy." >&2
     echo "[run_task]   CC_MODE=${CC_MODE:-unset} AGENT_HEADROOM_ENABLED=${AGENT_HEADROOM_ENABLED:-unset}" >&2
@@ -851,6 +839,20 @@ network_isolation_overlay() {
   echo "$overlay"
 }
 
+# Grade the rubric channel on the host, between harbor and reshape.
+#
+# The in-container judge cannot do it on the pinned grader: gpt-5.6-sol runs
+# over codex, and codex does not exist in python:3.12-slim. Putting one there
+# would mean
+# mounting this machine's ChatGPT credential into the container the agent just
+# ran in under bypassPermissions, and Harbor cannot isolate the verifier from
+# that container either -- environment_mode='separate' restarts light-servers
+# clean and destroys the world the state channel reads. So the container grades
+# everything that needs the live world, and the rubric is graded here.
+#
+# Runs before stage_reshape so harbor_to_output.py copies the corrected reward
+# rather than the rubric-less one. Checkpointed, because a resume must not spend
+# judge quota re-grading a trial it already graded.
 stage_host_rubric() {
   [ "$(state_get host_rubric_done)" = "1" ] && { echo "[run_task] host rubric already graded; skipping"; return 0; }
   # Trial dirs are named after the TASK slug, not the job: JOB=Input_1_oracle
@@ -1089,13 +1091,6 @@ stage_finance() {
 
 # --- dispatch -----------------------------------------------------------------
 
-if [ -f "$REPO/.env" ]; then
-  _env_tmp=$(mktemp)
-  sed 's/[[:space:]]*$//' "$REPO/.env" | grep -E '^[A-Za-z_][A-Za-z0-9_]*=[A-Za-z0-9_./:@~-]*$' > "$_env_tmp"
-  set -a; source "$_env_tmp"; set +a
-  rm -f "$_env_tmp"
-fi
-
 python3 "$REPO/scripts/patch_harbor.py"
 
 resolve_auth
@@ -1107,5 +1102,5 @@ case "$STAGE" in
   reshape)   stage_reshape ;;
   finance)   stage_finance ;;
   all)       stage_preflight; stage_harbor; stage_reshape; stage_finance
-             echo "[run_task] done → $OUTPUT_DIR/$SLUG" ;;
+             echo "[run_task] done → $OUTPUT_DIR/$OUT_SLUG" ;;
 esac
