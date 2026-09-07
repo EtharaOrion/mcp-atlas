@@ -38,6 +38,8 @@ import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / "scripts"))
+from harbor_to_output import norm_reward  # noqa: E402
 sys.path.insert(0, str(REPO / "services" / "scoring"))
 
 import agent_log_to_trajectory as alt  # noqa: E402
@@ -79,25 +81,25 @@ def write_grade_report(dest: Path, out: dict, gate: dict) -> None:
                           "retired": "not graded"}.get(spec.get("status"), "")))
         reward = out.get("reward") or 0.0
         lines = ["# Grade report", "",
-                 f"**reward = {reward:.4f}**", "",
+                 f"**reward = {reward:.2f}**", "",
                  "| component | status | weight | value | contribution | note |",
                  "|---|---|---:|---:|---:|---|"]
         lines += [f"| `{n}` | {s} | {w} | {v} | {c} | {note} |"
                   for n, s, w, v, c, note in rows]
-        pre_gate = max(0.0, num / den) if den else 0.0
+        pre_gate = norm_reward(max(0.0, num / den)) if den else 0.0
         lines += ["", f"    numerator   = {num:+.4f}"]
         if den:
             lines += [f"    denominator = {den:.4f}   (graded, weighted, produced a value)",
-                      f"    ledger      = max(0, {num:+.4f} / {den:.4f}) = {pre_gate:.4f}"]
+                      f"    ledger      = max(0, {num:+.4f} / {den:.4f}) = {pre_gate:.2f}"]
         else:
             lines += ["    denominator = 0 -- NOTHING SCORED. Every component was dropped "
                       "or retired; that is a bundle defect, not a run outcome."]
-        lines += [f"    published   = {reward:.4f}", ""]
+        lines += [f"    published   = {reward:.2f}", ""]
         fired = [k for k, v in (gate or {}).items() if v]
         if fired:
             lines += ["## Gates", ""] + [f"- `{k}` declared" for k in fired]
             if reward == 0.0 and pre_gate > 0.0:
-                lines += ["", f"**A gate zeroed the reward.** The ledger scored {pre_gate:.4f}; "
+                lines += ["", f"**A gate zeroed the reward.** The ledger scored {pre_gate:.2f}; "
                               "that is the partial credit the run actually earned."]
             lines += [""]
         missed = out.get("missed") or []
@@ -158,7 +160,7 @@ def recompute_reward(weights: dict, chan_a, rubric_value, rc_val, rb_val,
             "status": "retired" if not mis.get("graded") else "unscored",
             "weight": mis_w, "severity": None}
 
-    reward = max(0.0, num / den) if den else 0.0
+    reward = norm_reward(max(0.0, num / den)) if den else 0.0
 
     gate = weights.get("gate") or {}
     if gate.get("require_state_exact") and rc_val is not None \
@@ -200,6 +202,22 @@ def _sync_harbor_result(trial: Path, reward: float) -> None:
                         if isinstance(metric, dict) and "reward" in metric:
                             metric["reward"] = reward
                             touched += 1
+                    # reward_stats buckets trial names under the reward as a
+                    # STRING KEY, so a stale entry here is a second, contradictory
+                    # copy of the score in the same file -- and it kept the raw
+                    # float even after metrics[] was synced. Re-key only this
+                    # trial's entry; sibling trials own their own buckets.
+                    rstats = (ev.get("reward_stats") or {}).get("reward")
+                    if isinstance(rstats, dict):
+                        for key in list(rstats):
+                            rest = [t for t in rstats[key] if t != trial.name]
+                            if len(rest) != len(rstats[key]):
+                                if rest:
+                                    rstats[key] = rest
+                                else:
+                                    del rstats[key]
+                                rstats.setdefault(str(reward), []).append(trial.name)
+                                touched += 1
             if not touched:
                 # No reward field exists to correct -- the trial died before the
                 # verify phase, so there is no stale number here. Say that
@@ -210,7 +228,7 @@ def _sync_harbor_result(trial: Path, reward: float) -> None:
                       "(no verifier reward recorded); reward.json remains the source")
                 continue
             path.write_text(json.dumps(doc, indent=4))
-            print(f"[host-rubric] synced {path.name} -> {reward:.4f} ({touched} field(s))")
+            print(f"[host-rubric] synced {path.name} -> {reward:.2f} ({touched} field(s))")
         except (OSError, ValueError, AttributeError) as exc:
             print(f"[host-rubric] could not sync {path}: {exc!r}", file=sys.stderr)
 
@@ -300,7 +318,7 @@ def main() -> int:
     _sync_harbor_result(trial, reward)
 
     print(f"[host-rubric] rubric={rubric_value} channel_a={chan_a} "
-          f"state_completion={rc_val} -> reward={reward:.4f}")
+          f"state_completion={rc_val} -> reward={reward:.2f}")
     for name, row in ledger.items():
         print(f"    {name:18} {row.get('status'):9} w={row.get('weight')} "
               f"v={row.get('value', row.get('severity'))}")

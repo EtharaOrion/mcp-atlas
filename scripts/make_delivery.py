@@ -6,6 +6,10 @@ import re
 import shutil
 import sys
 from pathlib import Path
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parent))
+from harbor_to_output import norm_reward  # noqa: E402
 
 # Host-local path masking, inline. Harbor stamps absolute host paths
 # (trial_uri, trials_dir, jobs_dir, tracebacks) into bookkeeping files, which
@@ -187,7 +191,7 @@ def make_delivery(
             if (ver_src / fname).exists():
                 shutil.copy2(ver_src / fname, ver_dst / fname)
 
-        reward_val = (_load(ver_src / "reward.json", {}) or {}).get("reward", 0)
+        reward_val = norm_reward((_load(ver_src / "reward.json", {}) or {}).get("reward", 0))
         _dump(ver_dst / "reward.json", {"reward": reward_val})
 
         rubric = report.get("rubric", [])
