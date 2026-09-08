@@ -15,7 +15,6 @@
 #                NETWORK_ISOLATION_OFF (unset) DISALLOWED_TOOLS (WebSearch,WebFetch)
 #                CC_MODE (unset -> claude-opus-5; "zbridge" -> glm-5.3 via :8766)
 #                CC_BRIDGE_ENABLED (0)
-#                FINANCE_ENV_CHECK_OFF (unset -> ODOO_*/FINANCE_* checked up front)
 #
 # Values may also come from <repo>/.env, which is read as DEFAULTS only: anything
 # already in the environment wins over it.

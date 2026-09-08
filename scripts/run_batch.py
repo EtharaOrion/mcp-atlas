@@ -49,6 +49,7 @@ from typing import Any, Iterable
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
 import checkpoint as ckpt  # noqa: E402
+from harbor_to_output import norm_reward  # noqa: E402
 
 RUN_TASK = REPO / "scripts" / "run_task.sh"
 
@@ -243,7 +244,7 @@ def _grade(run_dir: Path) -> dict[str, Any]:
     out: dict[str, Any] = {}
     try:
         reward = json.loads((run_dir / "verifier" / "reward.json").read_text())
-        out["reward"] = reward.get("reward", reward.get("value"))
+        out["reward"] = norm_reward(reward.get("reward", reward.get("value")))
     except (OSError, json.JSONDecodeError, AttributeError):
         pass
     try:

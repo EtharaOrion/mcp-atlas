@@ -6,6 +6,7 @@ dist/
 wheels/
 tasks/
 output/
+input/
 delivery_output/
 input/
 *.egg-info
