@@ -39,6 +39,46 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
+
+# The only reward digit count in the pipeline. Every reward-shaped number
+# derives from it; no call site writes a literal.
+REWARD_DP = 2
+
+# A percentage at REWARD_DP needs two extra places to survive /100 back to a
+# fraction (90.44 % -> 0.9044).
+PCT_ROUNDTRIP_DP = REWARD_DP + 2
+
+
+def norm_reward(value, dp: int = REWARD_DP):
+    """Round a 0-1 reward to the published precision.
+
+    Non-numeric input (None from an ungraded trial, a string, a dict) is returned
+    unchanged: this normalises precision, it does not invent a score. `bool` is
+    excluded deliberately -- it is an int subclass, and rounding True to 1.0 would
+    silently turn a flag into a perfect score.
+    """
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return value
+    return round(float(value), dp)
+
+
+def reward_pct(x):
+    return None if x is None else round(float(x) * 100, REWARD_DP)
+
+
+def pct_to_reward(x):
+    return None if x is None else round(float(x) / 100, PCT_ROUNDTRIP_DP)
+
+
+def fmt_reward(value) -> str:
+    """Human-display form, trailing zeros kept: 90.4 renders as "90.40".
+
+    Machine-readable artifacts must not use this -- they carry the number via
+    norm_reward / reward_pct, whose `str()` gives "90.4".
+    """
+    return f"{float(value):.{REWARD_DP}f}"
+
+
 sys.path.insert(0, str(REPO / "services" / "mcp_eval"))
 sys.path.insert(0, str(REPO / "scripts"))
 
@@ -172,10 +212,6 @@ def _flatten_artifacts(run_dir: Path) -> None:
 
 def _r4(x):
     return None if x is None else round(float(x), 4)
-
-
-def _pct(x):
-    return None if x is None else round(float(x) * 100, 2)
 
 
 def _strip_mcp(name: str) -> str:
@@ -469,7 +505,7 @@ def _junit_to_ctrf(junit_path: Path, tw_comp: dict | None = None) -> dict | None
             "summary": {"tests": total, "passed": passed, "failed": failed,
                         "pending": 0, "skipped": skipped, "other": 0,
                         "overall_score": overall_score,
-                        "weighted_percentage": round(overall_score * 100, 2)},
+                        "weighted_percentage": reward_pct(overall_score)},
             "tests": tests,
         }
     }
@@ -681,10 +717,12 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
             "score": w, "is_positive": c.get("is_positive", True),
             "passed": ok, "satisfied": ok, "justification": bd.get("justification", ""),
         })
-    test_pct = _pct(traj_val)
-    rubric_pct = _pct(rubric_val)
+    test_pct = reward_pct(traj_val)
+    rubric_pct = reward_pct(rubric_val)
     try:
         _orig_rew = json.loads((ver / "reward.json").read_bytes())
+        if "reward" in _orig_rew:
+            _orig_rew["reward"] = norm_reward(_orig_rew["reward"])
     except Exception:
         _orig_rew = {}
 
@@ -713,19 +751,19 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         # weighted ledger path: rescale to percentage
         _ledger_reward = _orig_rew.get("reward")
         if isinstance(_ledger_reward, (int, float)):
-            final_reward = round(float(_ledger_reward) * 100, 2)
+            final_reward = reward_pct(_ledger_reward)
         else:
             # No reward.json (a trial that died before the verifier wrote one).
             # Fall back to the old average rather than reporting nothing, but it is
             # a strictly worse number -- see above.
             parts = [p for p in (test_pct, rubric_pct) if p is not None]
-            final_reward = round(sum(parts) / len(parts), 2) if parts else None
+            final_reward = norm_reward(sum(parts) / len(parts)) if parts else None
     elif _producer == "container_test":
         # binary gate path; scored key holds 0 or 1; no x100 rescale
         _ledger_reward = _orig_rew.get("scored", _orig_rew.get("reward", 0))
-        final_reward = _ledger_reward
+        final_reward = norm_reward(_ledger_reward)
     else:
-        final_reward = 0
+        final_reward = 0.0
     reward_pct_doc = {
         **_orig_rew,
         "reward": final_reward,
@@ -736,7 +774,8 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         passed, traj_rows, rubric_rows, stream, exception,
         rubric_expected=bool(rubric_src))
 
-    reward_txt_val = str(round(final_reward, 6)) if final_reward is not None else "0.0"
+    # Not fmt_reward: reward.txt ships bare repr ("90.4"), not padded ("90.40").
+    reward_txt_val = str(norm_reward(final_reward)) if final_reward is not None else "0.0"
     detail_doc = _build_detail(ctrf, weights, breakdown, traj_val, rubric_val, traj_w, rubric_w,
                                state_val=state_val, state_mis=state_mis,
                                state_w=_comp_w("state_completion"),
@@ -932,7 +971,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         "model": model, "run_index": run_no, "include_multimodal": False,
         "pytest": {"passed": n_pass, "failed": n_fail, "skipped": n_skip,
                    "exit_code": 0 if n_fail == 0 else 1,
-                   "reward": _pct(traj_val), "tests": test_entries},
+                   "reward": reward_pct(traj_val), "tests": test_entries},
         "rubric": rubric_entries,
         "final_reward": final_reward,
         "test_weights_percentage": test_pct,
@@ -1014,15 +1053,15 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         "reward": final_reward, "passed": passed,
         "quadrant": "PASSED" if passed else "FAILED", "threshold": threshold,
         "components": {
-            "traj_tests": {"weight": traj_w, "value": _pct(traj_val),
+            "traj_tests": {"weight": traj_w, "value": reward_pct(traj_val),
                            "earned": _r4((traj_val or 0) * traj_w) if traj_val is not None else None},
-            "rubric": {"weight": rubric_w, "value": _pct(rubric_val),
+            "rubric": {"weight": rubric_w, "value": reward_pct(rubric_val),
                        "earned": _r4((rubric_val or 0) * rubric_w) if rubric_val is not None else None},
             # Weights come from tests/test_weights.json rather than being pinned
             # to 0 here. Nothing in this pipeline computes their values yet, so
             # value/earned stay None; a task that declares them non-zero will at
             # least surface the discrepancy instead of silently reading as 0.
-            "state_completion": {"weight": _comp_w("state_completion"), "value": _pct(state_val),
+            "state_completion": {"weight": _comp_w("state_completion"), "value": reward_pct(state_val),
                                  "earned": _r4((state_val or 0) * _comp_w("state_completion"))
                                  if state_val is not None else None},
             "state_misbehave": {"weight": _comp_w("state_misbehave"), "severity": _r4(state_mis),
@@ -1034,12 +1073,12 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         "recall": sum(1 for r in goal_rows if r.get("outcome") == "credited"),
         "total": len(goal_rows),
         "misbehave": sum(1 for r in traj_rows if r.get("outcome") == "penalized"),
-        "state": _pct(state_val), "plan": None,
+        "state": reward_pct(state_val), "plan": None,
         "traj_tests": {"recall": sum(1 for r in goal_rows if r.get("outcome") == "credited"),
                        "total": len(goal_rows),
                        "misbehave": sum(1 for r in traj_rows if r.get("outcome") == "penalized"),
                        "passed_tests": {r["name"]: bool(r.get("raw_passed")) for r in traj_rows}},
-        "rubric_score": _pct(rubric_val),
+        "rubric_score": reward_pct(rubric_val),
         "rubric_per_criterion": rubric_entries,
         "grader": "weighted(" + "+".join(k for k in ["traj_tests", "rubric", "state_completion", "state_misbehave", "graph_plan"] if _comp_w(k) != 0) + ")",
     }
@@ -1274,7 +1313,7 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
                     _metrics.append({})
                 _eval_data["metrics"] = _metrics
                 for _i, _ep in enumerate(all_eps):
-                    _metrics[_i]["reward"] = _ep["judge"]["reward"]
+                    _metrics[_i]["reward"] = norm_reward(_ep["judge"]["reward"])
                 _new_rstats: dict = {"reward": {}}
                 for _i, _ep in enumerate(all_eps):
                     _tname = _ep.get("trial_name") or f"trial_{_i}"
