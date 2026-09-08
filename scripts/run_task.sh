@@ -506,7 +506,7 @@ for svc in (doc.get("services") or {}).values():
 image_build_context() {
   case "${1%%:*}" in
     light-servers) echo "$REPO/services/light-servers" ;;
-    egress-proxy)  echo "$REPO/services/egress-proxy" ;;
+    egress-proxy)  echo "$REPO/tools/network/egress-proxy" ;;
   esac
 }
 
@@ -590,7 +590,7 @@ stage_preflight() {
       echo "           bypass with PREFLIGHT_NETWORK_OFF=1" >&2
       exit 2
     }
-    "$_hpy" "$REPO/scripts/preflight_network.py" "$TASK" || {
+    "$_hpy" "$REPO/tools/network/preflight_network.py" "$TASK" || {
       echo "[run_task] network policy preflight failed — refusing to build or run" >&2
       exit 2
     }
@@ -720,7 +720,7 @@ stage_harbor() {
     echo "    Most common: [agent].network_mode differs from [environment]." >&2
     echo "    network_mode and the docker provider cannot switch policy after start." >&2
     echo "    Diagnose with:" >&2
-    echo "      scripts/preflight_network.py $TASK" >&2
+    echo "      tools/network/preflight_network.py $TASK" >&2
     echo >&2
     echo "    Refusing to reshape: an empty trial dir is skipped without comment and" >&2
     echo "    would leave this task silently missing a run." >&2
@@ -782,7 +782,7 @@ ensure_cc_bridge() {
   # api.anthropic.com (or to zbridge), and the rubric judge shells out to the
   # codex CLI -- so starting it bought nothing, while costing 180s of dead
   # wall-clock per trial on any host where it cannot boot (a missing fastapi in
-  # services/cc-bridge is enough, and is the state of this machine).
+  # tools/bridges/cbridge is enough, and is the state of this machine).
   #
   # run_eval.py and adapters/ DO use it, via LLM_BASE_URL. Set
   # CC_BRIDGE_ENABLED=1 there, or start it by hand.
@@ -792,19 +792,19 @@ ensure_cc_bridge() {
     echo "[run_task] cc-bridge already running on :$port"
     return 0
   fi
-  local bridge_dir="$REPO/services/cc-bridge"
+  local bridge_dir="$REPO/tools/bridges/cbridge"
   local py
   for py in "$bridge_dir/.venv/bin/python3" "$REPO/.venv/bin/python3" python3; do
     command -v "$py" >/dev/null 2>&1 && break
   done
-  if [ ! -f "$bridge_dir/cc_bridge.py" ]; then
-    echo "[run_task] WARNING: cc-bridge not found at $bridge_dir; agent will run without proxy" >&2
+  if [ ! -f "$bridge_dir/cbridge.py" ]; then
+    echo "[run_task] WARNING: cbridge not found at $bridge_dir; agent will run without proxy" >&2
     return 0
   fi
-  echo "[run_task] starting cc-bridge on :$port"
+  echo "[run_task] starting cbridge on :$port"
   mkdir -p "$bridge_dir/logs"
-  CC_BRIDGE_PORT="$port" nohup "$py" "$bridge_dir/cc_bridge.py" \
-    >"$bridge_dir/logs/cc_bridge.log" 2>&1 &
+  CC_BRIDGE_PORT="$port" nohup "$py" "$bridge_dir/cbridge.py" \
+    >"$bridge_dir/logs/cbridge.log" 2>&1 &
   local i=0
   while [ $i -lt 20 ]; do
     sleep 1; i=$((i+1))
@@ -812,7 +812,7 @@ ensure_cc_bridge() {
       echo "[run_task] cc-bridge ready on :$port"; return 0
     }
   done
-  echo "[run_task] WARNING: cc-bridge did not come up in 20s; check $bridge_dir/logs/cc_bridge.log" >&2
+  echo "[run_task] WARNING: cbridge did not come up in 20s; check $bridge_dir/logs/cbridge.log" >&2
 }
 
 ensure_zbridge() {
@@ -826,7 +826,7 @@ ensure_zbridge() {
   if curl -sf -m 2 "http://127.0.0.1:$port/healthz" >/dev/null 2>&1; then
     echo "[run_task] zbridge already running on :$port"
   else
-    local zbridge_dir="$REPO/zbridge"
+    local zbridge_dir="$REPO/tools/bridges/zbridge"
     if [ ! -f "$zbridge_dir/pyproject.toml" ]; then
       echo "[run_task] ERROR: zbridge not found at $zbridge_dir" >&2
       exit 3
@@ -895,7 +895,7 @@ ensure_headroom_zbridge_chain() {
     echo "[run_task] headroom CLI not on PATH; cannot chain to zbridge" >&2
     echo ""; return 1
   }
-  local log_dir="$REPO/zbridge/logs"; mkdir -p "$log_dir"
+  local log_dir="$REPO/tools/bridges/zbridge/logs"; mkdir -p "$log_dir"
   echo "[run_task] starting headroom->zbridge proxy on :$port" >&2
   (ANTHROPIC_TARGET_API_URL="http://127.0.0.1:$zport" \
      headroom proxy --port "$port" --host 127.0.0.1 \
@@ -944,12 +944,12 @@ route_agent_through_proxy() {
 # which harbor lands AFTER the task's own compose (docker.py:277), so one file
 # covers every bundle without editing any of them.
 #
-# See services/egress-proxy/squid.conf for why the block lives in compose rather
+# See tools/network/egress-proxy/squid.conf for why the block lives in compose rather
 # than in task.toml's network_mode.
 network_isolation_overlay() {
   [ -z "${NETWORK_ISOLATION_OFF:-}" ] || { echo "[run_task] network isolation OFF (NETWORK_ISOLATION_OFF set)" >&2; return 0; }
 
-  local overlay="$REPO/services/egress-proxy/overlay.yaml"
+  local overlay="$REPO/tools/network/egress-proxy/overlay.yaml"
   [ -f "$overlay" ] || {
     echo "[run_task] network isolation overlay missing at $overlay" >&2
     echo "[run_task]   refusing to run open-network by accident; set NETWORK_ISOLATION_OFF=1 to allow it" >&2
@@ -1054,7 +1054,7 @@ PYEOF
 #                                 a host allowlist here at all.
 #
 # Neither of those is where the block lives now. network_isolation_overlay()
-# above passes services/egress-proxy/overlay.yaml as --extra-docker-compose,
+# above passes tools/network/egress-proxy/overlay.yaml as --extra-docker-compose,
 # which makes the project's default network `internal: true` and leaves one
 # squid sidecar as the only route out, allowlisting api.anthropic.com. That is a
 # Compose-level answer to a question Harbor's network_mode cannot express:
@@ -1122,7 +1122,7 @@ stage_netaudit() {
 
     # ${flags[@]+...} is load-bearing under `set -u`: bash 3.2 on macOS treats a
     # bare "${flags[@]}" on an empty array as unbound and kills the script.
-    python3 "$REPO/scripts/detect_internet_use.py" "$traj" \
+    python3 "$REPO/tools/network/detect_internet_use.py" "$traj" \
       --json "$run_dir/internet_audit.json" \
       ${flags[@]+"${flags[@]}"} ${aflags[@]+"${aflags[@]}"} || dirty=1
   done
@@ -1177,7 +1177,7 @@ stage_reshape() {
     rm -rf "$stash"
   fi
 
-  local conv=(python3 scripts/harbor_to_output.py "$OUTPUT_DIR/$JOB" \
+  local conv=(python3 tools/delivery/harbor_to_output.py "$OUTPUT_DIR/$JOB" \
               --output-dir "$OUTPUT_DIR" --at "$AT" --run-offset "$offset")
   [ -n "${COPY_TO:-}" ] && conv+=(--copy-to "$COPY_TO")
   "${conv[@]}"
@@ -1220,7 +1220,7 @@ stage_finance() {
   if [ ! -d "$run_dir" ] && [ -d "$OUTPUT_DIR/$JOB/trajectory/run_$((offset+1))" ]; then
     run_dir="$OUTPUT_DIR/$JOB/trajectory/run_$((offset+1))"
   fi
-  python3 scripts/finance_reporter.py \
+  python3 tools/finance/finance_reporter.py \
     --run-dir "$run_dir" \
     --skip-if-reported \
     --task-id "$OUT_SLUG" || echo "[finance] WARNING: reporting failed (non-fatal)"

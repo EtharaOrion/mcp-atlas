@@ -42,7 +42,7 @@ ppid_of() { ps -o ppid= -p "$1" 2>/dev/null | tr -d ' '; }
 # the real server. Only the last does any work; the other two are dead weight
 # that makes it look like a run is still going.
 SERVICE_PIDS=()
-for pat in 'python -m zbridge' 'cc_bridge\.py' 'zbridge_adapter\.py' 'headroom.*proxy'; do
+for pat in 'python -m zbridge' 'cbridge\.py' 'zbridge_adapter\.py' 'headroom.*proxy'; do
   while read -r p; do [ -n "$p" ] && SERVICE_PIDS+=("$p"); done < <(pgrep -f "$pat" 2>/dev/null)
 done
 

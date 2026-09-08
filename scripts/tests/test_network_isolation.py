@@ -25,7 +25,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[2]
-OVERLAY = REPO / "services" / "egress-proxy" / "overlay.yaml"
+OVERLAY = REPO / "tools" / "network" / "egress-proxy" / "overlay.yaml"
 BUNDLES = sorted(REPO.glob("tasks/*/task.toml"))
 
 pytestmark = pytest.mark.skipif(not BUNDLES, reason="no task bundles in this checkout")
@@ -90,7 +90,7 @@ def test_overlay_isolates_main(task_toml: Path):
     assert "/egress-out" in targets, (
         "the proxy does not mount /egress-out, so its access log dies with the "
         "container and the audit degrades to trajectory inference with no "
-        "ground truth. See services/egress-proxy/overlay.yaml."
+        "ground truth. See tools/network/egress-proxy/overlay.yaml."
     )
 
     # The sidecars are the reason no-network was unusable. Keep them reachable.
@@ -101,7 +101,7 @@ def test_overlay_isolates_main(task_toml: Path):
 def test_harbor_still_exports_the_var_the_overlay_mounts():
     """The overlay's one dependency on harbor internals.
 
-    services/egress-proxy/overlay.yaml mounts ${HOST_AGENT_LOGS_PATH} to carry
+    tools/network/egress-proxy/overlay.yaml mounts ${HOST_AGENT_LOGS_PATH} to carry
     squid's access log off the container, and that variable is not ours -- harbor
     derives it in compose_env.py::legacy_log_mount_env_vars from the bind mount
     it makes at /logs/agent, by taking the target's BASENAME and looking it up in
@@ -137,7 +137,7 @@ def test_harbor_still_exports_the_var_the_overlay_mounts():
     )
     assert env.get("HOST_AGENT_LOGS_PATH") == "/host/trial/agent", (
         "harbor stopped exporting HOST_AGENT_LOGS_PATH as the HOST side of the "
-        f"agent log mount; got {env!r}. services/egress-proxy/overlay.yaml "
+        f"agent log mount; got {env!r}. tools/network/egress-proxy/overlay.yaml "
         "interpolates that name and will fail at `compose up`."
     )
 

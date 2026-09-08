@@ -25,12 +25,12 @@ import pytest
 import yaml
 
 REPO = Path(__file__).resolve().parents[2]
-PROXY_DIR = REPO / "services" / "egress-proxy"
+PROXY_DIR = REPO / "tools" / "network" / "egress-proxy"
 SQUID_CONF = PROXY_DIR / "squid.conf"
 OVERLAY = PROXY_DIR / "overlay.yaml"
 DOCKERFILE = PROXY_DIR / "Dockerfile"
 ENTRYPOINT = PROXY_DIR / "entrypoint.sh"
-DETECTOR = REPO / "scripts" / "detect_internet_use.py"
+DETECTOR = REPO / "tools" / "network" / "detect_internet_use.py"
 
 # The whole point of the sidecar. Widening this set is a deliberate act and
 # should have to edit a test that says so out loud.

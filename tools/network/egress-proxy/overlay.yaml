@@ -29,7 +29,7 @@
 # only value that appends no Harbor overlay. Setting "no-network" here would add
 # services.main.network_mode: none, which detaches main from the bridge
 # entirely, takes light-servers with it, and grades the run 0 with no MCP tools.
-# See services/egress-proxy/squid.conf for the full argument.
+# See tools/network/egress-proxy/squid.conf for the full argument.
 #
 # Disable with NETWORK_ISOLATION_OFF=1 (scripts/run_task.sh).
 
@@ -51,7 +51,7 @@ services:
       https_proxy: "http://egress-proxy:3128"
       # Sidecar traffic must not be proxied -- it never leaves the bridge, and
       # routing it through squid would fail the allowlist. Mirrors the
-      # INTERNAL_HOSTS set in scripts/detect_internet_use.py.
+      # INTERNAL_HOSTS set in tools/network/detect_internet_use.py.
       NO_PROXY: "light-servers,main,egress-proxy,localhost,127.0.0.1,0.0.0.0,::1"
       no_proxy: "light-servers,main,egress-proxy,localhost,127.0.0.1,0.0.0.0,::1"
       # Claude Code reaches more than api.anthropic.com: update checks, feature

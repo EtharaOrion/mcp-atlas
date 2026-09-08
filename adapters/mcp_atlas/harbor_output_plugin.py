@@ -1,5 +1,5 @@
 """Harbor job plugin: when a job finishes, reshape it into output/<task>/ (the
-complex-mcp `--layout harbor` shape) via scripts/harbor_to_output.py.
+complex-mcp `--layout harbor` shape) via tools/delivery/harbor_to_output.py.
 
 Attach with:
     harbor run ... --plugin adapters.mcp_atlas.harbor_output_plugin:HarborOutputPlugin

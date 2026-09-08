@@ -38,7 +38,7 @@ import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO / "scripts"))
+sys.path.insert(0, str(REPO / "tools" / "delivery"))
 from harbor_to_output import fmt_reward, norm_reward  # noqa: E402
 sys.path.insert(0, str(REPO / "services" / "scoring"))
 

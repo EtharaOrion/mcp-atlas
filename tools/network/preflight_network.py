@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Prove Harbor can enforce this task's network policy BEFORE anything is spent.
 
-    scripts/preflight_network.py tasks/<task> [--env-type docker]
+    tools/network/preflight_network.py tasks/<task> [--env-type docker]
 
 Exit 0 = go. Exit 2 = a blocker, named, with the fix.
 
@@ -14,7 +14,7 @@ not fail early and loudly; it fails late, leaving a trial directory with no
 ``config.json``, and every stage downstream treats that as "a run that produced
 nothing" rather than "a run that never started":
 
-  scripts/harbor_to_output.py:1129 selects trial dirs with
+  tools/delivery/harbor_to_output.py:1129 selects trial dirs with
       ``(p / "config.json").exists()``
   so an aborted trial is silently SKIPPED, ``written`` comes back empty, and
   reshape exits 0 having done nothing. No traceback, no error -- just a task
@@ -45,7 +45,7 @@ import sys
 import tomllib
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parent.parent
+REPO = Path(__file__).resolve().parents[2]
 
 FAIL = 0
 
@@ -336,7 +336,7 @@ def check(task_dir: Path, env_type: str) -> None:
 # Everything above asks whether HARBOR can enforce the task's policy. Since the
 # egress block landed, harbor is no longer where the policy lives: task.toml
 # stays network_mode = "public" precisely because that is the value that appends
-# no harbor overlay, and services/egress-proxy/overlay.yaml does the work one
+# no harbor overlay, and tools/network/egress-proxy/overlay.yaml does the work one
 # layer down in compose.
 #
 # So the checks above can all pass while the run is still guaranteed to fail.
@@ -443,7 +443,7 @@ def check_isolation(task_dir: Path, raw: dict) -> None:
         bad("the egress overlay does not carry squid's access.log off the container",
             "without it the run is audited on trajectory inference alone and "
             "reports 'no denials' whether or not the block held. Restore the "
-            "/egress-out mount in services/egress-proxy/overlay.yaml and the tee "
+            "/egress-out mount in tools/network/egress-proxy/overlay.yaml and the tee "
             "in entrypoint.sh")
     else:
         ok("the proxy's access log is captured per run (proof of denial)")

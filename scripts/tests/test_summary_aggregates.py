@@ -26,7 +26,7 @@ _SCRIPTS = Path(__file__).resolve().parents[1]
 
 def _load_module():
     spec = importlib.util.spec_from_file_location(
-        "harbor_to_output", _SCRIPTS / "harbor_to_output.py"
+        "harbor_to_output", _SCRIPTS.parent / "tools" / "delivery" / "harbor_to_output.py"
     )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

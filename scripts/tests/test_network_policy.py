@@ -44,7 +44,7 @@ import yaml
 from conftest import mirror_harbor_package
 
 REPO = Path(__file__).resolve().parents[2]
-PROXY_DIR = REPO / "services" / "egress-proxy"
+PROXY_DIR = REPO / "tools" / "network" / "egress-proxy"
 SQUID_CONF = PROXY_DIR / "squid.conf"
 OVERLAY = PROXY_DIR / "overlay.yaml"
 DOCKERFILE = PROXY_DIR / "Dockerfile"
