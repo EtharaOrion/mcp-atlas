@@ -222,3 +222,4 @@ If you use MCP-Atlas in your research, please cite:
   url           = {https://arxiv.org/abs/2602.00933}
 }
 ```
+"

@@ -146,3 +146,16 @@ run-zbridge-adapter: # start zbridge OpenAI-compat adapter on port 4001
 eval-glm: # run eval through zbridge adapter (usage: make eval-glm MODEL=claude-sonnet-4-6 OUTPUT=output/glm.csv)
 	LLM_BASE_URL=$${LLM_BASE_URL:-http://localhost:4001} \
 	python run_eval.py --model "$(MODEL)" --output "$(OUTPUT)"
+
+# ---------------------------------------------------------------------------
+# Harness teardown
+# ---------------------------------------------------------------------------
+.PHONY: stop-harness
+
+# make stop-harness [DRY=1] [ALL=1] [FORCE=1]
+#   DRY=1    show what would go, change nothing
+#   ALL=1    prune every stopped container / unused volume on the machine,
+#            not just the harness-scoped ones
+#   FORCE=1  tear down even while a run is live (kills it mid-trial)
+stop-harness: # kill the background bridges and reap stopped containers + unused volumes (images and build cache kept)
+	bash scripts/stop_harness.sh $(if $(DRY),--dry-run,) $(if $(ALL),--all,) $(if $(FORCE),--force,)
