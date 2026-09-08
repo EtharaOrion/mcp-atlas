@@ -39,6 +39,22 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
+
+REWARD_DP = 2
+
+
+def norm_reward(value, dp: int = REWARD_DP):
+    """Round a reward to the published precision.
+
+    Non-numeric input (None from an ungraded trial, a string, a dict) is returned
+    unchanged: this normalises precision, it does not invent a score. `bool` is
+    excluded deliberately -- it is an int subclass, and rounding True to 1.0 would
+    silently turn a flag into a perfect score.
+    """
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return value
+    return round(float(value), dp)
+
 sys.path.insert(0, str(REPO / "services" / "mcp_eval"))
 sys.path.insert(0, str(REPO / "scripts"))
 
@@ -685,6 +701,8 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     rubric_pct = _pct(rubric_val)
     try:
         _orig_rew = json.loads((ver / "reward.json").read_bytes())
+        if "reward" in _orig_rew:
+            _orig_rew["reward"] = norm_reward(_orig_rew["reward"])
     except Exception:
         _orig_rew = {}
 
@@ -723,7 +741,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     elif _producer == "container_test":
         # binary gate path; scored key holds 0 or 1; no x100 rescale
         _ledger_reward = _orig_rew.get("scored", _orig_rew.get("reward", 0))
-        final_reward = _ledger_reward
+        final_reward = norm_reward(_ledger_reward)
     else:
         final_reward = 0
     reward_pct_doc = {
@@ -736,7 +754,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         passed, traj_rows, rubric_rows, stream, exception,
         rubric_expected=bool(rubric_src))
 
-    reward_txt_val = str(round(final_reward, 6)) if final_reward is not None else "0.0"
+    reward_txt_val = str(round(final_reward, 2)) if final_reward is not None else "0.0"
     detail_doc = _build_detail(ctrf, weights, breakdown, traj_val, rubric_val, traj_w, rubric_w,
                                state_val=state_val, state_mis=state_mis,
                                state_w=_comp_w("state_completion"),
@@ -1274,7 +1292,7 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
                     _metrics.append({})
                 _eval_data["metrics"] = _metrics
                 for _i, _ep in enumerate(all_eps):
-                    _metrics[_i]["reward"] = _ep["judge"]["reward"]
+                    _metrics[_i]["reward"] = norm_reward(_ep["judge"]["reward"])
                 _new_rstats: dict = {"reward": {}}
                 for _i, _ep in enumerate(all_eps):
                     _tname = _ep.get("trial_name") or f"trial_{_i}"
