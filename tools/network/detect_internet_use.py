@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Detect whether the agent reached the public internet, and block the run if it did.
 
-    scripts/detect_internet_use.py <trajectory.json> [--json OUT] [--warn-only]
+    tools/network/detect_internet_use.py <trajectory.json> [--json OUT] [--warn-only]
                                   [--access-log run_N/logs/egress-access.log]
 
 Exit 0 = clean. Exit 2 = the model used the internet; the run is blocked.
@@ -32,7 +32,7 @@ reaching api.anthropic.com regardless. There is no Harbor setting that means
 "sidecars and the API, nothing else".
 
 There is now a block, but it lives BELOW Harbor rather than in it:
-services/egress-proxy/overlay.yaml is passed as --extra-docker-compose and makes
+tools/network/egress-proxy/overlay.yaml is passed as --extra-docker-compose and makes
 the compose project's default network `internal: true`, leaving a single squid
 sidecar as the only route out with api.anthropic.com as its whole allowlist.
 That is the distinction Harbor's network_mode cannot draw -- network_mode says
@@ -79,7 +79,7 @@ from pathlib import Path
 # Reachable over the compose bridge, not over the internet. A curl at any of
 # these is the bundle working as designed.
 # Hosts that never leave the compose bridge. Peer definition:
-# services/egress-proxy/overlay.yaml's NO_PROXY is the same set applied to the
+# tools/network/egress-proxy/overlay.yaml's NO_PROXY is the same set applied to the
 # run rather than to the transcript, and squid.conf's comment makes keeping the
 # two in agreement a standing pact.
 #
@@ -191,11 +191,11 @@ def is_internal(host: str) -> bool:
 #
 # squid's access.log is the other half: not what the model said it would do, but
 # what actually arrived at the proxy and what the proxy did about it. It is
-# written per attempt into the trial's agent-log dir (services/egress-proxy/
-# entrypoint.sh) and reaches the run dir via scripts/harbor_to_output.py.
+# written per attempt into the trial's agent-log dir (tools/network/egress-proxy/
+# entrypoint.sh) and reaches the run dir via tools/delivery/harbor_to_output.py.
 # --------------------------------------------------------------------------
 
-# The one host squid lets out. services/egress-proxy/squid.conf is the source of
+# The one host squid lets out. tools/network/egress-proxy/squid.conf is the source of
 # truth and scripts/tests/test_egress_allowlist.py::EXPECTED_ALLOWLIST pins it
 # there; this is the third copy, so change one and look at the other two.
 PROXY_ALLOWLIST = {"api.anthropic.com"}

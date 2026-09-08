@@ -17,7 +17,7 @@ still passes.
 This file starts the real proxy and reads its real access log. It also exercises
 the capture path added for per-run proof of denial: the container is given an
 /egress-out mount, and the log is read back from the HOST side of it, which is
-the same path services/egress-proxy/overlay.yaml uses under harbor.
+the same path tools/network/egress-proxy/overlay.yaml uses under harbor.
 
 Requires docker and a built `egress-proxy:latest` (`make build-egress-proxy`).
 Skipped, never failed, when either is missing -- an unbuilt image is a laptop
@@ -221,7 +221,7 @@ def test_allowed_host_is_denied_on_a_non_ssl_port(proxy):
         f"CONNECT {ALLOWED}:22 was not denied -- logged {[f[3] for f in entries] or 'nothing'}. "
         f"An empty result here means squid accepted the tunnel and is still "
         f"holding it open. Check that `http_access deny CONNECT !SSL_ports` "
-        f"still precedes the allow rules in services/egress-proxy/squid.conf."
+        f"still precedes the allow rules in tools/network/egress-proxy/squid.conf."
     )
 
 
@@ -236,7 +236,7 @@ def test_auditor_reads_this_log(proxy):
     nothing, months later, on a run that mattered.
     """
     import sys
-    sys.path.insert(0, str(REPO / "scripts"))
+    sys.path.insert(0, str(REPO / "tools" / "network"))
     import detect_internet_use as diu
 
     diu.FINDINGS.clear()

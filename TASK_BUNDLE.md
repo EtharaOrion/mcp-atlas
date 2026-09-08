@@ -522,7 +522,7 @@ scripts/run_task.sh <task-dir>
   ├─ python3 scripts/harbor_to_output.py output/<slug> --output-dir output
   │      reshapes raw harbor artifacts into the reporting bundle
   │
-  └─ python3 scripts/finance_reporter.py --run-dir output/<slug>/trajectory/Run_N
+  └─ python3 tools/finance/finance_reporter.py --run-dir output/<slug>/trajectory/Run_N
          token/cost accounting (optional; skipped when ODOO_URL is unset)
 ```
 

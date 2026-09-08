@@ -1,4 +1,4 @@
-"""scripts/detect_internet_use.py -- the closed-world guarantee.
+"""tools/network/detect_internet_use.py -- the closed-world guarantee.
 
 Two things must hold, and the second is the one that costs real money if it
 breaks: every form of egress is caught, and NO legitimate bundle traffic is
@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent.parent
-DETECT = REPO / "scripts" / "detect_internet_use.py"
+DETECT = REPO / "tools" / "network" / "detect_internet_use.py"
 
 
 def run(steps, *flags, tmp_path):

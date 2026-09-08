@@ -25,7 +25,7 @@ calls, rubric = Channel B LLM-judged claims). The complex-mcp-only channels
 emitted as absent (weight 0, value null) rather than fabricated.
 
 Usage:
-    python scripts/harbor_to_output.py jobs/xenon-opus-2 [--output-dir output] [--copy-to DIR]
+    python tools/delivery/harbor_to_output.py jobs/xenon-opus-2 [--output-dir output] [--copy-to DIR]
 """
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parent.parent
+REPO = Path(__file__).resolve().parents[2]
 
 # The only reward digit count in the pipeline. Every reward-shaped number
 # derives from it; no call site writes a literal.
@@ -833,7 +833,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     if _copy(stream_path, run_dir / "logs" / "agent-stream.jsonl"):
         (run_dir / "logs" / "agent-stream.txt").unlink(missing_ok=True)
     # Squid's access log for this attempt: what the agent actually tried to
-    # reach and what the proxy actually refused. services/egress-proxy/
+    # reach and what the proxy actually refused. tools/network/egress-proxy/
     # entrypoint.sh tees it into the trial's own agent-log dir, which is why it
     # is read from `ag` here rather than collected with `docker logs` -- by the
     # time anything downstream runs, the proxy container is gone.

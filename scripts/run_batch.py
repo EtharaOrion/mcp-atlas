@@ -48,6 +48,7 @@ from typing import Any, Iterable
 
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
+sys.path.insert(0, str(REPO / "tools" / "delivery"))
 import checkpoint as ckpt  # noqa: E402
 from harbor_to_output import norm_reward  # noqa: E402
 

@@ -16,7 +16,7 @@ so nothing here may use 3.10+ runtime syntax.
 # WHY NOT THE AGENT PATH
 # ---------------------------------------------------------------------------
 # The agent loop is `services/agent-harness/` (TypeScript) and the Claude Code
-# route is `services/cc-bridge/`. Neither can import this module, so the
+# route is `tools/bridges/cbridge/`. Neither can import this module, so the
 # boundary is structural here rather than a rule someone has to remember. It is
 # still worth writing down why it should stay that way.
 #

@@ -14,7 +14,6 @@ harness/
 │   ├── run_task.sh           Run a single task bundle via Harbor
 │   ├── run_batch.py          Resumable multi-task batch runner
 │   ├── harbor_to_output.py   Reshape a Harbor job into output/<task>/
-│   ├── finance_reporter.py   POST token/cost usage to Finance API
 │   └── smoke_test.py         End-to-end bundle generation validation
 ├── services/
 │   ├── agent-environment/    Docker image with 36 MCP tool servers (port 1984)
@@ -24,7 +23,11 @@ harness/
 │   ├── light-servers/        Mock SaaS application fleet (140 domain + 20 tool servers)
 │   ├── mcp_eval/             Health tests and eval utilities
 │   └── scoring/              LLM-as-judge and score aggregation pipeline
-└── tasks/                    Harbor-format task bundles
+├── tasks/                    Harbor-format task bundles
+└── tools/
+    └── finance/              Finance/billing utilities
+        ├── finance_reporter.py   POST token/cost usage to Finance API
+        └── claude_account.py     Resolve Claude subscription info
 ```
 
 ## Quick start

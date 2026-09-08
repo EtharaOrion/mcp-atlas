@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Start zbridge (Anthropic-to-GLM proxy) on port 8766.
-# Run from harness/ root: bash scripts/start_zbridge.sh
+# Run from harness/ root: bash tools/bridges/start_zbridge.sh
 # Requires ZB_ZAI_API_KEY and ZB_BRIDGE_SECRET to be set (or sourced from .env).
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ZBRIDGE_DIR="$(cd "$SCRIPT_DIR/../zbridge" && pwd)"
+ZBRIDGE_DIR="$(cd "$SCRIPT_DIR/zbridge" && pwd)"
 
 if [[ ! -f "$ZBRIDGE_DIR/pyproject.toml" ]]; then
     echo "ERROR: zbridge not found at $ZBRIDGE_DIR" >&2
@@ -14,8 +14,8 @@ if [[ ! -f "$ZBRIDGE_DIR/pyproject.toml" ]]; then
 fi
 
 if [[ -z "${ZB_ZAI_API_KEY:-}" ]]; then
-    if [[ -f "$SCRIPT_DIR/../.env" ]]; then
-        set -a; source "$SCRIPT_DIR/../.env"; set +a
+    if [[ -f "$SCRIPT_DIR/../../.env" ]]; then
+        set -a; source "$SCRIPT_DIR/../../.env"; set +a
     fi
 fi
 

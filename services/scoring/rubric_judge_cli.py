@@ -638,7 +638,7 @@ def _record_usage_codex(usage: dict, model: str) -> None:
     it is a breakdown of output_tokens, not a sibling of it, so folding it in
     would double count.
 
-    Written best-effort so scripts/finance_reporter.py always sees the usage
+    Written best-effort so tools/finance/finance_reporter.py always sees the usage
     that was incurred: never raises, never blocks grading.
     """
     if _token_out is None:
@@ -815,7 +815,7 @@ def main() -> None:
     ap.add_argument("--output", required=True)
     ap.add_argument("--token-output", default=None,
                     help="write the judge's own token usage here, in the finance "
-                         "API's judge_lines shape (read by scripts/finance_reporter.py)")
+                         "API's judge_lines shape (read by tools/finance/finance_reporter.py)")
     ap.add_argument("--model", default=None,
                     help="judge model; defaults to JUDGE_MODEL, else whichever "
                          "of the codex / claude CLIs is installed here")

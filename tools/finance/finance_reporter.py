@@ -7,7 +7,7 @@ reshaped the Harbor job:
 
     run_task.sh -> harbor_to_output.py -> finance_reporter.py -> Odoo Finance API
 
-    scripts/finance_reporter.py --run-dir output/<task>/trajectory/Run_1 \
+    tools/finance/finance_reporter.py --run-dir output/<task>/trajectory/Run_1 \
                                 --task-id <task-slug>
 
 Data sources (all already on disk when this runs):
@@ -15,7 +15,7 @@ Data sources (all already on disk when this runs):
     <run-dir>/agent/trajectory.json       cache-token split
     <run-dir>/verifier/judge_tokens.json  judge_lines (written by rubric_judge_cli)
     <job-dir>/summary.json                run config (model/agent), if present
-    tools.claude_account                  subscription_id, fetched once and cached
+    tools.finance.claude_account                  subscription_id, fetched once and cached
 
 Environment (read from the process env, falling back to the nearest .env
 at or above the repo root):
@@ -64,7 +64,7 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parent.parent
+REPO = Path(__file__).resolve().parents[2]
 ENDPOINT_PATH = "api/v1/ethara_project/trajectory_usage/create"
 RETRIES = 3
 TIMEOUT_SEC = 30
@@ -388,10 +388,10 @@ def main() -> int:
     task_id = args.task_id or run_dir.parent.parent.name
 
     try:
-        from tools.claude_account import get_claude_account_info
+        from tools.finance.claude_account import get_claude_account_info
     except ImportError:
         sys.path.insert(0, str(REPO))
-        from tools.claude_account import get_claude_account_info
+        from tools.finance.claude_account import get_claude_account_info
 
     account = get_claude_account_info()
     if account.get("error"):

@@ -110,7 +110,7 @@ ALREADY_PATCHED_MARKER_JUDGE_MODEL = '_ov_env.setdefault("JUDGE_MODEL"'
 # ClaudeCode.install() reaches the network twice inside the container: apt-get
 # for curl/procps, then a bootstrap.sh download from downloads.claude.ai. Both
 # run BEFORE the agent phase, and both die once the container's default network
-# is `internal: true` (services/egress-proxy/overlay.yaml).
+# is `internal: true` (tools/network/egress-proxy/overlay.yaml).
 #
 # The bundles pre-bake the CLI at build time instead, where the network is still
 # open, so these two commands have nothing left to do. They are made no-ops

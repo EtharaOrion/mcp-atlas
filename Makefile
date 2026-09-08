@@ -113,18 +113,18 @@ batch-status: # print a batch's per-step progress without running anything
 # make harbor-output JOB=jobs/<job>
 harbor-output: # reshape an existing Harbor job into output/<task>/ without re-running it
 	@test -n "$(JOB)" || { echo "usage: make harbor-output JOB=jobs/<job>"; exit 2; }
-	python3 scripts/harbor_to_output.py $(JOB) --output-dir output $(if $(COPY_TO),--copy-to $(COPY_TO),)
+	python3 tools/delivery/harbor_to_output.py $(JOB) --output-dir output $(if $(COPY_TO),--copy-to $(COPY_TO),)
 
 # make finance-usage RUN=output/<task>/trajectory/Run_1 [DRY=1]
 finance-usage: # POST one run's token/cost usage to the Finance API
 	@test -n "$(RUN)" || { echo "usage: make finance-usage RUN=output/<task>/trajectory/Run_N [DRY=1]"; exit 2; }
-	python3 scripts/finance_reporter.py --run-dir $(RUN) $(if $(DRY),--dry-run,)
+	python3 tools/finance/finance_reporter.py --run-dir $(RUN) $(if $(DRY),--dry-run,)
 
 build-light-servers: # build light-servers Docker image (all software + utility servers bundled in services/light-servers/)
 	docker build -t light-servers:latest services/light-servers/
 
 build-egress-proxy: # build the egress allowlist proxy (network isolation for the agent phase)
-	docker build -t egress-proxy:latest services/egress-proxy/
+	docker build -t egress-proxy:latest tools/network/egress-proxy/
 
 # ---------------------------------------------------------------------------
 # zbridge — GLM-5.3 via z.ai (Anthropic-to-GLM proxy + OpenAI adapter)
@@ -133,11 +133,11 @@ build-egress-proxy: # build the egress allowlist proxy (network isolation for th
 .PHONY: run-zbridge run-zbridge-adapter eval-glm
 
 run-zbridge: # start zbridge proxy on port 8766 (Anthropic→GLM translator)
-	bash scripts/start_zbridge.sh
+	bash tools/bridges/start_zbridge.sh
 
 run-zbridge-adapter: # start zbridge OpenAI-compat adapter on port 4001
 	@test -f .env && set -a && source .env && set +a; \
-	cd services/zbridge-adapter && \
+	cd tools/bridges/zbridge-adapter && \
 	ZBRIDGE_URL=$${ZBRIDGE_URL:-http://127.0.0.1:8766} \
 	ZB_BRIDGE_SECRET=$${ZB_BRIDGE_SECRET} \
 	ZBRIDGE_ADAPTER_PORT=$${ZBRIDGE_ADAPTER_PORT:-4001} \

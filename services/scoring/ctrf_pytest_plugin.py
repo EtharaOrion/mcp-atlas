@@ -5,7 +5,7 @@ task's docker-compose bind-mounts ``services/scoring`` at ``/harness/scoring``
 read-only, so putting that directory on PYTHONPATH is enough to import this).
 
 Before this existed, ``ctrf.json`` had no producer at all: tasks ran pytest with
-``--junitxml=/logs/verifier/junit.xml`` and ``scripts/harbor_to_output.py``
+``--junitxml=/logs/verifier/junit.xml`` and ``tools/delivery/harbor_to_output.py``
 reconstructed CTRF from that XML on the host (``_junit_to_ctrf``). CTRF was
 therefore an XML derivative, and deleting the XML would have silently emptied
 it -- along with ``detail.json`` and ``report.json``, which are both built from

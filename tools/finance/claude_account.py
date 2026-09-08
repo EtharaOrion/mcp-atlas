@@ -4,9 +4,9 @@ claude_account.py — resolve the Claude account behind a run.
 
 Reads the Claude Code OAuth credentials from the local credential store, calls
 the profile endpoint, and returns the identity fields the finance pipeline
-needs. scripts/finance_reporter.py calls get_claude_account_info() once per run.
+needs. tools/finance/finance_reporter.py calls get_claude_account_info() once per run.
 
-    from tools.claude_account import get_claude_account_info
+    from tools.finance.claude_account import get_claude_account_info
     info = get_claude_account_info()
     info["subscription_id"]        # == organization_uuid
 
