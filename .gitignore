@@ -7,6 +7,7 @@ wheels/
 tasks/
 output/
 delivery_output/
+input/
 *.egg-info
 
 # Virtual environments
