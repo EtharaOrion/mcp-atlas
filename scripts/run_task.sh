@@ -305,6 +305,130 @@ check_credentials() {
   [ "$fail" = "0" ] || { echo "[run_task] credential check FAILED — fix the above and retry" >&2; exit 4; }
 }
 
+# --- finance attribution ------------------------------------------------------
+# The ODOO_*/FINANCE_* keys are validated HERE, at second zero, and not in
+# stage_finance where they are used.
+#
+# stage_finance is the LAST thing a run does -- after hours of paid agent time --
+# and it calls finance_reporter.py WITHOUT --strict, which makes `fail = 0`
+# (finance_reporter.py:354). A bad enum therefore raises inside build_payload,
+# prints "cannot build payload: ..." to stderr, and returns 0. run_task.sh sees
+# a clean exit, the run reports success, and nothing was ever posted. The loss is
+# invisible until someone reconciles the ledger against the trials that actually
+# ran. Everything below is string comparison over variables already in the
+# environment: it costs nothing, and it moves that failure from hour five to
+# second zero.
+#
+# An empty ODOO_URL is the documented opt-out (finance_reporter.py:382-385), so
+# it skips the rest rather than forcing operators who never report to fill in
+# attribution they do not use.
+#
+# Bypass with FINANCE_ENV_CHECK_OFF=1.
+FINANCE_DEFAULT_PROJECT_TYPE="Technical"   # finance_reporter.py:276
+FINANCE_DEFAULT_TEAM_TYPE="Projects"       # finance_reporter.py:279
+
+# Warn when a value is the documented one in the wrong case. The reporter
+# forwards project_type and team_type to Odoo verbatim and validates neither, so
+# a casing slip passes every check on this machine and surfaces only as a wrong
+# or rejected record on the server. Anything genuinely different is left alone --
+# the server owns that vocabulary, not this script.
+warn_finance_case() {   # warn_finance_case <VAR_NAME> <documented-value>
+  local name="$1" want="$2" have="${!1:-}"
+  [ -n "$have" ] || return 0
+  [ "$have" = "$want" ] && return 0
+  [ "$(printf '%s' "$have" | tr 'A-Z' 'a-z')" = "$(printf '%s' "$want" | tr 'A-Z' 'a-z')" ] || return 0
+  echo "[run_task] WARNING: $name='$have' differs only in CASE from the documented '$want'" >&2
+  echo "[run_task]   Odoo is sent the value verbatim; use '$want' unless you mean otherwise." >&2
+}
+
+check_finance_env() {
+  # reshape never reports; finance runs as its own stage under run_batch.py and
+  # is checked on its own invocation.
+  case "$STAGE" in reshape) return 0 ;; esac
+  [ -z "${FINANCE_ENV_CHECK_OFF:-}" ] || return 0
+
+  if [ -z "${ODOO_URL:-}" ]; then
+    echo "[run_task] finance: ODOO_URL empty — usage reporting disabled, skipping checks"
+    return 0
+  fi
+
+  local fail=0
+  case "$ODOO_URL" in
+    http://*|https://*) ;;
+    *) echo "[run_task] ERROR: ODOO_URL must start with http:// or https:// — got '$ODOO_URL'" >&2
+       echo "[run_task]   (a value with a space or a quote is dropped by load_dotenv above)" >&2
+       fail=1 ;;
+  esac
+
+  # The one key with no default anywhere: build_payload raises outright.
+  if [ -z "${FINANCE_PROJECT_ID:-}" ]; then
+    echo "[run_task] ERROR: FINANCE_PROJECT_ID is empty or unset — required (e.g. PRJ-512)" >&2
+    fail=1
+  fi
+
+  # An EMPTY value is legal wherever the reporter has a default: env() is
+  # `(os.environ.get(name) or default)`, which treats "" and unset identically.
+  # Only a non-empty WRONG value is an error, so the defaults are resolved here
+  # exactly as the reporter resolves them and the result is what gets checked.
+  #
+  # Comparisons are case-SENSITIVE because the reporter's are
+  # (finance_reporter.py:72-73, 251-263). "testing" is not "Testing", and that
+  # one difference is the entire failure this function exists to catch.
+  local budget="${FINANCE_BUDGET_TYPE:-}"
+  [ -n "$budget" ] || budget="RFP"          # finance_reporter.py:251
+  case "$budget" in
+    RFP|Production) ;;
+    *) echo "[run_task] ERROR: FINANCE_BUDGET_TYPE must be exactly 'RFP' or 'Production' — got '$budget'" >&2
+       fail=1 ;;
+  esac
+
+  local detail=""
+  if [ "$budget" = "RFP" ]; then
+    local sub="${FINANCE_RFP_SUB_TYPE:-}"
+    [ -n "$sub" ] || sub="Testing"          # finance_reporter.py:255
+    case "$sub" in
+      Testing|Sampling) detail="rfp_sub_type=$sub" ;;
+      *) echo "[run_task] ERROR: FINANCE_RFP_SUB_TYPE must be exactly 'Testing' or 'Sampling' — got '$sub'" >&2
+         echo "[run_task]   Case matters: 'testing' is rejected by finance_reporter.py:256." >&2
+         fail=1 ;;
+    esac
+  elif [ "$budget" = "Production" ]; then
+    # No default on this one -- env("FINANCE_PRODUCTION_MODE") is called with no
+    # fallback -- so empty is a hard error rather than a silent default.
+    case "${FINANCE_PRODUCTION_MODE:-}" in
+      Singlephase|Multiphase) detail="production_mode=${FINANCE_PRODUCTION_MODE}" ;;
+      "") echo "[run_task] ERROR: FINANCE_PRODUCTION_MODE is required when FINANCE_BUDGET_TYPE=Production" >&2
+          echo "[run_task]   Set it to 'Singlephase' or 'Multiphase'." >&2
+          fail=1 ;;
+      *)  echo "[run_task] ERROR: FINANCE_PRODUCTION_MODE must be exactly 'Singlephase' or 'Multiphase' — got '${FINANCE_PRODUCTION_MODE}'" >&2
+          fail=1 ;;
+    esac
+  fi
+
+  # Odoo's handler requires phase_number and wants it as a string of digits.
+  case "${FINANCE_PHASE_NUMBER:-1}" in
+    ''|*[!0-9]*) echo "[run_task] ERROR: FINANCE_PHASE_NUMBER must be a number — got '${FINANCE_PHASE_NUMBER:-}'" >&2
+                 fail=1 ;;
+  esac
+
+  warn_finance_case FINANCE_PROJECT_TYPE "$FINANCE_DEFAULT_PROJECT_TYPE"
+  warn_finance_case FINANCE_TEAM_TYPE    "$FINANCE_DEFAULT_TEAM_TYPE"
+
+  # Not fatal: the reporter posts unauthenticated and says so
+  # (finance_reporter.py:411-412). Some deployments accept that; refusing to run
+  # over it would break a working setup for a value this script cannot verify.
+  if [ -z "${ODOO_AUTH_TOKEN:-}" ] && [ -z "${ODOO_EXTRA_HEADERS:-}" ]; then
+    echo "[run_task] WARNING: ODOO_AUTH_TOKEN is empty — the usage POST will be unauthenticated" >&2
+  fi
+
+  [ "$fail" = "0" ] || {
+    echo "[run_task] finance env check FAILED — fix <repo>/.env and retry." >&2
+    echo "[run_task]   Clear ODOO_URL to disable reporting, or set FINANCE_ENV_CHECK_OFF=1 to skip this gate." >&2
+    exit 4
+  }
+  echo "[run_task] finance: OK (project=$FINANCE_PROJECT_ID budget=$budget${detail:+ $detail} -> $ODOO_URL)"
+}
+
 # --- images -------------------------------------------------------------------
 # Nothing below ever asks the operator to have run `docker pull` or
 # `make build-light-servers` first. Preflight is the cheap idempotent stage
@@ -365,11 +489,24 @@ for svc in (doc.get("services") or {}).values():
 # this checkout are in NO registry -- `docker pull light-servers:latest` 404s --
 # so a pull-only preflight cannot fix the one image every bundle here needs.
 # Anything not named is treated as a registry image and pulled.
+#
+# agent-environment is deliberately NOT here, and dropping it changed nothing.
+# The image that context builds is PUBLISHED as ghcr.io/scaleapi/mcp-atlas:<ver>
+# (`make push`), and that is the name adapter-generated bundles pin for their
+# `mcp-server` sidecar (adapters/mcp_atlas/adapter.py:27,92). `${1%%:*}` on it is
+# "ghcr.io/scaleapi/mcp-atlas", which never matched this case -- so those bundles
+# have always taken the registry-pull path above, which is the correct one.
+#
+# The only string this branch could ever match was the LOCAL `agent-environment`
+# alias, which exists solely for the :1984 REST sandbox that run_all.sh /
+# run_eval.py drive (`make run-docker`, `make shell`, run_all.sh:15) and which
+# nothing on the Harbor path uses. Keeping it only meant preflight could be asked
+# to build a 5.4 GB image no `harbor run` would ever start. Re-add it only if a
+# bundle actually pins that bare name.
 image_build_context() {
   case "${1%%:*}" in
-    light-servers)     echo "$REPO/services/light-servers" ;;
-    agent-environment) echo "$REPO/services/agent-environment" ;;
-    egress-proxy)      echo "$REPO/services/egress-proxy" ;;
+    light-servers) echo "$REPO/services/light-servers" ;;
+    egress-proxy)  echo "$REPO/services/egress-proxy" ;;
   esac
 }
 
@@ -1095,6 +1232,7 @@ python3 "$REPO/scripts/patch_harbor.py"
 
 resolve_auth
 check_credentials
+check_finance_env
 
 case "$STAGE" in
   preflight) stage_preflight ;;
