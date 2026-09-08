@@ -122,8 +122,7 @@ uv run /tests/weighted_judge_entry.py
 
 # Inert by default (both components weight 0) — a --weighted bundle behaves
 # exactly like a plain bundle (scored by agent_judge.py alone) until a task
-# author edits this file to opt a component in. See
-# services/scoring/rubric_pytest_kit/README.md for the polarity convention.
+# author edits this file to opt a component in.
 TEST_WEIGHTS_JSON_STUB = """{
   "threshold": 1.0,
   "components": {
@@ -141,7 +140,7 @@ services/scoring/traj_asserts.py for the assertion API) and give them
 non-zero signed weights in test_weights.json to opt in: positive weight for
 a goal test, negative for a guard test. Every assertion should be phrased
 positively ("X happened") — the sign of the weight decides whether that's
-good or bad. See services/scoring/rubric_pytest_kit/README.md.
+good or bad.
 """
 from traj_asserts import called_with, called_any, never_called  # noqa: F401
 '''

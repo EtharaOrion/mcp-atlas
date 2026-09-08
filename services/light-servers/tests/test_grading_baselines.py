@@ -4,7 +4,7 @@ actually serve.
 ``tests/old_env.json`` and ``tests/gt_env.json`` are baked from the stock
 world. When a bundle's world_data overlay changes what is served, a *perfect*
 run is graded against a world that no longer exists -- so the baselines have
-to be re-derived (scripts/rederive_env.py) before the task is shipped.
+to be re-derived before the task is shipped.
 """
 from __future__ import annotations
 
