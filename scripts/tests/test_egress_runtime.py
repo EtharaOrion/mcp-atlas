@@ -67,9 +67,8 @@ def _sh(*args: str, timeout: int = 60) -> subprocess.CompletedProcess:
     return subprocess.run(args, capture_output=True, text=True, timeout=timeout)
 
 
-@pytest.fixture(scope="module")
-def proxy():
-    """A running proxy plus the host side of its /egress-out mount.
+def _start_proxy(extra_env: dict[str, str] | None = None) -> dict:
+    """Start the image and wait for squid to answer; returns cid/port/out.
 
     /tmp and not pytest's tmp_path: Docker Desktop shares /tmp by default and
     does not share the /private/var/folders path tmp_path hands out, so a bind
@@ -77,36 +76,68 @@ def proxy():
     a reason that has nothing to do with the proxy.
     """
     out = Path(tempfile.mkdtemp(dir="/tmp", prefix="egress-out-"))
-    run = _sh("docker", "run", "-d", "--rm",
-              "-p", "0:3128",
-              "-v", f"{out}:/egress-out",
-              IMAGE)
+    cmd = ["docker", "run", "-d", "--rm", "-p", "0:3128", "-v", f"{out}:/egress-out"]
+    for k, v in (extra_env or {}).items():
+        cmd += ["-e", f"{k}={v}"]
+    run = _sh(*cmd, IMAGE)
     if run.returncode != 0:
+        shutil.rmtree(out, ignore_errors=True)
         pytest.skip(f"could not start {IMAGE}: {run.stderr.strip()}")
     cid = run.stdout.strip()
 
-    try:
-        port = _sh("docker", "port", cid, "3128").stdout.strip()
-        port = port.splitlines()[0].rsplit(":", 1)[1]
+    port = _sh("docker", "port", cid, "3128").stdout.strip()
+    port = port.splitlines()[0].rsplit(":", 1)[1]
 
-        # squid is listening when it answers, not when docker says "started".
-        # Poll rather than sleep: a fixed sleep is either slow or flaky.
-        deadline = time.time() + 30
-        while time.time() < deadline:
-            probe = _sh("curl", "-sS", "-o", "/dev/null", "-w", "%{http_code}",
-                        "--max-time", "3", "-x", f"http://127.0.0.1:{port}",
-                        f"http://{DENIED}/", timeout=10)
-            if probe.stdout.strip() == "403":
-                break
-            time.sleep(0.5)
-        else:
-            pytest.fail(f"proxy never answered on :{port}\n"
-                        f"{_sh('docker', 'logs', cid).stderr}")
-
-        yield {"cid": cid, "port": port, "out": out}
-    finally:
+    # squid is listening when it answers, not when docker says "started".
+    # Poll rather than sleep: a fixed sleep is either slow or flaky.
+    deadline = time.time() + 30
+    while time.time() < deadline:
+        probe = _sh("curl", "-sS", "-o", "/dev/null", "-w", "%{http_code}",
+                    "--max-time", "3", "-x", f"http://127.0.0.1:{port}",
+                    f"http://{DENIED}/", timeout=10)
+        if probe.stdout.strip() == "403":
+            break
+        time.sleep(0.5)
+    else:
+        logs = _sh("docker", "logs", cid).stderr
         _sh("docker", "rm", "-f", cid)
         shutil.rmtree(out, ignore_errors=True)
+        pytest.fail(f"proxy never answered on :{port}\n{logs}")
+    return {"cid": cid, "port": port, "out": out}
+
+
+def _stop_proxy(p: dict) -> None:
+    _sh("docker", "rm", "-f", p["cid"])
+    shutil.rmtree(p["out"], ignore_errors=True)
+
+
+@pytest.fixture(scope="module")
+def proxy():
+    """A running proxy on the baked-in default allowlist, plus the host side
+    of its /egress-out mount."""
+    p = _start_proxy()
+    try:
+        yield p
+    finally:
+        _stop_proxy(p)
+
+
+# The per-run swap scripts/run_task.sh performs for CC_MODE=bedrock. A literal
+# host for the same reason ALLOWED is: the test states the expectation, the
+# script does not get to define it.
+BEDROCK_HOST = "bedrock-runtime.ap-south-1.amazonaws.com"
+BEDROCK_CONTROL_HOST = "bedrock.ap-south-1.amazonaws.com"
+
+
+@pytest.fixture(scope="module")
+def bedrock_proxy():
+    """The same image started the way overlay.yaml starts it under
+    CC_MODE=bedrock: EGRESS_ALLOWED_HOSTS names the regional runtime host."""
+    p = _start_proxy({"EGRESS_ALLOWED_HOSTS": f"{BEDROCK_HOST},{BEDROCK_CONTROL_HOST}"})
+    try:
+        yield p
+    finally:
+        _stop_proxy(p)
 
 
 def _request(proxy, url: str) -> None:
@@ -254,3 +285,46 @@ def test_auditor_reads_this_log(proxy):
         "a denied host produced no blocking finding"
     )
     diu.FINDINGS.clear()
+
+
+# ------------------------------------------------- the per-run allowlist swap
+
+
+def test_bedrock_allowlist_lets_the_regional_runtime_through(bedrock_proxy):
+    """Under CC_MODE=bedrock the CLI's only upstream is the Bedrock runtime;
+    the entrypoint must have rewritten allowed_hosts.txt from the env."""
+    _request(bedrock_proxy, f"https://{BEDROCK_HOST}/")
+    entries = _entries(_log(bedrock_proxy), BEDROCK_HOST)
+    assert entries, f"no access.log entry for {BEDROCK_HOST}"
+    assert not any("DENIED" in f[3] for f in entries), (
+        f"the Bedrock host was denied: {[f[3] for f in entries]} -- "
+        "EGRESS_ALLOWED_HOSTS did not reach squid's allowed_hosts file"
+    )
+
+
+def test_bedrock_allowlist_admits_the_control_plane_too(bedrock_proxy):
+    """The CLI resolves an inference-profile ARN on bedrock.<region> before
+    its first model call. The comma-separated value must yield BOTH hosts."""
+    _request(bedrock_proxy, f"https://{BEDROCK_CONTROL_HOST}/")
+    entries = _entries(_log(bedrock_proxy), BEDROCK_CONTROL_HOST + ":")
+    assert entries, f"no access.log entry for {BEDROCK_CONTROL_HOST}"
+    assert not any("DENIED" in f[3] for f in entries), (
+        f"the Bedrock control plane was denied: {[f[3] for f in entries]}"
+    )
+
+
+def test_bedrock_allowlist_replaces_rather_than_widens(bedrock_proxy):
+    """Swapping the host must not keep the old one: a Bedrock run has no
+    business reaching api.anthropic.com, and one-host-per-run is the policy."""
+    _request(bedrock_proxy, f"https://{ALLOWED}/")
+    entries = _entries(_log(bedrock_proxy), ALLOWED)
+    assert entries, f"no access.log entry for {ALLOWED}"
+    assert all("DENIED" in f[3] for f in entries), (
+        f"{ALLOWED} still allowed under the Bedrock allowlist: {[f[3] for f in entries]}"
+    )
+
+
+def test_bedrock_allowlist_still_denies_everything_else(bedrock_proxy):
+    _request(bedrock_proxy, f"https://{DENIED}/")
+    entries = _entries(_log(bedrock_proxy), DENIED)
+    assert entries and all("DENIED" in f[3] for f in entries)

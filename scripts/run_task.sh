@@ -4,6 +4,7 @@
 #
 #   scripts/run_task.sh tasks/xenon-atomic-cube                 # claude-code + opus-5 (defaults)
 #   CC_MODE=zbridge N=3 scripts/run_task.sh tasks/foo            # 3 attempts via GLM-5.3 (zbridge)
+#   CC_MODE=bedrock scripts/run_task.sh tasks/foo               # Claude Code on AWS Bedrock (Bedrock API key)
 #   AGENT=oracle scripts/run_task.sh tasks/foo                  # oracle gate
 #   COPY_TO=/some/dir scripts/run_task.sh tasks/foo           # optional extra mirror
 #
@@ -13,7 +14,9 @@
 #                OUTPUT_DIR (<repo>/output) COPY_TO (unset) BUILD_MULT (3) AT (auto)
 #                STAGE (all) RUN_OFFSET (auto) SETUP_MULT (6) JUDGE_MODEL (gpt-5.6-sol)
 #                NETWORK_ISOLATION_OFF (unset) DISALLOWED_TOOLS (WebSearch,WebFetch)
-#                CC_MODE (unset -> claude-opus-5; "zbridge" -> glm-5.3 via :8766)
+#                CC_MODE (unset -> claude-opus-5; "zbridge" -> glm-5.3 via :8766;
+#                         "bedrock" -> $BEDROCK_MODEL_ID on AWS Bedrock)
+#                AWS_BEARER_TOKEN_BEDROCK AWS_REGION BEDROCK_MODEL_ID (bedrock mode; see .env)
 #                CC_BRIDGE_ENABLED (0)
 #
 # Values may also come from <repo>/.env, which is read as DEFAULTS only: anything
@@ -44,7 +47,12 @@ set -euo pipefail
 # failure that reads exactly like the agent refusing the task.
 # CLAUDE_CODE_OAUTH_TOKEN is deliberately NOT cleared: it is what the run
 # authenticates with, and the verifier needs it too.
-unset AWS_BEARER_TOKEN_BEDROCK 2>/dev/null || true
+# AWS_BEARER_TOKEN_BEDROCK is not cleared HERE either: it is the credential for
+# CC_MODE=bedrock, and CC_MODE may still be sitting in .env at this point. It is
+# dropped further down, once .env is loaded and the mode is known, for every
+# mode except bedrock -- harbor's claude_code agent flips into Bedrock on the
+# mere presence of that variable (_is_bedrock_mode), so a stray token must not
+# be allowed to reroute an Anthropic or GLM run.
 unset ANTHROPIC_BASE_URL ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN 2>/dev/null || true
 unset CLAUDECODE CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_SSE_PORT 2>/dev/null || true
 unset CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN 2>/dev/null || true
@@ -75,8 +83,12 @@ load_dotenv() {
     # replaces. Values outside it are still skipped -- but they are now NAMED
     # instead of vanishing, which is how ZB_MODEL_ALIAS_JSON sat in .env doing
     # nothing while looking like configuration.
+    #
+    # `=` and `+` are admitted for base64 credentials: a Bedrock API key
+    # (AWS_BEARER_TOKEN_BEDROCK) is base64 and ends in `=`, and without them the
+    # one line CC_MODE=bedrock cannot run without was "skipped" every time.
     case "$val" in
-      *[!A-Za-z0-9_./:@~-]*) skipped="$skipped $key"; continue ;;
+      *[!A-Za-z0-9_./:@~=+-]*) skipped="$skipped $key"; continue ;;
     esac
     if [ -z "${!key+set}" ]; then
       export "$key=$val"
@@ -111,8 +123,28 @@ SLUG="$(basename "$TASK")"
 AGENT="${AGENT:-claude-code}"
 if [ "${CC_MODE:-}" = "zbridge" ]; then
   MODEL="${MODEL:-glm-5.3}"
+elif [ "${CC_MODE:-}" = "bedrock" ]; then
+  # Claude Code on AWS Bedrock. Nothing on the host calls Bedrock: harbor's
+  # claude_code agent sees CLAUDE_CODE_USE_BEDROCK=1 / AWS_BEARER_TOKEN_BEDROCK
+  # in ITS environment (claude_code.py: _is_bedrock_mode), forwards the bearer
+  # token (or the AWS_* key chain) and AWS_REGION into the container, and the
+  # CLI in there talks to bedrock-runtime.<region>.amazonaws.com instead of
+  # api.anthropic.com. The model is a Bedrock model id or an inference-profile
+  # ARN; harbor passes it through untouched as ANTHROPIC_MODEL.
+  #
+  # Same shape as zbridge: one CC_MODE value, credentials from .env, the rest
+  # of the pipeline (judge on codex, reshape, finance) unchanged. The
+  # ANTHROPIC_BASE_URL unset at the top stays in force -- a headroom or
+  # cc-bridge proxy forwards to api.anthropic.com and would defeat the mode.
+  MODEL="${MODEL:-${BEDROCK_MODEL_ID:-}}"
+  export CLAUDE_CODE_USE_BEDROCK=1
 else
   MODEL="${MODEL:-claude-opus-5}"
+fi
+if [ "${CC_MODE:-}" != "bedrock" ]; then
+  # Not a Bedrock run. Either variable alone puts harbor's agent into Bedrock
+  # mode, so a token left in the shell or in .env must not survive past here.
+  unset AWS_BEARER_TOKEN_BEDROCK CLAUDE_CODE_USE_BEDROCK 2>/dev/null || true
 fi
 N="${N:-1}"
 # Pin the rubric grader for the whole run. Left unset, rubric_judge_cli picks a
@@ -274,6 +306,33 @@ check_credentials() {
     # because the containerised agent sends no x-zbridge-secret header and a
     # live gate would 401 every call. Demanding a value here only to discard it
     # at launch failed runs for a credential that changes nothing.
+  elif [ "${CC_MODE:-}" = "bedrock" ]; then
+    # Two credential shapes, checked in the order harbor prefers them. A Bedrock
+    # API key is a bearer token that replaces SigV4 entirely -- no IAM user, no
+    # signing. AWS_PROFILE is deliberately not accepted: harbor forwards the
+    # name, but the container has no ~/.aws to resolve it against.
+    if [ -n "${AWS_BEARER_TOKEN_BEDROCK:-}" ]; then
+      echo "[run_task] bedrock: AWS_BEARER_TOKEN_BEDROCK OK (Bedrock API key)"
+    elif [ -n "${AWS_ACCESS_KEY_ID:-}" ] && [ -n "${AWS_SECRET_ACCESS_KEY:-}" ]; then
+      echo "[run_task] bedrock: AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY OK (SigV4)"
+    else
+      echo "[run_task] ERROR: CC_MODE=bedrock but no AWS credential is set" >&2
+      echo "[run_task]   Add AWS_BEARER_TOKEN_BEDROCK=<Bedrock API key> to harness/.env" >&2
+      echo "[run_task]   (or AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY for SigV4)" >&2
+      fail=1
+    fi
+    if [ -z "${AWS_REGION:-}" ]; then
+      echo "[run_task] ERROR: CC_MODE=bedrock but AWS_REGION is not set" >&2
+      echo "[run_task]   It must match the model's region (an ARN names it, e.g. ap-south-1)" >&2
+      fail=1
+    fi
+    if [ -z "$MODEL" ]; then
+      echo "[run_task] ERROR: CC_MODE=bedrock but no model" >&2
+      echo "[run_task]   Set BEDROCK_MODEL_ID in harness/.env (a Bedrock model id or" >&2
+      echo "[run_task]   inference-profile ARN), or pass MODEL=... for this run" >&2
+      fail=1
+    fi
+    [ "$fail" = 0 ] && echo "[run_task] bedrock: region $AWS_REGION, model $MODEL"
   else
     if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && [ -z "${ANTHROPIC_API_KEY:-}" ]; then
       echo "[run_task] ERROR: no Claude Code credentials found" >&2
@@ -659,6 +718,16 @@ stage_harbor() {
   # pointed at host.docker.internal, which network isolation cannot route to.
   local _iso; _iso="$(network_isolation_overlay)"
   [ -n "$_iso" ] && args+=(--extra-docker-compose "$_iso")
+  # network_isolation_overlay runs in a subshell (command substitution), so its
+  # export does not reach this shell or harbor. Recompute the one line here.
+  if [ -n "$_iso" ]; then
+    if [ "${CC_MODE:-}" = "bedrock" ]; then
+      export EGRESS_ALLOWED_HOSTS="$(bedrock_allowed_hosts)"
+    else
+      export EGRESS_ALLOWED_HOSTS="api.anthropic.com"
+    fi
+    state_put egress_allowlist "$EGRESS_ALLOWED_HOSTS"
+  fi
   [ "$AGENT" != "oracle" ] && args+=(--model "$MODEL")
   if [ "$AGENT" = "claude-code" ]; then
     [ -n "$THINKING" ] && args+=(--ak "thinking=$THINKING")
@@ -909,8 +978,38 @@ ensure_headroom_zbridge_chain() {
   echo ""; return 1
 }
 
+# The hosts a Bedrock run must reach, comma-separated for EGRESS_ALLOWED_HOSTS.
+#
+#   bedrock-runtime.<region>   InvokeModel / Converse -- the model calls
+#   bedrock.<region>           the control plane. Claude Code resolves an
+#                              inference-profile ARN here (GetInferenceProfile)
+#                              before its first model call; denied, the CLI
+#                              reports "authentication_failed" and never reaches
+#                              the runtime. Seen live on the first smoke run.
+#   sts.<region>               credential exchange; only the SigV4 key path can
+#                              need it, a bearer token never does.
+#
+# Same set kakashi's lockdown allows. Still infrastructure, never content: none
+# of these can carry an answer to a closed-world task.
+bedrock_allowed_hosts() {
+  local hosts="bedrock-runtime.${AWS_REGION}.amazonaws.com,bedrock.${AWS_REGION}.amazonaws.com"
+  if [ -z "${AWS_BEARER_TOKEN_BEDROCK:-}" ]; then
+    hosts="$hosts,sts.${AWS_REGION}.amazonaws.com"
+  fi
+  echo "$hosts"
+}
+
 route_agent_through_proxy() {
   [ "$AGENT_HEADROOM_ENABLED" = "true" ] || return 0
+
+  # The headroom proxy forwards to api.anthropic.com (or, chained, to zbridge).
+  # Under bedrock the agent must talk to bedrock-runtime directly: pointing
+  # ANTHROPIC_BASE_URL at either proxy would hand Bedrock's model id to a host
+  # that has never heard of it. Run direct, compression off.
+  if [ "${CC_MODE:-}" = "bedrock" ]; then
+    echo "[run_task] CC_MODE=bedrock: headroom proxy skipped; agent-path compression OFF" >&2
+    return 0
+  fi
 
   # zbridge mode: chain through a headroom proxy that forwards to zbridge, not
   # the Anthropic-bound one. Without this the export below would silently
@@ -968,11 +1067,27 @@ network_isolation_overlay() {
     exit 2
   fi
 
+  # What squid lets out: the model endpoint of this mode and nothing else.
+  # api.anthropic.com for Anthropic; for Bedrock the regional runtime plus the
+  # control plane the CLI resolves an inference profile on (bedrock_allowed_hosts).
+  # overlay.yaml hands EGRESS_ALLOWED_HOSTS to the proxy sidecar (compose
+  # interpolates it from harbor's environment, the same way HOST_AGENT_LOGS_PATH
+  # reaches the mount), and the sidecar's entrypoint writes it into squid's
+  # allowed_hosts file before squid starts. Recorded in the run state by
+  # stage_harbor so a later, separate-process netaudit judges the proxy log
+  # against the allowlist that was actually in force.
+  if [ "${CC_MODE:-}" = "bedrock" ]; then
+    [ -n "${AWS_REGION:-}" ] || { echo "[run_task] CC_MODE=bedrock needs AWS_REGION for the egress allowlist" >&2; exit 2; }
+    export EGRESS_ALLOWED_HOSTS="$(bedrock_allowed_hosts)"
+  else
+    export EGRESS_ALLOWED_HOSTS="api.anthropic.com"
+  fi
+
   # stdout is the return channel here, and ensure_image narrates its build to
   # stdout. Without the redirect its progress lines end up inside the overlay
   # path and harbor is handed a -f that does not exist.
   ensure_image "egress-proxy:latest" >&2
-  echo "[run_task] network isolation ON -- egress allowlist: api.anthropic.com" >&2
+  echo "[run_task] network isolation ON -- egress allowlist: $EGRESS_ALLOWED_HOSTS" >&2
   echo "$overlay"
 }
 
@@ -1077,6 +1192,14 @@ stage_netaudit() {
 
   local flags=()
   [ -n "${INTERNET_AUDIT_WARN:-}" ] && flags+=(--warn-only)
+
+  # The allowlist stage_harbor recorded for this job. Absent (an older tree, or
+  # a job that ran open-network) the auditor falls back to its own default,
+  # api.anthropic.com. Under bedrock the only allowed line in the proxy log is
+  # bedrock-runtime.<region>.amazonaws.com, and judging that against the
+  # default would report an ALLOWLIST_BREACH on every clean run.
+  local _allow; _allow="$(state_get egress_allowlist)"
+  local _h; for _h in ${_allow//,/ }; do flags+=(--allowed-host "$_h"); done
 
   local traj run_dir dirty=0 seen=0 empty=0
   # Iterate RUN DIRECTORIES, not trajectory files.

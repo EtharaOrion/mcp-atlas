@@ -203,7 +203,10 @@ def drive_unit(cp: ckpt.Checkpoint, unit_id: str, args: argparse.Namespace,
         if not cp.needs(unit_id, step):
             continue
         unit = cp.unit(unit_id)
-        log_path = batch_dir / "logs" / f"{unit_id.replace('::', '__')}.log"
+        # unit_id embeds the model verbatim; a Bedrock ARN carries ':' and '/',
+        # so flatten both to keep the log a single file under logs/.
+        log_name = unit_id.replace("::", "__").replace("/", "_").replace(":", "_")
+        log_path = batch_dir / "logs" / f"{log_name}.log"
         with cp.step(unit_id, step, on_error="record") as st:
             run_stage(STAGE_OF[step], unit, args, log_path)
             st.record(log=str(log_path))

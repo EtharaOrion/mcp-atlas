@@ -11,6 +11,7 @@
 FROM ubuntu/squid@sha256:6a097f68bae708cedbabd6188d68c7e2e7a38cedd05a176e1cc0ba29e3bbe029
 
 COPY squid.conf /etc/squid/squid.conf
+COPY allowed_hosts.txt /etc/squid/allowed_hosts.txt
 COPY entrypoint.sh /usr/local/bin/egress-entrypoint.sh
 
 RUN chmod +x /usr/local/bin/egress-entrypoint.sh

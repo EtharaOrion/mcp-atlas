@@ -74,6 +74,15 @@ services:
     image: egress-proxy:latest
     # Built by `make build-egress-proxy`. Never `build:` here -- a task project
     # would rebuild it per run, and run_task.sh checks the tag exists up front.
+    environment:
+      # The one host squid lets out, chosen per run by scripts/run_task.sh
+      # (network_isolation_overlay): api.anthropic.com for Anthropic runs,
+      # bedrock-runtime.<region>.amazonaws.com under CC_MODE=bedrock. Compose
+      # interpolates it from harbor's environment, the same path
+      # HOST_AGENT_LOGS_PATH takes below; the sidecar's entrypoint writes it into
+      # squid's allowed_hosts file. The default keeps a hand `compose up` on the
+      # documented Anthropic-only policy.
+      EGRESS_ALLOWED_HOSTS: "${EGRESS_ALLOWED_HOSTS:-api.anthropic.com}"
     networks:
       - default
       - egress

@@ -5,7 +5,11 @@ internal network and the proxy is the only way out. This file asserts what
 happens once traffic arrives at that proxy, which is the part that decides
 whether the block is real:
 
-  1. the allowlist is exactly one host, and `deny all` is the last word on it;
+  1. the allowlist is exactly one host, and `deny all` is the last word on it
+     -- with the host read from a file the sidecar's entrypoint can rewrite
+     per run (api.anthropic.com by default, the regional Bedrock runtime under
+     CC_MODE=bedrock), so the ONE-host policy and the mode-dependent host are
+     both pinned here;
   2. main is pointed at the proxy and waits for it to be healthy;
   3. the two files that independently decide "internal vs internet" —
      overlay.yaml's NO_PROXY and detect_internet_use.py's INTERNAL_HOSTS —
@@ -30,11 +34,25 @@ SQUID_CONF = PROXY_DIR / "squid.conf"
 OVERLAY = PROXY_DIR / "overlay.yaml"
 DOCKERFILE = PROXY_DIR / "Dockerfile"
 ENTRYPOINT = PROXY_DIR / "entrypoint.sh"
+ALLOWED_HOSTS_FILE = PROXY_DIR / "allowed_hosts.txt"
+ALLOWED_HOSTS_IN_IMAGE = "/etc/squid/allowed_hosts.txt"
 DETECTOR = REPO / "tools" / "network" / "detect_internet_use.py"
+RUN_TASK = REPO / "scripts" / "run_task.sh"
 
 # The whole point of the sidecar. Widening this set is a deliberate act and
 # should have to edit a test that says so out loud.
 EXPECTED_ALLOWLIST = {"api.anthropic.com"}
+
+# What a Bedrock run may reach instead, never in addition: the regional runtime
+# (model calls) and the control plane (the CLI resolves an inference-profile ARN
+# there before its first call -- denied, it reports authentication_failed), plus
+# STS only on the SigV4 key path. run_task.sh substitutes the region at run
+# time; the shape is what is pinned. All infrastructure, none of it content.
+BEDROCK_HOSTS = {
+    "bedrock-runtime.${AWS_REGION}.amazonaws.com",
+    "bedrock.${AWS_REGION}.amazonaws.com",
+}
+BEDROCK_STS_HOST = "sts.${AWS_REGION}.amazonaws.com"
 
 
 def _directives(text: str) -> list[str]:
@@ -59,6 +77,42 @@ def overlay() -> dict:
     return yaml.safe_load(OVERLAY.read_text())
 
 
+def _hosts_file_entries(path: Path) -> set[str]:
+    """squid dstdomain file: one entry per line, `#` lines are comments."""
+    return {l.strip() for l in path.read_text().splitlines()
+            if l.strip() and not l.lstrip().startswith("#")}
+
+
+def _acl_entries(squid_lines: list[str]) -> tuple[set[str], set[str]]:
+    """(inline hosts, quoted file paths) across every dstdomain ACL."""
+    inline: set[str] = set()
+    files: set[str] = set()
+    for line in squid_lines:
+        m = re.match(r"acl\s+\S+\s+dstdomain\s+(.+)$", line)
+        if not m:
+            continue
+        for tok in m.group(1).split():
+            if tok.startswith('"') and tok.endswith('"'):
+                files.add(tok.strip('"'))
+            else:
+                inline.add(tok)
+    return inline, files
+
+
+def _literal_set(name: str) -> set[str]:
+    """A set literal read from detect_internet_use.py's source, not imported.
+
+    The detector is a CLI with argparse at module scope in some revisions;
+    parsing the literal keeps this test from depending on whether importing it
+    has side effects.
+    """
+    tree = ast.parse(DETECTOR.read_text())
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == name:
+            return set(ast.literal_eval(node.value))
+    pytest.fail(f"{name} not found in detect_internet_use.py")
+
+
 @pytest.fixture(scope="module")
 def internal_hosts() -> set[str]:
     """INTERNAL_HOSTS read from source, not imported.
@@ -67,43 +121,108 @@ def internal_hosts() -> set[str]:
     revisions; parsing the literal keeps this test from depending on whether
     importing it has side effects.
     """
-    tree = ast.parse(DETECTOR.read_text())
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "INTERNAL_HOSTS":
-            return set(ast.literal_eval(node.value))
-    pytest.fail("INTERNAL_HOSTS not found in detect_internet_use.py")
+    return _literal_set("INTERNAL_HOSTS")
 
 
 # --------------------------------------------------------------- allowlist
 
 
-def test_allowlist_is_exactly_the_documented_host(squid_lines):
+def test_allowlist_is_read_from_the_file_the_entrypoint_rewrites(squid_lines):
+    """The ACL names no host inline. The host comes from allowed_hosts.txt, which
+    is what lets one image serve both providers: an inline host would be baked
+    in, and a Bedrock run would need a second image or a widened list."""
+    inline, files = _acl_entries(squid_lines)
+    assert not inline, (
+        f"inline dstdomain entries {sorted(inline)} bypass the per-run file; "
+        "put them in allowed_hosts.txt instead"
+    )
+    assert files == {ALLOWED_HOSTS_IN_IMAGE}, (
+        f"allowlist ACL reads {sorted(files)}, expected only {ALLOWED_HOSTS_IN_IMAGE}"
+    )
+
+
+def test_default_allowlist_is_exactly_the_documented_host():
     """One host, named explicitly. A diff here is a policy change."""
-    allowed: set[str] = set()
-    for line in squid_lines:
-        m = re.match(r"acl\s+\S+\s+dstdomain\s+(.+)$", line)
-        if m:
-            allowed.update(m.group(1).split())
+    assert ALLOWED_HOSTS_FILE.is_file(), f"missing {ALLOWED_HOSTS_FILE}"
+    allowed = _hosts_file_entries(ALLOWED_HOSTS_FILE)
     assert allowed == EXPECTED_ALLOWLIST, (
         f"allowlist drifted: {sorted(allowed)} != {sorted(EXPECTED_ALLOWLIST)}. "
         "Widening it silently turns a closed-world task into an open one."
     )
 
 
-def test_allowlist_entries_are_exact_hosts_not_subdomain_wildcards(squid_lines):
+def test_allowlist_entries_are_exact_hosts_not_subdomain_wildcards():
     """`.anthropic.com` matches every subdomain; `api.anthropic.com` does not.
 
     squid's dstdomain treats a leading dot as "this domain and all children",
     so the dot is the difference between one endpoint and an entire estate.
     """
-    for line in squid_lines:
-        m = re.match(r"acl\s+\S+\s+dstdomain\s+(.+)$", line)
-        if not m:
-            continue
-        for entry in m.group(1).split():
-            assert not entry.startswith("."), (
-                f"dstdomain '{entry}' is a subdomain wildcard; name the exact host instead"
-            )
+    for entry in _hosts_file_entries(ALLOWED_HOSTS_FILE):
+        assert not entry.startswith("."), (
+            f"dstdomain '{entry}' is a subdomain wildcard; name the exact host instead"
+        )
+
+
+def test_default_file_is_shipped_in_the_image():
+    """Without the COPY, `squid -k parse` fails the build on a missing file --
+    or worse, a stale image keeps an old list."""
+    df = DOCKERFILE.read_text()
+    assert f"COPY allowed_hosts.txt {ALLOWED_HOSTS_IN_IMAGE}" in df
+
+
+def test_entrypoint_rewrites_the_allowlist_from_the_env_before_squid_starts():
+    """The per-run swap. It must land before the exec so the healthcheck's
+    `squid -k check` and the running instance read the same file, and it must
+    leave the baked-in default alone when the variable is absent."""
+    sh = ENTRYPOINT.read_text()
+    write_at = sh.find(ALLOWED_HOSTS_IN_IMAGE)
+    exec_at = sh.find('exec /usr/local/bin/entrypoint.sh "$@"')
+    assert 0 <= write_at < exec_at, "allowlist must be written before squid is exec'd"
+    assert 'if [ -n "${EGRESS_ALLOWED_HOSTS:-}" ]' in sh, (
+        "an unset EGRESS_ALLOWED_HOSTS must keep the baked-in default"
+    )
+    assert "tr ',' ' '" in sh, "comma-separated lists must be accepted"
+
+
+def test_overlay_hands_the_allowlist_to_the_sidecar_with_the_documented_default(overlay):
+    """run_task.sh exports EGRESS_ALLOWED_HOSTS; compose interpolates it into
+    the sidecar. The fallback must equal the default file, so a hand `compose
+    up` and the image agree on the policy."""
+    env = overlay["services"]["egress-proxy"]["environment"]
+    value = env["EGRESS_ALLOWED_HOSTS"]
+    m = re.fullmatch(r"\$\{EGRESS_ALLOWED_HOSTS:-(.+)\}", value)
+    assert m, f"EGRESS_ALLOWED_HOSTS must be interpolated with a default, got {value!r}"
+    assert set(m.group(1).replace(",", " ").split()) == EXPECTED_ALLOWLIST
+
+
+def test_run_task_allowlists_are_the_documented_hosts_per_mode():
+    """The mode switch, pinned: Anthropic is the one default host; Bedrock is
+    the regional runtime + control plane, STS only without a bearer token.
+    Exact hosts throughout, nothing wider (no `.amazonaws.com`)."""
+    sh = RUN_TASK.read_text()
+    exports = set(re.findall(r'export EGRESS_ALLOWED_HOSTS="([^"]+)"', sh))
+    assert exports == {"api.anthropic.com", "$(bedrock_allowed_hosts)"}, (
+        f"run_task.sh allowlists drifted: {sorted(exports)}"
+    )
+    fn = re.search(r"bedrock_allowed_hosts\(\) \{(.*?)\n\}", sh, re.S)
+    assert fn, "bedrock_allowed_hosts() missing from run_task.sh"
+    body = fn.group(1)
+    base = re.search(r'local hosts="([^"]+)"', body)
+    assert base and set(base.group(1).split(",")) == BEDROCK_HOSTS, (
+        f"Bedrock allowlist drifted: {base and base.group(1)}"
+    )
+    sts = re.search(r'hosts="\$hosts,([^"]+)"', body)
+    assert sts and sts.group(1) == BEDROCK_STS_HOST
+    assert 'if [ -z "${AWS_BEARER_TOKEN_BEDROCK:-}" ]' in body, "STS must be SigV4-only"
+    for host in BEDROCK_HOSTS | {BEDROCK_STS_HOST, "api.anthropic.com"}:
+        assert not host.startswith("."), f"{host!r} is a subdomain wildcard"
+
+
+def test_detector_default_matches_the_shipped_default():
+    """The third copy of the allowlist (detect_internet_use.py::PROXY_ALLOWLIST)
+    must agree with the file the image ships, or an audit without --allowed-host
+    judges the log against a policy the proxy never enforced."""
+    assert _literal_set("PROXY_ALLOWLIST") == _hosts_file_entries(ALLOWED_HOSTS_FILE)
 
 
 def test_default_is_deny_and_it_is_the_last_word(squid_lines):

@@ -178,6 +178,43 @@ ANCHOR_FALLBACK = """\
         ),"""
 
 
+# --- Bedrock: ARN model ids and alias pinning ---------------------------------
+# CC_MODE=bedrock (scripts/run_task.sh) hands harbor a Bedrock model id or an
+# inference-profile ARN as --model. Two things in ClaudeCode.run() get that
+# wrong for an ARN:
+#
+#   1. `if "/" in self.model_name: split("/", 1)[-1]` is meant to strip a
+#      Harbor-style "provider/model" prefix, but an ARN carries exactly one "/"
+#      (…:application-inference-profile/<id>) and is cut down to "<id>", which
+#      Bedrock rejects as an unknown model.
+#   2. The sonnet/opus/haiku/subagent aliases are pinned to ANTHROPIC_MODEL
+#      only under a custom ANTHROPIC_BASE_URL. A Bedrock API key scoped to one
+#      inference profile cannot invoke Bedrock's default haiku id, so any
+#      alias call would fail; pin them under Bedrock too, as harbor already
+#      does for every other single-model endpoint.
+#
+# Hard failure on drift, like the thinking flags: the anchors sit in harbor's
+# own Bedrock branch, and a Bedrock run on an unpatched harbor dies on its
+# first model call with an error that reads like a bad model id.
+ANCHOR_BEDROCK_ARN = """\
+                if "/" in self.model_name:
+                    env["ANTHROPIC_MODEL"] = self.model_name.split("/", 1)[-1]"""
+REPLACEMENT_BEDROCK_ARN = """\
+                # harbor-patch: bedrock -- an ARN's single "/" is not a provider prefix
+                if "/" in self.model_name and not self.model_name.startswith("arn:"):
+                    env["ANTHROPIC_MODEL"] = self.model_name.split("/", 1)[-1]"""
+ANCHOR_BEDROCK_ALIASES = """\
+        if "ANTHROPIC_BASE_URL" in env and "ANTHROPIC_MODEL" in env:
+            env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = env["ANTHROPIC_MODEL"]"""
+REPLACEMENT_BEDROCK_ALIASES = """\
+        if ("ANTHROPIC_BASE_URL" in env or use_bedrock) and "ANTHROPIC_MODEL" in env:
+            env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = env["ANTHROPIC_MODEL"]"""
+ALREADY_PATCHED_MARKER_BEDROCK = "harbor-patch: bedrock"
+# Upstream may fix (1) itself; if its Bedrock branch already knows about ARNs,
+# only the alias half is still ours to apply.
+NATIVE_BEDROCK_ARN_GUARD = 'startswith("arn:")'
+
+
 def find_harbor_claude_code() -> Path:
     import shutil
     import subprocess
@@ -338,6 +375,30 @@ def main() -> None:
             file=sys.stderr,
         )
         failures.append(f"pre-baked CLI guard  ({target.name})")
+
+    if ALREADY_PATCHED_MARKER_BEDROCK in text:
+        print(f"[patch_harbor] Bedrock ARN + aliases: already applied")
+    else:
+        arn_ok = NATIVE_BEDROCK_ARN_GUARD in text or ANCHOR_BEDROCK_ARN in text
+        if not arn_ok or ANCHOR_BEDROCK_ALIASES not in text:
+            print(
+                f"[patch_harbor] Bedrock ARN + aliases: NOT applied -- anchor not found in {target}",
+                file=sys.stderr,
+            )
+            failures.append(f"bedrock ARN + aliases  ({target.name})")
+        else:
+            if ANCHOR_BEDROCK_ARN in text:
+                text = text.replace(ANCHOR_BEDROCK_ARN, REPLACEMENT_BEDROCK_ARN, 1)
+            text = text.replace(ANCHOR_BEDROCK_ALIASES, REPLACEMENT_BEDROCK_ALIASES, 1)
+            if ALREADY_PATCHED_MARKER_BEDROCK not in text:
+                # The ARN half was native; leave the marker on the alias half so
+                # the next run reads "already applied" rather than re-patching.
+                text = text.replace(
+                    REPLACEMENT_BEDROCK_ALIASES,
+                    "        # harbor-patch: bedrock -- aliases pinned under Bedrock too\n"
+                    + REPLACEMENT_BEDROCK_ALIASES, 1)
+            changed = True
+            print(f"[patch_harbor] Bedrock ARN + aliases: applied")
 
     if changed and not audit:
         target.write_text(text, encoding="utf-8")

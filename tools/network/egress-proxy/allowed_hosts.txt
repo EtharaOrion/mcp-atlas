@@ -1,0 +1,8 @@
+# Default egress allowlist, one exact host per line (squid dstdomain: a leading
+# dot would match every subdomain, so never write one). This is the Anthropic
+# mode default; at container start entrypoint.sh REPLACES this file with the
+# hosts in EGRESS_ALLOWED_HOSTS when that variable is set, which is how
+# scripts/run_task.sh swaps in bedrock-runtime.<region>.amazonaws.com for
+# CC_MODE=bedrock. The policy stays "exactly one model endpoint"; only which
+# endpoint changes.
+api.anthropic.com

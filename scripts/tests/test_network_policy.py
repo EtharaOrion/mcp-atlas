@@ -741,8 +741,22 @@ def acls(squid_lines) -> dict[str, tuple[str, set[str]]]:
         if not m:
             continue
         name, kind, rest = m.group(1), m.group(2), m.group(3)
+        values: set[str] = set()
+        for tok in rest.split():
+            if tok.startswith('"') and tok.endswith('"'):
+                # A quoted token is a file of entries, one per line, `#` lines
+                # being comments. The image ships it from PROXY_DIR under the
+                # same basename (Dockerfile COPY), so read that copy: it is the
+                # baked-in default, i.e. the policy a run gets when
+                # EGRESS_ALLOWED_HOSTS is unset.
+                src = PROXY_DIR / Path(tok.strip('"')).name
+                assert src.is_file(), f"acl {name} reads {tok}, but {src} is not in the proxy dir"
+                values |= {l.strip() for l in src.read_text().splitlines()
+                           if l.strip() and not l.lstrip().startswith("#")}
+            else:
+                values.add(tok)
         prev_kind, prev_vals = out.get(name, (kind, set()))
-        out[name] = (prev_kind, prev_vals | set(rest.split()))
+        out[name] = (prev_kind, prev_vals | values)
     return out
 
 

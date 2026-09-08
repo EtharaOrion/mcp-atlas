@@ -9,6 +9,23 @@ mkdir -p /var/log/squid /var/run/squid
 : > /var/log/squid/access.log
 chown -R proxy:proxy /var/log/squid /var/run/squid
 
+# The allowlist for THIS run. squid.conf reads allowed_hosts from a file so the
+# model endpoint can follow the run's provider: api.anthropic.com by default
+# (baked into the image), bedrock-runtime.<region>.amazonaws.com when
+# scripts/run_task.sh runs CC_MODE=bedrock. overlay.yaml passes the choice in
+# as EGRESS_ALLOWED_HOSTS (comma or space separated, exact hosts). Rewritten
+# here, before squid parses its config and before it drops to the proxy user,
+# so the healthcheck's `squid -k check` and the running instance read the same
+# file. Unset or empty leaves the baked-in default alone.
+if [ -n "${EGRESS_ALLOWED_HOSTS:-}" ]; then
+  printf '%s\n' "# written by egress-entrypoint.sh from EGRESS_ALLOWED_HOSTS" > /etc/squid/allowed_hosts.txt
+  for h in $(printf '%s' "$EGRESS_ALLOWED_HOSTS" | tr ',' ' '); do
+    printf '%s\n' "$h" >> /etc/squid/allowed_hosts.txt
+  done
+  chmod 0644 /etc/squid/allowed_hosts.txt
+fi
+echo "[egress-proxy] allowlist: $(grep -v '^#' /etc/squid/allowed_hosts.txt | tr '\n' ' ')"
+
 # Two sinks, one tail.
 #
 #   stdout      `docker logs egress-proxy`, for an operator debugging a blocked

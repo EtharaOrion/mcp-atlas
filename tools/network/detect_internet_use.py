@@ -195,9 +195,16 @@ def is_internal(host: str) -> bool:
 # entrypoint.sh) and reaches the run dir via tools/delivery/harbor_to_output.py.
 # --------------------------------------------------------------------------
 
-# The one host squid lets out. tools/network/egress-proxy/squid.conf is the source of
-# truth and scripts/tests/test_egress_allowlist.py::EXPECTED_ALLOWLIST pins it
-# there; this is the third copy, so change one and look at the other two.
+# The one host squid lets out BY DEFAULT. tools/network/egress-proxy/
+# allowed_hosts.txt is the source of truth and
+# scripts/tests/test_egress_allowlist.py::EXPECTED_ALLOWLIST pins it there; this
+# is the third copy, so change one and look at the other two.
+#
+# A run can allow a different single host: scripts/run_task.sh swaps in
+# bedrock-runtime.<region>.amazonaws.com for CC_MODE=bedrock and records the
+# choice in the job's run state, then passes it here as --allowed-host. Without
+# that flag this default applies, so a Bedrock run audited by an older tree
+# reports an ALLOWLIST_BREACH rather than silently passing.
 PROXY_ALLOWLIST = {"api.anthropic.com"}
 
 # Hosts the Claude Code CLI reaches on its own initiative -- update checks,
@@ -251,14 +258,18 @@ def _is_cli_infra(host: str) -> bool:
     return host in CLI_INFRA_HOSTS or host.endswith(CLI_INFRA_SUFFIXES)
 
 
-def scan_access_log(path: Path) -> list[dict]:
+def scan_access_log(path: Path, allowlist: set[str] | None = None) -> list[dict]:
     """Parse squid's log; flag the attempts the model is answerable for.
 
     Returned records go into the audit JSON whole -- including the allowed ones,
     because "api.anthropic.com was reached N times and nothing else was" is the
     positive evidence that the block was live for this run, which no amount of
     config assertion can supply.
+
+    `allowlist` is the set of hosts the proxy was configured to let out for THIS
+    run (from --allowed-host); None means the default PROXY_ALLOWLIST.
     """
+    allowed_hosts = allowlist if allowlist is not None else PROXY_ALLOWLIST
     attempts: list[dict] = []
     for line in path.read_text(errors="replace").splitlines():
         f = line.split()
@@ -277,7 +288,7 @@ def scan_access_log(path: Path) -> list[dict]:
         if _is_cli_infra(host):
             rec["verdict"] = "cli_infrastructure"
             continue
-        if not denied and host not in PROXY_ALLOWLIST:
+        if not denied and host not in allowed_hosts:
             # The allowlist did not hold. Worse than a denial: something left.
             rec["verdict"] = "ALLOWLIST_BREACH"
             flag(None, "egress-proxy", "allowlist-breach",
@@ -423,7 +434,14 @@ def main(argv=None) -> int:
     ap.add_argument("--access-log", type=Path,
                     help="squid access.log for this run; adds proxy ground truth "
                          "to the trajectory inference")
+    ap.add_argument("--allowed-host", action="append", default=None, metavar="HOST",
+                    help="a host the proxy was configured to allow for this run "
+                         "(repeatable). Replaces the default allowlist "
+                         "(api.anthropic.com); run_task.sh passes the allowlist it "
+                         "recorded at harbor time, e.g. bedrock-runtime.<region>."
+                         "amazonaws.com for CC_MODE=bedrock")
     a = ap.parse_args(argv)
+    allowlist = {h.strip().lower() for h in a.allowed_host if h.strip()} if a.allowed_host else None
 
     if not a.trajectory.is_file():
         # No trajectory is not evidence of good behaviour, but it is also not
@@ -435,7 +453,7 @@ def main(argv=None) -> int:
         print(f"  {_c('33', 'warn')}  no trajectory at {a.trajectory}")
         if not (a.access_log and a.access_log.is_file()):
             return 0
-        attempts = scan_access_log(a.access_log)
+        attempts = scan_access_log(a.access_log, allowlist)
         _report(a, total=0, attempts=attempts)
         return 2 if FINDINGS and not a.warn_only else 0
 
@@ -456,7 +474,7 @@ def main(argv=None) -> int:
     attempts = []
     if a.access_log:
         if a.access_log.is_file():
-            attempts = scan_access_log(a.access_log)
+            attempts = scan_access_log(a.access_log, allowlist)
         else:
             print(f"  {_c('33', 'warn')}  no proxy log at {a.access_log}; "
                   f"trajectory-only audit")

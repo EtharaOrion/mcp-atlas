@@ -386,6 +386,21 @@ def parse_stream(path: Path) -> dict:
     return out
 
 
+def _model_slug(model: str) -> str:
+    """A model name as a single path component.
+
+    Plain ids (claude-opus-5, glm-5.3) pass through. A Bedrock model id or
+    inference-profile ARN is reduced to its last path segment with any trailing
+    ':<version>' dropped, then anything outside [A-Za-z0-9._-] becomes '_':
+      arn:aws:bedrock:ap-south-1:1234:application-inference-profile/abc -> abc
+      us.anthropic.claude-sonnet-4-5-20250929-v1:0 -> us.anthropic.claude-sonnet-4-5-20250929-v1
+    Same rule as kakashi's run_model_slug, so the two trees name runs alike.
+    """
+    raw = re.sub(r":\d+$", "", (model or "").rsplit("/", 1)[-1])
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "_", raw).strip("._-")
+    return slug or "model"
+
+
 def _synth_trajectory(stream: dict, *, model: str, agent_name: str, session_id, usage: dict | None) -> dict:
     """Minimal ATIF-shaped trajectory from a parsed stream (one step per
     assistant/tool/user message), for agents that don't write their own."""
@@ -989,7 +1004,10 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
               file=sys.stderr)
 
     # ---- .raw/trials_<slug>/trajectories/<model>/run_N --------------------
-    raw_run = raw_trials / "trajectories" / model / f"run_{run_no}"
+    # The directory name is a slug of the model, not the model: a Bedrock
+    # inference-profile ARN carries ':' and '/', and used verbatim it would
+    # nest the run several directories deep. Metadata keeps the full name.
+    raw_run = raw_trials / "trajectories" / _model_slug(model) / f"run_{run_no}"
     raw_run.mkdir(parents=True, exist_ok=True)
     _copy(ag / "trajectory.json", raw_run / "agent" / "trajectory.json")
     _dump(raw_run / "agent" / "trajectory.messages.json", {
@@ -1093,7 +1111,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         "valid_tool_calls": stream["valid"], "invalid_tool_calls": stream["invalid"],
         "error_tool_calls": stream["error"],
         "tokens": tokens, "usage": usage,
-        "dir": str(Path(slug) / ".raw" / f"trials_{slug}" / "trajectories" / model / f"run_{run_no}"),
+        "dir": str(Path(slug) / ".raw" / f"trials_{slug}" / "trajectories" / _model_slug(model) / f"run_{run_no}"),
         "trial_name": tres.get("trial_name") or trial_dir.name,
         "failure_class": failure_class, "failure_reason": failure_reason,
         "exception": exception,

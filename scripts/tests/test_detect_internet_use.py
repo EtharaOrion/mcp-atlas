@@ -146,3 +146,52 @@ def test_unparseable_trajectory_blocks(tmp_path):
     r = subprocess.run([sys.executable, str(DETECT), str(bad)],
                        capture_output=True, text=True)
     assert r.returncode == 2
+
+
+# --- the proxy log against the run's allowlist --------------------------------
+
+BEDROCK_HOST = "bedrock-runtime.ap-south-1.amazonaws.com"
+
+
+def squid_line(host, code="TCP_TUNNEL/200"):
+    """One squid-native access.log line: ts elapsed client CODE/STATUS bytes METHOD URL ..."""
+    return f"1700000000.000 120 172.18.0.3 {code} 5000 CONNECT {host}:443 - HIER_DIRECT/1.2.3.4 -\n"
+
+
+def test_allowed_line_to_an_unlisted_host_is_a_breach_by_default(tmp_path):
+    """The default allowlist is api.anthropic.com. A Bedrock run audited
+    without --allowed-host must therefore FAIL, not pass quietly -- an older
+    tree must never certify a run whose policy it did not know."""
+    log = tmp_path / "egress-access.log"
+    log.write_text(squid_line(BEDROCK_HOST))
+    r = run([], "--access-log", str(log), tmp_path=tmp_path)
+    assert r.returncode == 2
+    assert "allowlist-breach" in r.stdout
+
+
+def test_allowed_host_flag_is_the_run_allowlist(tmp_path):
+    """run_task.sh passes the allowlist it recorded at harbor time; under
+    CC_MODE=bedrock that is the regional runtime and the log is clean."""
+    log = tmp_path / "egress-access.log"
+    log.write_text(squid_line(BEDROCK_HOST))
+    r = run([], "--access-log", str(log), "--allowed-host", BEDROCK_HOST, tmp_path=tmp_path)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "allowlist-breach" not in r.stdout
+
+
+def test_allowed_host_flag_replaces_the_default_rather_than_adding_to_it(tmp_path):
+    """One host per run. A Bedrock run that reached api.anthropic.com left
+    the policy it was run under, and the audit must say so."""
+    log = tmp_path / "egress-access.log"
+    log.write_text(squid_line("api.anthropic.com"))
+    r = run([], "--access-log", str(log), "--allowed-host", BEDROCK_HOST, tmp_path=tmp_path)
+    assert r.returncode == 2
+    assert "allowlist-breach" in r.stdout
+
+
+def test_denials_are_still_findings_under_a_custom_allowlist(tmp_path):
+    log = tmp_path / "egress-access.log"
+    log.write_text(squid_line(BEDROCK_HOST) + squid_line("example.com", "TCP_DENIED/403"))
+    r = run([], "--access-log", str(log), "--allowed-host", BEDROCK_HOST, tmp_path=tmp_path)
+    assert r.returncode == 2
+    assert "proxy-denied" in r.stdout

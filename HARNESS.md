@@ -90,6 +90,61 @@ Key environment variables:
 | `ANTHROPIC_API_KEY` | API key for agent and judge |
 | `SKIP_IMAGE_REFRESH` | Set to `1` to skip Docker image rebuilds |
 | `BUILD_MULT` | Multiply healthcheck start_period (useful when starting all 161 servers) |
+| `CC_MODE` | Model provider for the Claude Code agent: unset = Anthropic (OAuth token / `ANTHROPIC_API_KEY`), `zbridge` = GLM-5.3 via the local zbridge, `bedrock` = AWS Bedrock (below) |
+| `AWS_BEARER_TOKEN_BEDROCK` | Bedrock API key (bearer token) for `CC_MODE=bedrock`; or `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` |
+| `BEDROCK_MODEL_ID` | Bedrock model id or inference-profile ARN; the default `MODEL` under `CC_MODE=bedrock` |
+| `AWS_REGION` | Region of the Bedrock model; also names the one host the egress proxy allows |
+
+### Provider modes
+
+The same in-container Claude Code agent runs against one of three endpoints.
+The mode is `CC_MODE`, read from `.env` or the command line; credentials come
+from `.env`; the judge (codex), reshape and finance stages are identical.
+
+```bash
+# Anthropic (default): `claude login` on the host, or ANTHROPIC_API_KEY
+make run-task TASK=tasks/<task>
+
+# GLM-5.3 via zbridge (ZB_ZAI_API_KEY in .env)
+CC_MODE=zbridge make run-task TASK=tasks/<task>
+
+# AWS Bedrock (AWS_BEARER_TOKEN_BEDROCK, BEDROCK_MODEL_ID, AWS_REGION in .env)
+CC_MODE=bedrock make run-task TASK=tasks/<task>
+CC_MODE=bedrock MODEL=us.anthropic.claude-sonnet-4-5-20250929-v1:0 make run-task TASK=tasks/<task>
+```
+
+Under `bedrock` nothing on the host calls AWS: `run_task.sh` exports
+`CLAUDE_CODE_USE_BEDROCK=1` and leaves the credential in the environment,
+Harbor's `claude_code` agent forwards it with `AWS_REGION` into the container,
+and the CLI there calls `bedrock-runtime.<region>.amazonaws.com`. Network
+isolation stays on: instead of `api.anthropic.com` the egress proxy allows the
+regional runtime and `bedrock.<region>.amazonaws.com` (the control plane, where
+the CLI resolves an inference-profile ARN before its first call; STS is added
+only on the SigV4 key path), and the post-run internet audit is told the same
+allowlist. `AGENT_HEADROOM_ENABLED` is ignored in this
+mode (the headroom proxy forwards to Anthropic). Outside this mode a Bedrock
+token left in the shell or `.env` is dropped before Harbor sees it, so it
+cannot reroute an Anthropic or GLM run by accident.
+
+Output directory structure:
+
+```
+output/<task>/
+├── summary.json           Aggregated metrics across all trials
+├── pass_summary.json      Pass rate and score breakdown
+├── passk_summary.json     Pass@k statistics
+├── report.md              Human-readable run report
+└── trajectory/
+    └── Run_N/
+        ├── agent/         Agent turn-by-turn trace
+        ├── verifier/      Grading artifacts
+        │   ├── state_channel.json
+        │   ├── reward_channel_a.json
+        │   ├── rubric_breakdown.json
+        │   └── ctrf.json
+        └── logs/
+```
+
 
 Output directory structure:
 
