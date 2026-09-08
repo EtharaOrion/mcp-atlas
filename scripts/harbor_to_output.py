@@ -1281,7 +1281,7 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
         rewards = [e["judge"]["reward"] for e in all_eps]
         # Episodes carried forward from an older summary.json predate the
         # "scored" flag; default them to True so a re-run does not retroactively
-        # drop them from the average. n/c and mean_pass@k stay over all attempts
+        # drop them from the average. n/c and per_trial_rewards stay over all attempts
         # -- a crashed attempt is still an attempt -- but the reward AVERAGE is
         # a scored component and only averages trials that were actually scored.
         scored_rewards = [e["judge"]["reward"] for e in all_eps if e.get("scored", True)]
@@ -1440,19 +1440,15 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
         # attempt count changes.
         ks_eff = list(range(1, n + 1)) if not ks else ([k for k in ks if k <= n] or [1])
         per_task = [{
-            "task": task_name, "n": n, "c": c,
+            "task": task_name,
             "pass@1": round(pass_at_k(n, c, 1), 6),
             "pass@k": {str(k): round(pass_at_k(n, c, k), 6) for k in ks_eff},
-            "mean_reward_per_trial": _mean_or_none(scored_rewards),
-            "runs_unscored": n_unscored,
-            "failure_breakdown": hist,
         }]
         passk = {
             "model": model, "tasks": 1, "passed": c, "accuracy": round(c / n, 6) if n else 0.0,
-            "mean_reward_per_trial": _mean_or_none(scored_rewards),
+            "mean_reward": _mean_or_none(scored_rewards),
             "runs_unscored": n_unscored,
-            # mean_pass@k is per-attempt, so it stays over every attempt.
-            "mean_pass@k": {str(i + 1): round(r, 6) for i, r in enumerate(rewards)},
+            "per_trial_rewards": {str(i + 1): round(r, 2) for i, r in enumerate(rewards)},
             "failure_mode_histogram": hist, "per_task": per_task,
             "attempts_per_task": n, "at": ks_eff,
         }
