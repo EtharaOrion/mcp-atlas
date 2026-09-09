@@ -36,6 +36,7 @@ import shutil
 import sys
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
+from decimal import ROUND_DOWN, Decimal
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -50,24 +51,166 @@ PCT_ROUNDTRIP_DP = REWARD_DP + 2
 
 
 def norm_reward(value, dp: int = REWARD_DP):
-    """Round a 0-1 reward to the published precision.
+    """Cut one published number to the tree's precision.
+
+    The single scalar normaliser: rewards, ledger values, pass@k, rates, cost.
+    Everything that lands in an output file goes through here, so a ledger
+    value and the reward it feeds read at the same number of places. There
+    used to be a second copy of this (`_r4`, rounding to four) whose only
+    difference was that it crashed on the non-numeric input this one passes
+    through -- which published 0.9538 beside a reward of 0.95 and left the
+    reader deciding which precision was the real one. `reward_pct` and
+    `norm_result_metrics` build on this rather than re-normalising.
+
+    It TRUNCATES, it does not round: 0.267442 publishes as 0.26, not 0.27. A
+    score is a claim about what a run earned, and rounding is the one operation
+    here that can make that claim larger than the measurement supports -- a
+    misbehave rate of 0.267 reported as 0.27 overstates the misbehaviour, and
+    the same half-place lands on rewards and pass@k. Truncation only ever
+    understates, which is the safe direction for a number an auditor re-derives.
+
+    Decimal on repr(), not int(value * 100) / 100: the float nearest 0.29 is
+    0.28999999999999998, and scaling that by 100 truncates to 0.28. repr() is
+    the shortest string that round-trips the float, so the digits cut here are
+    the digits a reader would have seen.
 
     Non-numeric input (None from an ungraded trial, a string, a dict) is returned
     unchanged: this normalises precision, it does not invent a score. `bool` is
-    excluded deliberately -- it is an int subclass, and rounding True to 1.0 would
-    silently turn a flag into a perfect score.
+    excluded deliberately -- it is an int subclass, and turning True into 1.0
+    would silently make a flag a perfect score.
     """
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return value
-    return round(float(value), dp)
+    q = Decimal(1).scaleb(-dp)          # dp=2 -> Decimal("0.01")
+    return float(Decimal(repr(float(value))).quantize(q, rounding=ROUND_DOWN))
+
+
+def norm_result_metrics(res: dict) -> dict:
+    """Walk result.json and hand each of its metrics to norm_reward().
+
+    Not a second rounder -- it holds the map of WHERE the numbers live in a
+    document Harbor wrote, which norm_reward (a scalar) cannot know.
+
+    Harbor writes these straight out of float arithmetic, so cost_usd lands as
+    3.7953620000000003 and a rate as 0.7142857142857143 -- the same quantities
+    that read at two decimals everywhere else in the tree. Covers the per-trial
+    file (verifier_result.rewards, agent_result) and the job-level one
+    (stats, stats.evals[*].metrics). Rounds in place and returns `res` so a
+    caller can dump it.
+
+    `reward` and `reward_stats` are covered here too, not left to the call site
+    that rebuilds them: that rebuild only runs when the job has both evals and
+    parsed episodes, so on any path where it is skipped Harbor's own
+    0.016499678279253607 reached the published file. Normalising at dump time
+    makes the guarantee unconditional.
+    """
+    _stats = res.get("stats") or {}
+    for _d, _flds in (((res.get("verifier_result") or {}).get("rewards"),
+                       ("completion_rate", "misbehave_rate")),
+                      (res.get("agent_result"), ("cost_usd",)),
+                      (_stats, ("cost_usd",))):
+        if isinstance(_d, dict):
+            for _f in _flds:
+                if _f in _d:
+                    _d[_f] = norm_reward(_d[_f])
+    for _eval_data in (_stats.get("evals") or {}).values():
+        for _m in (_eval_data.get("metrics") or []):
+            if isinstance(_m, dict):
+                for _f in ("completion_rate", "misbehave_rate", "reward"):
+                    if _f in _m:
+                        _m[_f] = norm_reward(_m[_f])
+        # reward_stats groups trial names under a STRINGIFIED metric value, so
+        # its precision sits in the KEYS ("0.302326": ["run_1", ...]), where no
+        # amount of walking the values would find it. Two raw keys can collapse
+        # to one cut key, so the name lists are merged rather than overwritten
+        # -- dropping a trial name here would silently shrink the grouping.
+        _rstats = _eval_data.get("reward_stats")
+        if isinstance(_rstats, dict):
+            for _fld, _groups in _rstats.items():
+                if not isinstance(_groups, dict):
+                    continue
+                _merged: dict = {}
+                for _k, _names in _groups.items():
+                    try:
+                        _key = str(norm_reward(float(_k)))
+                    except (TypeError, ValueError):
+                        _key = _k          # not a number; leave the label alone
+                    _merged.setdefault(_key, []).extend(
+                        _names if isinstance(_names, list) else [_names])
+                _rstats[_fld] = _merged
+    return res
+
+
+# Cost and rate fields that reach the published tree without passing through
+# norm_result_metrics: Harbor and the agent SDK write them into files we copy
+# verbatim, so a float like 6.550475500000003 lands in the output dir beside
+# rewards already cut to two places. Keyed by NAME rather than rounding every
+# float in the file, because these documents also carry numbers that are not
+# measurements -- a rubric criterion quoting "7849.186" must survive intact.
+_METRIC_KEYS = frozenset((
+    "cost_usd", "total_cost_usd", "judge_cost_usd", "trajectory_cost_usd",
+    "completion_rate", "misbehave_rate", "rubric", "rubric_score",
+))
+
+
+def norm_metrics_deep(obj):
+    """Truncate every _METRIC_KEYS value in a nested document, in place.
+
+    norm_reward does the cutting, so these land at the same two places, by the
+    same truncate-never-round rule, as every other published number.
+    """
+    if isinstance(obj, dict):
+        # A ledger component -- {"weight": w, "value": v} -- carries its number
+        # under the generic key "value", which is far too common a name to put
+        # in _METRIC_KEYS outright. Matching on the pair instead identifies the
+        # shape without claiming every "value" in the tree is a measurement.
+        if "weight" in obj and isinstance(obj.get("value"), (int, float)) and not isinstance(obj["value"], bool):
+            obj["value"] = norm_reward(obj["value"])
+        for k, v in obj.items():
+            if k in _METRIC_KEYS and isinstance(v, (int, float)) and not isinstance(v, bool):
+                obj[k] = norm_reward(v)
+            else:
+                norm_metrics_deep(v)
+    elif isinstance(obj, list):
+        for v in obj:
+            norm_metrics_deep(v)
+    return obj
+
+
+def norm_metrics_file(path: Path) -> None:
+    """Rewrite one published JSON with its metric fields truncated.
+
+    Best-effort: a file that is absent, unreadable or not JSON is left alone
+    rather than failing the publish -- precision is cosmetic next to shipping
+    the artifact at all.
+    """
+    try:
+        raw = path.read_text(encoding="utf-8")
+        doc = json.loads(raw)
+    except (OSError, ValueError):
+        return
+    before = json.dumps(doc, sort_keys=True)
+    norm_metrics_deep(doc)
+    if json.dumps(doc, sort_keys=True) == before:
+        # Nothing to cut. Returning instead of rewriting matters: this runs
+        # over every published JSON, most of which carry no metric at all, and
+        # a write would reflow them to this function's indent. Some are not
+        # ours to reformat -- artifacts/manifest.json is Harbor's provenance
+        # record, kept exactly as written -- and a diff full of whitespace
+        # churn hides the handful of files where a number really changed.
+        return
+    try:
+        path.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
+    except OSError as exc:
+        print(f"[output] could not normalise {path}: {exc}", file=sys.stderr)
 
 
 def reward_pct(x):
-    return None if x is None else round(float(x) * 100, REWARD_DP)
+    return None if x is None else norm_reward(float(x) * 100)
 
 
 def pct_to_reward(x):
-    return None if x is None else round(float(x) / 100, PCT_ROUNDTRIP_DP)
+    return None if x is None else norm_reward(float(x) / 100, PCT_ROUNDTRIP_DP)
 
 
 def fmt_reward(value) -> str:
@@ -75,8 +218,12 @@ def fmt_reward(value) -> str:
 
     Machine-readable artifacts must not use this -- they carry the number via
     norm_reward / reward_pct, whose `str()` gives "90.4".
+
+    Cut before formatting. `f"{v:.2f}"` ROUNDS, so formatting a raw 0.267442
+    here would print "0.27" beside a reward.json reading 0.26 -- the displayed
+    number has to be the published one.
     """
-    return f"{float(value):.{REWARD_DP}f}"
+    return f"{norm_reward(float(value)):.{REWARD_DP}f}"
 
 
 sys.path.insert(0, str(REPO / "services" / "mcp_eval"))
@@ -210,8 +357,21 @@ def _flatten_artifacts(run_dir: Path) -> None:
                                "total_bytes": sum(e["size"] for e in entries)})
 
 
-def _r4(x):
-    return None if x is None else round(float(x), 4)
+def _norm_ledger(doc: dict) -> dict:
+    """Round a detail.json ledger's numbers to the published precision.
+
+    detail.json has two writers. _build_detail (below) makes one here and
+    already rounds; weighted_judge.write_verifier_artifacts makes the other
+    inside the task container, straight off the scoring floats, and that copy
+    is published verbatim when it exists. Normalising at the publish point
+    covers both without touching the numbers the container grades with.
+    """
+    for _row in (doc.get("ledger") or {}).values():
+        if isinstance(_row, dict):
+            for _f in ("value", "earned", "severity", "penalty"):
+                if isinstance(_row.get(_f), (int, float)) and not isinstance(_row[_f], bool):
+                    _row[_f] = norm_reward(_row[_f])
+    return doc
 
 
 def _strip_mcp(name: str) -> str:
@@ -498,14 +658,19 @@ def _junit_to_ctrf(junit_path: Path, tw_comp: dict | None = None) -> dict | None
                      if t["status"] == "passed" and (weights.get(t["name"], 0) or 0) > 0)
     total_pos = sum(w for n, w in weights.items() if isinstance(w, (int, float)) and w > 0
                     and any(t["name"] == n and t["status"] != "skipped" for t in tests))
-    overall_score = round(earned_pos / total_pos, 6) if total_pos > 0 else 0.0
+    # Kept identical to services/scoring/ctrf_pytest_plugin.py, which produces
+    # the same document for runs that carry a CTRF plugin report: score at
+    # REWARD_DP, percentage taken from the unrounded ratio so it does not
+    # inherit the score's rounding.
+    ratio = (earned_pos / total_pos) if total_pos > 0 else 0.0
+    overall_score = norm_reward(ratio)
     return {
         "results": {
             "tool": {"name": "pytest"},
             "summary": {"tests": total, "passed": passed, "failed": failed,
                         "pending": 0, "skipped": skipped, "other": 0,
                         "overall_score": overall_score,
-                        "weighted_percentage": reward_pct(overall_score)},
+                        "weighted_percentage": reward_pct(ratio)},
             "tests": tests,
         }
     }
@@ -543,21 +708,21 @@ def _build_detail(ctrf: dict | None, weights: dict | None, breakdown: dict | Non
                                 "outcome": outcome, "is_positive": is_positive})
     rubric_rows = (breakdown.get("per_criterion") or breakdown.get("results") if breakdown else None) or []
     ledger = {
-        "traj_tests": {"weight": traj_w, "value": _r4(traj_val),
-                       "earned": _r4((traj_val or 0) * traj_w) if traj_val is not None else None},
-        "rubric": {"weight": rubric_w, "value": _r4(rubric_val),
-                   "earned": _r4((rubric_val or 0) * rubric_w) if rubric_val is not None else None},
+        "traj_tests": {"weight": traj_w, "value": norm_reward(traj_val),
+                       "earned": norm_reward((traj_val or 0) * traj_w) if traj_val is not None else None},
+        "rubric": {"weight": rubric_w, "value": norm_reward(rubric_val),
+                   "earned": norm_reward((rubric_val or 0) * rubric_w) if rubric_val is not None else None},
     }
     # State channel (Rc/Rb). A declared component whose value never arrived
     # (state dump failed, or the task has no state channel) stays out rather
     # than reading as a scored zero; a declared component WITH a value must
     # appear, because a component that never scores can never fail.
     if state_w and state_val is not None:
-        ledger["state_completion"] = {"weight": state_w, "value": _r4(state_val),
-                                      "earned": _r4(state_val * state_w)}
+        ledger["state_completion"] = {"weight": state_w, "value": norm_reward(state_val),
+                                      "earned": norm_reward(state_val * state_w)}
     if mis_w and state_mis is not None:
-        ledger["state_misbehave"] = {"weight": mis_w, "value": _r4(state_mis),
-                                     "earned": _r4(state_mis * mis_w)}
+        ledger["state_misbehave"] = {"weight": mis_w, "value": norm_reward(state_mis),
+                                     "earned": norm_reward(state_mis * mis_w)}
     return {"ledger": ledger, "traj_test_rows": traj_test_rows, "rubric_rows": rubric_rows}
 
 
@@ -672,6 +837,11 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         usage["input_tokens"] = ar.get("n_input_tokens")
     if usage.get("output_tokens") is None:
         usage["output_tokens"] = ar.get("n_output_tokens")
+    # The stream reports cost as raw float arithmetic (3.8658485000000002).
+    # It is published in report.json and summary.json, so it is rounded to the
+    # same precision as every other metric in the tree.
+    if usage.get("cost_usd") is not None:
+        usage["cost_usd"] = norm_reward(usage["cost_usd"])
     tool_tokens = sum(len(r["result"] or "") for r in stream["trace"]) // 4
     # Claude Code's `usage.input_tokens` excludes cache reads/creation, so the
     # headline prompt count comes from Harbor's agent_result (total input) with
@@ -767,12 +937,45 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     reward_pct_doc = {
         **_orig_rew,
         "reward": final_reward,
+        # The rates ride in on **_orig_rew from whichever grader wrote last. The
+        # bundle's container-side test.sh writes raw float arithmetic, so
+        # completion_rate arrives as 0.290698 (25/86) and sits next to a reward
+        # already at REWARD_DP -- six places beside two in the same four-line
+        # file, leaving a reader to decide which precision is the real one.
+        # Bundles are task content and each rounds or does not; the tree's
+        # precision is a property of the published tree, so it is settled here,
+        # through the same scalar rounder every other number goes through.
+        **{_k: norm_reward(_orig_rew[_k])
+           for _k in ("completion_rate", "misbehave_rate", "rubric", "rubric_score")
+           if _k in _orig_rew},
         **({"producer": "unscored"} if _producer == "unscored" else {}),
     }
 
     failure_class, failure_reason = classify_failure(
         passed, traj_rows, rubric_rows, stream, exception,
         rubric_expected=bool(rubric_src))
+
+    # An attempt that died inside the harness -- agent process crash, auth/OAuth
+    # failure, container error -- is not a measurement of the agent's answer. The
+    # host rubric pass still runs against the empty trajectory and returns a
+    # perfectly well-formed 0, so `producer` stays "host_rubric_pass" and the
+    # `producer == "unscored"` guard below never fires. Averaging that 0 in is
+    # exactly the confusion that guard exists to prevent: on one measured task
+    # four graded trials scored 50/50/48/50 and a fifth died on an OAuth error,
+    # and the mean reported 39.6 instead of 49.5 -- infrastructure trouble read
+    # as agent failure. Mark the trial unscored so it stays in n, c,
+    # per_trial_rewards and the failure histogram (a crashed attempt is still a
+    # failed attempt for pass@k) but out of the reward MEAN.
+    #
+    # The flag rides in reward.json as "unscored_reason", NOT as a "scored" key:
+    # container_test reward.json already uses "scored" for its binary 0/1 score
+    # (see the _ledger_reward read above), and reusing the name would make one
+    # key mean two things in the same file.
+    _scored = _producer != "unscored" and failure_class != "infrastructure"
+    if not _scored:
+        reward_pct_doc["unscored_reason"] = (
+            failure_reason if failure_class == "infrastructure"
+            else "host rubric was not run or refused to grade")
 
     # Not fmt_reward: reward.txt ships bare repr ("90.4"), not padded ("90.40").
     reward_txt_val = str(norm_reward(final_reward)) if final_reward is not None else "0.0"
@@ -815,6 +1018,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         pass
     _copy(ag / "oracle.txt", run_dir / "agent" / "oracle.txt")
     _copy(ag / "trajectory.json", run_dir / "agent" / "trajectory.json")
+    # Its total_cost_usd is cut, but NOT here -- see the .raw staging below.
     for f in ("config.json", "result.json"):
         if _copy(trial_dir / f, run_dir / f):
             # Harbor stamps absolute host paths (trial_uri, trials_dir) into
@@ -827,7 +1031,8 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     _trun_res = _load(run_dir / "result.json", {}) or {}
     if isinstance((_trun_res.get("verifier_result") or {}).get("rewards"), dict):
         _trun_res["verifier_result"]["rewards"]["reward"] = reward_pct_doc.get("reward", final_reward)
-        _dump(run_dir / "result.json", _trun_res)
+    if _trun_res:
+        _dump(run_dir / "result.json", norm_result_metrics(_trun_res))
     _copy(trial_dir / "artifacts", run_dir / "artifacts")
     _flatten_artifacts(run_dir)
     if _copy(stream_path, run_dir / "logs" / "agent-stream.jsonl"):
@@ -854,7 +1059,13 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
           run_dir / "logs" / "light-servers-health.log")
     _copy(ver / "light-servers-tool_calls.log",
           run_dir / "logs" / "light-servers-tool-calls.log")
-    for f in ("ctrf.json", "reward.json", "test-stdout.txt", "detail.json",
+    # reward_channel_a.json is here because the published run dir has to be
+    # re-gradable: host_rubric_pass reads channel A from it, and without it a
+    # re-run of that pass drops traj_tests from the ledger and scores the run on
+    # the rubric alone. Leaving it behind made the published tree look complete
+    # while quietly not being enough to reproduce its own reward.
+    for f in ("ctrf.json", "reward.json", "reward_channel_a.json",
+              "test-stdout.txt", "detail.json",
               "rubric_breakdown.json", "judge_tokens.json",
               "state_channel.json", "end_env.json"):
         _copy(ver / f, run_dir / "verifier" / f)
@@ -967,6 +1178,9 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         for _k in ("score", "rc", "rb"):
             _rbd.pop(_k, None)
         _dump(vdir / "rubric_breakdown.json", _rbd)
+    _pub_detail = _load(vdir / "detail.json", {}) or {}
+    if _pub_detail.get("ledger"):
+        _dump(vdir / "detail.json", _norm_ledger(_pub_detail))
     report = {
         "model": model, "run_index": run_no, "include_multimodal": False,
         "pytest": {"passed": n_pass, "failed": n_fail, "skipped": n_skip,
@@ -1013,7 +1227,27 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     if not (rver / "detail.json").exists():
         _dump(rver / "detail.json", detail_doc)
     _dump(rver / "reward.json", reward_pct_doc)
-    _dump(raw_run / "rubric.json", {"format": "criteria", "rubric_score": _r4(rubric_val), "per_criterion": rubric_entries})
+    _dump(raw_run / "rubric.json", {"format": "criteria", "rubric_score": norm_reward(rubric_val), "per_criterion": rubric_entries})
+
+    # Cut the published cost/rate fields to two places -- deliberately AFTER the
+    # .raw staging above, and this ordering is load-bearing.
+    #
+    # When the job dir IS the output dir (run_task.sh passes one path for both),
+    # _copy sees src.resolve() == dst.resolve() and returns without copying, so
+    # run_dir/agent/trajectory.json and ag/trajectory.json are the SAME file.
+    # Cutting at the publish site therefore rewrote Harbor's own artifact, and
+    # the _copy above then mirrored the already-cut number into .raw -- leaving
+    # 6.7969325 nowhere on disk. Publishing the cut here, once .raw holds the
+    # verbatim copy, keeps the mirror worth mirroring.
+    #
+    # total_cost_usd is raw float arithmetic from the agent SDK; judge_cost_usd
+    # comes from rubric_judge_cli's pricing; verifier/reward.json carries the
+    # rates when a container graded the trial rather than host_rubric_pass,
+    # which normalises its own writes. finance_reporter reads its cost from the
+    # PUBLISHED trajectory.json, so what it posts is cut too.
+    norm_metrics_file(run_dir / "agent" / "trajectory.json")
+    for _f in ("judge_tokens.json", "reward.json"):
+        norm_metrics_file(run_dir / "verifier" / _f)
     with (raw_run / "trace.jsonl").open("w", encoding="utf-8") as fh:
         for r in stream["trace"]:
             fh.write(json.dumps({"step": r["step"], "tool": r["tool"], "arguments": r["arguments"],
@@ -1037,7 +1271,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
 
         "channel_a_present": bool(traj_rows),
         "test_weights_percentage": test_pct, "rubric_weights_percentage": rubric_pct,
-        "rubric_rc": _r4(rubric_val), "rubric_rb": None,
+        "rubric_rc": norm_reward(rubric_val), "rubric_rb": None,
         "rubric_per_criterion": rubric_entries,
         "tokens": tokens, "usage": usage,
         "tool_summary": {"tool_cnt": stream["tool_cnt"], "valid_tool_calls": stream["valid"],
@@ -1054,18 +1288,18 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         "quadrant": "PASSED" if passed else "FAILED", "threshold": threshold,
         "components": {
             "traj_tests": {"weight": traj_w, "value": reward_pct(traj_val),
-                           "earned": _r4((traj_val or 0) * traj_w) if traj_val is not None else None},
+                           "earned": norm_reward((traj_val or 0) * traj_w) if traj_val is not None else None},
             "rubric": {"weight": rubric_w, "value": reward_pct(rubric_val),
-                       "earned": _r4((rubric_val or 0) * rubric_w) if rubric_val is not None else None},
+                       "earned": norm_reward((rubric_val or 0) * rubric_w) if rubric_val is not None else None},
             # Weights come from tests/test_weights.json rather than being pinned
             # to 0 here. Nothing in this pipeline computes their values yet, so
             # value/earned stay None; a task that declares them non-zero will at
             # least surface the discrepancy instead of silently reading as 0.
             "state_completion": {"weight": _comp_w("state_completion"), "value": reward_pct(state_val),
-                                 "earned": _r4((state_val or 0) * _comp_w("state_completion"))
+                                 "earned": norm_reward((state_val or 0) * _comp_w("state_completion"))
                                  if state_val is not None else None},
-            "state_misbehave": {"weight": _comp_w("state_misbehave"), "severity": _r4(state_mis),
-                                "penalty": _r4((state_mis or 0) * abs(_comp_w("state_misbehave")))
+            "state_misbehave": {"weight": _comp_w("state_misbehave"), "severity": norm_reward(state_mis),
+                                "penalty": norm_reward((state_mis or 0) * abs(_comp_w("state_misbehave")))
                                 if state_mis is not None else None},
             "graph_plan": {"weight": _comp_w("graph_plan"), "value": None, "earned": None},
         },
@@ -1088,7 +1322,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         # result and still go ungraded when the host rubric pass refuses an
         # empty trajectory. Aggregates use this to keep unscored trials out of
         # the mean instead of averaging them in as zeros.
-        "scored": _producer != "unscored",
+        "scored": _scored,
         "judge": judge,
         "valid_tool_calls": stream["valid"], "invalid_tool_calls": stream["invalid"],
         "error_tool_calls": stream["error"],
@@ -1103,7 +1337,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
             "final_answer": stream["final_answer"], "reward": final_reward, "passed": passed}
     per_run = {"run_index": run_no, "include_multimodal": False,
                "test_weights_percentage": test_pct, "rubric_weights_percentage": rubric_pct,
-               "scored": _producer != "unscored",
+               "scored": _scored,
                "combined_score": final_reward}
     # Safe here: ctrf was resolved at the top of this function, so a legacy
     # XML-only job still reshapes correctly — it just does not ship the XML.
@@ -1146,7 +1380,7 @@ def wilson_ci(c: int, n: int, z: float = 1.96):
     d = 1 + z * z / n
     centre = (p + z * z / (2 * n)) / d
     half = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / d
-    return [round(max(0.0, centre - half), 6), round(min(1.0, centre + half), 6)]
+    return [norm_reward(max(0.0, centre - half)), norm_reward(min(1.0, centre + half))]
 
 
 # ---------------------------------------------------------------------------
@@ -1155,7 +1389,7 @@ def wilson_ci(c: int, n: int, z: float = 1.96):
 
 def _mean(vals):
     vals = [v for v in vals if v is not None]
-    return round(sum(vals) / len(vals), 6) if vals else 0.0
+    return norm_reward(sum(vals) / len(vals)) if vals else 0.0
 
 
 def _mean_or_none(vals):
@@ -1169,10 +1403,10 @@ def _mean_or_none(vals):
     Aggregates over scored components use this instead.
     """
     vals = [v for v in vals if v is not None]
-    return round(sum(vals) / len(vals), 6) if vals else None
+    return norm_reward(sum(vals) / len(vals)) if vals else None
 
 
-def _fmt_metric(value, places: int = 4) -> str:
+def _fmt_metric(value, places: int = REWARD_DP) -> str:
     """Render an aggregate for report.md, naming an absent one rather than
     printing a number that was never measured."""
     return "unmeasured" if value is None else f"{value:.{places}f}"
@@ -1385,8 +1619,13 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
         # They stay in per_run -- losing them would hide infrastructure trouble
         # -- but they are excluded from every average, and the counts below say
         # how many there were so a reader can see the difference.
-        completed = [p for p in per_run if p.get("test_weights_percentage") is not None]
-        errored = [p for p in per_run if p.get("test_weights_percentage") is None]
+        # `scored` catches the other shape of the same thing: a trial that died
+        # in the harness but whose verifier still wrote a well-formed 0 for
+        # Channel A, so test_weights_percentage is 0.0 rather than None.
+        completed = [p for p in per_run
+                     if p.get("test_weights_percentage") is not None and p.get("scored", True)]
+        errored = [p for p in per_run
+                   if p.get("test_weights_percentage") is None or not p.get("scored", True)]
         pass_summary = {
             "model": model, "runs": n,
             "runs_completed": len(completed),
@@ -1422,7 +1661,10 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
                 # counts toward n -- an attempt that produced nothing is a failed
                 # attempt for pass@k -- but it must stay out of the reward MEAN,
                 # or infrastructure failures read as agent failures.
-                if _rw.get("producer") != "unscored":
+                # "unscored_reason" also covers the trial the grader DID score
+                # but that never ran the agent to completion (harness crash);
+                # see the note where it is written in reshape_trial.
+                if _rw.get("producer") != "unscored" and not _rw.get("unscored_reason"):
                     _disk_scored.append(float(_rw["reward"]))
         if len(_disk_rewards) > n:
             _tw = (_load(task_dir / "tests" / "test_weights.json", {}) if task_dir else {}) or {}
@@ -1439,16 +1681,35 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
         # actually accumulated, so pass@k needs no --at retuning when the
         # attempt count changes.
         ks_eff = list(range(1, n + 1)) if not ks else ([k for k in ks if k <= n] or [1])
-        per_task = [{
-            "task": task_name,
-            "pass@1": round(pass_at_k(n, c, 1), 6),
-            "pass@k": {str(k): round(pass_at_k(n, c, k), 6) for k in ks_eff},
-        }]
+        # Keys are "k=<k>", not a bare "<k>", because a bare k reads exactly
+        # like a trial number: "3": 0.5 in pass@k means "drawing 3 of the n
+        # runs clears the threshold half the time", not "trial 3 scored 0.5".
+        # That collision is why pass@k no longer sits inside per_task at all --
+        # per_task now reports only the task name, and the pass@k map lives on
+        # the .raw summary, where nothing per-trial sits beside it to be
+        # confused with. The redundant "pass@1" that sat next to "task" is gone
+        # too; it was always pass@k's own k=1 entry printed twice.
+        pass_at_k_map = {f"k={k}": norm_reward(pass_at_k(n, c, k)) for k in ks_eff}
+        # The score each individual attempt earned, keyed "pass@<n>": "pass@3"
+        # is "trial 3 scored this". Published in BOTH places the layout asks
+        # for -- once at top level for a reader skimming the whole file, once
+        # inside the per_task entry so a task's scores travel with its slug
+        # when entries are pulled out for a multi-task rollup. The two are the
+        # same dict; they cannot drift.
+        #
+        # NOTE the label collision this leaves standing: "pass@3" HERE is a
+        # per-trial reward, while "pass@3" in .raw/summary.json's metrics block
+        # is the pass@k statistic ("3 drawn attempts contain a pass this
+        # often"). Same label, different metric. The probabilities are keyed
+        # "k=<k>" over there precisely so the two never appear identically
+        # keyed in the same file; do not read one as the other.
+        per_trial_rewards = {f"pass@{i + 1}": norm_reward(r) for i, r in enumerate(rewards)}
+        per_task = [{"task": task_name, "per_trial_rewards": per_trial_rewards}]
         passk = {
-            "model": model, "tasks": 1, "passed": c, "accuracy": round(c / n, 6) if n else 0.0,
+            "model": model, "tasks": 1, "passed": c, "accuracy": norm_reward(c / n) if n else 0.0,
             "mean_reward": _mean_or_none(scored_rewards),
             "runs_unscored": n_unscored,
-            "per_trial_rewards": {str(i + 1): round(r, 2) for i, r in enumerate(rewards)},
+            "per_trial_rewards": per_trial_rewards,
             "failure_mode_histogram": hist, "per_task": per_task,
             "attempts_per_task": n, "at": ks_eff,
         }
@@ -1461,18 +1722,31 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
                 _old.unlink()
         _dump(out_task / passk_name, passk)
         _dump(raw_trials / "passk_summary.json", passk)
-        if _evals:
+        if _top_res:
+            # result.json is Harbor's file, not ours: Harbor re-reads and
+            # validates it on every startup (harbor/job.py:80) against
+            # AgentDatasetStats.pass_at_k, which is typed dict[int, float].
+            # The "k=<k>" keys above label OUR pass@N.json report; writing them
+            # here meant the first run left behind a job dir that no later run
+            # could open -- harbor died in pydantic before a trial could start.
+            # Hand Harbor back the shape it declared; the labelled keys stay in
+            # the files we own.
+            _passk_native = {k: norm_reward(pass_at_k(n, c, k)) for k in ks_eff}
             for _eval_data in _evals.values():
-                _eval_data["pass_at_k"] = per_task[0]["pass@k"]
-            _dump(out_task / "result.json", _top_res)
+                _eval_data["pass_at_k"] = _passk_native
+            _dump(out_task / "result.json", norm_result_metrics(_top_res))
 
         # .raw summary / pairs / failure_analysis
         _dump(raw_trials / "summary.json", {
             "task": task_name, "model": model, "agent": agent_name, "seed": None,
             "generated_at": datetime.now(timezone.utc).isoformat(),
-            "metrics": {"n": n, "c": c, "pass@1": round(pass_at_k(n, c, 1), 6),
-                        "p_hat": round(c / n, 6) if n else 0.0, "ci95": wilson_ci(c, n),
-                        "pass@k": per_task[0]["pass@k"],
+            "metrics": {"n": n, "c": c, "pass@1": norm_reward(pass_at_k(n, c, 1)),
+                        "p_hat": norm_reward(c / n) if n else 0.0, "ci95": wilson_ci(c, n),
+                        # The full "k=<k>" map, which pass@N.json no longer
+                        # carries -- this is now its only home. The "pass@1"
+                        # above is a named headline metric, not a second copy
+                        # of an entry sitting beside it.
+                        "pass@k": pass_at_k_map,
                         "failure_breakdown": hist},
             "attempts": [{"attempt": e["index"], "passed": e["passed"], "reward": e["judge"]["reward"],
                           "rubric_score": e["judge"]["rubric_score"],
@@ -1492,17 +1766,21 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
             f"- Method: `harbor`", f"- Benchmark: `mcp-atlas`", f"- Harbor job: `{job_dir}`",
             f"- Episodes: {n}", "",
             "## Aggregate metrics", "", "| Metric | Value |", "|---|---|",
-            f"| Accuracy (reward ≥ threshold) | {m['accuracy']:.4f} |",
+            f"| Accuracy (reward ≥ threshold) | {m['accuracy']:.{REWARD_DP}f} |",
             f"| Avg reward | {_fmt_metric(m['avg_reward'])} |",
-            f"| Avg rubric (Channel B) | {m['avg_rubric_score']:.4f} |",
+            # Without this row an avg reward that skips a trial cannot be
+            # re-derived from the per-episode table below, and reads as an
+            # arithmetic error.
+            f"| Runs unscored (excluded from avg reward) | {m['runs_unscored']} |",
+            f"| Avg rubric (Channel B) | {m['avg_rubric_score']:.{REWARD_DP}f} |",
             f"| Avg traj_tests (Channel A) | {_fmt_metric(m['avg_traj_tests'])} |",
             f"| Avg misbehave rate | {_fmt_metric(m['avg_misbehave_rate'])} |",
-            f"| Avg valid tool calls / episode | {m['avg_valid_tool_calls']:.4f} |",
-            f"| Avg invalid tool calls / episode | {m['avg_invalid_tool_calls']:.4f} |",
-            f"| Avg error tool calls / episode | {m['avg_error_tool_calls']:.4f} |",
-            f"| Avg prompt tokens | {m['avg_prompt_tokens']:.2f} |",
-            f"| Avg llm tokens | {m['avg_llm_tokens']:.2f} |",
-            f"| Avg tool tokens | {m['avg_tool_tokens']:.2f} |", "",
+            f"| Avg valid tool calls / episode | {m['avg_valid_tool_calls']:.{REWARD_DP}f} |",
+            f"| Avg invalid tool calls / episode | {m['avg_invalid_tool_calls']:.{REWARD_DP}f} |",
+            f"| Avg error tool calls / episode | {m['avg_error_tool_calls']:.{REWARD_DP}f} |",
+            f"| Avg prompt tokens | {m['avg_prompt_tokens']:.{REWARD_DP}f} |",
+            f"| Avg llm tokens | {m['avg_llm_tokens']:.{REWARD_DP}f} |",
+            f"| Avg tool tokens | {m['avg_tool_tokens']:.{REWARD_DP}f} |", "",
             "## Per-episode", "",
             "| # | Passed | Reward | Traj recall / total | Misbehave | Rubric | Valid TC | Invalid TC | Failure | Dir |",
             "|---|---|---|---|---|---|---|---|---|---|",

@@ -21,17 +21,22 @@ it already satisfies the interface:
 Rubric criterion shape (tests/rubric.json):
 
     [
-      {"id": "claim_000", "text": "...", "weight": 1, "is_positive": true},
-      {"id": "claim_001", "text": "...", "weight": 2, "is_positive": false}
+      {"id": "claim_000", "text": "...", "score": 1, "is_positive": true},
+      {"id": "claim_001", "text": "...", "score": -2, "is_positive": false}
     ]
 
-`weight` is always a non-negative magnitude here — polarity is carried by
-the explicit `is_positive` field, not the sign of the number. That's a
-deliberate difference from Channel A's test_weights.json (where polarity
-*is* the sign): a rubric criterion's LLM-judged verdict is inherently
-graded, not boolean, so "how much of a violation occurred" needs its own
-signed *magnitude* separate from "is this good or bad" — folding both into
-one signed number would conflate them.
+`score` states the magnitude, and authored rubrics sign it by polarity
+(a guard reads -5). Only the magnitude is read here; polarity is carried by
+the explicit `is_positive` field. That's a deliberate difference from
+Channel A's test_weights.json (where polarity *is* the sign): a rubric
+criterion's LLM-judged verdict is inherently graded, not boolean, so "how
+much of a violation occurred" needs its own magnitude separate from "is this
+good or bad" — folding both into one number would conflate them.
+
+Older rubrics also carry a `weight` twin holding the same magnitude
+unsigned, and it is still accepted when `score` is absent. `score` is read
+first because it is the field the graders and the published breakdown rows
+agree on, and because four of this tree's rubrics state only that one.
 
 Legacy compatibility: a bare list of strings (score_claims.py's
 extract_claims() output — today's GTFA_CLAIMS shape) is accepted too — each
@@ -95,10 +100,11 @@ def parse_rubric(raw: Any) -> list[RubricCriterion]:
                 or item.get("title") or ""
             )
             identifier = item.get("id") or item.get("number") or f"claim_{i:03d}"
+            magnitude = item.get("score", item.get("weight", 1.0))
             out.append(RubricCriterion(
                 id=str(identifier),
                 text=text,
-                weight=abs(float(item.get("weight", 1.0))),
+                weight=abs(float(magnitude)),
                 is_positive=bool(item.get("is_positive", True)),
             ))
     return out
@@ -168,7 +174,7 @@ def score_verdicts(
         rows.append({
             "id": c.id,
             "text": c.text,
-            "weight": c.weight,
+            "score": c.weight if c.is_positive else -c.weight,
             "is_positive": c.is_positive,
             "coverage_outcome": outcome,
             "justification": result.get("justification", ""),

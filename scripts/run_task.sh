@@ -618,6 +618,48 @@ stage_preflight() {
 
 }
 
+# Harbor validates output/<job>/result.json against its own JobResult model
+# before it will start a trial (harbor/job.py:80), and it dies in pydantic when
+# that fails -- no trial, no logs, just a traceback. So a job dir written by an
+# older harness is not merely stale, it is unopenable.
+#
+# One such dir is in the wild: harbor_to_output.py used to write our labelled
+# "k=<k>" pass@k keys into that file, where the field is typed dict[int, float].
+# The writer is fixed, but the dirs it already wrote are still on disk, and a
+# fix nobody can reach without hand-editing JSON is not a fix. Normalise what we
+# know how to normalise; leave anything else for harbor to rule on.
+normalise_stale_job_result() {
+  [ -f "$1" ] || return 0
+  python3 - "$1" <<'PY' || true
+import json, sys
+
+p = sys.argv[1]
+try:
+    d = json.loads(open(p).read())
+except Exception:
+    sys.exit(0)             # unreadable is harbor's call to report, not ours
+
+changed = False
+for e in ((d.get("stats") or {}).get("evals") or {}).values():
+    pk = e.get("pass_at_k")
+    if not isinstance(pk, dict) or not any(str(k).startswith("k=") for k in pk):
+        continue
+    fixed = {}
+    for k, v in pk.items():
+        s = str(k).removeprefix("k=")
+        if not s.isdigit():
+            break           # not the shape we know; leave the whole map alone
+        fixed[int(s)] = v
+    else:
+        e["pass_at_k"] = fixed
+        changed = True
+
+if changed:
+    json.dump(d, open(p, "w"), indent=2)
+    print(f"[run_task] repaired legacy pass_at_k keys in {p}")
+PY
+}
+
 stage_harbor() {
   local offset; offset="$(resolve_run_offset)"
   state_put slug "$SLUG"
@@ -637,6 +679,7 @@ stage_harbor() {
 
   rm -f "$OUTPUT_DIR/$JOB/lock.json"
   rm -f "$OUTPUT_DIR/$JOB/config.json"
+  normalise_stale_job_result "$OUTPUT_DIR/$JOB/result.json"
   # SETUP_MULT multiplies Harbor's agent-setup timeout (base 360s). Setup is
   # `apt-get install curl procps` followed by
   # `curl downloads.claude.ai/.../bootstrap.sh | bash`, so it is network-bound
@@ -1141,8 +1184,52 @@ stage_netaudit() {
   fi
 
   if [ "$dirty" -ne 0 ]; then
+    # Word the banner from what actually happened, not from the fact that
+    # findings exist. detect_internet_use.py classifies each run into
+    # breach / denied / unverified (see _outcome there) and writes it to
+    # internet_audit.json; the worst outcome across runs decides the headline.
+    # A denied attempt is the egress proxy WORKING, and saying "used the
+    # internet" there sends an operator hunting a leak that never happened.
+    # "clean" is skipped, not ranked. An aborted trial writes an audit with no
+    # findings, and _outcome() still has to name its shape; ranking that word
+    # put "the model tried to reach the internet" in the headline on the
+    # strength of a run where the model never made a tool call.
+    local _worst="denied"
+    for _aj in "$TRAJ_DIR"/[Rr]un_*/internet_audit.json; do
+      [ -f "$_aj" ] || continue
+      case "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("outcome",""))' "$_aj" 2>/dev/null)" in
+        breach)     _worst="breach"; break ;;
+        unverified) [ "$_worst" = "denied" ] && _worst="unverified" ;;
+        setup)      [ "$_worst" = "denied" ] && _worst="setup" ;;
+        clean|"")   ;;
+      esac
+    done
+
     echo >&2
-    echo "==> BLOCKED: THE MODEL USED THE INTERNET" >&2
+    case "$_worst" in
+      breach)
+        echo "==> BLOCKED: THE MODEL REACHED THE INTERNET" >&2
+        echo "    Either a host that is not on the egress allowlist was NOT" >&2
+        echo "    denied, or a package install printed its own success -- so" >&2
+        echo "    traffic left the sandbox. Treat this as a hole in the block," >&2
+        echo "    not just agent behaviour. internet_audit.json names which." >&2 ;;
+      setup)
+        echo "==> BLOCKED: EGRESS ATTEMPTED DURING AGENT SETUP" >&2
+        echo "    The traffic was denied, and it was NOT the model: the trial" >&2
+        echo "    has no trajectory, so harbor's own setup made these requests" >&2
+        echo "    before the agent ran. Usually a bundle that does not pre-bake" >&2
+        echo "    the Claude Code CLI (see TASK_BUNDLE.md 2.4)." >&2 ;;
+      unverified)
+        echo "==> BLOCKED: THE MODEL TRIED TO REACH THE INTERNET" >&2
+        echo "    No proxy log for at least one run, so whether the attempt" >&2
+        echo "    succeeded is unverified. With NETWORK_ISOLATION_OFF=1 there is" >&2
+        echo "    no proxy in the path and the attempt most likely succeeded." >&2 ;;
+      *)
+        echo "==> BLOCKED: THE MODEL TRIED TO REACH THE INTERNET (ALL DENIED)" >&2
+        echo "    The egress proxy refused every attempt, so nothing left the" >&2
+        echo "    sandbox -- the block worked. The run is still not delivered:" >&2
+        echo "    reaching for the open web is itself disqualifying here." >&2 ;;
+    esac
     echo "    This task is closed-world -- the answer must come from the MCP" >&2
     echo "    sidecars and /workspace/data, not the open web. Findings are listed" >&2
     echo "    above and saved to each run's internet_audit.json." >&2

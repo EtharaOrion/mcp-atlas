@@ -10,7 +10,26 @@ import subprocess
 import sys
 import tempfile
 import time
+from decimal import ROUND_DOWN, Decimal
 from pathlib import Path
+
+
+def _cut(value: float, dp: int = 2) -> float:
+    """Truncate to `dp` places, mirroring harbor_to_output.norm_reward.
+
+    Defined here rather than imported: this module is mounted into the task
+    container at /harness/scoring, where tools/delivery does not exist. The
+    same reason ctrf_pytest_plugin.py carries its own copy. All three must
+    agree, or the container and the host publish different numbers for the
+    same run.
+
+    Decimal on repr(), not int(value * 100) / 100: the float nearest 0.29 is
+    0.28999999999999998, which would truncate to 0.28.
+    """
+    return float(
+        Decimal(repr(float(value))).quantize(Decimal(1).scaleb(-dp),
+                                             rounding=ROUND_DOWN)
+    )
 
 # Optional Headroom prompt compression, default OFF (see grader_compress.py).
 # This file runs inside the task container, where the scoring tree is mounted
@@ -767,19 +786,19 @@ def _compute_scores(criteria: list[dict], results: list[dict]) -> dict:
 
     for c in criteria:
         num = str(c.get("number", ""))
-        weight = float(c.get("score", 1))
+        score = float(c.get("score", 1))
         is_pos = bool(c.get("is_positive", True))
         r = by_num.get(num, {})
         satisfied = bool(r.get("satisfied", False))
 
         if is_pos:
-            pos_total += weight
+            pos_total += score
             if satisfied:
-                pos_earned += weight
+                pos_earned += score
         else:
-            neg_total += weight
+            neg_total += score
             if satisfied:
-                neg_hit += weight
+                neg_hit += score
 
         per_criterion.append(
             {
@@ -788,7 +807,7 @@ def _compute_scores(criteria: list[dict], results: list[dict]) -> dict:
                 "type": c.get("type"),
                 "evaluation_target": c.get("evaluation_target"),
                 "importance": c.get("importance"),
-                "weight": weight,
+                "score": score,
                 "is_positive": is_pos,
                 "satisfied": satisfied,
                 "justification": r.get("justification", ""),
@@ -798,9 +817,18 @@ def _compute_scores(criteria: list[dict], results: list[dict]) -> dict:
     rc = (pos_earned / pos_total) if pos_total else 1.0
     rb = (neg_hit / neg_total) if neg_total else 0.0
     return {
-        "score": round(rc * (1.0 - rb), 4),
-        "rc": round(rc, 4),
-        "rb": round(rb, 4),
+        # Cut, never rounded, and cut only on the way out: the score is taken
+        # from the full-precision rc and rb, so truncating the two inputs does
+        # not compound into the number the ledger reads. These three published
+        # at four places was the last thing in the tree still disagreeing with
+        # the two-place rule -- rubric_breakdown.json carried 0.5716 beside a
+        # reward.json reading 0.57, which is exactly the "which precision is
+        # the real one" problem the rule exists to end.
+        "score": _cut(rc * (1.0 - rb)),
+        "rc": _cut(rc),
+        "rb": _cut(rb),
+        # Pass/fail is decided on the FULL values, not the cut ones. A run that
+        # earned 0.999 must not be promoted to a pass by truncation.
         "rubric_passed": rc >= 0.999999 and rb <= 0.000001,
         "per_criterion": per_criterion,
     }

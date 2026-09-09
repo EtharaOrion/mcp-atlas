@@ -39,7 +39,10 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "tools" / "delivery"))
-from harbor_to_output import fmt_reward, norm_reward  # noqa: E402
+from harbor_to_output import REWARD_DP, fmt_reward, norm_reward  # noqa: E402
+
+
+REPORT_DP = REWARD_DP
 sys.path.insert(0, str(REPO / "services" / "scoring"))
 
 import agent_log_to_trajectory as alt  # noqa: E402
@@ -75,8 +78,8 @@ def write_grade_report(dest: Path, out: dict, gate: dict) -> None:
                 num += contrib
                 den += w
             rows.append((name, spec.get("status"), w,
-                         "-" if v is None else f"{v:.6f}",
-                         "-" if contrib is None else f"{contrib:+.4f}",
+                         "-" if v is None else f"{v:.{REPORT_DP}f}",
+                         "-" if contrib is None else f"{contrib:+.{REPORT_DP}f}",
                          {"scored": "", "unscored": "DROPPED from both sums",
                           "retired": "not graded"}.get(spec.get("status"), "")))
         reward = out.get("reward") or 0.0
@@ -87,10 +90,11 @@ def write_grade_report(dest: Path, out: dict, gate: dict) -> None:
         lines += [f"| `{n}` | {s} | {w} | {v} | {c} | {note} |"
                   for n, s, w, v, c, note in rows]
         pre_gate = norm_reward(max(0.0, num / den)) if den else 0.0
-        lines += ["", f"    numerator   = {num:+.4f}"]
+        lines += ["", f"    numerator   = {num:+.{REPORT_DP}f}"]
         if den:
-            lines += [f"    denominator = {den:.4f}   (graded, weighted, produced a value)",
-                      f"    ledger      = max(0, {num:+.4f} / {den:.4f}) = {fmt_reward(pre_gate)}"]
+            lines += [f"    denominator = {den:.{REPORT_DP}f}   (graded, weighted, produced a value)",
+                      f"    ledger      = max(0, {num:+.{REPORT_DP}f} / {den:.{REPORT_DP}f}) "
+                      f"= {fmt_reward(pre_gate)}"]
         else:
             lines += ["    denominator = 0 -- NOTHING SCORED. Every component was dropped "
                       "or retired; that is a bundle defect, not a run outcome."]
@@ -145,7 +149,11 @@ def recompute_reward(weights: dict, chan_a, rubric_value, rc_val, rb_val,
         if v is None:
             ledger[name] = {"status": "unscored", "weight": w, "value": None}
             continue
-        ledger[name] = {"status": "scored", "weight": w, "value": round(float(v), 6)}
+        # `value` is what the ledger publishes; the arithmetic below stays on
+        # the full float. Cutting only the published copy keeps the report
+        # readable at the tree's two places without the reward inheriting a
+        # truncation on every component it sums.
+        ledger[name] = {"status": "scored", "weight": w, "value": norm_reward(float(v))}
         num += w * float(v)
         den += w
 
@@ -154,7 +162,7 @@ def recompute_reward(weights: dict, chan_a, rubric_value, rc_val, rb_val,
     if mis.get("graded") and mis_w < 0 and rb_val is not None:
         num -= abs(mis_w) * float(rb_val)
         ledger["state_misbehave"] = {"status": "scored", "weight": mis_w,
-                                     "severity": round(float(rb_val), 6)}
+                                     "severity": norm_reward(float(rb_val))}
     else:
         ledger["state_misbehave"] = {
             "status": "retired" if not mis.get("graded") else "unscored",
@@ -287,9 +295,15 @@ def main() -> int:
     rubric_value = float(rubric_value) if isinstance(rubric_value, (int, float)) else None
 
     weights = _load(weights_path, {}) or {}
-    prior = _load(verifier / "reward_channel_a.json", {}) or {}
+    _chan_a_path = verifier / "reward_channel_a.json"
+    prior = _load(_chan_a_path, {}) or {}
     state = _load(verifier / "state_channel.json", {}) or {}
     chan_a = prior.get("channel_a")
+    if chan_a is None:
+        print(f"[host-rubric] WARNING: no channel_a in {_chan_a_path.name}; "
+              "traj_tests is DROPPED from the ledger and the reward comes from "
+              "the rubric alone -- not comparable to a full in-pipeline grade",
+              file=sys.stderr)
     rc_val = state.get("completion") if state.get("available") else None
     rb_val = state.get("misbehave") if state.get("available") else None
     guards = prior.get("guards_tripped") or []
@@ -297,13 +311,14 @@ def main() -> int:
     reward, ledger = recompute_reward(weights, chan_a, rubric_value, rc_val, rb_val, guards)
 
     out = dict(prior)
-    out.update({"reward": reward, "rubric": rubric_value, "ledger": ledger,
+    out.update({"reward": reward, "rubric": norm_reward(rubric_value),
+                "ledger": ledger,
                 "rubric_graded_on": "host", "grader": "weighted_ledger"})
     (verifier / "reward_channel_a.json").write_text(json.dumps(out, indent=2))
     (verifier / "reward.json").write_text(json.dumps(
         {"reward": reward,
-         "completion_rate": out.get("completion_rate", 0.0),
-         "misbehave_rate": out.get("misbehave_rate", 0.0),
+         "completion_rate": norm_reward(out.get("completion_rate", 0.0)),
+         "misbehave_rate": norm_reward(out.get("misbehave_rate", 0.0)),
          "producer": "host_rubric_pass"}, indent=2))
 
     # The container wrote grade_report.md from the rubric value it had, which
