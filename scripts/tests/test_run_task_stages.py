@@ -21,6 +21,19 @@ HARBOR_STUB = """#!/usr/bin/env bash
 printf '%s\\n' "$@" >> "$HARBOR_ARGS"
 mkdir -p "$JOB_DIR"
 touch "$JOB_DIR/result.json"
+# STUB_TRIAL makes the stub behave like a harbor run that actually created a
+# trial directory, which is what the run-ownership tests below need to see.
+if [ -n "${STUB_TRIAL:-}" ]; then
+  for t in ${STUB_TRIAL//,/ }; do
+    mkdir -p "$JOB_DIR/$t"
+    echo '{}' > "$JOB_DIR/$t/config.json"
+  done
+fi
+# A trial harbor created but never started: the directory exists, config.json
+# does not. run_task.sh must refuse to reshape rather than lose the run.
+if [ -n "${STUB_TRIAL_EMPTY:-}" ]; then
+  mkdir -p "$JOB_DIR/$STUB_TRIAL_EMPTY"
+fi
 exit 0
 """
 
@@ -157,3 +170,90 @@ exit 0
 BUNDLES = sorted(p for p in (REPO / "tasks").glob("*/environment/docker-compose.yaml")) \
     if (REPO / "tasks").is_dir() else []
 
+
+
+def _stale_trial(env, name="alpha__stale"):
+    """A trial dir harbor left behind when an earlier invocation died."""
+    d = env.output / "alpha" / name
+    d.mkdir(parents=True)
+    (d / "config.json").write_text("{}")
+    return d
+
+
+def test_reshape_is_handed_only_this_invocations_trial(env):
+    """The extra-runs bug: convert_job globs every *__* dir with a config.json,
+    so one N=1 invocation emitted one run per stale trial dir as well."""
+    _stale_trial(env)
+    r = env.run("harbor", RUN_OFFSET=0, N=1, STUB_TRIAL="alpha__fresh")
+    assert r.returncode == 0, r.stderr
+    assert env.state()["trials"] == "alpha__fresh"
+
+
+def test_stale_trial_dirs_are_named_not_silently_dropped(env):
+    _stale_trial(env)
+    r = env.run("harbor", RUN_OFFSET=0, N=1, STUB_TRIAL="alpha__fresh")
+    assert "trial dir(s) from earlier invocations" in r.stderr
+    assert "alpha__stale" in r.stderr
+
+
+def test_every_trial_of_a_multi_attempt_run_is_kept(env):
+    """N>1 legitimately makes several trials; only the pre-existing ones drop out."""
+    _stale_trial(env)
+    r = env.run("harbor", RUN_OFFSET=0, N=2, STUB_TRIAL="alpha__c,alpha__b")
+    assert r.returncode == 0, r.stderr
+    assert env.state()["trials"] == "alpha__b,alpha__c"
+
+
+def test_no_trial_at_all_records_an_empty_list(env):
+    """Nothing ran: reshape must convert nothing, not adopt the leftovers."""
+    _stale_trial(env)
+    r = env.run("harbor", RUN_OFFSET=0, N=1)
+    assert r.returncode == 0, r.stderr
+    assert env.state()["trials"] == ""
+
+
+def test_a_new_trial_that_never_started_is_still_caught(env):
+    """A stale dir has a config.json, so probing the newest dir by mtime let an
+    aborted trial pass the guard silently -- the case the guard exists for."""
+    _stale_trial(env)
+    r = env.run("harbor", RUN_OFFSET=0, N=1, STUB_TRIAL_EMPTY="alpha__aborted")
+    assert r.returncode != 0
+    assert "AGENT PHASE DID NOT RUN" in r.stderr
+
+
+def test_one_empty_trial_among_several_is_caught(env):
+    r = env.run("harbor", RUN_OFFSET=0, N=2,
+                STUB_TRIAL="alpha__good", STUB_TRIAL_EMPTY="alpha__aborted")
+    assert r.returncode != 0
+    assert "AGENT PHASE DID NOT RUN" in r.stderr
+
+
+REAL_TRIAL_CFG = '{"task": {"path": "tasks/alpha", "name": "acme/alpha"}, "trial_name": "%s"}'
+
+
+def _trial(env, name, *, started=True):
+    d = env.output / "alpha" / name
+    d.mkdir(parents=True, exist_ok=True)
+    if started:
+        (d / "config.json").write_text(REAL_TRIAL_CFG % name)
+        (d / "result.json").write_text('{"reward": 0.0}')
+    return d
+
+
+def test_one_invocation_writes_exactly_one_run(env, tmp_path):
+    """End to end over both stages: a job dir carrying two dead trials from
+    earlier invocations must still yield exactly ONE new trajectory/run_N."""
+    (env.output / "alpha").mkdir(parents=True)
+    _trial(env, "alpha__old1")
+    _trial(env, "alpha__old2")
+    (env.output / "alpha" / "config.json").write_text(
+        '{"agents": [{"name": "claude-code", "model_name": "m1"}]}')
+    (env.output / "alpha" / "result.json").write_text('{"id": "job-1"}')
+
+    assert env.run("harbor", RUN_OFFSET=0, N=1, STUB_TRIAL="alpha__fresh").returncode == 0
+    _trial(env, "alpha__fresh")          # the stub cannot write harbor's real config
+    r = env.run("reshape", RUN_OFFSET=0)
+    assert r.returncode == 0, r.stderr + r.stdout
+
+    runs = [p.name for d in env.output.glob("*/trajectory") for p in d.glob("run_*")]
+    assert runs == ["run_1"], runs

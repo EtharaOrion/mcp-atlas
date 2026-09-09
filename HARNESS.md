@@ -98,7 +98,6 @@ output/<task>/
 ├── summary.json           Aggregated metrics across all trials
 ├── pass_summary.json      Pass rate and score breakdown
 ├── passk_summary.json     Pass@k statistics
-├── report.md              Human-readable run report
 └── trajectory/
     └── Run_N/
         ├── agent/         Agent turn-by-turn trace

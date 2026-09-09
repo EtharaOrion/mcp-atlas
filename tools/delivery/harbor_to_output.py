@@ -5,7 +5,7 @@ and complex-mcp task runs land in one consistent shape:
 
     output/<task-slug>/
     ├── config.json  lock.json  result.json          (Harbor job files, verbatim)
-    ├── summary.json  pass_summary.json  pass@N.json (N = run count)  report.md
+    ├── summary.json  pass_summary.json  pass@N.json (N = run count)
     ├── trajectory/Run_N/                            (one per trial, Harbor-shaped)
     │   ├── agent/{claude-code.jsonl, trajectory.json}
     │   ├── logs/{agent-stream.jsonl, verifier-ctrf.json, verifier-reward.txt, verifier-stdout.txt}
@@ -1346,7 +1346,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
            *(run_dir / "verifier" / f for f in PRUNE_FROM_VERIFIER),
            *(raw_run / "verifier" / f for f in PRUNE_FROM_VERIFIER),
            *(raw_run / f for f in PRUNE_FROM_VERIFIER))
-    return {"episode": episode, "pair": pair, "per_run": per_run, "report": report,
+    return {"episode": episode, "pair": pair, "per_run": per_run,
             "failure": {"attempt": run_no, "failure_class": failure_class, "reason": failure_reason}}
 
 
@@ -1406,13 +1406,8 @@ def _mean_or_none(vals):
     return norm_reward(sum(vals) / len(vals)) if vals else None
 
 
-def _fmt_metric(value, places: int = REWARD_DP) -> str:
-    """Render an aggregate for report.md, naming an absent one rather than
-    printing a number that was never measured."""
-    return "unmeasured" if value is None else f"{value:.{places}f}"
-
-
-def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: int = 0) -> list[Path]:
+def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: int = 0,
+                only_trials: set[str] | None = None) -> list[Path]:
     job_cfg = _load(job_dir / "config.json", {}) or {}
     job_res = _load(job_dir / "result.json", {}) or {}
     job_lock = _load(job_dir / "lock.json", {}) or {}
@@ -1442,6 +1437,15 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
             (p for p in traj_root.iterdir()
              if p.is_dir() and (p / "config.json").exists() and not re.match(r'^run_\d+$', p.name)),
             key=lambda p: int(p.name.split("_")[-1]) if p.name.split("_")[-1].isdigit() else 0)
+    # Harbor leaves the directory of any trial that died (build failure, Ctrl-C,
+    # setup timeout) in the job dir forever, and every one of them satisfies the
+    # selection above. Converting them turns one N=1 invocation into several
+    # trajectory/run_N dirs -- all counted as attempts by the summary and pass@k
+    # aggregates below. run_task.sh diffs the job dir across the harbor call and
+    # passes the trials THAT call produced; None means "whatever is here", which
+    # is what a conversion driven by hand over a finished job dir wants.
+    if only_trials is not None:
+        trials = [p for p in trials if p.name in only_trials]
     by_task: dict[str, list[Path]] = {}
     for t in trials:
         cfg = _load(t / "config.json", {}) or {}
@@ -1758,52 +1762,6 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
                 fh.write(json.dumps(r["pair"], ensure_ascii=False) + "\n")
         _dump(raw_trials / "failure_analysis.json", [r["failure"] for r in recs])
 
-        # report.md
-        m = summary["metrics"]
-        lines = [
-            f"# Benchmark Report — {slug}", "",
-            f"- Timestamp: {stamp}", f"- Model: `{model}`", f"- Agent: `{agent_name}`",
-            f"- Method: `harbor`", f"- Benchmark: `mcp-atlas`", f"- Harbor job: `{job_dir}`",
-            f"- Episodes: {n}", "",
-            "## Aggregate metrics", "", "| Metric | Value |", "|---|---|",
-            f"| Accuracy (reward ≥ threshold) | {m['accuracy']:.{REWARD_DP}f} |",
-            f"| Avg reward | {_fmt_metric(m['avg_reward'])} |",
-            # Without this row an avg reward that skips a trial cannot be
-            # re-derived from the per-episode table below, and reads as an
-            # arithmetic error.
-            f"| Runs unscored (excluded from avg reward) | {m['runs_unscored']} |",
-            f"| Avg rubric (Channel B) | {m['avg_rubric_score']:.{REWARD_DP}f} |",
-            f"| Avg traj_tests (Channel A) | {_fmt_metric(m['avg_traj_tests'])} |",
-            f"| Avg misbehave rate | {_fmt_metric(m['avg_misbehave_rate'])} |",
-            f"| Avg valid tool calls / episode | {m['avg_valid_tool_calls']:.{REWARD_DP}f} |",
-            f"| Avg invalid tool calls / episode | {m['avg_invalid_tool_calls']:.{REWARD_DP}f} |",
-            f"| Avg error tool calls / episode | {m['avg_error_tool_calls']:.{REWARD_DP}f} |",
-            f"| Avg prompt tokens | {m['avg_prompt_tokens']:.{REWARD_DP}f} |",
-            f"| Avg llm tokens | {m['avg_llm_tokens']:.{REWARD_DP}f} |",
-            f"| Avg tool tokens | {m['avg_tool_tokens']:.{REWARD_DP}f} |", "",
-            "## Per-episode", "",
-            "| # | Passed | Reward | Traj recall / total | Misbehave | Rubric | Valid TC | Invalid TC | Failure | Dir |",
-            "|---|---|---|---|---|---|---|---|---|---|",
-        ]
-        for e in eps:
-            j = e["judge"]
-            lines.append(
-                f"| {e['index']} | {'✓' if e['passed'] else '✗'} | {j['reward']} | {j['recall']} / {j['total']} | "
-                f"{j['misbehave']} | {sum(1 for r in j['rubric_per_criterion'] if r['passed'])} / {len(j['rubric_per_criterion'])} | "
-                f"{e['valid_tool_calls']} | {e['invalid_tool_calls']} | `{e['failure_class']}` | `{e['dir']}` |")
-        lines += ["", "## Channel A — trajectory tests (per run)", ""]
-        for r in recs:
-            lines.append(f"### Run {r['report']['run_index']}")
-            lines.append("")
-            lines.append("| Test | Weight | Passed |")
-            lines.append("|---|---|---|")
-            for t in r["report"]["pytest"]["tests"]:
-                lines.append(f"| {t['name']} | {t['weight']} | {'✓' if t['passed'] else '✗'} |")
-            lines.append("")
-        lines += ["## Channel B — rubric claims (run 1)", "", "| # | Claim | Passed |", "|---|---|---|"]
-        for c_ in recs[0]["report"]["rubric"]:
-            lines.append(f"| {c_['number']} | {c_['criterion']} | {'✓' if c_['passed'] else '✗'} |")
-        (out_task / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
         # Harbor writes lock.json straight into the job dir (which is out_task on
         # in-place runs). Everything that needs it has been read by now.
         _prune(*(out_task / f for f in PRUNE_FROM_OUTPUT))
@@ -1844,6 +1802,10 @@ def main(argv=None) -> int:
     ap.add_argument("--at", default="auto",
                     help="comma-separated k values for pass@k, or 'auto' (default) "
                          "to use every k from 1 to the number of runs")
+    ap.add_argument("--only-trials", default=None,
+                    help="comma-separated trial dir names to convert. Omitted = every trial in the "
+                         "job dir; passed EMPTY = none of them (the caller knows this run made no "
+                         "trial), which is not the same thing.")
     ap.add_argument("--run-offset", type=int, default=0, dest="run_offset",
                     help="number of already-written Run_N dirs to skip when numbering new runs")
     a = ap.parse_args(argv)
@@ -1851,10 +1813,13 @@ def main(argv=None) -> int:
     if not a.job_dir.exists():
         print(f"job dir not found: {a.job_dir}", file=sys.stderr)
         return 2
-    written = convert_job(a.job_dir, a.output_dir, ks=ks, run_offset=a.run_offset)
+    only = (None if a.only_trials is None
+            else {t.strip() for t in a.only_trials.split(",") if t.strip()})
+    written = convert_job(a.job_dir, a.output_dir, ks=ks, run_offset=a.run_offset,
+                          only_trials=only)
     # Mask host-local paths (/Users/..., /home/..., file:///...) in EVERYTHING
     # this pipeline leaves behind, not just the delivery: the reshaped task
-    # dir (config/summary/report.md carry jobs_dir and task paths) and
+    # dir (config/summary carry jobs_dir and task paths) and
     # harbor's own raw job records (trial_uri etc.). By reshape time the
     # harbor run is complete, and masking keeps the JSON valid, so `harbor
     # view` still works. Runs before copy_to so mirrors ship masked too.

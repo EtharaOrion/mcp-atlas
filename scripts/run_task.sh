@@ -30,6 +30,8 @@
 #   harbor     harbor run -> output/<job>/                  (NOT idempotent: makes a trial)
 #   reshape    harbor_to_output.py -> trajectory/Run_N/      (idempotent)
 #   finance    finance_reporter.py -> Odoo                  (NOT idempotent: external POST)
+#   mask       make_delivery.py --mask-only -> strips host   (idempotent; runs
+#              paths; automatic at the end of reshape + finance)
 #
 # State that crosses a stage boundary (which Run_N this invocation owns, where
 # earlier runs were stashed) is written to output/<job>/.run_state.json so a
@@ -100,11 +102,11 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-TASK="${TASK:?usage: scripts/run_task.sh [--stage all|preflight|harbor|reshape|finance] <task-dir>}"
+TASK="${TASK:?usage: scripts/run_task.sh [--stage all|preflight|harbor|reshape|finance|mask] <task-dir>}"
 [ -f "$TASK/task.toml" ] || { echo "not a task dir (no task.toml): $TASK" >&2; exit 2; }
 case "$STAGE" in
-  all|preflight|harbor|reshape|finance) ;;
-  *) echo "unknown stage: $STAGE (want all|preflight|harbor|reshape|finance)" >&2; exit 2;;
+  all|preflight|harbor|reshape|finance|mask) ;;
+  *) echo "unknown stage: $STAGE (want all|preflight|harbor|reshape|finance|mask)" >&2; exit 2;;
 esac
 SLUG="$(basename "$TASK")"
 
@@ -196,6 +198,15 @@ except Exception:
     pass' "$STATE_FILE" "$1"
 }
 
+state_has() {  # state_has <key> -> exit 0 if the key is present at all
+  [ -f "$STATE_FILE" ] || return 1
+  python3 -c 'import json,sys
+try:
+    sys.exit(0 if sys.argv[2] in json.load(open(sys.argv[1])) else 1)
+except Exception:
+    sys.exit(1)' "$STATE_FILE" "$1"
+}
+
 state_put() {  # state_put <key> <value>
   mkdir -p "$(dirname "$STATE_FILE")"
   python3 -c 'import json,os,sys
@@ -208,6 +219,20 @@ doc[key] = int(value) if value.lstrip("-").isdigit() else value
 tmp = path + ".tmp"
 open(tmp, "w").write(json.dumps(doc, indent=2) + "\n")
 os.replace(tmp, path)' "$STATE_FILE" "$1" "$2"
+}
+
+list_trial_dirs() {
+  local d="$OUTPUT_DIR/$JOB" p
+  [ -d "$d" ] || return 0
+  # Both places harbor_to_output.py looks for trials: the job root (where harbor
+  # puts them -- each trial config.json records trials_dir as the job dir) and
+  # trajectory/, which older reshaped layouts left non-run_N trial dirs in. The
+  # two lists must agree or the delta below would miss a trial and convert none.
+  for p in "$d"/*__*/ "$d"/trajectory/*__*/; do
+    [ -d "$p" ] || continue          # no match: the glob stays literal
+    p="${p%/}"
+    printf '%s\n' "${p##*/}"
+  done
 }
 
 # Which Run_N this invocation owns. An explicit RUN_OFFSET (what run_batch.py
@@ -258,7 +283,7 @@ resolve_auth() {
 }
 
 check_credentials() {
-  case "$STAGE" in reshape|finance) return 0 ;; esac
+  case "$STAGE" in reshape|finance|mask) return 0 ;; esac
   local fail=0
 
   if [ "${CC_MODE:-}" = "zbridge" ]; then
@@ -344,7 +369,7 @@ warn_finance_case() {   # warn_finance_case <VAR_NAME> <documented-value>
 check_finance_env() {
   # reshape never reports; finance runs as its own stage under run_batch.py and
   # is checked on its own invocation.
-  case "$STAGE" in reshape) return 0 ;; esac
+  case "$STAGE" in reshape|mask) return 0 ;; esac
   [ -z "${FINANCE_ENV_CHECK_OFF:-}" ] || return 0
 
   if [ -z "${ODOO_URL:-}" ]; then
@@ -722,6 +747,16 @@ stage_harbor() {
     [ -n "$_iso" ] && [ -n "$DISALLOWED_TOOLS" ] \
       && args+=(--ak "disallowed_tools=$DISALLOWED_TOOLS")
   fi
+  # Trial dirs left behind by EARLIER invocations. Harbor never removes a trial
+  # that died (docker build failure, Ctrl-C, agent-setup timeout) and
+  # stage_harbor only clears lock.json/config.json, so those directories sit in
+  # the job dir indefinitely. harbor_to_output.convert_job globs EVERY *__* dir
+  # holding a config.json and emits one trajectory/run_N per hit -- so the next
+  # `N=1` invocation materialised 1 + <stale count> runs in a single shot,
+  # numbered in ASCII order of the random suffix rather than chronologically,
+  # and every one of them counted as an attempt in summary.json and pass@k.
+  # Snapshot what is already here; only the delta belongs to this invocation.
+  local _pre; _pre="$(list_trial_dirs)"
   echo "[run_task] harbor ${args[*]}"
   local _hrc=0
   HARBOR_OUTPUT_OFF=1 command harbor "${args[@]}" \
@@ -741,19 +776,39 @@ stage_harbor() {
   # stage_harbor removes $JOB/config.json before running, so what is checked
   # here is always this invocation's.
   local _job_dir="$OUTPUT_DIR/$JOB"
-  local _trial=""
-  if [ -d "$_job_dir" ]; then
-    # `|| true` is load-bearing: this script runs under `set -euo pipefail`, and
-    # with no trial directory to match, `ls` fails, pipefail propagates that past
-    # `head`, and the assignment's non-zero status kills the script THROUGH set -e
-    # -- silently, because ls's stderr is discarded. That is the exact failure
-    # mode this guard exists to report, so introducing it here would be a
-    # self-inflicted version of the bug. Caught by
-    # scripts/tests/test_run_task_stages.py, whose harbor stub makes no trial dir.
-    _trial="$(ls -td "$_job_dir"/*__*/ 2>/dev/null | head -1)" || true
-    _trial="${_trial%/}"
+
+  # What THIS invocation produced: everything in the job dir now, minus what was
+  # there before harbor ran. Recorded for stage_reshape, which may be a separate
+  # process (run_batch.py drives the stages one at a time).
+  local _new _stale_n
+  _new="$(comm -13 <(printf '%s\n' "$_pre" | grep . | sort) \
+                   <(list_trial_dirs | sort) | grep . || true)"
+  state_put trials "$(printf '%s' "$_new" | tr '\n' ',' | sed 's/,$//')"
+  _stale_n="$(printf '%s\n' "$_pre" | grep -c . || true)"
+  if [ "$_stale_n" -gt 0 ]; then
+    echo "[run_task] NOTE: $_stale_n trial dir(s) from earlier invocations are still in" >&2
+    echo "           $_job_dir. They are NOT part of this run and will not be reshaped:" >&2
+    echo "             $(printf '%s' "$_pre" | tr '\n' ' ')" >&2
+    echo "           Delete them once inspected. To convert one deliberately (it was a" >&2
+    echo "           real attempt whose reshape never finished):" >&2
+    echo "             python3 tools/delivery/harbor_to_output.py $_job_dir \\" >&2
+    echo "               --output-dir $OUTPUT_DIR --run-offset <n> --only-trials <name>" >&2
   fi
-  if [ -n "$_trial" ] && [ ! -f "$_trial/config.json" ]; then
+
+  # The guard below asks whether the trial harbor just made actually started, so
+  # it looks at THIS invocation's trials. Reading the newest dir by mtime instead
+  # picked up a stale one whenever harbor aborted before creating any -- the
+  # stale dir has a config.json, so the guard stayed silent on the very case it
+  # exists to catch. Every new trial is checked, not just one: with N>1 a single
+  # empty dir among several good ones would otherwise slip through.
+  local _trial="" _n
+  if [ -n "$_new" ] && [ -d "$_job_dir" ]; then
+    while IFS= read -r _n; do
+      [ -n "$_n" ] || continue
+      [ -f "$_job_dir/$_n/config.json" ] || { _trial="$_job_dir/$_n"; break; }
+    done <<< "$_new"
+  fi
+  if [ -n "$_trial" ]; then
     echo >&2
     echo "==> AGENT PHASE DID NOT RUN" >&2
     echo "    $_trial exists but has no config.json, so Harbor aborted before the" >&2
@@ -767,7 +822,12 @@ stage_harbor() {
     echo >&2
     echo "    Refusing to reshape: an empty trial dir is skipped without comment and" >&2
     echo "    would leave this task silently missing a run." >&2
-    exit "${_hrc:-1}"
+    # `${_hrc:-1}` only substituted when _hrc was unset/empty, and _hrc is 0
+    # whenever harbor believed it succeeded -- so this guard printed REFUSING TO
+    # RESHAPE and then exited 0, which run_batch.py records as a completed unit.
+    # A run that did not happen must not report success.
+    [ "${_hrc:-0}" -ne 0 ] || _hrc=1
+    exit "$_hrc"
   fi
   # Harbor exiting NON-ZERO with no trial directory at all: nothing ran and
   # nothing can be graded, so stop rather than let reshape find nothing.
@@ -775,7 +835,7 @@ stage_harbor() {
   # it succeeded -- so that one is reported loudly and left to proceed, because
   # blocking on it would mean asserting a harbor contract this script does not
   # own. Loud either way; the thing being prevented is silence, not progress.
-  if [ -z "$_trial" ] && [ ! -d "$_job_dir/trajectory" ]; then
+  if [ -z "$_new" ] && [ ! -d "$_job_dir/trajectory" ]; then
     if [ "$_hrc" -ne 0 ]; then
       echo >&2
       echo "==> NO TRIAL DIRECTORY: harbor exited $_hrc and produced nothing to grade." >&2
@@ -1266,6 +1326,18 @@ stage_reshape() {
 
   local conv=(python3 tools/delivery/harbor_to_output.py "$OUTPUT_DIR/$JOB" \
               --output-dir "$OUTPUT_DIR" --at "$AT" --run-offset "$offset")
+  # Convert only the trials stage_harbor just made. Without this the reshaper
+  # adopts every stale trial dir in the job dir as an extra run (see the
+  # snapshot in stage_harbor). Absent key -> convert everything, which is what a
+  # hand-driven `--stage reshape` over a job dir with no state expects; present
+  # but EMPTY -> convert nothing, because harbor made nothing this time. Those
+  # two must not collapse into one value: treating "harbor made nothing" as
+  # "convert everything" is exactly the extra-runs bug.
+  if state_has trials; then
+    local only; only="$(state_get trials)"
+    conv+=(--only-trials "$only")
+    [ -n "$only" ] || echo "[run_task] WARNING: harbor produced no trial dir this run — nothing to reshape." >&2
+  fi
   [ -n "${COPY_TO:-}" ] && conv+=(--copy-to "$COPY_TO")
   "${conv[@]}"
   # Relative to the job dir this state file sits in — keeps host-local paths
@@ -1274,6 +1346,25 @@ stage_reshape() {
 
   # After conversion, before anything is delivered or reported.
   stage_netaudit
+  stage_mask
+}
+
+# Re-run make_delivery.py's host-path mask over the finished tree.
+#
+# harbor_to_output.py already masks what it writes, but two things land after
+# it: stage_netaudit's internet_audit.json (called just above) and, one stage
+# later, finance_receipt.json. Both would ship whatever absolute path they were
+# handed. The sweep is idempotent and walks one task's output dir, so calling
+# it at the end of reshape AND at the end of finance costs nothing and leaves
+# no window where a host path is the last thing written.
+stage_mask() {
+  local dir="$OUTPUT_DIR/$OUT_SLUG"
+  [ -d "$dir" ] || dir="$OUTPUT_DIR/$JOB"
+  [ -d "$dir" ] || { echo "[mask] no output dir to mask" >&2; return 0; }
+  # Never fatal: a delivered tree with a stray path in it beats a run marked
+  # failed after the agent phase already spent its money.
+  python3 tools/delivery/make_delivery.py --mask-only "$dir" \
+    || echo "[mask] WARNING: path mask failed (non-fatal)" >&2
 }
 
 # finance API: report trajectory usage (after the runs are done).
@@ -1311,6 +1402,8 @@ stage_finance() {
     --run-dir "$run_dir" \
     --skip-if-reported \
     --task-id "$OUT_SLUG" || echo "[finance] WARNING: reporting failed (non-fatal)"
+  # The receipt lands after reshape masked the tree.
+  stage_mask
 }
 
 # --- dispatch -----------------------------------------------------------------
@@ -1326,6 +1419,7 @@ case "$STAGE" in
   harbor)    stage_harbor ;;
   reshape)   stage_reshape ;;
   finance)   stage_finance ;;
+  mask)      stage_mask ;;
   all)       stage_preflight; stage_harbor; stage_reshape; stage_finance
              echo "[run_task] done → $OUTPUT_DIR/$OUT_SLUG" ;;
 esac

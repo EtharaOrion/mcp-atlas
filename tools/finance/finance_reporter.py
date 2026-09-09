@@ -65,6 +65,21 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
+
+
+def _repo_relative(path: Path) -> str:
+    """`output/<task>/trajectory/run_N` for a path inside the checkout.
+
+    Paths recorded in a shipped file are for a reader, and every other path in
+    that tree (Harbor's `tasks/<slug>`, `output/<job>`) is already written
+    relative to the repo root. A run dir outside the checkout -- an operator
+    pointing --run-dir at an archived tree -- is returned unchanged, because
+    there is nothing to make it relative to.
+    """
+    try:
+        return str(path.relative_to(REPO))
+    except ValueError:
+        return str(path)
 ENDPOINT_PATH = "api/v1/ethara_project/trajectory_usage/create"
 RETRIES = 3
 TIMEOUT_SEC = 30
@@ -422,7 +437,13 @@ def main() -> int:
         f"-> {'ok' if ok else 'FAILED'} ({status or 'no response'})"
         + ("" if ok else f": {text}"), err=not ok)
 
-    receipt = {"run_dir": str(run_dir), "endpoint": url, "http_status": status,
+    # Repo-relative, not the absolute path resolve() gave us above: the receipt
+    # ships inside the delivered output tree, and the operator's home directory
+    # is not part of what the run produced. tools/delivery/scrub_paths.py would
+    # strip it anyway -- writing it right here means the file is never wrong on
+    # disk, including for a run whose scrub pass never gets to it.
+    rel_run_dir = _repo_relative(run_dir)
+    receipt = {"run_dir": rel_run_dir, "endpoint": url, "http_status": status,
                "ok": ok, "response": text, "posted_at": iso8601(None),
                "account_source": account.get("source"), "payload": payload}
     try:
@@ -443,7 +464,7 @@ def main() -> int:
                 "task_id": task_id, "trajectory_id": payload["trajectory_id"],
                 "model_name": payload["model_name"],
                 "trajectory_cost_usd": payload["trajectory_cost_usd"],
-                "run_dir": str(run_dir),
+                "run_dir": rel_run_dir,
             }) + "\n")
     except OSError as exc:
         log(f"warning: could not append to ledger ({exc})", err=True)
