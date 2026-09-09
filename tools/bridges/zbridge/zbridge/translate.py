@@ -50,8 +50,9 @@ def anthropic_to_glm_request(
     out: dict[str, Any] = {
         "model": model,
         "messages": _build_messages(body, preserve_thinking),
-        "max_tokens": body["max_tokens"],
     }
+    if "max_tokens" in body:
+        out["max_tokens"] = body["max_tokens"]
 
     if "stream" in body:
         out["stream"] = bool(body["stream"])

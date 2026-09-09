@@ -16,20 +16,6 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 
-_MODEL_MAX_OUTPUT = {
-    "glm-5.3": 128000,
-    "claude-opus-5": 128000,
-    "claude-fable-5": 128000,
-    "claude-mythos-5": 128000,
-    "claude-opus-4-8": 128000,
-    "claude-opus-4-7": 128000,
-    "claude-opus-4-6": 128000,
-    "claude-sonnet-5": 128000,
-    "claude-sonnet-4-6": 128000,
-    "claude-haiku-4-5": 64000,
-}
-_DEFAULT_MAX_OUTPUT = 64000
-
 MODEL_ALIASES = {
     "glm-5.3": "glm-5.3",
     "claude-opus-5":    "claude-opus-5",
@@ -254,13 +240,12 @@ async def handle(body: dict[str, Any]) -> dict[str, Any]:
     system_prompt, anthropic_msgs = _openai_messages_to_anthropic(body.get("messages") or [])
     tools = _openai_tools_to_anthropic(body.get("tools") or [])
 
-    ceiling = _MODEL_MAX_OUTPUT.get(model, _DEFAULT_MAX_OUTPUT)
-    requested_max = body.get("max_tokens")
     kwargs: dict[str, Any] = {
         "model": model,
         "messages": anthropic_msgs,
-        "max_tokens": min(int(requested_max), ceiling) if requested_max else ceiling,
     }
+    # anthropic SDK requires max_tokens; 999999 lets z.ai upstream cap take over.
+    kwargs["max_tokens"] = int(body["max_tokens"]) if body.get("max_tokens") else 999999
     if system_prompt:
         kwargs["system"] = system_prompt
     if tools:
