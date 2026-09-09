@@ -648,10 +648,16 @@ Terminal gate: **`Rc == 1.0` AND `Rb == 0.0`**.
 ```
 output/<task>/
 ├── summary.json          per-episode judge ledger, metrics, failure classification
-├── result.json           harbor's own trial result
+├── result.json           harbor's own trial result -- harbor re-reads and validates
+│                       this on every startup, so it must stay in harbor's schema
+│                       (pass_at_k is dict[int, float]); a file it cannot parse
+│                       makes the job dir unopenable for every later run
 ├── report.md             human-readable summary
 ├── pass_summary.json     pass/fail rollup
-├── pass@N.json           pass@k (N = run count, e.g. pass@2.json for 2 runs)
+├── pass@N.json           pass/reward rollup (N = run count, e.g. pass@2.json for 2 runs);
+│                       per_trial_rewards (top level and in per_task[]) is keyed
+│                       "pass@1".."pass@N" and holds that TRIAL's reward -- not the
+│                       pass@k statistic, which is the "k=<k>" map in .raw summary.json
 ├── config.json           the job config used
 ├── trajectory/Run_N/
 │   ├── report.json       per-run pytest + rubric view

@@ -349,7 +349,13 @@ def main(
                     row = by_id.get(str(c.id))
                     if row is None:
                         verdicts.append({"score": 0.0})
-                    elif "coverage_outcome" in row or "score" in row:
+                    elif "coverage_outcome" in row:
+                        verdicts.append(row)
+                    elif "satisfied" in row:
+                        verdicts.append(
+                            {**row, "score": 1.0 if row.get("satisfied") else 0.0}
+                        )
+                    elif "score" in row:
                         verdicts.append(row)
                     else:
                         verdicts.append(

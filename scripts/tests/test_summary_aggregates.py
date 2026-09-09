@@ -37,12 +37,15 @@ h2o = _load_module()
 
 
 def _build_job(
-    tmp_path: Path, per_trial: list[dict], trial_reward: dict | None = None
+    tmp_path: Path, per_trial: list[dict], trial_reward: dict | None = None,
+    agent_cost: float | None = None,
 ) -> tuple[Path, Path]:
     """A minimal Harbor job dir carrying `per_trial` metrics in result.json.
 
     `trial_reward`, when given, is written as each trial's verifier/reward.json --
     the container-side record the reshaper reads to derive the final reward.
+    `agent_cost`, when given, becomes each trial's agent/trajectory.json
+    final_metrics.total_cost_usd, uncut, as the agent SDK writes it.
     """
     job = tmp_path / "job"
     job.mkdir()
@@ -59,6 +62,13 @@ def _build_job(
             json.dumps({"task": {"path": "tasks/demo", "name": "demo"}})
         )
         (trial / "result.json").write_text(json.dumps({"reward": 0.0}))
+        if agent_cost is not None:
+            agent = trial / "agent"
+            agent.mkdir()
+            (agent / "trajectory.json").write_text(json.dumps({
+                "schema_version": "ATIF-v1.7", "steps": [],
+                "final_metrics": {"total_cost_usd": agent_cost},
+            }))
         if trial_reward is not None:
             verifier = trial / "verifier"
             verifier.mkdir()
@@ -90,7 +100,9 @@ def test_aggregate_reconciles_with_per_trial_metrics(tmp_path, aggregate, compon
 
     This is the property the audit re-derives (crucible rollout.py,
     REWARD-COMPONENT-NOT-REDERIVABLE), computed the same way: over the trials
-    that actually recorded the component.
+    that actually recorded the component. It reconciles to the precision the
+    aggregate is published at -- every metric in the tree carries REWARD_DP
+    places -- not to the float the mean happened to land on.
     """
     summary, recorded = _convert(
         tmp_path,
@@ -103,7 +115,7 @@ def test_aggregate_reconciles_with_per_trial_metrics(tmp_path, aggregate, compon
     rederived = sum(values) / len(values)
     reported = summary["metrics"][aggregate]
     assert reported is not None, f"{aggregate} reported as unmeasured despite recorded values"
-    assert abs(float(reported) - rederived) <= 1e-6
+    assert float(reported) == pytest.approx(round(rederived, h2o.REWARD_DP))
 
 
 def test_aggregate_ignores_trials_missing_the_component(tmp_path):
@@ -193,4 +205,265 @@ def test_mean_or_none_distinguishes_unmeasured_from_zero():
 
 def test_report_renders_unmeasured_without_crashing():
     assert h2o._fmt_metric(None) == "unmeasured"
-    assert h2o._fmt_metric(0.5) == "0.5000"
+    assert h2o._fmt_metric(0.5) == "0.50"
+
+
+def test_published_reward_json_is_cut_to_the_trees_precision(tmp_path):
+    """Every number in the published tree reads at REWARD_DP, truncated.
+
+    reward.json is the one that kept slipping: the bundle's container-side
+    test.sh writes raw float arithmetic, so a reward arrived as
+    0.010999785519502404 and the rates as six-place ratios, sitting next to a
+    result.json that reported the same quantities at two. Bundles are task
+    content, so the precision is settled at the publish boundary instead.
+
+    0.267442 must publish as 0.26, not 0.27. Rounding is the one operation here
+    that can make a score larger than the measurement supports; truncation only
+    ever understates, which is the safe direction for a number an auditor
+    re-derives.
+    """
+    job, out = _build_job(
+        tmp_path,
+        [{"completion_rate": 0.9, "misbehave_rate": 0.0, "reward": 0.0}],
+        {"reward": 0.010999785519502404, "completion_rate": 0.290698,
+         "misbehave_rate": 0.267442, "scored": True},
+    )
+    written = h2o.convert_job(job, out, ks=[], run_offset=0)
+    assert written
+    rw = json.loads(
+        (written[0] / "trajectory" / "run_1" / "verifier" / "reward.json").read_text()
+    )
+    for k in ("reward", "completion_rate", "misbehave_rate"):
+        assert rw[k] == h2o.norm_reward(rw[k]), \
+            f"{k} published at more than {h2o.REWARD_DP} places: {rw[k]}"
+    assert rw["completion_rate"] == 0.29
+    assert rw["misbehave_rate"] == 0.26, "0.267442 was rounded up, not cut"
+
+
+def test_norm_reward_cuts_rather_than_rounds():
+    """The precision policy itself, stated once.
+
+    The 0.29 case is the one that makes the implementation non-obvious: the
+    float nearest 0.29 is 0.28999999999999998, so `int(v * 100) / 100` yields
+    0.28 and silently loses a hundredth off every second value.
+    """
+    assert h2o.norm_reward(0.267442) == 0.26
+    assert h2o.norm_reward(0.348837) == 0.34
+    assert h2o.norm_reward(0.999) == 0.99
+    assert h2o.norm_reward(0.29) == 0.29
+    assert h2o.norm_reward(16.0) == 16.0
+    # Truncation is toward zero, so a negative is not driven further from it.
+    assert h2o.norm_reward(-0.267) == -0.26
+    # Non-numeric and bool are still passed through untouched.
+    assert h2o.norm_reward(None) is None
+    assert h2o.norm_reward(True) is True
+
+
+def test_result_json_keeps_harbors_pass_at_k_schema(tmp_path):
+    """result.json belongs to Harbor, and Harbor re-reads it on every startup.
+
+    `harbor.models.job.result.AgentDatasetStats.pass_at_k` is `dict[int, float]`
+    and `Job.__init__` validates any existing result.json before it will start a
+    trial. We used to write our own "k=<k>" labels into that field, so the first
+    run left behind a job dir no later run could open -- harbor died in pydantic
+    with `unable to parse string as an integer` before reaching the agent. The
+    labels are ours to keep, but only in the files we own.
+    """
+    job, out = _build_job(tmp_path, [{"completion_rate": 0.9, "misbehave_rate": 0.0,
+                                      "reward": 0.0}])
+    written = h2o.convert_job(job, out, ks=[], run_offset=0)
+    assert written
+    task = written[0]
+
+    result = json.loads((task / "result.json").read_text())
+    for eval_data in ((result.get("stats") or {}).get("evals") or {}).values():
+        for key in eval_data.get("pass_at_k") or {}:
+            assert int(key) >= 1, f"harbor cannot parse pass_at_k key {key!r} as an int"
+
+    # ...and the labelled "k=<k>" form still reaches the .raw summary, which is
+    # now its only home -- per_task must not carry it, since a probability
+    # keyed 1..N sitting in a per-task block reads as a per-run score.
+    passk = json.loads(next(task.glob("pass@*.json")).read_text())
+    entry = passk["per_task"][0]
+    assert "pass@k" not in entry
+    raw_summary = json.loads((task / ".raw").glob("trials_*/summary.json").__next__().read_text())
+    assert all(k.startswith("k=") for k in raw_summary["metrics"]["pass@k"])
+
+    # The per-attempt scores ride in both places the layout calls for -- top
+    # level and inside the per_task entry -- keyed "pass@<n>", and the two
+    # copies are the same dict, so they cannot drift. These are per-trial
+    # REWARDS despite the label; the pass@k probabilities that share the name
+    # live in the .raw summary keyed "k=<k>", which is what keeps the two
+    # metrics from ever appearing identically keyed in one file.
+    per_trial = passk["per_trial_rewards"]
+    assert entry["per_trial_rewards"] == per_trial
+    assert list(per_trial) == [f"pass@{i}" for i in range(1, len(per_trial) + 1)]
+    assert list(per_trial.values()) == [e["reward"] for e in raw_summary["attempts"]]
+
+
+def test_cost_fields_are_truncated_to_the_trees_precision(tmp_path):
+    """Costs reach the tree through copied files, bypassing norm_result_metrics.
+
+    total_cost_usd arrives as raw float arithmetic from the agent SDK and
+    judge_cost_usd from rubric_judge_cli's pricing, so before norm_metrics_file
+    the published dir showed 6.550475500000003 beside rewards already cut to
+    two places. Truncation, not rounding: 8.5681125 publishes as 8.56.
+    """
+    doc = {
+        "final_metrics": {"total_cost_usd": 6.550475500000003,
+                          "usage": {"cost_usd": 8.5681125}},
+        "lines": [{"judge_cost_usd": 0.404303, "completion_rate": 0.395349}],
+        # A measurement-shaped number that is NOT a measurement. The task this
+        # guards is about decimal conversion, so its rubric quotes figures at
+        # three places; keying on field names rather than rounding every float
+        # is what keeps them readable.
+        "criterion": "reads the fee as the decimal 7849.186",
+        "steps": 3,
+        "ok": True,
+    }
+    path = tmp_path / "trajectory.json"
+    path.write_text(json.dumps(doc))
+    h2o.norm_metrics_file(path)
+    out = json.loads(path.read_text())
+
+    assert out["final_metrics"]["total_cost_usd"] == 6.55
+    assert out["final_metrics"]["usage"]["cost_usd"] == 8.56   # not 8.57
+    assert out["lines"][0]["judge_cost_usd"] == 0.4
+    assert out["lines"][0]["completion_rate"] == 0.39          # not 0.4
+    assert out["criterion"] == "reads the fee as the decimal 7849.186"
+    assert out["steps"] == 3 and out["ok"] is True
+
+
+def test_norm_metrics_file_leaves_unreadable_files_alone(tmp_path):
+    """Precision is cosmetic; it must never cost the artifact itself."""
+    path = tmp_path / "not.json"
+    path.write_text("not json at all")
+    h2o.norm_metrics_file(path)
+    assert path.read_text() == "not json at all"
+    h2o.norm_metrics_file(tmp_path / "absent.json")  # must not raise
+
+
+def test_norm_metrics_file_does_not_touch_files_without_metrics(tmp_path):
+    """No metric field -> no write, byte for byte.
+
+    This runs over every published JSON, and most carry no measurement at all.
+    Rewriting them would reflow Harbor-owned documents (artifacts/manifest.json
+    is provenance, kept exactly as written) and bury the files whose numbers
+    actually changed under a diff of pure whitespace churn.
+    """
+    original = '{"collected":["a.csv"],  "steps":3,\n   "nested":{"ok":true}}'
+    path = tmp_path / "manifest.json"
+    path.write_text(original)
+    h2o.norm_metrics_file(path)
+    assert path.read_text() == original
+
+
+def test_ledger_component_values_are_truncated(tmp_path):
+    """reward_channel_a.json holds its numbers under the generic key "value".
+
+    The ledger shape is {"weight": w, "value": v}, so matching the PAIR is what
+    identifies a measurement -- "value" alone is too common a name to treat as
+    one wherever it appears.
+    """
+    doc = {"reward": 0.57, "rubric": 0.5716,
+           "ledger": {"traj_tests": {"status": "unscored", "weight": 3.59, "value": None},
+                      "rubric": {"status": "scored", "weight": 4.0, "value": 0.5716}},
+           "config": {"value": 0.123456}}      # no sibling weight -> not a metric
+    path = tmp_path / "reward_channel_a.json"
+    path.write_text(json.dumps(doc))
+    h2o.norm_metrics_file(path)
+    out = json.loads(path.read_text())
+
+    assert out["rubric"] == 0.57
+    assert out["ledger"]["rubric"]["value"] == 0.57
+    assert out["ledger"]["traj_tests"]["value"] is None      # unscored stays null
+    assert out["ledger"]["traj_tests"]["weight"] == 3.59
+    assert out["config"]["value"] == 0.123456
+
+
+def test_result_json_metrics_are_cut_without_the_rebuild_branch(tmp_path):
+    """norm_result_metrics must not depend on the reward_stats rebuild.
+
+    That rebuild only runs when the job has both evals and parsed episodes.
+    On any path where it is skipped, Harbor's raw numbers -- reward as
+    0.016499678279253607, and reward_stats keyed by the stringified rate
+    "0.302326" -- reached the published result.json unchanged.
+    """
+    res = {
+        "stats": {
+            "cost_usd": 6.7969325000000005,
+            "evals": {
+                "some__eval": {
+                    "metrics": [{"completion_rate": 0.302326,
+                                 "misbehave_rate": 0.267442,
+                                 "reward": 0.016499678279253607}],
+                    "reward_stats": {
+                        "reward": {"0.016499678279253607": ["run_1"]},
+                        "completion_rate": {"0.302326": ["run_1"],
+                                            "0.309999": ["run_2"]},
+                    },
+                }
+            },
+        }
+    }
+    out = h2o.norm_result_metrics(res)
+    ev = out["stats"]["evals"]["some__eval"]
+
+    assert out["stats"]["cost_usd"] == 6.79        # truncated, not 6.80
+    assert ev["metrics"][0]["reward"] == 0.01
+    assert ev["metrics"][0]["completion_rate"] == 0.3
+    assert ev["metrics"][0]["misbehave_rate"] == 0.26
+    assert ev["reward_stats"]["reward"] == {"0.01": ["run_1"]}
+    # 0.302326 and 0.309999 both cut to 0.3 -- the grouping merges, and no
+    # trial name is lost to the collision.
+    assert ev["reward_stats"]["completion_rate"] == {"0.3": ["run_1", "run_2"]}
+
+
+def test_reward_stats_non_numeric_labels_survive(tmp_path):
+    """A grouping key that is not a number is a label, not a measurement."""
+    res = {"stats": {"evals": {"e": {"reward_stats": {"reward": {"unscored": ["run_3"]}}}}}}
+    out = h2o.norm_result_metrics(res)
+    assert out["stats"]["evals"]["e"]["reward_stats"]["reward"] == {"unscored": ["run_3"]}
+
+
+def test_raw_mirror_keeps_full_precision_when_publishing_in_place(tmp_path):
+    """.raw must hold the uncut number when the trial dir IS the run dir.
+
+    run_task.sh re-publishes an output dir over itself, so trial_dir/agent and
+    out_task/trajectory/run_N/agent resolve to the same path. _copy then hits
+    its src == dst short-circuit and returns WITHOUT copying, which makes the
+    "published" file Harbor's own. Cutting it before the .raw staging therefore
+    truncated the mirror too, and 6.7969325 existed nowhere on disk.
+
+    The separate-directory fixture above cannot catch this -- there _copy makes
+    a real copy and the two files are independent -- so this test wires the
+    in-place geometry explicitly.
+    """
+    out_task = tmp_path / "task"
+    trial_dir = out_task / "trajectory" / "run_1"        # trial dir IS the run dir
+    (trial_dir / "agent").mkdir(parents=True)
+    (trial_dir / "verifier").mkdir(parents=True)
+    (trial_dir / "result.json").write_text(json.dumps({"id": "t1", "reward": 0.0}))
+    (trial_dir / "config.json").write_text(
+        json.dumps({"task": {"path": "tasks/demo", "name": "demo"}}))
+    (trial_dir / "agent" / "trajectory.json").write_text(json.dumps({
+        "schema_version": "ATIF-v1.7", "steps": [],
+        "final_metrics": {"total_cost_usd": 6.7969325000000005},
+    }))
+
+    ag_file = trial_dir / "agent" / "trajectory.json"
+    run_file = out_task / "trajectory" / "run_1" / "agent" / "trajectory.json"
+    assert ag_file.resolve() == run_file.resolve(), "fixture is not in-place"
+
+    raw_trials = out_task / ".raw" / "trials_demo"
+    raw_trials.mkdir(parents=True)
+    h2o.reshape_trial(trial_dir, 1, out_task=out_task, raw_trials=raw_trials,
+                      model="m", task_name="demo", task_dir=None, job_id="j1")
+
+    def cost(p):
+        return (json.loads(p.read_text()).get("final_metrics") or {}).get("total_cost_usd")
+
+    mirrored = raw_trials / "trajectories" / "m" / "run_1" / "agent" / "trajectory.json"
+    assert mirrored.exists(), "no .raw mirror staged"
+    assert cost(run_file) == 6.79                    # published: cut, truncated
+    assert cost(mirrored) == 6.7969325000000005      # mirror: every digit kept

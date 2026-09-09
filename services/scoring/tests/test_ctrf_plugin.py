@@ -121,11 +121,18 @@ def test_overall_score_ignores_negative_weights(tmp_path):
 
     Positives here are listing_read (1, passed) + box_price_written (5, passed)
     + box_state_activated (3, failed); world_ends_correct (5) skipped, so it is
-    excluded entirely. Score is 6/9, untouched by either guard.
+    excluded entirely. Score is 6/9, untouched by either guard, published at
+    the tree-wide two places -- and the percentage still comes off the full
+    ratio, so it reads 66.66 rather than 0.66 * 100.
+
+    6/9 is 0.6666..., which publishes as 0.66. The tree cuts at two places
+    rather than rounding: a score is a claim about what a run earned, and
+    rounding is the one operation that can make that claim larger than the
+    measurement supports.
     """
     plugin, _ = _run_suite(tmp_path)
-    assert plugin["results"]["summary"]["overall_score"] == round(6 / 9, 6)
-    assert plugin["results"]["summary"]["weighted_percentage"] == 66.67
+    assert plugin["results"]["summary"]["overall_score"] == 0.66
+    assert plugin["results"]["summary"]["weighted_percentage"] == 66.66
 
 
 def test_missing_weights_file_still_emits_ctrf(tmp_path):

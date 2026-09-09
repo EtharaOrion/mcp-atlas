@@ -36,10 +36,29 @@ from __future__ import annotations
 
 import json
 import os
+from decimal import ROUND_DOWN, Decimal
 from pathlib import Path
 from typing import Any
 
 import pytest
+
+
+def _cut(value: float, dp: int = 2) -> float:
+    """Truncate to `dp` places, mirroring harbor_to_output.norm_reward.
+
+    This plugin runs inside the task container, where tools/delivery is not on
+    the path, so the precision policy is duplicated here rather than imported.
+    The two copies must agree: test_plugin_matches_junit_derived_ctrf compares
+    this document against the one the host builds from junit, and a one
+    hundredth difference between rounding and truncating fails it.
+
+    Decimal on repr(), not int(value * 100) / 100: the float nearest 0.29 is
+    0.28999999999999998, which would truncate to 0.28.
+    """
+    return float(
+        Decimal(repr(float(value))).quantize(Decimal(1).scaleb(-dp),
+                                             rounding=ROUND_DOWN)
+    )
 
 DEFAULT_OUT = "/logs/verifier/ctrf.json"
 DEFAULT_WEIGHTS = "/tests/test_weights.json"
@@ -166,7 +185,8 @@ class CtrfReporter:
                          if t["status"] == "passed" and (self.weights.get(t["name"], 0) or 0) > 0)
         total_pos = sum(w for n, w in self.weights.items() if w > 0
                         and any(t["name"] == n and t["status"] != "skipped" for t in tests))
-        overall_score = round(earned_pos / total_pos, 6) if total_pos > 0 else 0.0
+        ratio = (earned_pos / total_pos) if total_pos > 0 else 0.0
+        overall_score = _cut(ratio)
 
         return {
             "results": {
@@ -174,7 +194,7 @@ class CtrfReporter:
                 "summary": {"tests": total, "passed": passed, "failed": failed,
                             "pending": 0, "skipped": skipped, "other": 0,
                             "overall_score": overall_score,
-                            "weighted_percentage": round(overall_score * 100, 2)},
+                            "weighted_percentage": _cut(ratio * 100)},
                 "tests": tests,
             }
         }

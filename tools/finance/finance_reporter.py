@@ -413,8 +413,12 @@ def main() -> int:
 
     status, text = post(url, payload)
     ok = 200 <= status < 300
+    # Two places on the console line only. The number POSTed and the number
+    # recorded in the receipt below stay exact -- this is money and Odoo bills
+    # it -- but printing $8.5681125 to an operator reads as noise beside every
+    # other figure the harness shows at two places.
     log(f"{run_dir.name} {payload['trajectory_id']} "
-        f"${payload['trajectory_cost_usd']} sub={payload['subscription_id'] or '(none)'} "
+        f"${payload['trajectory_cost_usd']:.2f} sub={payload['subscription_id'] or '(none)'} "
         f"-> {'ok' if ok else 'FAILED'} ({status or 'no response'})"
         + ("" if ok else f": {text}"), err=not ok)
 
