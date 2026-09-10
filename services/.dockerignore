@@ -1,0 +1,14 @@
+# Shared by every image built with `services/` as its context
+# (verifier/Dockerfile, rubric-judge/Dockerfile). Both of those need
+# scoring/ and their own directory and nothing else, so everything that
+# belongs to the AGENT side is excluded -- it would otherwise ride along in
+# the build context of two images whose whole point is to be free of it.
+__pycache__/
+**/__pycache__/
+*.pyc
+agent-environment/
+agent-harness/
+cc-bridge/
+diagnostics/
+light-servers/
+mcp_eval/

@@ -1,0 +1,9 @@
+# Minimal judge config -- see the COPY note in Dockerfile for why the host's
+# ~/.codex/config.toml is not mounted instead.
+#
+# No MCP servers: the judge is a single non-interactive `codex exec` call and
+# has no use for tools. /tmp is trusted because that is the scratch cwd
+# _codex_exec pins the CLI to, so the read-only sandbox cannot see the trial
+# tree it is grading.
+[projects."/tmp"]
+trust_level = "trusted"

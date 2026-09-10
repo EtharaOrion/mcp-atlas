@@ -621,6 +621,43 @@ stage_preflight() {
     }
   fi
 
+  # The builtin collect hook is OPTIONAL in shared mode and MANDATORY in
+  # separate mode. patch_harbor.py appends `python3
+  # /harness/scoring/collect_artifacts.py` to _collect_hooks_for(); that hook is
+  # the only thing that publishes /workspace into /logs/artifacts, which is the
+  # only channel by which the agent's deliverables reach a SEPARATE verifier.
+  # In shared mode the grader sits in the agent's own container and reads
+  # /workspace directly, so a missing hook is survivable there and this check
+  # only warns.
+  #
+  # It can go missing without anyone touching it. patch_harbor.py resolves its
+  # target with importlib.find_spec("harbor") on whatever python3 runs it and
+  # only falls back to `which harbor` when that fails -- so activating any venv
+  # with harbor importable patches THAT copy while `command harbor` keeps
+  # running the one on PATH. There is a second, unpatched harbor 0.13.2 in
+  # ~/ethara-harbor on at least one machine. `uv tool upgrade harbor` also wipes
+  # the patches. Either way the failure is silent: /workspace never arrives and
+  # every deliverable assertion scores False against a published reward.
+  local _vmode _hbin _hroot _htrial
+  _vmode="$(grep -m1 -E '^[[:space:]]*environment_mode[[:space:]]*=' "$TASK/task.toml" 2>/dev/null \
+            | sed -E 's/.*"([^"]+)".*/\1/')"
+  _hbin="$(command -v harbor 2>/dev/null || true)"
+  if [ -n "$_hbin" ]; then
+    _hroot="$(cd "$(dirname "$(readlink "$_hbin" 2>/dev/null || echo "$_hbin")")/.." && pwd)"
+    _htrial="$(ls "$_hroot"/lib/python*/site-packages/harbor/trial/trial.py 2>/dev/null | head -1)"
+    if [ -n "$_htrial" ] && ! grep -q 'harbor-patch: builtin collect' "$_htrial"; then
+      echo "[run_task] harbor on PATH has NO builtin collect hook: $_htrial" >&2
+      echo "           Re-run scripts/patch_harbor.py with no venv active." >&2
+      if [ "$_vmode" = "separate" ]; then
+        echo "[run_task] REFUSING: this task grades in a separate verifier, where" >&2
+        echo "           /workspace reaches the grader ONLY through that hook." >&2
+        echo "           Every deliverable assertion would score False silently." >&2
+        exit 2
+      fi
+      echo "           (shared mode: survivable, continuing)" >&2
+    fi
+  fi
+
   if ! docker info >/dev/null 2>&1; then
     echo "[run_task] docker not running — starting OrbStack/Docker"
     open -a OrbStack 2>/dev/null || open -a Docker 2>/dev/null || true

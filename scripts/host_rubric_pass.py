@@ -32,6 +32,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -164,11 +165,79 @@ def _sync_harbor_result(trial: Path, reward: float) -> None:
             print(f"[host-rubric] could not sync {path}: {exc!r}", file=sys.stderr)
 
 
+# --- judge transport ---------------------------------------------------------
+# The judge runs in its OWN container by default (services/rubric-judge/):
+# not on the host, and not in the verifier.
+#
+# It is off the HOST because the host is the one place a scoring step should not
+# run. `codex exec` there inherits the operator's PATH, network and entire
+# ~/.codex -- 378 MB of session history plus a config.toml registering an MCP
+# server at a path no other machine has. None of that belongs in a grading path
+# and none of it reproduces anywhere else.
+#
+# It is not folded into the VERIFIER container because that one carries the
+# whole grading tree and each bundle's baked /tests. The judge needs neither, so
+# putting the credential there would widen its blast radius for nothing.
+#
+# Verified 2026-09-10 against run_47: 17/17 criteria identical to the host pass,
+# same rubric_passed. `codex exec --sandbox read-only` needs no modification
+# inside the container.
+RUBRIC_JUDGE_IMAGE = os.getenv("RUBRIC_JUDGE_IMAGE", "rubric-judge:latest")
+
+
+def _image_present(image: str) -> bool:
+    return subprocess.run(["docker", "image", "inspect", image],
+                          capture_output=True).returncode == 0
+
+
+def _judge_argv(rubric: Path, traj: Path, out_dir: Path, model) -> list:
+    """argv for one containerised judge call, and only these mounts:
+
+        /in/rubric.json      the rubric being graded               (ro)
+        /in/trajectory.json  what the agent did                    (ro)
+        /codex-cred/         one credential file, copied on entry  (ro)
+        /out                 scratch dir for the two result files
+
+    Deliberately absent: /workspace, /tests, /logs, the trial tree, the repo.
+    The judge cannot read the answer key it is grading against, cannot see the
+    other channels' scores, and cannot write anywhere the trial reads except
+    through the two files the caller collects afterwards.
+    """
+    cred = Path.home() / ".codex" / "auth.json"
+    argv = [
+        "docker", "run", "--rm",
+        # Results land owned by the operator rather than root. The image sets
+        # HOME=/tmp/judge-home world-writable precisely so an uid it has never
+        # heard of still has somewhere for codex to refresh its token.
+        "--user", "%d:%d" % (os.getuid(), os.getgid()),
+        "-e", "JUDGE_MODEL=%s" % (model or os.getenv("JUDGE_MODEL", "")),
+        # Parity pin: compression rewrites the prompt the judge reads, so the
+        # container has to inherit the host's setting rather than default.
+        "-e", "GRADER_HEADROOM_ENABLED=%s" % os.getenv("GRADER_HEADROOM_ENABLED", "false"),
+        "-v", "%s:/in/rubric.json:ro" % rubric.resolve(),
+        "-v", "%s:/in/trajectory.json:ro" % traj.resolve(),
+        "-v", "%s:/out" % out_dir.resolve(),
+    ]
+    if cred.exists():
+        argv += ["-v", "%s:/codex-cred/auth.json:ro" % cred]
+    argv += [RUBRIC_JUDGE_IMAGE,
+             "--rubric", "/in/rubric.json",
+             "--trajectory", "/in/trajectory.json",
+             "--output", "/out/rubric_breakdown.json",
+             "--token-output", "/out/judge_tokens.json"]
+    if model:
+        argv += ["--model", model]
+    return argv
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--trial", required=True, help="output/<job>/<job>__<id>/")
     ap.add_argument("--task", required=True, help="tasks/<task>/")
     ap.add_argument("--model", default=None, help="judge model (default: JUDGE_MODEL, else codex)")
+    ap.add_argument("--judge-runner", choices=("container", "host"),
+                    default=os.getenv("RUBRIC_JUDGE_RUNNER", "container"),
+                    help="where the judge runs (default: container)")
     ap.add_argument("--dry-run", action="store_true", help="convert and report, do not call the judge")
     a = ap.parse_args()
 
@@ -200,14 +269,40 @@ def main() -> int:
         print(f"[host-rubric] dry run; trajectory at {traj_path}")
         return 0
 
-    cmd = [sys.executable, str(REPO / "services" / "scoring" / "rubric_judge_cli.py"),
-           "--rubric", str(rubric), "--trajectory", str(traj_path),
-           "--output", str(breakdown),
-           "--token-output", str(verifier / "judge_tokens.json")]
-    if a.model:
-        cmd += ["--model", a.model]
-    print(f"[host-rubric] judging with {a.model or os.getenv('JUDGE_MODEL') or 'codex default'} ...")
-    proc = subprocess.run(cmd)
+    model = a.model or os.getenv("JUDGE_MODEL") or None
+    if a.judge_runner == "container" and not _image_present(RUBRIC_JUDGE_IMAGE):
+        # No silent fallback to the host. Falling back would grade the run with
+        # a different transport than the one the operator asked for and publish
+        # the number as if nothing happened -- the exact class of silent drift
+        # this split exists to remove.
+        print("[host-rubric] judge image %s is not built" % RUBRIC_JUDGE_IMAGE,
+              file=sys.stderr)
+        print("[host-rubric] run `make build-rubric-judge`, or pass "
+              "--judge-runner host to grade on this machine", file=sys.stderr)
+        traj_path.unlink(missing_ok=True)
+        return 2
+
+    print("[host-rubric] judging with %s in the %s ..."
+          % (model or "codex default", a.judge_runner))
+
+    if a.judge_runner == "container":
+        # The container writes into a scratch dir, never into the trial tree --
+        # see _judge_argv. The two results are copied in afterwards.
+        out_dir = Path(tempfile.mkdtemp(prefix="rubric-judge-"))
+        proc = subprocess.run(_judge_argv(rubric, traj_path, out_dir, model))
+        for _name in ("rubric_breakdown.json", "judge_tokens.json"):
+            _src = out_dir / _name
+            if _src.exists():
+                shutil.copyfile(_src, verifier / _name)
+        shutil.rmtree(out_dir, ignore_errors=True)
+    else:
+        cmd = [sys.executable, str(REPO / "services" / "scoring" / "rubric_judge_cli.py"),
+               "--rubric", str(rubric), "--trajectory", str(traj_path),
+               "--output", str(breakdown),
+               "--token-output", str(verifier / "judge_tokens.json")]
+        if model:
+            cmd += ["--model", model]
+        proc = subprocess.run(cmd)
     traj_path.unlink(missing_ok=True)
     if proc.returncode != 0:
         print("[host-rubric] judge failed; rubric channel stays UNSCORED", file=sys.stderr)

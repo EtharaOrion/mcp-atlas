@@ -4,7 +4,7 @@ IMAGE_NAME = agent-environment
 VERSION = 1.2.7
 GHCR_REPO = ghcr.io/scaleapi/mcp-atlas
 
-.PHONY: build run-docker shell push install-harness run-harness install-python run-eval test build-light-servers judge-codex-check run-eval-codex run-batch batch-status
+.PHONY: build run-docker shell push install-harness run-harness install-python run-eval test build-light-servers build-verifier-base build-rubric-judge judge-codex-check run-eval-codex run-batch batch-status
 
 # ---------------------------------------------------------------------------
 # Agent Environment (docker image with the 36 MCP servers)
@@ -122,6 +122,16 @@ finance-usage: # POST one run's token/cost usage to the Finance API
 
 build-light-servers: # build light-servers Docker image (all software + utility servers bundled in services/light-servers/)
 	docker build -t light-servers:latest services/light-servers/
+
+build-verifier-base: # build the shared eval base image (pytest + scoring + judge CLI) used by separate-verifier bundles
+	docker build -t verifier-base:latest services/verifier/
+
+# The rubric channel's own container -- built once, shared by every task, and
+# deliberately NOT folded into verifier-base: it is the only image that gets a
+# judge credential mounted, so it holds the judge and nothing else. See
+# services/rubric-judge/Dockerfile for the full argument.
+build-rubric-judge: # build the isolated LLM-judge image that grades the rubric channel
+	docker build -t rubric-judge:latest -f services/rubric-judge/Dockerfile services/
 
 build-egress-proxy: # build the egress allowlist proxy (network isolation for the agent phase)
 	docker build -t egress-proxy:latest tools/network/egress-proxy/

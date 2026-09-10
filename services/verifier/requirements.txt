@@ -1,0 +1,19 @@
+# What the GRADING path actually imports. Nothing else.
+#
+# NOT here, and each for a reason:
+#   openai / litellm  -- rubric_judge_cli.py is stdlib-only and shells out to a
+#                        CLI; its header says litellm "is gone from this path
+#                        entirely: no bridge, no endpoint, no key". Both earlier
+#                        drafts listed them, at hundreds of MB for nothing.
+#   mcp / anyio       -- state_dump.py's, and state capture runs in the AGENT
+#                        container now (it needs light-servers alive).
+#   the Claude CLI    -- see the Dockerfile. Deliberate.
+pytest>=8
+python-docx>=1
+pyyaml>=6
+httpx>=0.27
+# GRADER_HEADROOM_ENABLED=true is set on the verifier service, and
+# services/scoring/grader_compress.py imports headroom when it is on. It degrades
+# to an identity function without it, but then the container and the host-side
+# pass would compress differently and publish different token counts.
+headroom-ai>=0.37,<0.38
