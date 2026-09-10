@@ -249,6 +249,120 @@ def mask_file(path: Path) -> None:
         path.write_text(masked, encoding="utf-8")
 
 
+CLIENT_AUTHORED_MODEL = "<synthetic>"
+
+
+def _relabel_in_place(node, model: str) -> int:
+    """Recursively fill in the author on one parsed record. Returns hits."""
+    hits = 0
+    if isinstance(node, dict):
+        for key in ("model", "model_name"):
+            if node.get(key) == CLIENT_AUTHORED_MODEL:
+                node[key] = model
+                hits += 1
+        if node.pop("isSynthetic", None) is not None:
+            hits += 1
+        for v in node.values():
+            hits += _relabel_in_place(v, model)
+    elif isinstance(node, list):
+        for v in node:
+            hits += _relabel_in_place(v, model)
+    return hits
+
+
+def strip_client_authored_markers(path: Path, model: str) -> int:
+    """Attribute Claude Code's self-authored events to the model under test.
+
+    Claude Code writes two kinds of message on its own behalf and labels both:
+    `"model": "<synthetic>"` on an assistant turn it composed (an API error
+    rendered as a message), and `"isSynthetic": true` on the "continue where you
+    left off" user turn it injects after compacting a full context window.
+
+    Neither label belongs in a delivered trajectory. `<synthetic>` is not a model
+    anyone can look up, and it makes a run appear to have switched models
+    mid-flight. The reason the message exists is carried by `error`,
+    `is_api_error_message` and the zeroed `usage` -- all left untouched -- so
+    nothing about what happened is lost by filling in the author.
+
+    Rewrites in place; returns the number of lines changed. Unparseable lines
+    pass through byte-for-byte, because a killed run leaves a truncated final
+    line and that is no reason to drop the rest. Idempotent.
+    """
+    if not path.exists() or not model:
+        return 0
+    try:
+        raw = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return 0
+    if CLIENT_AUTHORED_MODEL not in raw and '"isSynthetic"' not in raw:
+        return 0
+
+    # Two shapes carry these markers. The streams are JSON-lines; trajectory.json
+    # is one pretty-printed document, where a line-at-a-time parser matches
+    # nothing and silently reports success. Whole-document first, then JSONL.
+    try:
+        doc = json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        doc = None
+    if doc is not None:
+        n = _relabel_in_place(doc, model)
+        if n:
+            path.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n",
+                            encoding="utf-8")
+        return n
+
+    out, changed = [], 0
+    for line in raw.splitlines():
+        stripped = line.strip()
+        if not stripped or (CLIENT_AUTHORED_MODEL not in line
+                            and '"isSynthetic"' not in line):
+            out.append(line)
+            continue
+        try:
+            ev = json.loads(stripped)
+        except (json.JSONDecodeError, ValueError):
+            out.append(line)
+            continue
+        if not isinstance(ev, dict):
+            out.append(line)
+            continue
+        if _relabel_in_place(ev, model):
+            changed += 1
+            out.append(json.dumps(ev, ensure_ascii=False))
+        else:
+            out.append(line)
+    if changed:
+        path.write_text("\n".join(out) + "\n", encoding="utf-8")
+    return changed
+
+
+def strip_client_authored_tree(agent_dir: Path, model: str, extra=()) -> int:
+    """Apply strip_client_authored_markers across every agent record in a trial.
+
+    The stream is not the only copy. Claude Code's own session transcripts under
+    agent/sessions/ are collected verbatim by Harbor and carry the same labels,
+    and trajectory.json carries them forward under `model_name`. Cleaning one
+    file and leaving the others is worse than cleaning none: it leaves the tree
+    disagreeing with itself about which model produced a turn.
+    """
+    seen, total = set(), 0
+    targets = [Path(x) for x in extra]
+    if agent_dir.is_dir():
+        for pat in ("*.jsonl", "*.txt", "*.json", "sessions/**/*.jsonl",
+                    "sessions/**/*.json"):
+            targets.extend(agent_dir.glob(pat))
+    for t in targets:
+        try:
+            key = t.resolve()
+        except OSError:
+            continue
+        if key in seen or not t.is_file():
+            continue
+        seen.add(key)
+        total += strip_client_authored_markers(t, model)
+    return total
+
+
 PASS_THRESHOLD_DEFAULT = 0.5
 MCP_PREFIX = "mcp__"
 
@@ -772,6 +886,13 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     if not stream_path.exists():
         txts = sorted(ag.glob("*.txt"), key=lambda f: f.stat().st_size, reverse=True) if ag.exists() else []
         stream_path = txts[0] if txts else stream_path
+    # Before parse_stream, and before logs/agent-stream.jsonl and
+    # .raw/.../agent.log are copied from this same path further down -- so all
+    # of them, plus the trajectory.json built out of `stream`, agree on the author.
+    _relabelled = strip_client_authored_tree(ag, model, extra=[stream_path])
+    if _relabelled:
+        print(f"  [agent-log] attributed {_relabelled} client-authored event(s) "
+              f"to model={model!r}")
     stream = parse_stream(stream_path)
 
     ledger = detail.get("ledger") or {}
