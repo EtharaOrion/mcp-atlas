@@ -1153,13 +1153,6 @@ stage_host_rubric() {
   # Loop over ALL trial dirs: Harbor may produce >1 when run with --n-attempts N.
   local py; py="$REPO/.venv/bin/python"; [ -x "$py" ] || py=python3
   local trial _codex_graded _tokens any_graded=0 seen=0
-  # RESUME_RUBRIC=1 reuses criteria the trial's existing rubric_breakdown.json
-  # already graded. It only ever bites alongside FORCE_HOST_RUBRIC=1, because the
-  # two skip guards below hand a cleanly-graded trial straight back -- which is
-  # the point: a forced regrade after a short or timed-out judge reply re-asks
-  # the ungraded criteria and pays for those alone.
-  local _resume_args=""
-  [ "${RESUME_RUBRIC:-0}" = "1" ] && _resume_args="--resume"
   while IFS= read -r trial; do
     [ -n "$trial" ] || continue
     seen=$((seen+1))
@@ -1190,7 +1183,7 @@ PYEOF
       any_graded=1
       continue
     fi
-    if "$py" "$REPO/scripts/host_rubric_pass.py" --trial "$trial" --task "$TASK" $_resume_args; then
+    if "$py" "$REPO/scripts/host_rubric_pass.py" --trial "$trial" --task "$TASK"; then
       any_graded=1
     else
       # A failed rubric is not a failed run: Channel A and the state channel are

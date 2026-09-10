@@ -32,7 +32,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -183,308 +182,6 @@ def _sync_harbor_result(trial: Path, reward: float) -> None:
 # Verified 2026-09-10 against run_47: 17/17 criteria identical to the host pass,
 # same rubric_passed. `codex exec --sandbox read-only` needs no modification
 # inside the container.
-# ---------------------------------------------------------------------------
-# Phase 2 re-entry: run the verifier again against a trial that already exists.
-#
-# Harbor drives agent -> verifier inside one `harbor run`, and offers no way back
-# in: `harbor job resume` deletes the whole trial directory (cli/jobs.py:1594)
-# and re-runs it from the agent, which is the expensive half and the half that
-# was already fine. So a trial that graded badly because the EVAL image was
-# wrong, or test_outputs.py had a bug, costs a full agent re-run to re-grade.
-#
-# In separate mode it does not have to. The collect hook writes the world
-# snapshot and the trajectory to artifacts/_atlas/ before teardown, and
-# tests/test.sh opens by restoring them, so Phase 2 already reads frozen files
-# and never touches the agent's containers. Everything it needs is on disk.
-#
-# What this does, then, is rebuild the Trial object from the trial's own
-# config.json and call the verifier phase alone.
-#
-# It rides on Harbor private API (`_run_verifier`, `_run_separate_verifier`,
-# `_result`). There is no public equivalent -- `harbor trial start` runs
-# everything -- so an upgrade can break this. patch_harbor.py already couples us
-# to Harbor internals, so the exposure is not new, but it is real: if Harbor
-# moves, this is the first thing to check.
-
-HARBOR_BIN = os.getenv("HARBOR_BIN", shutil.which("harbor") or "")
-
-
-def _harbor_python() -> Path | None:
-    """Harbor's own interpreter.
-
-    Harbor is a uv TOOL install, so it lives in its own venv and the repo's
-    .venv cannot import it -- `import harbor` there raises ModuleNotFoundError.
-    The driver below therefore runs under Harbor's python, not ours, and this
-    script stays runnable from .venv like every other stage.
-    """
-    if not HARBOR_BIN:
-        return None
-    py = Path(HARBOR_BIN).resolve().parent / "python"
-    return py if py.exists() else None
-
-
-# Runs under Harbor's interpreter, one argument: the trial directory.
-#
-# Three things it deliberately does NOT do:
-#   * `_init_result()` -- it calls self.agent.to_agent_info(), and self.agent is
-#     only set by _prepare() -> _setup_agent(), which is the agent phase we are
-#     skipping. It also REWRITES config.json and mints a fresh TrialResult,
-#     throwing away the agent record we are trying to preserve. The prior
-#     result.json is restored onto _result instead.
-#   * `_prepare()` -- builds and starts the agent environment. Nothing in the
-#     separate-verifier path touches it (`agent_env_paths` is a paths object,
-#     not a live environment), so starting it would cost minutes to build a
-#     container that is never used.
-#   * `run()` -- its finally block calls _stop_agent_environment() on an
-#     environment that was never created.
-_PHASE2_DRIVER = r"""
-import asyncio, sys
-from pathlib import Path
-from harbor.models.trial.config import TrialConfig
-from harbor.models.trial.result import TrialResult
-from harbor.models.task.verifier_mode import (
-    VerifierEnvironmentMode, resolve_task_verifier_mode)
-from harbor.trial.trial import Trial
-
-trial_dir = Path(sys.argv[1]).resolve()
-cfg = TrialConfig.model_validate_json((trial_dir / "config.json").read_text())
-
-# run_task.sh's reshape renames <job>__<id> to trajectory/run_N after the run,
-# so the recorded trials_dir/trial_name point at a directory that is now an
-# empty stub -- artifacts/_atlas lives only under the new name. Re-point the
-# config at where the trial actually is, or the verifier grades an empty tree
-# and reports it as an agent that produced nothing.
-cfg = cfg.model_copy(update={"trials_dir": trial_dir.parent,
-                             "trial_name": trial_dir.name})
-
-async def main() -> int:
-    trial = await Trial.create(cfg)
-    mode = resolve_task_verifier_mode(trial.task.config)
-    if mode != VerifierEnvironmentMode.SEPARATE:
-        # Shared mode execs the verifier INTO the agent container, which was
-        # torn down when the run ended. It would fail, or worse grade a
-        # rebuilt-and-empty world as a real result.
-        print("[verifier-rerun] task is environment_mode=%s, not separate; "
-              "the verifier runs inside the agent container there and that "
-              "container is gone. Migrate the bundle "
-              "(scripts/migrate_separate_verifier.py) or re-run the trial."
-              % mode.value, file=sys.stderr)
-        return 3
-
-    result_path = trial_dir / "result.json"
-    if not result_path.exists():
-        print("[verifier-rerun] no result.json in %s" % trial_dir, file=sys.stderr)
-        return 4
-    trial._result = TrialResult.model_validate_json(result_path.read_text())
-
-    # _atlas is either lifted to artifacts/_atlas (post-reshape) or still under
-    # the manifest's convention destination (fresh). Reporting only the first
-    # spelling prints "present: False" on a run that is about to work fine --
-    # a diagnostic that says the opposite of the truth is worse than none.
-    found = next((c for c in trial.paths.artifacts_dir.rglob("_atlas")
-                  if c.is_dir()), None)
-    print("[verifier-rerun] artifacts: %s (_atlas: %s)"
-          % (trial.paths.artifacts_dir, found or "NOT FOUND"))
-    await trial._run_verifier()
-    result_path.write_text(trial.result.model_dump_json(indent=4))
-    vr = trial.result.verifier_result
-    print("[verifier-rerun] reward=%s" % (getattr(vr, "reward", None),))
-    return 0
-
-sys.exit(asyncio.run(main()))
-"""
-
-
-def _dotenv_defaults() -> dict:
-    """<repo>/.env as DEFAULTS, mirroring run_task.sh:57-86.
-
-    Same precedence rule as there: the ambient environment wins, .env only
-    fills gaps. A subprocess that ignored .env would resolve [verifier.env]
-    differently from a normal run, which is the quiet kind of drift that makes
-    a re-grade disagree with the original for no visible reason.
-    """
-    env = {}
-    dotenv = REPO / ".env"
-    if not dotenv.exists():
-        return env
-    for line in dotenv.read_text().splitlines():
-        line = line.rstrip()
-        if not line or line.lstrip().startswith("#") or "=" not in line:
-            continue
-        key, _, val = line.partition("=")
-        key = key.strip()
-        if key and key.isidentifier():
-            env.setdefault(key, val.strip().strip('"').strip("'"))
-    return env
-
-
-def _missing_verifier_env(task: Path, env: dict) -> list:
-    """Names in [verifier.env] that expand to nothing here.
-
-    Harbor resolves these itself and raises ValueError from deep inside
-    verifier.verify() -- a 30-line traceback whose one useful line is the
-    variable name. It is a credential the operator supplies, not a bug, so it
-    is worth catching before anything is built.
-    """
-    toml_path = task / "task.toml"
-    if not toml_path.exists():
-        return []
-    try:
-        import tomllib
-        cfg = tomllib.loads(toml_path.read_text())
-    except Exception:
-        return []
-    declared = ((cfg.get("verifier") or {}).get("env") or {})
-    missing = []
-    for name, value in declared.items():
-        ref = re.fullmatch(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}", str(value).strip())
-        if ref and not env.get(ref.group(1)):
-            missing.append(ref.group(1))
-    return missing
-
-
-def _atlas_dir(trial: Path) -> Path | None:
-    """Where this trial's _atlas lives, in either layout.
-
-    Fresh out of `harbor run` it is under the convention destination the
-    manifest records (artifacts/logs/artifacts/_atlas); after run_task.sh's
-    reshape it has been lifted to artifacts/_atlas. Both are the same files.
-    """
-    manifest = _load(trial / "artifacts" / "manifest.json", []) or []
-    dest = next((e.get("destination") for e in manifest
-                 if e.get("source", "").endswith("/logs/artifacts")), None)
-    for candidate in ((trial / dest / "_atlas") if dest else None,
-                      trial / "artifacts" / "_atlas"):
-        if candidate is not None and candidate.is_dir():
-            return candidate
-    return None
-
-
-def _rehydrate_convention_dir(trial: Path) -> int:
-    """Undo the reshape's flattening of the artifacts tree, in place.
-
-    Harbor's collect hook records ONE convention entry in manifest.json:
-
-        {"source": "/logs/artifacts", "destination": "artifacts/logs/artifacts"}
-
-    and `upload_artifacts` re-materializes the verifier's /logs/artifacts from
-    exactly that destination. But harbor_to_output.py's reshape lifts the real
-    payload up a level -- artifacts/logs/artifacts/_atlas becomes
-    artifacts/_atlas -- and leaves the recorded destination behind as an EMPTY
-    directory.
-
-    That combination is silent and total. `upload_artifacts` finds the path,
-    so it does not skip it; it uploads an empty directory; tests/test.sh's
-    restore block is guarded by `[ -s ... ]` so it prints nothing and does
-    nothing; pytest then grades a run with no trajectory and no world snapshot
-    and fails all of it. Measured on run_9: 44 collected, 44 failed, and the
-    only hint was the ABSENCE of the "[0/5 restore]" lines.
-
-    So put the payload back where the manifest says it is. Only ever fills an
-    empty directory, so it is additive and safe to repeat.
-    """
-    manifest_path = trial / "artifacts" / "manifest.json"
-    manifest = _load(manifest_path, []) or []
-    dest = next((e.get("destination") for e in manifest
-                 if e.get("source", "").endswith("/logs/artifacts")), None)
-    if not dest:
-        return 0
-
-    target = trial / dest
-    if target.is_dir() and any(target.iterdir()):
-        return 0                       # already laid out the way Harbor expects
-
-    # Everything the reshape lifted: the artifacts dir minus Harbor's own
-    # bookkeeping and minus the convention path itself.
-    src_root = trial / "artifacts"
-    top = target.relative_to(src_root).parts[0] if target.is_relative_to(src_root) else None
-    payload = [c for c in src_root.iterdir()
-               if c.name not in {"manifest.json", "index.json", top}]
-    if not payload:
-        print(f"[verifier-rerun] {manifest_path.name} points at {dest}, which is "
-              f"empty, and there is nothing in artifacts/ to restore it from. "
-              f"The verifier would grade an empty run.", file=sys.stderr)
-        return 2
-
-    target.mkdir(parents=True, exist_ok=True)
-    for child in payload:
-        out = target / child.name
-        if child.is_dir():
-            shutil.copytree(child, out, dirs_exist_ok=True)
-        else:
-            shutil.copyfile(child, out)
-    print(f"[verifier-rerun] rebuilt {dest} from the reshaped tree "
-          f"({', '.join(sorted(c.name for c in payload))})")
-    return 0
-
-
-def rerun_verifier(trial: Path, task: Path) -> int:
-    """Re-run Phase 2 (pytest + state channel) against an existing trial."""
-    py = _harbor_python()
-    if py is None:
-        print("[verifier-rerun] harbor CLI not found on PATH; set HARBOR_BIN",
-              file=sys.stderr)
-        return 2
-    if not (trial / "config.json").exists():
-        print(f"[verifier-rerun] no config.json in {trial}; this is not a trial "
-              f"directory Harbor wrote", file=sys.stderr)
-        return 2
-    # _atlas sits in one of two places depending on whether run_task.sh's reshape
-    # has been over this trial yet: under the manifest's convention destination
-    # for a fresh trial, and lifted to artifacts/_atlas afterwards. Checking only
-    # the reshaped spelling refuses every trial straight out of `harbor run` --
-    # which is the common case, not the rare one.
-    if not _atlas_dir(trial):
-        # Without the collect hook's output there is no world snapshot and no
-        # trajectory, so test.sh's restore step finds nothing and pytest grades
-        # an empty run -- silently, as an agent that did nothing.
-        print(f"[verifier-rerun] no _atlas directory under {trial/'artifacts'}. "
-              f"The collect hook never ran for this trial, so the world snapshot "
-              f"it needs does not exist and cannot be reconstructed. Re-run the "
-              f"trial.", file=sys.stderr)
-        return 2
-
-    rc = _rehydrate_convention_dir(trial)
-    if rc != 0:
-        return rc
-
-    env = {**_dotenv_defaults(), **os.environ}
-    missing = _missing_verifier_env(task, env)
-    if missing:
-        print(f"[verifier-rerun] {task/'task.toml'} declares [verifier.env] "
-              f"entries that are empty here: {', '.join(missing)}", file=sys.stderr)
-        print(f"[verifier-rerun] these are operator credentials -- export them "
-              f"(or add them to {REPO/'.env'}) and re-run", file=sys.stderr)
-        return 2
-
-    # tests/test.sh still ATTEMPTS the in-container rubric judge on its way past,
-    # and in separate mode that attempt always fails (no codex binary, and the
-    # Claude transport needs a credential this phase has no business holding).
-    # It then writes a {"per_criterion": []} stub over rubric_breakdown.json --
-    # the file Phase 3 publishes from and the file --resume reads its verdicts
-    # out of. Re-running pytest must not cost the rubric channel, so the real
-    # breakdown is put back afterwards.
-    breakdown = trial / "verifier" / "rubric_breakdown.json"
-    keep = None
-    if (_load(breakdown, {}) or {}).get("per_criterion"):
-        keep = breakdown.read_text()
-        print(f"[verifier-rerun] holding {breakdown.name} "
-              f"({len(json.loads(keep)['per_criterion'])} graded criteria) across "
-              f"the verifier run")
-
-    print(f"[verifier-rerun] re-running the verifier phase for {trial.name}")
-    # cwd=REPO: config.json records the task as a RELATIVE path
-    # (tasks/<task>), so it only resolves from the repo root.
-    rc = subprocess.run([str(py), "-c", _PHASE2_DRIVER, str(trial)],
-                        cwd=str(REPO), env=env).returncode
-
-    if keep is not None and not (_load(breakdown, {}) or {}).get("per_criterion"):
-        breakdown.write_text(keep)
-        print(f"[verifier-rerun] restored {breakdown.name}; the in-container "
-              f"judge had stubbed it")
-    return rc
-
-
 RUBRIC_JUDGE_IMAGE = os.getenv("RUBRIC_JUDGE_IMAGE", "rubric-judge:latest")
 
 
@@ -493,12 +190,11 @@ def _image_present(image: str) -> bool:
                           capture_output=True).returncode == 0
 
 
-def _judge_argv(rubric: Path, traj: Path, out_dir: Path, model, prior: Path | None = None) -> list:
+def _judge_argv(rubric: Path, traj: Path, out_dir: Path, model) -> list:
     """argv for one containerised judge call, and only these mounts:
 
         /in/rubric.json      the rubric being graded               (ro)
         /in/trajectory.json  what the agent did                    (ro)
-        /in/prior.json       verdicts to reuse, when resuming      (ro)
         /codex-cred/         one credential file, copied on entry  (ro)
         /out                 scratch dir for the two result files
 
@@ -524,20 +220,11 @@ def _judge_argv(rubric: Path, traj: Path, out_dir: Path, model, prior: Path | No
     ]
     if cred.exists():
         argv += ["-v", "%s:/codex-cred/auth.json:ro" % cred]
-    # The prior breakdown is a file this caller already owns and holds no answer
-    # key -- it is the judge's own previous verdicts -- so admitting it read-only
-    # keeps the mount contract above intact. It goes in as a SEPARATE file from
-    # /out/rubric_breakdown.json so a judge crash, which stubs the output, cannot
-    # reach the verdicts being resumed.
-    if prior is not None:
-        argv += ["-v", "%s:/in/prior.json:ro" % prior.resolve()]
     argv += [RUBRIC_JUDGE_IMAGE,
              "--rubric", "/in/rubric.json",
              "--trajectory", "/in/trajectory.json",
              "--output", "/out/rubric_breakdown.json",
              "--token-output", "/out/judge_tokens.json"]
-    if prior is not None:
-        argv += ["--resume-from", "/in/prior.json"]
     if model:
         argv += ["--model", model]
     return argv
@@ -552,36 +239,11 @@ def main() -> int:
                     default=os.getenv("RUBRIC_JUDGE_RUNNER", "container"),
                     help="where the judge runs (default: container)")
     ap.add_argument("--dry-run", action="store_true", help="convert and report, do not call the judge")
-    ap.add_argument("--phase", choices=("rubric", "verifier", "all"), default="rubric",
-                    help="which grading phase to re-run. 'rubric' (default) is "
-                         "Phase 3 only, the historical behaviour of this script. "
-                         "'verifier' re-runs Phase 2 (pytest + state channel) "
-                         "against the trial already on disk, without re-running "
-                         "the agent -- separate mode only. 'all' does Phase 2 "
-                         "then Phase 3, which is the whole grading half of a run")
-    ap.add_argument("--resume", action="store_true",
-                    help="reuse criteria the trial's existing rubric_breakdown.json "
-                         "already graded, under the same judge, transport and "
-                         "evidence; only ungraded criteria are re-asked. A partial "
-                         "grade (short reply, judge timeout) is what this is for")
     a = ap.parse_args()
 
     trial, task = Path(a.trial), Path(a.task)
     verifier = trial / "verifier"
     verifier.mkdir(parents=True, exist_ok=True)
-
-    # Phase 2 first when asked, because Phase 3's ledger recompute reads what it
-    # writes: reward_channel_a.json and state_channel.json. Running them the
-    # other way round would fold a fresh rubric score into the PREVIOUS run's
-    # Channel A and publish the mixture as one number.
-    if a.phase in ("verifier", "all"):
-        rc = rerun_verifier(trial, task)
-        if rc != 0:
-            print("[host-rubric] verifier phase failed; not grading the rubric "
-                  "on top of a half-known result", file=sys.stderr)
-            return rc
-        if a.phase == "verifier":
-            return 0
 
     rubric = task / "tests" / "rubric.json"
     weights_path = task / "tests" / "test_weights.json"
@@ -620,22 +282,6 @@ def main() -> int:
         traj_path.unlink(missing_ok=True)
         return 2
 
-    # Resume reads a SNAPSHOT, never the live breakdown. rubric_judge_cli stubs
-    # its --output to zeros when the judge crashes, so resuming straight from the
-    # file it is about to write would let a failed retry destroy the verdicts it
-    # was meant to preserve. The snapshot also stays behind afterwards as the
-    # record of what the reused half actually was.
-    prior: Path | None = None
-    if a.resume:
-        if breakdown.exists():
-            prior = verifier / "rubric_breakdown.pre_resume.json"
-            shutil.copyfile(breakdown, prior)
-            print("[host-rubric] [resume] reusing verdicts from %s (%dB)"
-                  % (breakdown.name, breakdown.stat().st_size))
-        else:
-            print("[host-rubric] [resume] no %s in this trial; grading every "
-                  "criterion" % breakdown.name)
-
     print("[host-rubric] judging with %s in the %s ..."
           % (model or "codex default", a.judge_runner))
 
@@ -643,7 +289,7 @@ def main() -> int:
         # The container writes into a scratch dir, never into the trial tree --
         # see _judge_argv. The two results are copied in afterwards.
         out_dir = Path(tempfile.mkdtemp(prefix="rubric-judge-"))
-        proc = subprocess.run(_judge_argv(rubric, traj_path, out_dir, model, prior))
+        proc = subprocess.run(_judge_argv(rubric, traj_path, out_dir, model))
         for _name in ("rubric_breakdown.json", "judge_tokens.json"):
             _src = out_dir / _name
             if _src.exists():
@@ -654,8 +300,6 @@ def main() -> int:
                "--rubric", str(rubric), "--trajectory", str(traj_path),
                "--output", str(breakdown),
                "--token-output", str(verifier / "judge_tokens.json")]
-        if prior is not None:
-            cmd += ["--resume-from", str(prior)]
         if model:
             cmd += ["--model", model]
         proc = subprocess.run(cmd)
