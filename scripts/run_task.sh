@@ -727,6 +727,17 @@ stage_harbor() {
   # pointed at host.docker.internal, which network isolation cannot route to.
   local _iso; _iso="$(network_isolation_overlay)"
   [ -n "$_iso" ] && args+=(--extra-docker-compose "$_iso")
+  # Grade the rubric INSIDE the job, on TrialEvent.END, so the metric on
+  # Harbor's progress bar and the tables it prints are the ledger's numbers.
+  # Harbor prints those from the reward a trial carried at trial exit
+  # (cli/jobs.py:1416, before any plugin finalizes), and the container cannot
+  # judge the rubric -- so without this it reported 0.082 for a run the ledger
+  # credited with 40.0. The plugin is a no-op when HOST_GRADE_OFF=1, which
+  # leaves stage_host_rubric below to do it the old way, after the fact.
+  if [ "${HOST_GRADE_OFF:-0}" != "1" ]; then
+    args+=(--plugin adapters.mcp_atlas.host_grade_plugin:HostGradePlugin
+           --pk "task=$TASK")
+  fi
   [ "$AGENT" != "oracle" ] && args+=(--model "$MODEL")
   if [ "$AGENT" = "claude-code" ]; then
     [ -n "$THINKING" ] && args+=(--ak "thinking=$THINKING")
@@ -759,7 +770,10 @@ stage_harbor() {
   local _pre; _pre="$(list_trial_dirs)"
   echo "[run_task] harbor ${args[*]}"
   local _hrc=0
-  HARBOR_OUTPUT_OFF=1 command harbor "${args[@]}" \
+  # PYTHONPATH: the `harbor` console script puts its own bin dir on sys.path,
+  # not the cwd, so `adapters.mcp_atlas...` is unimportable without this.
+  HARBOR_OUTPUT_OFF=1 PYTHONPATH="$REPO${PYTHONPATH:+:$PYTHONPATH}" \
+    command harbor "${args[@]}" \
     || { _hrc=$?; echo "[run_task] harbor exited $_hrc; checking whether a trial actually ran" >&2; }
 
   # A trial DIRECTORY is not a trial that RAN. Harbor creates it in
@@ -1120,6 +1134,15 @@ PYEOF
        && [ -s "$trial/verifier/rubric_breakdown.json" ] \
        && [ "$_codex_graded" = "1" ]; then
       echo "[run_task] rubric already graded in-container by codex for $(basename "$trial"); skipping"
+      any_graded=1
+      continue
+    fi
+    # The in-job plugin (host_grade_plugin.py) grades on TrialEvent.END and
+    # stamps producer=host_rubric_pass. A judge run is a billed API call, so
+    # seeing that stamp means this stage must not buy another one.
+    if [ "${FORCE_HOST_RUBRIC:-0}" != "1" ] \
+       && grep -q '"producer": "host_rubric_pass"' "$trial/verifier/reward.json" 2>/dev/null; then
+      echo "[run_task] rubric already graded in-job for $(basename "$trial"); skipping"
       any_graded=1
       continue
     fi
