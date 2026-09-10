@@ -68,6 +68,89 @@ REPLACEMENT_COLLECT = """\
 ALREADY_PATCHED_MARKER_COLLECT = "harbor-patch: builtin collect"
 
 
+# --- Agent failure classification ---------------------------------------------
+# harbor names the cause of a failed agent run by regex-searching the WHOLE run
+# output for r"rate.?limit" (base.py:174) and never looks at the exit code, which
+# it formats into a string and then discards. Claude Code emits
+#   {"type":"rate_limit_event","rate_limit_info":{"status":"allowed"}}
+# as ordinary telemetry after successful calls, and ".?" matches the underscore,
+# so that pattern hits on essentially every run: measured 55, 45 and 2 times
+# across three runs of one task -- including the run that exited 0. The upshot is
+# that ApiRateLimitError is harbor's de facto name for ANY non-zero agent exit.
+#
+# Measured here: an OOM kill (exit 137, mid-OCR) and a genuine Anthropic session
+# limit (exit 1) came back with the identical label. The OOM's real cause
+# survived nowhere -- SIGKILL writes no result event, the container is deleted
+# before State.OOMKilled can be read, and the exit code is the only evidence
+# left, which is precisely what the classifier ignores.
+#
+# The override below does two things harbor's does not:
+#   1. Triages on HOW the process died before reading what its log mentions.
+#      A signal death is a fact; a substring in 12 MB of output is a guess.
+#   2. Requires a real rate-limit signal rather than the telemetry line.
+#      Verified discriminator: '"error":"rate_limit"' appears once in the
+#      genuinely rate-limited run and zero times in the OOM run, while
+#      "rate_limit_event" appears in both.
+#
+# Retry semantics are unchanged except for the misfiled cases: ApiRateLimitError
+# keeps meaning "waiting may help", which is exactly what an OOM does not.
+ANCHOR_CLASSIFY = '''    @override
+    def get_version_command(self) -> str | None:'''
+
+REPLACEMENT_CLASSIFY = r'''    # harbor-patch: classify agent failures by how the process died
+    _FATAL_SIGNALS = {
+        137: "killed by SIGKILL (128+9) -- in a container this is normally the "
+             "OOM killer; compare the task's memory_mb with what docker has",
+        139: "killed by SIGSEGV (128+11) -- agent process crashed",
+        143: "killed by SIGTERM (128+15) -- stopped by an external signal",
+        124: "exit 124 -- command timed out (coreutils timeout)",
+    }
+
+    # A real provider rate limit, not Claude Code's "status: allowed" telemetry.
+    _REAL_RATE_LIMIT = _re.compile(
+        r'"error"\s*:\s*"rate_limit"'
+        r'|"type"\s*:\s*"rate_limit_error"'
+        r'|too many requests'
+        r'|\b(?:session|usage|weekly|monthly)\s+limit\b'
+        r'|Limit Exhausted',
+        _re.IGNORECASE,
+    )
+
+    @override
+    def _classify_exec_error(self, command, result):
+        detail = (
+            f"Command failed (exit {result.return_code}): {command}\n"
+            f"stdout: {self._truncate_output(result.stdout)}\n"
+            f"stderr: {self._truncate_output(result.stderr)}"
+        )
+        note = self._FATAL_SIGNALS.get(getattr(result, "return_code", None))
+        if note:
+            # How it died outranks what the log happens to mention.
+            return NonZeroAgentExitCodeError(note + "\n" + detail)
+        output = f"{result.stdout or ''}\n{result.stderr or ''}"
+        if self._REAL_RATE_LIMIT.search(output):
+            return ApiRateLimitError(detail)
+        return NonZeroAgentExitCodeError(detail)
+
+    @override
+    def get_version_command(self) -> str | None:'''
+
+ALREADY_PATCHED_MARKER_CLASSIFY = "harbor-patch: classify agent failures by how the process died"
+
+# The override needs three names claude_code.py does not import today.
+ANCHOR_CLASSIFY_IMPORT = '''from harbor.agents.installed.base import (
+    BaseInstalledAgent,'''
+
+REPLACEMENT_CLASSIFY_IMPORT = '''import re as _re  # harbor-patch: agent failure classification
+
+from harbor.agents.installed.base import (
+    ApiRateLimitError,
+    BaseInstalledAgent,
+    NonZeroAgentExitCodeError,'''
+
+ALREADY_PATCHED_MARKER_CLASSIFY_IMPORT = "import re as _re  # harbor-patch"
+
+
 ANCHOR_JUDGE_MODEL_1 = """\
         with self.agent_environment.with_default_user(user):
             verifier = VerifierFactory.create_verifier_from_config(
@@ -338,6 +421,27 @@ def main() -> None:
             file=sys.stderr,
         )
         failures.append(f"pre-baked CLI guard  ({target.name})")
+
+    if ALREADY_PATCHED_MARKER_CLASSIFY in text:
+        print(f"[patch_harbor] Failure classification: already applied")
+    elif ANCHOR_CLASSIFY not in text or ANCHOR_CLASSIFY_IMPORT not in text:
+        # Non-fatal. Without it, a crashed or OOM-killed run is still recorded --
+        # just under harbor's default name, ApiRateLimitError. That is a wrong
+        # label on a real result, not a lost result, so it must not block a run.
+        print(
+            f"[patch_harbor] Failure classification: NOT applied -- anchor not found in {target.name}\n"
+            "  Agent failures will keep being labelled ApiRateLimitError regardless of\n"
+            "  what actually killed them (harbor base.py:174 greps the whole log for\n"
+            "  r'rate.?limit', which Claude Code's own telemetry always matches).\n"
+            "  Re-anchor against ClaudeCode.get_version_command if this matters.",
+            file=sys.stderr,
+        )
+    else:
+        if ALREADY_PATCHED_MARKER_CLASSIFY_IMPORT not in text:
+            text = text.replace(ANCHOR_CLASSIFY_IMPORT, REPLACEMENT_CLASSIFY_IMPORT, 1)
+        text = text.replace(ANCHOR_CLASSIFY, REPLACEMENT_CLASSIFY, 1)
+        changed = True
+        print(f"[patch_harbor] Failure classification: applied")
 
     if changed and not audit:
         target.write_text(text, encoding="utf-8")
