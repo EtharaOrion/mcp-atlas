@@ -81,11 +81,41 @@ def _load_criteria(rubric_path: Path) -> list[dict]:
 # where prose runs ~3.9. Sizing against the average silently overruns on exactly
 # the JSON-dense trajectories that need the room.
 #
-# Measured over 16 recorded trials: median rendered 213,693 chars, max 278,543
-# (~119K and ~155K tokens at 1.8). 300,000 clears the worst observed trial and
-# lands near 167K tokens, leaving margin under a 200K window for the system
-# prompt, the rubric (76 criteria on some bundles) and the reply.
-_EVIDENCE_BUDGET_CHARS = int(os.environ.get("JUDGE_EVIDENCE_BUDGET_CHARS", "300000"))
+# Sized against a 200K window, from the MEASURED whole-prompt ratio.
+#
+# The 1.8 chars/token this was first built on is a worst-case guess. Measure it
+# the only way that matters -- len(_judge_prompt(...)) against the judge's own
+# reported input_tokens, over four trials of the lydbury bundle: 3.03, 2.98,
+# 3.07, 3.03. Use 3.03. (Do NOT derive it as evidence_chars/(input-cache): the
+# cached figure is a constant 11,136 that does not correspond to any prefix of
+# this prompt, and subtracting it inflates the ratio to ~3.2, which is enough
+# to push a budget 2% over the window while appearing to leave margin.)
+#
+# The prompt is larger than the evidence by 12K-17K chars: the preamble, the
+# criteria payload, and the final message, which _judge_prompt sends a second
+# time even though _render_trajectory already appended it as "Final:".
+#
+#     budget + 17,151 overhead, / 3.03, + 7,007 reply  <=  200,000
+#       550,000 ->  194,186 tok   2.9% margin   <- chosen
+#       567,788 ->  200,056 tok   0.0%          the largest recorded trajectory;
+#                                               it does not fit safely, so it
+#                                               loses a handful of middle steps
+#                                               rather than the 296 it lost at
+#                                               300,000
+#       580,000 ->  204,087 tok  -2.0%  OVER
+#     1,000,000 ->  342,700 tok -71.4%  OVER
+#
+# 550,000 grades 3 of 7 recorded trajectories whole (up from 2) and takes the
+# rest from 20-59% of their steps to 60-100%.
+#
+# Do NOT raise this past ~588,000 without confirming the judge model's context.
+# _codex_exec has no branch for an over-length prompt: it raises only on a
+# nonzero exit or an empty event stream, so an overflow surfaces as a generic
+# transport error after four retries, or as a silently truncated prompt that
+# still produces a scored rubric. Headroom compression does not buy margin here
+# either -- measured 11.4% on a 567K-char trial and 0% on a 921K one, where the
+# library's own size gate declines to compress at all.
+_EVIDENCE_BUDGET_CHARS = int(os.environ.get("JUDGE_EVIDENCE_BUDGET_CHARS", "550000"))
 
 
 def _render_trajectory(traj: dict, budget: int | None = None) -> str:
