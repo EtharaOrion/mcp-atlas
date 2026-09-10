@@ -291,3 +291,95 @@ def test_not_denied_when_isolation_is_off(tmp_path):
         "web tools still denied with NETWORK_ISOLATION_OFF=1; that run would not "
         "mean what the operator asked for"
     )
+
+
+# --- the third layer: the PreToolUse egress guard ---------------------------
+#
+# The routing table removes the route and DISALLOWED_TOOLS removes the web
+# tools. Neither says anything back when the model reaches for `apt-get`, so it
+# reaches again: one recorded run spent seven consecutive Bash calls on npm,
+# apt-get, chromium and puppeteer before giving up. The guard refuses in the
+# same turn and names what to use instead.
+
+def _guard_settings_path(argv: list[str]) -> str | None:
+    for a in argv:
+        if a.startswith("config="):
+            return a[len("config="):]
+    return None
+
+
+def test_egress_guard_is_passed_to_harbor(tmp_path):
+    argv = _harbor_argv(tmp_path)
+    path = _guard_settings_path(argv)
+    assert path, (
+        "no `--ak config=` in harbor's argv; the agent runs with no PreToolUse "
+        "guard and burns turns on commands that cannot work"
+    )
+
+    import json
+    doc = json.loads(Path(path).read_text())
+    hooks = doc["hooks"]["PreToolUse"]
+    assert hooks and "Bash" in hooks[0]["matcher"], doc
+
+
+def test_egress_guard_is_not_passed_when_isolation_is_off(tmp_path):
+    """An operator who asked for an open run must get one, Bash included."""
+    argv = _harbor_argv(tmp_path, NETWORK_ISOLATION_OFF="1")
+    assert _guard_settings_path(argv) is None, (
+        "Bash egress still guarded with NETWORK_ISOLATION_OFF=1; that run would "
+        "not mean what the operator asked for"
+    )
+
+
+# --- .env may not turn the block off ----------------------------------------
+
+def test_dotenv_cannot_disable_network_isolation(tmp_path):
+    """The switch that cost a benchmark result.
+
+    NETWORK_ISOLATION_OFF=1 sat in .env, so every run on the machine was an open
+    run and nothing said so. It is a per-RUN decision, and load_dotenv now
+    refuses to read it from the file.
+    """
+    import re
+    import subprocess
+
+    env_file = REPO / ".env"
+    if env_file.is_file():
+        live = [ln for ln in env_file.read_text().splitlines()
+                if not ln.lstrip().startswith("#")]
+        assert not any(ln.startswith("NETWORK_ISOLATION_OFF=") for ln in live), (
+            ".env sets NETWORK_ISOLATION_OFF; every run on this machine is an "
+            "open run and the audit is the only thing left standing"
+        )
+
+    # And the refusal holds if someone puts it back. The function is lifted out
+    # of run_task.sh and driven against a .env of our own, so the assertion is
+    # about load_dotenv itself rather than about this checkout's file.
+    body = RUN_TASK.read_text()
+    m = re.search(r"^DOTENV_FORBIDDEN_KEYS=.*?^}", body, re.S | re.M)
+    assert m, "load_dotenv / DOTENV_FORBIDDEN_KEYS not found in run_task.sh"
+
+    # A key nothing else could have set, so an inherited value cannot mask the
+    # result -- load_dotenv is fill-if-unset and the CALLER wins by design.
+    (tmp_path / ".env").write_text(
+        "NETWORK_ISOLATION_OFF=1\nDOTENV_PROBE_KEY=loaded\n")
+    driver = tmp_path / "drive.sh"
+    driver.write_text(
+        "set -u\n"
+        f'REPO="{tmp_path}"\n'
+        + m.group(0) + "\n"
+        "load_dotenv\n"
+        'echo "ISO=[${NETWORK_ISOLATION_OFF:-}]"\n'
+        'echo "PROBE=[${DOTENV_PROBE_KEY:-}]"\n'
+    )
+    out = subprocess.run(["bash", str(driver)], capture_output=True, text=True)
+    combined = out.stdout + out.stderr
+
+    assert "ISO=[]" in combined, combined
+    assert "REFUSED" in combined, (
+        "the key was dropped silently; configuration that vanishes looks "
+        "exactly like configuration that works\n" + combined
+    )
+    # Every other key must still load, or the guard has broken .env instead of
+    # narrowing it.
+    assert "PROBE=[loaded]" in combined, combined

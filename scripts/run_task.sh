@@ -17,7 +17,9 @@
 #                CC_BRIDGE_ENABLED (0)
 #
 # Values may also come from <repo>/.env, which is read as DEFAULTS only: anything
-# already in the environment wins over it.
+# already in the environment wins over it. NETWORK_ISOLATION_OFF is the one key
+# .env may NOT set (DOTENV_FORBIDDEN_KEYS): it turns the closed-world guarantee
+# off, and a file that does that for every future run is not configuration.
 #
 # Stages. The default STAGE=all runs the four below in order, which is the
 # original one-shot behaviour. They are separable because their costs differ by
@@ -67,12 +69,32 @@ cd "$REPO"
 # the .env value and no .env key could be overridden for a single run.
 # Presence is what is tested (${!k+set}), not emptiness, so an explicitly-empty
 # override is honoured rather than refilled from the file.
+# Keys .env may not set, however they are spelled in the file.
+#
+# NETWORK_ISOLATION_OFF is the only member and it is here because it was the
+# whole of a real failure. It is a per-RUN decision -- "open the network, this
+# once, and I know what that means" -- and it sat in .env instead, so every run
+# on the machine was open and nothing said so. A closed-world task then
+# installed Pillow, puppeteer and chromium off the public internet and graded as
+# though it had not. A file that turns the guarantee off for all future runs is
+# not configuration, it is an unattended decision, so the caller has to make it:
+#
+#   NETWORK_ISOLATION_OFF=1 scripts/run_task.sh tasks/<task>
+#
+# Named rather than dropped in silence, for the same reason the charset skip
+# below is named: configuration that vanishes looks exactly like configuration
+# that works.
+DOTENV_FORBIDDEN_KEYS=" NETWORK_ISOLATION_OFF "
+
 load_dotenv() {
   [ -f "$REPO/.env" ] || return 0
-  local line key val skipped=""
+  local line key val skipped="" refused=""
   while IFS= read -r line; do
     key="${line%%=*}"
     val="${line#*=}"
+    case "$DOTENV_FORBIDDEN_KEYS" in
+      *" $key "*) refused="$refused $key"; continue ;;
+    esac
     # Conservative value charset, inherited from the `source` implementation this
     # replaces. Values outside it are still skipped -- but they are now NAMED
     # instead of vanishing, which is how ZB_MODEL_ALIAS_JSON sat in .env doing
@@ -86,6 +108,11 @@ load_dotenv() {
   done < <(sed 's/[[:space:]]*$//' "$REPO/.env" | grep -E '^[A-Za-z_][A-Za-z0-9_]*=')
   if [ -n "$skipped" ]; then
     echo "[run_task] .env: skipped (value has unsupported characters):$skipped" >&2
+  fi
+  if [ -n "$refused" ]; then
+    echo "[run_task] .env: REFUSED (per-run only, not a file setting):$refused" >&2
+    echo "[run_task]   pass it on the command line for a single run instead:" >&2
+    echo "[run_task]   ${refused# }=1 scripts/run_task.sh <task>" >&2
   fi
   return 0
 }
@@ -746,6 +773,16 @@ stage_harbor() {
     # that run mean something different from what they asked for.
     [ -n "$_iso" ] && [ -n "$DISALLOWED_TOOLS" ] \
       && args+=(--ak "disallowed_tools=$DISALLOWED_TOOLS")
+
+    # Third layer, and the only one the model can actually READ. The routing
+    # table removes the route and the tool list removes the web tools; neither
+    # says anything back when the model reaches for `apt-get`, so it retries.
+    # This one refuses the call and explains what to use instead, in the same
+    # turn. Same gate as above: an open run stays open.
+    if [ -n "$_iso" ]; then
+      local _guard; _guard="$(egress_guard_settings)"
+      [ -n "$_guard" ] && args+=(--ak "config=$_guard")
+    fi
   fi
   # Trial dirs left behind by EARLIER invocations. Harbor never removes a trial
   # that died (docker build failure, Ctrl-C, agent-setup timeout) and
@@ -1034,6 +1071,16 @@ route_agent_through_proxy() {
   if ! curl -sf -m 3 "http://127.0.0.1:$HEADROOM_PROXY_PORT/health" >/dev/null 2>&1; then
     echo "[run_task] no headroom proxy on :$HEADROOM_PROXY_PORT; running direct" >&2
     echo "[run_task]   start one with: headroom proxy --port $HEADROOM_PROXY_PORT" >&2
+    # Say so in the variable, not just on stderr. network_isolation_overlay()
+    # below refuses to run while this reads true, because a host-side proxy and
+    # an internal network cannot coexist -- but with no proxy actually LISTENING
+    # there is no conflict to refuse, only a flag left set. That refusal fired
+    # on a machine with no headroom running, and the way out of it was
+    # NETWORK_ISOLATION_OFF=1 in .env, which turned the egress block off for
+    # every run from then on. Clearing the flag here removes the reason anyone
+    # reached for that switch.
+    AGENT_HEADROOM_ENABLED=false
+    export AGENT_HEADROOM_ENABLED
     return 0
   fi
   export ANTHROPIC_BASE_URL="http://host.docker.internal:$HEADROOM_PROXY_PORT"
@@ -1077,6 +1124,51 @@ network_isolation_overlay() {
   ensure_image "egress-proxy:latest" >&2
   echo "[run_task] network isolation ON -- egress allowlist: api.anthropic.com" >&2
   echo "$overlay"
+}
+
+# Echo the path of a generated Claude Code --settings file whose PreToolUse hook
+# refuses egress commands before they run, or nothing if it cannot be built.
+#
+# WHY A HOOK WHEN THE ROUTER ALREADY BLOCKS
+#
+# It buys turns, not safety. Under isolation a `pip install` does not fail
+# quickly -- it opens a connection to a gateway that is not there and sits until
+# something times out, and the model then reasons about the error and tries
+# again with a different tool. One recorded run spent seven consecutive Bash
+# calls that way (npm, then apt-get, then chromium, then puppeteer) before
+# giving up, on a task where every fact it needed was already in the MCP
+# sidecars. The hook turns each of those into an immediate refusal that SAYS
+# what to use instead, so the model re-plans in one turn.
+#
+# WHY THE SCRIPT IS INLINED RATHER THAN MOUNTED
+#
+# tools/network/egress_rules.py is base64'd into the hook command itself. No
+# bind mount to add to every bundle's compose file, no second copy to drift, and
+# nothing on disk for an agent running as root to overwrite -- the rules the
+# hook enforces are byte-identical to the ones detect_internet_use.py imports
+# afterwards, because they are the same file.
+#
+# Gated on isolation being ON, exactly like DISALLOWED_TOOLS above: an operator
+# who asked for an open run must get one.
+egress_guard_settings() {
+  local guard="$REPO/tools/network/egress_rules.py"
+  if [ ! -f "$guard" ]; then
+    echo "[run_task] egress guard missing at $guard -- agent runs without it" >&2
+    return 0
+  fi
+
+  local out_dir="$OUTPUT_DIR/.egress-guard"
+  mkdir -p "$out_dir" 2>/dev/null || return 0
+  local out="$out_dir/claude-settings.json"
+
+  # Regenerated every run, never cached: a stale settings.json would enforce
+  # whatever the rules were the last time someone looked.
+  if ! python3 "$REPO/tools/network/make_guard_settings.py" "$guard" "$out" >&2; then
+    echo "[run_task] could not build the egress guard -- agent runs without it" >&2
+    return 0
+  fi
+  echo "[run_task] egress guard ON -- Bash egress is refused with an explanation" >&2
+  echo "$out"
 }
 
 # Grade the rubric channel on the host, between harbor and reshape.
@@ -1238,6 +1330,27 @@ stage_netaudit() {
     echo "[run_task]   and no proxy log -- nothing to audit, NOT a clean result." >&2
   fi
 
+  # A trajectory that PARSES and holds no tool calls is the other silent case,
+  # and it does not reach the branch above because the file exists. One recorded
+  # trial died on its first model call ("Weekly/Monthly Limit Exhausted"),
+  # published a prompt and an error, and audited as "ok  0 tool call(s)". It
+  # then counted as a full attempt: 0.0 alongside a 0.59, reported as a mean of
+  # 29.5. Not an internet finding, so it does not block -- but pass@k is
+  # measuring the API's availability, not the model's, and that has to be said.
+  local _norun=0 _aj
+  for _aj in "$TRAJ_DIR"/[Rr]un_*/internet_audit.json; do
+    [ -f "$_aj" ] || continue
+    [ "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("outcome",""))' "$_aj" 2>/dev/null)" = "no-run" ] \
+      && _norun=$((_norun+1))
+  done
+  if [ "$_norun" -gt 0 ]; then
+    echo "[run_task] internet audit: $_norun run(s) made NO tool calls" >&2
+    echo "[run_task]   The agent never acted -- usually a rate limit or an API" >&2
+    echo "[run_task]   error, not a task failure. They are still counted as" >&2
+    echo "[run_task]   attempts in summary.json and pass@k, so a mean reward" >&2
+    echo "[run_task]   over this job is diluted by runs that never happened." >&2
+  fi
+
   if [ "$seen" -eq 0 ]; then
     echo "[run_task] internet audit: nothing auditable under $TRAJ_DIR" >&2
     return 0
@@ -1261,7 +1374,12 @@ stage_netaudit() {
         breach)     _worst="breach"; break ;;
         unverified) [ "$_worst" = "denied" ] && _worst="unverified" ;;
         setup)      [ "$_worst" = "denied" ] && _worst="setup" ;;
-        clean|"")   ;;
+        # Neither is ranked. "clean" is an all-clear; "no-run" is an agent that
+        # never acted. Letting either into this ladder would put "the model
+        # tried to reach the internet" in the headline on the strength of a run
+        # where the model made no tool call at all. no-run is reported on its
+        # own above, where it can be worded as what it is.
+        clean|no-run|"")   ;;
       esac
     done
 
