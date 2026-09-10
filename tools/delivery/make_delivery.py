@@ -11,6 +11,10 @@ from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parent))
 from harbor_to_output import norm_reward, pct_to_reward 
 
+# tools/delivery/make_delivery.py -> the checkout root. Every path this
+# file masks is measured against it.
+REPO_ROOT = _Path(__file__).resolve().parents[2]
+
 # Host-local path masking, inline. Harbor stamps absolute host paths
 # (trial_uri, trials_dir, jobs_dir, tracebacks) into bookkeeping files, which
 # is how `/Users/<name>/...` strings end up in shipped bundles. A path holding
@@ -24,12 +28,52 @@ _ANCHORED_RE = re.compile(
 )
 _HOME_RE = re.compile(r"(?:file://)?/(?:Users|home)/[^/\s\"'\\]+")
 
-_TEXT_SUFFIXES = {".json", ".txt", ".md", ".xml", ".yaml", ".yml", ".log",
-                  ".toml", ".py", ".csv", ".html", ".cfg", ".ini"}
+# macOS mkdtemp: /var/folders/<2 chars>/<hash>/T. The hash is derived from the
+# uid, so it identifies the operator's account as surely as their name does.
+# Harbor writes these into the `docker compose -f ...` line it quotes back in
+# every environment-build failure, which is how they reach exception.txt,
+# result.json and job.log. /private is the real path, /var the symlink, and
+# both spellings turn up in the same message.
+_TMPDIR_RE = re.compile(r"(?:/private)?/var/folders/[^/\s\"']+/[^/\s\"']+/[A-Z]")
+
+_TEXT_SUFFIXES = {".json", ".jsonl", ".txt", ".md", ".xml", ".yaml", ".yml",
+                  ".log", ".toml", ".py", ".csv", ".html", ".cfg", ".ini"}
+
+
+def _repo_needles() -> list[tuple[str, str]]:
+    """(needle, replacement) pairs that cut this checkout's root off a path.
+
+    _ANCHORED_RE only fires on a path whose tail starts at one of the five
+    directories a delivered bundle points into. Everything else in the repo is
+    invisible to it -- which is why `--extra-docker-compose` shipped as
+    `~/Downloads/.../harness/tools/network/egress-proxy/overlay.yaml` in every
+    config.json we published. Anchoring on the repo root instead covers
+    `tools/`, `services/`, `scripts/` and any directory added later.
+
+    Two spellings, because Harbor collapses $HOME to `~` when it serialises
+    argv but writes the absolute path in a traceback; the `~` form is derived
+    from the repo path itself, not from this process's $HOME, so a tree
+    reshaped on one machine still masks when swept on another.
+    """
+    roots = [str(REPO_ROOT)]
+    head = _HOME_RE.match(str(REPO_ROOT))
+    if head and len(head.group(0)) < len(str(REPO_ROOT)):
+        roots.append("~" + str(REPO_ROOT)[len(head.group(0)):])
+    pairs = []
+    for r in roots:
+        for stem in (f"file://{r}", r):
+            # A bare root is a cwd or a --project-directory: emptying it would
+            # leave a broken value, so it becomes "." rather than "".
+            pairs += [(stem + "/", ""), (stem, ".")]
+    return sorted(set(pairs), key=lambda kv: len(kv[0]), reverse=True)
 
 
 def mask_local_paths(text: str) -> str:
-    return _HOME_RE.sub("~", _ANCHORED_RE.sub("", text))
+    text = _ANCHORED_RE.sub("", text)
+    for needle, repl in _repo_needles():
+        text = text.replace(needle, repl)
+    text = _TMPDIR_RE.sub("$TMPDIR", text)
+    return _HOME_RE.sub("~", text)
 
 
 def mask_tree(root: Path) -> list[Path]:
@@ -38,10 +82,12 @@ def mask_tree(root: Path) -> list[Path]:
     for p in sorted(root.rglob("*")):
         if not (p.is_file() and p.suffix.lower() in _TEXT_SUFFIXES):
             continue
-        text = p.read_text(encoding="utf-8", errors="replace")
+        # surrogateescape, not replace: a log with one non-UTF-8 byte in it
+        # must come back byte-identical apart from the paths we masked.
+        text = p.read_text(encoding="utf-8", errors="surrogateescape")
         masked = mask_local_paths(text)
         if masked != text:
-            p.write_text(masked, encoding="utf-8")
+            p.write_text(masked, encoding="utf-8", errors="surrogateescape")
             changed.append(p)
     return changed
 
@@ -232,11 +278,31 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Reformat output/<task>/ into delivery_output/<task>/"
     )
-    parser.add_argument("task_slug", help="Task slug, e.g. bull-street-lot-expense-claim")
+    parser.add_argument("task_slug", nargs="?",
+                        help="Task slug, e.g. bull-street-lot-expense-claim")
     parser.add_argument("--output-dir", default="output")
     parser.add_argument("--tasks-dir", default="tasks")
     parser.add_argument("--delivery-dir", default="delivery_output")
+    # The masking sweep on its own, over a directory that is already in its
+    # final shape. harbor_to_output.py runs it as part of reshape, but two
+    # stages write after that -- netaudit's internet_audit.json and finance's
+    # receipt -- so run_task.sh calls this again once they are done. Also the
+    # way to clean a tree reshaped before these rules covered it.
+    parser.add_argument("--mask-only", metavar="DIR",
+                        help="mask host-local paths under DIR and exit")
     args = parser.parse_args()
+
+    if args.mask_only:
+        root = Path(args.mask_only)
+        if not root.is_dir():
+            print(f"no such directory: {root}", file=sys.stderr)
+            raise SystemExit(1)
+        for p in mask_tree(root):
+            print(f"masked local paths in: {p}")
+        return
+
+    if not args.task_slug:
+        parser.error("task_slug is required unless --mask-only is given")
 
     base = Path(__file__).resolve().parent.parent
     make_delivery(

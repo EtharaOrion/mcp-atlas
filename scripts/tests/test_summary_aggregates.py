@@ -36,6 +36,18 @@ def _load_module():
 h2o = _load_module()
 
 
+def _load_delivery():
+    spec = importlib.util.spec_from_file_location(
+        "make_delivery", _SCRIPTS.parent / "tools" / "delivery" / "make_delivery.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+md = _load_delivery()
+
+
 def _build_job(
     tmp_path: Path, per_trial: list[dict], trial_reward: dict | None = None,
     agent_cost: float | None = None,
@@ -201,11 +213,6 @@ def test_mean_or_none_distinguishes_unmeasured_from_zero():
     assert h2o._mean_or_none([0.9, 0.5]) == pytest.approx(0.7)
     # The old helper's behaviour, kept for counts where zero is the truth.
     assert h2o._mean([]) == 0.0
-
-
-def test_report_renders_unmeasured_without_crashing():
-    assert h2o._fmt_metric(None) == "unmeasured"
-    assert h2o._fmt_metric(0.5) == "0.50"
 
 
 def test_published_reward_json_is_cut_to_the_trees_precision(tmp_path):
@@ -467,3 +474,118 @@ def test_raw_mirror_keeps_full_precision_when_publishing_in_place(tmp_path):
     assert mirrored.exists(), "no .raw mirror staged"
     assert cost(run_file) == 6.79                    # published: cut, truncated
     assert cost(mirrored) == 6.7969325000000005      # mirror: every digit kept
+
+
+# ---------------------------------------------------------------------------
+# Host-local path masking (make_delivery.mask_local_paths)
+#
+# Harbor writes the argv it ran with into config.json and quotes the whole
+# failing `docker compose ... -f <path>` line into exception.txt, result.json
+# and job.log. Every one of those carries the operator's home directory. The
+# mask used to anchor only on output/tasks/jobs/input/delivery_output, so a
+# path into any OTHER repo directory shipped intact -- `--extra-docker-compose`
+# appeared as `~/.../harness/tools/network/egress-proxy/overlay.yaml` in every
+# published config.json. These pin what must be cut and, just as importantly,
+# what must survive.
+# ---------------------------------------------------------------------------
+
+def _mask(text: str, repo="/Users/operator/work/harness", monkeypatch=None) -> str:
+    monkeypatch.setattr(md, "REPO_ROOT", Path(repo))
+    return md.mask_local_paths(text)
+
+
+@pytest.mark.parametrize("raw,want", [
+    # The regression: a repo path with no delivery anchor in it.
+    ("/Users/operator/work/harness/tools/network/egress-proxy/overlay.yaml",
+     "tools/network/egress-proxy/overlay.yaml"),
+    # Harbor collapses $HOME to `~` when it serialises argv, so the same file
+    # reaches disk under two spellings and both have to go.
+    ("~/work/harness/tools/network/egress-proxy/overlay.yaml",
+     "tools/network/egress-proxy/overlay.yaml"),
+    # Still handled by the original anchored rule.
+    ("/Users/operator/work/harness/output/t/trajectory/run_1",
+     "output/t/trajectory/run_1"),
+    # A bare repo root is a cwd or a --project-directory: emptying it would
+    # leave a broken value.
+    ("cwd=/Users/operator/work/harness", "cwd=."),
+    # macOS mkdtemp: the folder hash is derived from the uid.
+    ("-f /private/var/folders/1b/d687yx7j39l_8_smp0000gn/T/tmpu3n/x.json",
+     "-f $TMPDIR/tmpu3n/x.json"),
+    ("/var/folders/1b/d687yx7j39l_8_smp0000gn/T/tmp6/y.json",
+     "$TMPDIR/tmp6/y.json"),
+    # Home-rooted but outside the repo: head replaced, tail kept.
+    ("/Users/someone/.claude/settings.json", "~/.claude/settings.json"),
+    ("/home/runner/.local/share/uv/tools/harbor", "~/.local/share/uv/tools/harbor"),
+])
+def test_mask_cuts_host_paths(raw, want, monkeypatch):
+    assert _mask(raw, monkeypatch=monkeypatch) == want
+
+
+@pytest.mark.parametrize("keep", [
+    "/app/solution.docx",          # inside the container: real and reproducible
+    "/logs/agent/agent.log",
+    "tasks/some-task/environment/docker-compose.yaml",   # already relative
+    "output/some-task/trajectory/run_1",
+])
+def test_mask_leaves_container_and_relative_paths_alone(keep, monkeypatch):
+    assert _mask(keep, monkeypatch=monkeypatch) == keep
+
+
+def test_mask_keeps_json_parseable_and_is_idempotent(monkeypatch):
+    doc = {"environment": {"extra_docker_compose": [
+        "/Users/operator/work/harness/tools/network/egress-proxy/overlay.yaml"]}}
+    once = _mask(json.dumps(doc, indent=4), monkeypatch=monkeypatch)
+    assert json.loads(once)["environment"]["extra_docker_compose"] == [
+        "tools/network/egress-proxy/overlay.yaml"]
+    # The sweep runs again at the end of finance over a tree reshape already
+    # masked; a second pass must be a no-op.
+    assert _mask(once, monkeypatch=monkeypatch) == once
+
+
+def test_mask_tree_rewrites_text_and_skips_binaries(tmp_path, monkeypatch):
+    monkeypatch.setattr(md, "REPO_ROOT", Path("/Users/operator/work/harness"))
+    run = tmp_path / "trajectory" / "run_1"
+    (run / "artifacts").mkdir(parents=True)
+    cfg = tmp_path / "config.json"
+    cfg.write_text(json.dumps({"f": "/Users/operator/work/harness/tools/x.yaml"}))
+    exc = run / "exception.txt"
+    exc.write_text("RuntimeError: docker compose -f ~/work/harness/tools/x.yaml\n")
+    # An agent artifact that happens to contain the byte pattern. Rewriting it
+    # would change what the run is claimed to have produced.
+    art = run / "artifacts" / "report.docx"
+    art.write_bytes(b"/Users/operator/work/harness/tools/x.yaml")
+
+    changed = md.mask_tree(tmp_path)
+
+    assert set(changed) == {cfg, exc}
+    assert json.loads(cfg.read_text())["f"] == "tools/x.yaml"
+    assert "/Users/" not in exc.read_text() and "~/work" not in exc.read_text()
+    assert art.read_bytes() == b"/Users/operator/work/harness/tools/x.yaml"
+
+
+def test_only_trials_limits_what_becomes_a_run(tmp_path):
+    """Stale trial dirs in a job dir must not each become a trajectory/run_N.
+
+    Harbor leaves the directory of any trial that died behind, and the glob that
+    selects trials cannot tell those from the one the current invocation just
+    produced -- so a single N=1 run emitted several runs, each counted as an
+    attempt by the aggregates above. run_task.sh names the trials it owns.
+    """
+    job, out = _build_job(tmp_path, [{"reward": 0.0}, {"reward": 0.0}])
+    written = h2o.convert_job(job, out, ks=[], run_offset=0, only_trials={"trial_1"})
+    runs = sorted((written[0] / "trajectory").glob("run_*"))
+    assert [r.name for r in runs] == ["run_1"]
+
+
+def test_no_filter_still_converts_every_trial(tmp_path):
+    job, out = _build_job(tmp_path, [{"reward": 0.0}, {"reward": 0.0}])
+    written = h2o.convert_job(job, out, ks=[], run_offset=0)
+    runs = sorted((written[0] / "trajectory").glob("run_*"))
+    assert [r.name for r in runs] == ["run_1", "run_2"]
+
+
+def test_an_empty_only_trials_converts_nothing(tmp_path):
+    """"harbor made no trial" must not decay into "convert whatever is lying
+    around" -- that is the extra-runs bug with an extra step."""
+    job, out = _build_job(tmp_path, [{"reward": 0.0}])
+    assert h2o.convert_job(job, out, ks=[], run_offset=0, only_trials=set()) == []

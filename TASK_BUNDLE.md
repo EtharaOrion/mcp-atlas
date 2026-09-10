@@ -652,7 +652,6 @@ output/<task>/
 │                       this on every startup, so it must stay in harbor's schema
 │                       (pass_at_k is dict[int, float]); a file it cannot parse
 │                       makes the job dir unopenable for every later run
-├── report.md             human-readable summary
 ├── pass_summary.json     pass/fail rollup
 ├── pass@N.json           pass/reward rollup (N = run count, e.g. pass@2.json for 2 runs);
 │                       per_trial_rewards (top level and in per_task[]) is keyed
