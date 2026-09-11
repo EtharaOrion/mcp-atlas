@@ -177,7 +177,20 @@ _DURATION_RE = re.compile(r"\d+(?:\.\d+)?[smhd]?$")
 
 # Shell grouping that starts a new command. Kept as a capture group so
 # re.split returns the delimiters and _segments can tell them from words.
-_GROUPING_RE = re.compile(r"(\$\(|[(){}`])")
+#
+# BRACES ARE DELIBERATELY ABSENT, and the omission is load-bearing. `{` and `}`
+# were here for shell brace groups (`{ cmd; }`) and cost a real run: a sidecar
+# health probe,
+#
+#   curl -s -m 2 -o /dev/null -w "$p:%{http_code}\n" http://light-servers:$p/
+#
+# split at the braces of curl's own format string, which tore the URL off the
+# end of the curl segment. The command was then reported as "curl with no
+# resolvable host operand" -- a BLOCKING finding, on the most ordinary thing an
+# agent does in these bundles. ${VAR}, awk '{print}' and jq '{a:.b}' are the
+# same shape. A brace group is rare in agent-written shell and its inner `;`
+# already separates the commands inside it, so nothing is lost by leaving it out.
+_GROUPING_RE = re.compile(r"(\$\(|[()`])")
 
 # Output-suppressing tails. These do not change what a command REACHES, only
 # what it can be proven to have reached afterwards -- `apt-get install chromium
@@ -527,8 +540,18 @@ def classify_tool(tool_name: str, tool_input: dict) -> list[Finding]:
 # bytes the auditor imports.
 # --------------------------------------------------------------------------
 
+# The first line of DENIAL, split out so the audit can recognise its own work.
+#
+# When this hook refuses a command, the command never runs and the step's
+# response is this text instead of any program's output. That is the difference
+# between "the proxy denied it" and "it never reached the proxy", and without a
+# marker the audit cannot tell them apart -- it reported a hook refusal as
+# "the egress proxy refused every attempt", which is a sentence about a
+# component that never saw the request.
+DENIAL_MARKER = "BLOCKED: this command reaches the public internet"
+
 DENIAL = """\
-BLOCKED: this command reaches the public internet, and this task is closed-world.
+{marker}, and this task is closed-world.
 {reasons}
 
 There is no route out of this container. Retrying, or reaching for a different
@@ -561,7 +584,7 @@ def _hook(stdin_text: str) -> int:
     if not findings:
         return 0
     reasons = "\n".join(f"  - {f.detail}" for f in findings)
-    sys.stderr.write(DENIAL.format(reasons=reasons) + "\n")
+    sys.stderr.write(DENIAL.format(marker=DENIAL_MARKER, reasons=reasons) + "\n")
     return 2
 
 

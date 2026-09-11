@@ -5,7 +5,7 @@
                                   [--access-log run_N/logs/egress-access.log]
 
 Exit 0 = clean. Exit 2 = the model reached for the internet; the run is
-blocked. Whether it got there is a separate question -- see _outcome().
+blocked. Whether it got there is a separate question -- see _verdict().
 
 WHY THIS EXISTS
 
@@ -82,6 +82,7 @@ import argparse
 import json
 import re
 import sys
+import textwrap
 from pathlib import Path
 
 # --------------------------------------------------------------------------
@@ -107,6 +108,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from egress_rules import (            # noqa: E402
+    DENIAL_MARKER,
     GIT_NETWORK_SUBCOMMANDS,
     HEREDOC_RE,
     INLINE_NETWORK_HINTS,
@@ -188,18 +190,21 @@ def _c(code: str, s: str) -> str:
 
 
 def flag(step: int | None, tool: str, kind: str, detail: str, evidence: str,
-         *, suppressed: bool = False) -> None:
+         *, suppressed: bool = False, stopped_by: str | None = None) -> None:
     """step is None for findings that come from the proxy log rather than a
     trajectory step -- they are real findings and must block, but they have no
     step number to point at.
 
     `suppressed` marks a command that piped its own output away, so the absence
-    of an install-success marker proves nothing. _outcome() reads it.
+    of an install-success marker proves nothing. `stopped_by` names what refused
+    the command, when something did. _verdict() and _stopped_by() read both.
     """
     record = {"step": step, "tool": tool, "kind": kind, "detail": detail,
               "evidence": evidence[:400]}
     if suppressed:
         record["evidence_suppressed"] = True
+    if stopped_by:
+        record["stopped_by"] = stopped_by
     FINDINGS.append(record)
 
 
@@ -434,7 +439,7 @@ def scan(traj: dict) -> None:
     lines -- "Processing triggers for libc-bin" -- and drops every "Setting up"
     line above them, so the markers find nothing and the strongest available
     evidence reads as absent. Absent is not negative, so the flag is carried
-    onto the finding and _outcome() decides what it means: with a proxy log,
+    onto the finding and _verdict() decides what it means: with a proxy log,
     squid is the witness and settles it; without one, nothing could have stopped
     the install and the agent removed the only other record of it.
     """
@@ -442,10 +447,17 @@ def scan(traj: dict) -> None:
         cmd = str(args.get("command") or "") if tool.split("__")[-1] == "Bash" else ""
         for f in classify_tool(tool, args):
             evidence = cmd or str(args.get("url") or args.get("query") or "")
+            out = response_text(response)
+            # The PreToolUse hook writes its refusal where the command's output
+            # would have been, so the step's own response says whether the
+            # command ran at all. Nothing else can tell a hook refusal from a
+            # proxy denial, and calling one the other names a component that
+            # was never involved.
+            by = "hook" if DENIAL_MARKER in out else None
             if f.kind != "package-install":
-                flag(step, tool, f.kind, f.detail, evidence)
+                flag(step, tool, f.kind, f.detail, evidence, stopped_by=by)
                 continue
-            landed = install_landed(response)
+            landed = None if by else install_landed(response)
             if landed:
                 flag(step, tool, "package-installed",
                      f.detail.replace("reaches", "reached")
@@ -453,7 +465,7 @@ def scan(traj: dict) -> None:
                      f"{evidence}  ->  {landed}")
             else:
                 flag(step, tool, "package-install", f.detail, evidence,
-                     suppressed=f.suppressed)
+                     suppressed=f.suppressed, stopped_by=by)
 
 
 def main(argv=None) -> int:
@@ -466,6 +478,9 @@ def main(argv=None) -> int:
     ap.add_argument("--access-log", type=Path,
                     help="squid access.log for this run; adds proxy ground truth "
                          "to the trajectory inference")
+    ap.add_argument("--strict", action="store_true",
+                    help="fail on a BLOCKED attempt too, not just on one that "
+                         "reached the internet")
     a = ap.parse_args(argv)
 
     if not a.trajectory.is_file():
@@ -480,15 +495,7 @@ def main(argv=None) -> int:
         if not (a.access_log and a.access_log.is_file()):
             return 0
         attempts = scan_access_log(a.access_log)
-        _report(a, total=0, attempts=attempts)
-        if FINDINGS and not a.warn_only:
-            # Say WHOSE traffic it was. This path has no trajectory by
-            # definition, so the words here are the only thing standing between
-            # an operator and a hunt through a transcript that does not exist.
-            print(f"\n  blocked: {_VERDICT_LINE[_outcome(attempts)]} "
-                  f"({len(FINDINGS)} finding(s)); this task is closed-world.")
-            return 2
-        return 0
+        return _exit_code(_report(a, total=0, attempts=attempts), a)
 
     try:
         traj = json.loads(a.trajectory.read_text())
@@ -512,120 +519,223 @@ def main(argv=None) -> int:
             print(f"  {_c('33', 'warn')}  no proxy log at {a.access_log}; "
                   f"trajectory-only audit")
 
-    _report(a, total=total, attempts=attempts)
+    verdict = _report(a, total=total, attempts=attempts)
+    return _exit_code(verdict, a)
 
-    if FINDINGS and not a.warn_only:
-        print(f"\n  blocked: {_VERDICT_LINE[_outcome(attempts)]} "
-              f"({len(FINDINGS)} finding(s)); this task is closed-world.")
+
+# --------------------------------------------------------------------------
+# VERDICT
+#
+# Three states an operator actually cares about, plus two that describe a run
+# that did not happen. The old vocabulary had five words for the middle state
+# alone (denied / unverified / setup) and no word at all for the case that now
+# happens most: the PreToolUse hook refused the command, so it never ran and the
+# proxy never saw it. The report said "the egress proxy refused every attempt",
+# which named a component that was not involved.
+# --------------------------------------------------------------------------
+
+REACHED = "reached_internet"        # it got out
+ATTEMPTED = "attempt_blocked"       # it reached for the web and was PROVABLY stopped
+UNVERIFIED = "attempt_unverified"   # it reached for the web; nothing witnessed the outcome
+NO_ATTEMPT = "no_attempt"           # it never reached for the web
+NO_ACTIVITY = "no_agent_activity"   # a trajectory with zero tool calls
+SETUP = "setup_traffic"             # traffic before the agent ran; not the model
+
+# Severity drives the exit code, and the split is the point: only REACHED is a
+# failure. An attempt that was refused is the system WORKING -- the model probed,
+# was told no, and adapted, which is the behaviour the guard was built to
+# produce. Failing the run for it would discard good runs and teach nobody
+# anything. --strict restores the older, harsher policy for anyone who wants it.
+# ATTEMPTED is a warning and UNVERIFIED is a failure, and the gap between them
+# is the whole reason both exist. "Nothing left the sandbox" is a claim, and it
+# needs a witness: the hook's refusal in the step's own output, or a proxy log.
+# With neither, there was no egress proxy in the path at all -- which means the
+# run was not isolated and the attempt most likely succeeded. That is the shape
+# of the run that started all of this: it audited as "unverified", shipped, and
+# had in fact installed Pillow, puppeteer and chromium from the open web.
+SEVERITY = {
+    REACHED: "fail",
+    UNVERIFIED: "fail",
+    ATTEMPTED: "warn",
+    NO_ATTEMPT: "ok",
+    NO_ACTIVITY: "warn",
+    SETUP: "warn",
+}
+
+
+def _stopped_by() -> str | None:
+    """What actually stopped the attempts, in the words of whatever did it.
+
+    Per-finding, `stopped_by` is recorded at scan time from the step's own
+    response. Here it is collapsed to one word for the run: "hook" and "proxy"
+    only when EVERY finding agrees, so a mixed run reads "mixed" rather than
+    crediting one layer with the other's work.
+    """
+    marks = {f.get("stopped_by") for f in FINDINGS if f["step"] is not None}
+    marks.discard(None)
+    if not marks:
+        return None
+    return marks.pop() if len(marks) == 1 else "mixed"
+
+
+def _verdict(attempts: list[dict]) -> str:
+    if not HAD_TRAJECTORY:
+        return SETUP if FINDINGS else NO_ATTEMPT
+    if not FINDINGS:
+        return NO_ACTIVITY if not TOOL_CALLS else NO_ATTEMPT
+
+    # Ground truth of reach, in order of strength: the proxy let a non-allowlist
+    # host through, or a command's own output shows an index was reached.
+    if any(f["kind"] in ("allowlist-breach", "package-installed") for f in FINDINGS):
+        return REACHED
+
+    # An install whose output was piped away proves nothing by itself. What
+    # decides it is whether anything was in a position to stop it:
+    #   hook refused it      the command never ran; there is nothing to verify
+    #   a proxy log exists   squid saw everything and let nothing out, or the
+    #                        rule above would already have returned REACHED
+    #   neither              nothing could have stopped it and the agent removed
+    #                        the only other witness
+    unproven = [f for f in FINDINGS if f.get("evidence_suppressed")
+                and f.get("stopped_by") != "hook"]
+    if unproven and not attempts:
+        return REACHED
+
+    # Can every attempt be SHOWN to have been stopped? Either the hook refused
+    # it before it ran, or a proxy log exists and (per the rule above) carries
+    # no breach. Otherwise nothing witnessed the outcome and saying "blocked"
+    # would be inventing the evidence.
+    steps = [f for f in FINDINGS if f["step"] is not None]
+    if attempts or (steps and all(f.get("stopped_by") for f in steps)):
+        return ATTEMPTED
+    return UNVERIFIED
+
+
+def _summary(verdict: str, attempts: list[dict]) -> str:
+    """One line of plain English. This is what gets read; everything else is
+    evidence for it."""
+    n = len([f for f in FINDINGS if f["step"] is not None]) or len(FINDINGS)
+    by = _stopped_by()
+    if verdict == REACHED:
+        landed = sum(1 for f in FINDINGS if f["kind"] == "package-installed")
+        if landed:
+            return (f"the model reached the open internet -- {landed} package "
+                    f"install(s) completed from a public index")
+        return "the model reached the open internet -- traffic left the sandbox"
+    if verdict == ATTEMPTED:
+        how = {"hook": "refused by the egress guard before it ran",
+               "proxy": "denied by the egress proxy",
+               "mixed": "refused by the egress guard and the proxy"}.get(
+                   by, "refused")
+        return (f"the model reached for the internet {n} time(s); every attempt "
+                f"was {how}, and nothing left the sandbox")
+    if verdict == UNVERIFIED:
+        return (f"the model reached for the internet {n} time(s) and nothing "
+                f"witnessed the outcome -- no egress proxy was in the path, so "
+                f"the run was not isolated and the attempts most likely succeeded")
+    if verdict == NO_ATTEMPT:
+        return "the model never reached for the internet"
+    if verdict == NO_ACTIVITY:
+        return "the agent made no tool calls -- there was nothing to audit"
+    return ("traffic was attempted before the agent ran (harbor's own setup) "
+            "and refused; the model made no tool calls")
+
+
+def _proxy_summary(attempts: list[dict]) -> dict:
+    """Counts plus the host list.
+
+    The hosts matter more than the counts. "28 requests, 0 denied" is
+    ambiguous -- it reads the same whether the proxy allowed only
+    api.anthropic.com or allowed everything. Naming them settles it.
+    """
+    hosts = sorted({r["host"] for r in attempts})
+    return {
+        "requests": len(attempts),
+        "allowed": sum(1 for r in attempts if not r["denied"]),
+        "denied": sum(1 for r in attempts if r["denied"]),
+        "hosts": hosts,
+        "attempts": attempts,
+    }
+
+
+def _exit_code(verdict: str, a) -> int:
+    """2 blocks the run, 0 does not.
+
+    Only REACHED blocks by default. An attempt that was refused is the block
+    working: the model probed, the guard said no, and the model adapted -- one
+    recorded run did exactly that in a single turn and went on to finish. Failing
+    it would throw away a good run and, worse, would make the audit's loudest
+    signal fire on the case where nothing went wrong, which is how an operator
+    learns to ignore it.
+
+    --strict (INTERNET_AUDIT_STRICT=1 in run_task.sh) restores the older policy
+    for anyone who wants reaching-for-the-web to be disqualifying in itself.
+    """
+    if a.warn_only:
+        return 0
+    if SEVERITY[verdict] == "fail":
+        return 2
+    if a.strict and verdict in (ATTEMPTED, UNVERIFIED, SETUP):
         return 2
     return 0
 
 
-def _outcome(attempts: list[dict]) -> str:
-    """Did anything actually REACH the open web, or was it only attempted?
+_LABEL = {"ok": ("32", "OK  "), "warn": ("33", "WARN"), "fail": ("31", "FAIL")}
 
-    The distinction is not cosmetic. A denied attempt means the egress proxy
-    did its job; reporting it as "the model used the internet" describes a
-    working defence as a breach, and an operator reading that line goes looking
-    for a leak that never happened.
 
-      "breach"     something got out. Two independent witnesses can say so: an
-                   allowlist-breach line in the proxy log (a host that was NOT
-                   denied and is NOT on the allowlist), or a package-installed
-                   finding (a command whose own output shows an index was
-                   reached and a package fetched). Either is sufficient -- the
-                   second is what still speaks on a run with no proxy log.
-      "clean"      no findings at all. Stated explicitly because the caller
-                   aggregates this field across runs, and a run with nothing to
-                   report must not land in that aggregate wearing one of the
-                   words below.
-      "setup"      findings, but no trajectory to attribute them to: the agent
-                   never ran, so this is harbor's setup traffic, not the model.
-      "denied"     a proxy log was read and carries no breach, so squid's own
-                   record is ground truth that every attempt was refused.
-      "unverified" no proxy log (NETWORK_ISOLATION_OFF=1, or capture broken).
-                   The trajectory shows the attempt; nothing shows the outcome,
-                   and on an open network the attempt most likely succeeded.
-                   Never call this "denied" -- that is the claim we cannot make.
-      "no-run"     a trajectory that parses and holds no tool calls. The agent
-                   never acted, so there was nothing to audit and "clean" would
-                   be a green tick on a run that did not happen.
+def _report(a, *, total: int, attempts: list[dict]) -> str:
+    """Print the audit, write its JSON, return the verdict.
 
-    THE SUPPRESSED-INSTALL RULE, and why it is not the same as "unverified".
-
-    An install whose output was piped away (`... | tail -3`) leaves no marker,
-    and the absence of a marker is not evidence the install failed. What decides
-    it is whether anything ELSE could have:
-
-      with a proxy log     squid saw every packet. If it had let the index
-                           through, that is an allowlist-breach line and the
-                           first rule already returned "breach". It did not, so
-                           the install was refused -- "denied" is the truth.
-      with no proxy log    nothing was in the path to refuse it, and the command
-                           removed the only other witness. Calling that
-                           "unverified" understates a run that on any honest
-                           reading fetched the package.
+    One block per run, and every line earns its place: the verdict, then the
+    evidence for it, then what the proxy saw. No banner, no repetition of the
+    verdict in three different wordings -- that is what made the old output
+    unreadable and, on one run, wrong.
     """
-    if any(f["kind"] in ("allowlist-breach", "package-installed") for f in FINDINGS):
-        return "breach"
-    if not FINDINGS:
-        return "no-run" if HAD_TRAJECTORY and not TOOL_CALLS else "clean"
-    if not HAD_TRAJECTORY:
-        return "setup"
-    if attempts:
-        return "denied"
-    if any(f.get("evidence_suppressed") for f in FINDINGS):
-        return "breach"
-    return "unverified"
+    verdict = _verdict(attempts)
+    severity = SEVERITY[verdict]
+    colour, label = _LABEL[severity]
 
+    name = a.trajectory.parent.parent.name or a.trajectory.name
+    print(f"== internet audit: {name} ==")
+    # Wrapped, and continuation lines align under the first word rather than
+    # under the label. An unwrapped verdict ran to 180 characters and folded
+    # wherever the terminal happened to be, which buried the one line that
+    # matters in the one place it is always read.
+    for i, line in enumerate(textwrap.wrap(_summary(verdict, attempts), 72)):
+        lead = f"  {_c(colour, label)}  " if i == 0 else " " * 8
+        print(f"{lead}{line}")
 
-_VERDICT_LINE = {
-    "breach": "the model reached the open internet",
-    "clean": "no internet access",
-    "no-run": "the agent made no tool calls; there was nothing to audit",
-    "setup": "traffic was attempted before the agent ran (harbor's agent setup) "
-             "and denied; the model made no tool calls",
-    "denied": "the model tried to reach the internet and every attempt was denied",
-    "unverified": "the model tried to reach the internet (no proxy log -- "
-                  "whether it succeeded is unverified)",
-}
-
-
-def _report(a, *, total: int, attempts: list[dict]) -> None:
-    """Print the audit and write its JSON. Shared by both entry paths above."""
-    print(f"== internet use audit: {a.trajectory} ==")
-    if not FINDINGS and HAD_TRAJECTORY and not total:
-        # Not a finding and not a block -- an empty trajectory is not
-        # misbehaviour. But it must not print as a clean audit either: the run
-        # this was written for died on its first model call, made no tool calls,
-        # and was reported as "ok  0 tool call(s), no internet access".
-        print(f"  {_c('33', 'INVALID')}  the agent made no tool calls -- "
-              f"nothing was audited, and this is NOT a clean run")
-    elif not FINDINGS:
-        print(f"  {_c('32', 'ok')}    {total} tool call(s), no internet access")
-    else:
-        for f in FINDINGS:
-            where = "proxy" if f["step"] is None else f"step {f['step']}"
-            print(f"  {_c('31', 'FAIL')}  {where}: [{f['kind']}] {f['detail']}")
-            print(f"        {f['evidence'].splitlines()[0][:160]}")
+    for f in FINDINGS:
+        where = "proxy" if f["step"] is None else f"step {f['step']}"
+        print(f"        {where:>9}  {f['detail']}")
+        print(f"        {'':>9}  {f['evidence'].splitlines()[0][:150]}")
 
     if attempts:
-        # The positive half of the record. An allowed line to api.anthropic.com
-        # is proof the proxy was in the path at all -- a log with no allowed
-        # lines and no denials means the capture is broken, not that the run
-        # was clean, and only printing the counts makes that visible.
-        allowed = sum(1 for r in attempts if not r["denied"])
-        denied = sum(1 for r in attempts if r["denied"])
-        infra = sum(1 for r in attempts if r.get("verdict") == "cli_infrastructure")
-        print(f"  {_c('32', 'ok')}    proxy log: {len(attempts)} request(s), "
-              f"{allowed} allowed, {denied} denied ({infra} CLI infrastructure)")
+        p = _proxy_summary(attempts)
+        shown = ", ".join(p["hosts"][:3]) + (", ..." if len(p["hosts"]) > 3 else "")
+        print(f"        {'proxy':>9}  {p['requests']} request(s) to {shown}"
+              f" -- {p['denied']} denied")
+    elif HAD_TRAJECTORY and verdict != NO_ACTIVITY:
+        # Absence of a proxy log is itself a finding about the RUN's setup: it
+        # means no egress proxy was in the path, so nothing could have been
+        # denied and no claim about what left the container is verifiable.
+        print(f"        {'proxy':>9}  no log -- the run had no egress proxy in "
+              f"the path")
 
     if a.json:
         a.json.parent.mkdir(parents=True, exist_ok=True)
-        a.json.write_text(json.dumps(
-            {"used_internet": bool(FINDINGS), "outcome": _outcome(attempts),
-             "tool_calls": total,
-             "findings": FINDINGS, "proxy_attempts": attempts}, indent=2))
+        a.json.write_text(json.dumps({
+            "verdict": verdict,
+            "summary": _summary(verdict, attempts),
+            "severity": severity,
+            "attempted_internet": verdict in (REACHED, ATTEMPTED, UNVERIFIED, SETUP),
+            "reached_internet": verdict == REACHED,
+            "stopped_by": _stopped_by(),
+            "tool_calls": total,
+            "findings": FINDINGS,
+            "proxy": _proxy_summary(attempts),
+        }, indent=2))
+    return verdict
 
 
 if __name__ == "__main__":

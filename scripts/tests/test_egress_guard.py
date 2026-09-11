@@ -211,7 +211,11 @@ def test_hook_and_audit_agree(cmd, tmp_path):
     traj = tmp_path / "t.json"
     traj.write_text(json.dumps(
         {"steps": [{"tool": "Bash", "arguments": {"command": cmd}}]}))
-    audit = subprocess.run([sys.executable, str(DETECT), str(traj)],
+    # --strict, because the question here is "did both recognise this as
+    # egress?", not "did both withhold delivery?". By default the audit only
+    # fails a run that actually REACHED the internet, so without the flag every
+    # blocked-attempt case would read as a disagreement it is not.
+    audit = subprocess.run([sys.executable, str(DETECT), str(traj), "--strict"],
                            capture_output=True, text=True)
 
     hook_blocked = hook_bash(cmd).returncode == 2

@@ -17,6 +17,7 @@ is what Compose *resolves*, and the implicit default network only appears there.
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import tomllib
@@ -383,3 +384,118 @@ def test_dotenv_cannot_disable_network_isolation(tmp_path):
     # Every other key must still load, or the guard has broken .env instead of
     # narrowing it.
     assert "PROBE=[loaded]" in combined, combined
+
+
+# --- "delivery withheld" has to be true -------------------------------------
+
+# A trajectory shaped to produce each verdict. The stage re-runs the detector,
+# so seeding the audit JSON by hand would be overwritten -- and seeding the
+# TRAJECTORY instead means these tests exercise the real path end to end.
+_HOOK_REFUSAL = ("PreToolUse:Bash hook error: BLOCKED: this command reaches the "
+                 "public internet, and this task is closed-world.")
+_TRAJECTORIES = {
+    # it got out: the command's own output proves the index answered
+    "reached_internet": ("pip install pandas", "Successfully installed pandas-2.2.3"),
+    # it tried and the guard refused it before it ran
+    "attempt_blocked": ("pip install pandas", _HOOK_REFUSAL),
+    # it tried and nothing witnessed the outcome
+    "attempt_unverified": ("pip install pandas", None),
+    # it never reached for the web
+    "no_attempt": ("ls -la /workspace/data", "data"),
+}
+
+
+def _drive_netaudit(tmp_path, verdicts: dict, **env):
+    """Run run_task.sh's stage_netaudit over a synthetic run tree.
+
+    The function is lifted out of the script rather than reached through a whole
+    pipeline run: the thing under test is what it does with the per-run verdicts
+    and the delivered directory, and a full run would take an hour to say so.
+    """
+    import re
+    import subprocess
+
+    body = RUN_TASK.read_text()
+    m = re.search(r"^stage_netaudit\(\) \{.*?^\}", body, re.S | re.M)
+    assert m, "stage_netaudit not found in run_task.sh"
+
+    out_dir = tmp_path / "output"
+    traj = out_dir / "job" / "trajectory"
+    for name, verdict in verdicts.items():
+        cmd, resp = _TRAJECTORIES[verdict]
+        step = {"tool": "Bash", "arguments": {"command": cmd}}
+        if resp is not None:
+            step["response"] = resp
+        d = traj / name
+        (d / "agent").mkdir(parents=True)
+        (d / "agent" / "trajectory.json").write_text(json.dumps({"steps": [step]}))
+
+    delivered = tmp_path / "delivery_output" / "job"
+    delivered.mkdir(parents=True)
+    (delivered / "trajectory").mkdir()
+
+    driver = tmp_path / "drive.sh"
+    driver.write_text(
+        "set -u\n"
+        f'REPO="{REPO}"\n'
+        f'OUTPUT_DIR="{out_dir}"\n'
+        f'TRAJ_DIR="{traj}"\n'
+        'OUT_SLUG="job"\n'
+        + m.group(0) + "\n"
+        "stage_netaudit\n"
+        'echo "STAGE_RC=$?"\n'
+    )
+    proc = subprocess.run(["bash", str(driver)], capture_output=True, text=True,
+                          env={**os.environ, **{k: str(v) for k, v in env.items()}})
+    # The verdicts the stage actually computed, so a mis-seeded fixture fails
+    # here rather than as a confusing assertion about delivery.
+    got = {d.name: json.loads((d / "internet_audit.json").read_text())["verdict"]
+           for d in sorted(traj.iterdir()) if (d / "internet_audit.json").is_file()}
+    assert got == verdicts, f"fixture produced {got}, wanted {verdicts}"
+    return proc, delivered
+
+
+def test_delivery_is_actually_withdrawn_on_a_breach(tmp_path):
+    """The message used to be false.
+
+    harbor_to_output.py writes delivery_output/ at the END of the reshape, which
+    is before this stage runs -- so "Not delivering this run" was printed over a
+    directory that had already been written, and the breach run shipped.
+    """
+    proc, delivered = _drive_netaudit(tmp_path, {"run_1": "reached_internet"})
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert not delivered.exists(), (
+        "delivery_output still holds the run the audit refused to deliver"
+    )
+    assert "WITHHELD" in proc.stderr, proc.stderr
+
+
+def test_a_blocked_attempt_still_delivers(tmp_path):
+    """An attempt the guard refused is the block working, not a failed run."""
+    proc, delivered = _drive_netaudit(tmp_path, {"run_1": "attempt_blocked"})
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert delivered.exists(), "a refused attempt must not cost the delivery"
+    assert "WITHHELD" not in proc.stderr, proc.stderr
+    assert "refused" in proc.stderr, proc.stderr
+
+
+def test_an_unwitnessed_attempt_withholds(tmp_path):
+    """No hook refusal and no proxy log means the run was never isolated."""
+    proc, delivered = _drive_netaudit(tmp_path, {"run_1": "attempt_unverified"})
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert not delivered.exists()
+
+
+def test_one_breach_among_clean_runs_still_withholds(tmp_path):
+    proc, delivered = _drive_netaudit(
+        tmp_path, {"run_1": "no_attempt", "run_2": "reached_internet",
+                   "run_3": "attempt_blocked"})
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert not delivered.exists()
+
+
+def test_clean_runs_deliver_and_say_nothing_alarming(tmp_path):
+    proc, delivered = _drive_netaudit(tmp_path, {"run_1": "no_attempt"})
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert delivered.exists()
+    assert "WITHHELD" not in proc.stderr and "refused" not in proc.stderr

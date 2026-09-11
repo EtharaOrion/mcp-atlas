@@ -17,13 +17,21 @@ REPO = Path(__file__).resolve().parent.parent.parent
 DETECT = REPO / "tools" / "network" / "detect_internet_use.py"
 
 
-def run(steps, *flags, tmp_path):
+def run(steps, *flags, tmp_path, strict=True):
+    """Audit a synthetic trajectory.
+
+    `strict` by default, because most tests here ask "is this recognised as
+    egress?" and --strict is the flag that turns that question back into an exit
+    code. Without it only a run that actually REACHED the internet exits 2 --
+    an attempt the guard refused is a warning that still delivers. Tests for
+    that policy pass strict=False and assert on the verdict.
+    """
     traj = tmp_path / "t.json"
     traj.write_text(json.dumps({"steps": steps}))
-    return subprocess.run(
-        [sys.executable, str(DETECT), str(traj), *flags],
-        capture_output=True, text=True,
-    )
+    argv = [sys.executable, str(DETECT), str(traj), *flags]
+    if strict:
+        argv.append("--strict")
+    return subprocess.run(argv, capture_output=True, text=True)
 
 
 def bash(cmd):
@@ -77,7 +85,7 @@ def test_clean_run_passes(tmp_path):
              {"tool": "mcp__LightGmail__list_messages", "arguments": {}}]
     r = run(steps, tmp_path=tmp_path)
     assert r.returncode == 0
-    assert "no internet access" in r.stdout
+    assert "never reached for the internet" in r.stdout
 
 
 # --- shapes, flags, edges ---------------------------------------------------
@@ -104,14 +112,14 @@ def test_findings_are_written_for_grading(tmp_path):
     out = tmp_path / "audit.json"
     run([bash("curl https://evil.test")], "--json", str(out), tmp_path=tmp_path)
     data = json.loads(out.read_text())
-    assert data["used_internet"] is True
+    assert data["attempted_internet"] is True
     assert data["findings"] and data["findings"][0]["kind"] == "fetch"
 
 
 def test_clean_run_records_a_negative_result(tmp_path):
     out = tmp_path / "audit.json"
     run([bash("ls /workspace")], "--json", str(out), tmp_path=tmp_path)
-    assert json.loads(out.read_text())["used_internet"] is False
+    assert json.loads(out.read_text())["attempted_internet"] is False
 
 
 def test_one_command_yields_one_finding(tmp_path):
@@ -255,7 +263,7 @@ def test_successful_install_is_a_breach(out, tmp_path):
     assert r.returncode == 2, r.stdout
     data = json.loads(audit.read_text())
     assert [f["kind"] for f in data["findings"]] == ["package-installed"]
-    assert data["outcome"] == "breach", data
+    assert data["verdict"] == "reached_internet", data
 
 
 def test_denied_install_is_an_attempt_not_a_breach(tmp_path):
@@ -268,7 +276,7 @@ def test_denied_install_is_an_attempt_not_a_breach(tmp_path):
     assert r.returncode == 2, r.stdout
     data = json.loads(audit.read_text())
     assert [f["kind"] for f in data["findings"]] == ["package-install"]
-    assert data["outcome"] == "unverified", data
+    assert data["verdict"] == "attempt_unverified", data
 
 
 @pytest.mark.parametrize("out", [
@@ -285,7 +293,7 @@ def test_already_on_disk_is_not_a_breach(out, tmp_path):
         tmp_path=tmp_path)
     data = json.loads(audit.read_text())
     assert [f["kind"] for f in data["findings"]] == ["package-install"]
-    assert data["outcome"] != "breach", data
+    assert data["verdict"] != "reached_internet", data
 
 
 def test_offline_install_stays_clean_whatever_it_prints(tmp_path):
@@ -316,7 +324,7 @@ def test_harbor_shape_carries_the_response_too(tmp_path):
     audit = tmp_path / "audit.json"
     r = run(steps, "--json", str(audit), tmp_path=tmp_path)
     assert r.returncode == 2, r.stdout
-    assert json.loads(audit.read_text())["outcome"] == "breach"
+    assert json.loads(audit.read_text())["verdict"] == "reached_internet"
 
 
 def test_harbor_results_are_matched_by_id_not_position(tmp_path):
@@ -331,7 +339,7 @@ def test_harbor_results_are_matched_by_id_not_position(tmp_path):
                                     {"source_call_id": "t1", "content": "data"}]}}]
     audit = tmp_path / "audit.json"
     run(steps, "--json", str(audit), tmp_path=tmp_path)
-    assert json.loads(audit.read_text())["outcome"] == "breach"
+    assert json.loads(audit.read_text())["verdict"] == "reached_internet"
 
 
 # --- namespace URIs are identifiers, not addresses --------------------------
@@ -367,7 +375,7 @@ def test_a_run_with_no_findings_is_clean_not_unverified(tmp_path):
     reached for something."""
     out = tmp_path / "audit.json"
     run([bash("ls /workspace/data")], "--json", str(out), tmp_path=tmp_path)
-    assert json.loads(out.read_text())["outcome"] == "clean"
+    assert json.loads(out.read_text())["verdict"] == "no_attempt"
 
 
 def test_proxy_findings_without_a_trajectory_are_setup_not_the_model(tmp_path):
@@ -383,9 +391,13 @@ def test_proxy_findings_without_a_trajectory_are_setup_not_the_model(tmp_path):
         [sys.executable, str(DETECT), str(tmp_path / "absent.json"),
          "--access-log", str(alog), "--json", str(out)],
         capture_output=True, text=True)
-    assert r.returncode == 2, r.stdout
+    # Denied setup traffic is not the model's doing and no longer withholds
+    # delivery on its own -- the trial that produced it has no trajectory, so it
+    # already failed for other reasons. It is still reported, and --strict still
+    # blocks on it.
+    assert r.returncode == 0, r.stdout
     data = json.loads(out.read_text())
-    assert data["outcome"] == "setup", data
+    assert data["verdict"] == "setup_traffic", data
     assert data["tool_calls"] == 0
 
 
@@ -394,7 +406,7 @@ def test_unverified_still_means_unverified_with_a_trajectory(tmp_path):
     proxy log is still the claim we cannot make."""
     out = tmp_path / "audit.json"
     run([bash("curl https://evil.test")], "--json", str(out), tmp_path=tmp_path)
-    assert json.loads(out.read_text())["outcome"] == "unverified"
+    assert json.loads(out.read_text())["verdict"] == "attempt_unverified"
 
 
 def test_unparseable_trajectory_blocks(tmp_path):
@@ -465,7 +477,7 @@ def test_apt_triggers_prove_the_install_landed(tmp_path):
         "--json", str(audit), tmp_path=tmp_path)
     data = json.loads(audit.read_text())
     assert [f["kind"] for f in data["findings"]] == ["package-installed"], data
-    assert data["outcome"] == "breach", data
+    assert data["verdict"] == "reached_internet", data
 
 
 def test_the_evidence_line_is_not_empty(tmp_path):
@@ -493,7 +505,7 @@ def test_suppressed_output_is_a_breach_with_no_proxy(tmp_path):
     assert r.returncode == 2
     data = json.loads(audit.read_text())
     assert data["findings"][0]["evidence_suppressed"] is True, data
-    assert data["outcome"] == "breach", data
+    assert data["verdict"] == "reached_internet", data
 
 
 def test_suppressed_output_is_only_denied_when_the_proxy_says_so(tmp_path):
@@ -512,7 +524,7 @@ def test_suppressed_output_is_only_denied_when_the_proxy_says_so(tmp_path):
          "--access-log", str(alog), "--json", str(audit)],
         capture_output=True, text=True,
     )
-    assert json.loads(audit.read_text())["outcome"] == "denied"
+    assert json.loads(audit.read_text())["verdict"] == "attempt_blocked"
 
 
 def test_a_run_with_no_tool_calls_is_not_clean(tmp_path):
@@ -530,9 +542,9 @@ def test_a_run_with_no_tool_calls_is_not_clean(tmp_path):
                        capture_output=True, text=True)
     # Not misbehaviour, so not a block -- but it must not read as a clean audit.
     assert r.returncode == 0, r.stdout
-    assert "INVALID" in r.stdout, r.stdout
+    assert "no tool calls" in r.stdout, r.stdout
     data = json.loads(audit.read_text())
-    assert data["outcome"] == "no-run", data
+    assert data["verdict"] == "no_agent_activity", data
     assert data["tool_calls"] == 0, data
 
 
@@ -541,4 +553,140 @@ def test_a_real_run_with_tool_calls_is_still_clean(tmp_path):
     audit = tmp_path / "audit.json"
     r = run([bash("ls /workspace/data")], "--json", str(audit), tmp_path=tmp_path)
     assert r.returncode == 0, r.stdout
-    assert json.loads(audit.read_text())["outcome"] == "clean"
+    assert json.loads(audit.read_text())["verdict"] == "no_attempt"
+
+
+# --- the verdict vocabulary, and what each one costs -------------------------
+#
+# Three states an operator asks about -- did it use the internet, did it try,
+# did it not try -- plus the two that describe a run that did not happen. The
+# old vocabulary spent three words (denied / unverified / setup) on the middle
+# state and had none for the one that now happens most: the PreToolUse hook
+# refused the command, so it never ran and the proxy never saw it. The report
+# said "the egress proxy refused every attempt", naming a component that was
+# not involved.
+
+HOOK_REFUSAL = (
+    "PreToolUse:Bash hook error: BLOCKED: this command reaches the public "
+    "internet, and this task is closed-world.\n  - pip install reaches a "
+    "package index\n"
+)
+
+
+def verdict_of(steps, *flags, tmp_path):
+    out = tmp_path / "audit.json"
+    r = run(steps, "--json", str(out), *flags, tmp_path=tmp_path, strict=False)
+    return json.loads(out.read_text()), r
+
+
+def test_hook_refusal_is_a_warning_and_still_delivers(tmp_path):
+    """The system working. The model probed, was refused, and adapted -- one
+    recorded run did exactly that in a single turn and went on to finish.
+    Failing it would discard good runs and make the audit's loudest signal fire
+    on the case where nothing went wrong."""
+    data, r = verdict_of([bash_out("pip install openpyxl pypdf 2>&1 | tail -2",
+                                   HOOK_REFUSAL)], tmp_path=tmp_path)
+    assert data["verdict"] == "attempt_blocked", data
+    assert data["severity"] == "warn", data
+    assert data["stopped_by"] == "hook", data
+    assert data["attempted_internet"] is True and data["reached_internet"] is False
+    assert r.returncode == 0, r.stdout
+    assert "egress guard" in data["summary"], data["summary"]
+    # And the proxy must not be credited with work it did not do.
+    assert "proxy" not in data["summary"], data["summary"]
+
+
+def test_hook_refusal_never_reads_as_an_install(tmp_path):
+    """The command never ran, so no output of its own can exist -- and the hook's
+    own text must not be mined for success markers."""
+    data, _ = verdict_of([bash_out("apt-get install -y chromium", HOOK_REFUSAL)],
+                         tmp_path=tmp_path)
+    assert [f["kind"] for f in data["findings"]] == ["package-install"], data
+
+
+def test_attempt_with_no_witness_is_not_called_blocked(tmp_path):
+    """"Nothing left the sandbox" is a claim and it needs a witness.
+
+    No hook refusal and no proxy log means there was no egress proxy in the path
+    at all -- the run was not isolated. That is the shape of the run that
+    started all of this: it audited as "unverified", shipped, and had in fact
+    installed Pillow, puppeteer and chromium from the open web.
+    """
+    data, r = verdict_of([bash("pip install pandas")], tmp_path=tmp_path)
+    assert data["verdict"] == "attempt_unverified", data
+    assert data["severity"] == "fail", data
+    assert r.returncode == 2, r.stdout
+    assert "not isolated" in data["summary"], data["summary"]
+
+
+def test_proxy_log_is_witness_enough(tmp_path):
+    """squid saw every packet and let nothing out, so "blocked" is provable."""
+    alog = tmp_path / "egress-access.log"
+    alog.write_text(
+        "1757500000.000 100 172.20.0.3 TCP_DENIED/403 400 CONNECT pypi.org:443 - HIER_NONE/- text/html\n")
+    data, r = verdict_of([bash("pip install pandas")],
+                         "--access-log", str(alog), tmp_path=tmp_path)
+    assert data["verdict"] == "attempt_blocked", data
+    assert r.returncode == 0, r.stdout
+
+
+def test_strict_restores_the_old_policy(tmp_path):
+    """For anyone who wants reaching-for-the-web to be disqualifying in itself."""
+    r = run([bash_out("pip install pandas", HOOK_REFUSAL)], tmp_path=tmp_path)
+    assert r.returncode == 2, r.stdout
+
+
+def test_the_proxy_line_names_its_hosts(tmp_path):
+    """"28 requests, 0 denied" reads the same whether the proxy allowed only
+    api.anthropic.com or allowed everything. The hosts settle it."""
+    alog = tmp_path / "egress-access.log"
+    alog.write_text(
+        "1757500001.000 200 172.20.0.3 TCP_TUNNEL/200 900 CONNECT api.anthropic.com:443 - ORIGINAL_DST/- -\n")
+    data, r = verdict_of([bash("ls /workspace")], "--access-log", str(alog),
+                         tmp_path=tmp_path)
+    assert data["proxy"]["hosts"] == ["api.anthropic.com"], data
+    assert "api.anthropic.com" in r.stdout, r.stdout
+
+
+def test_a_reached_run_still_fails(tmp_path):
+    """The one state that withholds delivery, with or without --strict."""
+    data, r = verdict_of([bash_out("pip install pandas", PIP_LANDED)],
+                         tmp_path=tmp_path)
+    assert data["verdict"] == "reached_internet", data
+    assert data["severity"] == "fail" and data["reached_internet"] is True
+    assert r.returncode == 2, r.stdout
+
+
+# --- braces are not command separators --------------------------------------
+#
+# A peer's run was blocked by this. The finding read "curl with no resolvable
+# host operand" against a LIGHT-SERVERS health probe -- the most ordinary
+# command in these bundles -- because `{` and `}` were treated as shell grouping
+# and split curl's own `-w "%{http_code}"` format string, tearing the URL off
+# the end of the segment. False positives here cost clean runs, so these are as
+# load-bearing as the detection cases.
+
+@pytest.mark.parametrize("cmd", [
+    # The exact command that was blocked.
+    'getent hosts light-servers; curl -s -m 5 http://light-servers:8000/ 2>&1 | head -20; '
+    'echo "---"; for p in 8000 8080 3000 9000; do '
+    '(curl -s -m 2 -o /dev/null -w "$p:%{http_code}\\n" http://light-servers:$p/ ) ; done',
+    'curl -s -o /dev/null -w "%{http_code}" http://light-servers:9142/mcp',
+    "awk '{print $1}' /workspace/data/ledger.csv",
+    "jq '{name: .a}' /tmp/x.json",
+    'echo "${HOME}/out" && python3 -c "print(1)"',
+])
+def test_braces_do_not_split_a_command(cmd, tmp_path):
+    r = run([bash(cmd)], tmp_path=tmp_path)
+    assert r.returncode == 0, f"false positive on local work:\n{r.stdout}"
+
+
+@pytest.mark.parametrize("cmd", [
+    # ...and the same shapes aimed outward are still caught.
+    'curl -s -o /dev/null -w "%{http_code}" https://pypi.org/simple/',
+    "(cd /tmp && pip install foo)",
+    "dpkg --print-architecture; (apt-get install -y -q chromium | tail -3)",
+    "V=$(curl -s https://example.com/v)",
+])
+def test_grouping_still_finds_the_real_verb(cmd, tmp_path):
+    assert run([bash(cmd)], tmp_path=tmp_path).returncode == 2, cmd

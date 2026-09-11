@@ -1265,13 +1265,24 @@ PYEOF
 # from the raw stream when Harbor did not publish one (harbor_to_output.py:744),
 # so this is the first point where every run is guaranteed to have one to audit.
 #
-#   INTERNET_AUDIT_OFF=1   skip entirely
-#   INTERNET_AUDIT_WARN=1  report findings but do not block
+#   INTERNET_AUDIT_OFF=1     skip entirely
+#   INTERNET_AUDIT_WARN=1    report findings but never block
+#   INTERNET_AUDIT_STRICT=1  also block a run that only ATTEMPTED egress
+#
+# Default policy: only a run that actually REACHED the internet withholds
+# delivery. An attempt the egress guard refused is the block working, and the
+# audit says so in those words rather than crediting the proxy for it.
 stage_netaudit() {
   [ -z "${INTERNET_AUDIT_OFF:-}" ] || return 0
 
   local flags=()
   [ -n "${INTERNET_AUDIT_WARN:-}" ] && flags+=(--warn-only)
+  # Reaching for the web is disqualifying in itself, rather than only getting
+  # there. Off by default: the guard now refuses the command and tells the model
+  # what to use instead, and a model that probes once, is refused, and adapts is
+  # the system working -- one recorded run did exactly that and went on to
+  # finish. Blocking it would discard good runs.
+  [ -n "${INTERNET_AUDIT_STRICT:-}" ] && flags+=(--strict)
 
   local traj run_dir dirty=0 seen=0 empty=0
   # Iterate RUN DIRECTORIES, not trajectory files.
@@ -1322,101 +1333,71 @@ stage_netaudit() {
       ${flags[@]+"${flags[@]}"} ${aflags[@]+"${aflags[@]}"} || dirty=1
   done
 
-  # Say what was NOT looked at. The whole failure this loop just stopped making
-  # was silence reading as success, and reporting only the audited runs would
-  # reproduce it one level up.
-  if [ "$empty" -gt 0 ]; then
-    echo "[run_task] internet audit: $seen run(s) audited, $empty with no trajectory" >&2
-    echo "[run_task]   and no proxy log -- nothing to audit, NOT a clean result." >&2
-  fi
-
-  # A trajectory that PARSES and holds no tool calls is the other silent case,
-  # and it does not reach the branch above because the file exists. One recorded
-  # trial died on its first model call ("Weekly/Monthly Limit Exhausted"),
-  # published a prompt and an error, and audited as "ok  0 tool call(s)". It
-  # then counted as a full attempt: 0.0 alongside a 0.59, reported as a mean of
-  # 29.5. Not an internet finding, so it does not block -- but pass@k is
-  # measuring the API's availability, not the model's, and that has to be said.
-  local _norun=0 _aj
-  for _aj in "$TRAJ_DIR"/[Rr]un_*/internet_audit.json; do
-    [ -f "$_aj" ] || continue
-    [ "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("outcome",""))' "$_aj" 2>/dev/null)" = "no-run" ] \
-      && _norun=$((_norun+1))
-  done
-  if [ "$_norun" -gt 0 ]; then
-    echo "[run_task] internet audit: $_norun run(s) made NO tool calls" >&2
-    echo "[run_task]   The agent never acted -- usually a rate limit or an API" >&2
-    echo "[run_task]   error, not a task failure. They are still counted as" >&2
-    echo "[run_task]   attempts in summary.json and pass@k, so a mean reward" >&2
-    echo "[run_task]   over this job is diluted by runs that never happened." >&2
-  fi
-
+  # Nothing auditable at all.
   if [ "$seen" -eq 0 ]; then
     echo "[run_task] internet audit: nothing auditable under $TRAJ_DIR" >&2
     return 0
   fi
 
-  if [ "$dirty" -ne 0 ]; then
-    # Word the banner from what actually happened, not from the fact that
-    # findings exist. detect_internet_use.py classifies each run into
-    # breach / denied / unverified (see _outcome there) and writes it to
-    # internet_audit.json; the worst outcome across runs decides the headline.
-    # A denied attempt is the egress proxy WORKING, and saying "used the
-    # internet" there sends an operator hunting a leak that never happened.
-    # "clean" is skipped, not ranked. An aborted trial writes an audit with no
-    # findings, and _outcome() still has to name its shape; ranking that word
-    # put "the model tried to reach the internet" in the headline on the
-    # strength of a run where the model never made a tool call.
-    local _worst="denied"
-    for _aj in "$TRAJ_DIR"/[Rr]un_*/internet_audit.json; do
-      [ -f "$_aj" ] || continue
-      case "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("outcome",""))' "$_aj" 2>/dev/null)" in
-        breach)     _worst="breach"; break ;;
-        unverified) [ "$_worst" = "denied" ] && _worst="unverified" ;;
-        setup)      [ "$_worst" = "denied" ] && _worst="setup" ;;
-        # Neither is ranked. "clean" is an all-clear; "no-run" is an agent that
-        # never acted. Letting either into this ladder would put "the model
-        # tried to reach the internet" in the headline on the strength of a run
-        # where the model made no tool call at all. no-run is reported on its
-        # own above, where it can be worded as what it is.
-        clean|no-run|"")   ;;
-      esac
-    done
-
-    echo >&2
-    case "$_worst" in
-      breach)
-        echo "==> BLOCKED: THE MODEL REACHED THE INTERNET" >&2
-        echo "    Either a host that is not on the egress allowlist was NOT" >&2
-        echo "    denied, or a package install printed its own success -- so" >&2
-        echo "    traffic left the sandbox. Treat this as a hole in the block," >&2
-        echo "    not just agent behaviour. internet_audit.json names which." >&2 ;;
-      setup)
-        echo "==> BLOCKED: EGRESS ATTEMPTED DURING AGENT SETUP" >&2
-        echo "    The traffic was denied, and it was NOT the model: the trial" >&2
-        echo "    has no trajectory, so harbor's own setup made these requests" >&2
-        echo "    before the agent ran. Usually a bundle that does not pre-bake" >&2
-        echo "    the Claude Code CLI (see TASK_BUNDLE.md 2.4)." >&2 ;;
-      unverified)
-        echo "==> BLOCKED: THE MODEL TRIED TO REACH THE INTERNET" >&2
-        echo "    No proxy log for at least one run, so whether the attempt" >&2
-        echo "    succeeded is unverified. With NETWORK_ISOLATION_OFF=1 there is" >&2
-        echo "    no proxy in the path and the attempt most likely succeeded." >&2 ;;
-      *)
-        echo "==> BLOCKED: THE MODEL TRIED TO REACH THE INTERNET (ALL DENIED)" >&2
-        echo "    The egress proxy refused every attempt, so nothing left the" >&2
-        echo "    sandbox -- the block worked. The run is still not delivered:" >&2
-        echo "    reaching for the open web is itself disqualifying here." >&2 ;;
+  # One tally pass over the per-run JSON. Each run already printed its own
+  # verdict line; this only reports what a per-run line cannot say -- how the
+  # runs add up, and what happens to the delivery as a result.
+  #
+  # The vocabulary is detect_internet_use.py's: reached_internet (it got out),
+  # attempt_blocked (it tried, nothing left), no_attempt, no_agent_activity,
+  # setup_traffic. Only the first is a failure; see _exit_code() there for why.
+  local _reached=0 _unwitnessed=0 _attempted=0 _norun=0 _skipped="$empty" _aj _v
+  for _aj in "$TRAJ_DIR"/[Rr]un_*/internet_audit.json; do
+    [ -f "$_aj" ] || continue
+    _v="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("verdict",""))' "$_aj" 2>/dev/null)"
+    case "$_v" in
+      reached_internet)   _reached=$((_reached+1)) ;;
+      attempt_unverified) _unwitnessed=$((_unwitnessed+1)) ;;
+      attempt_blocked|setup_traffic) _attempted=$((_attempted+1)) ;;
+      no_agent_activity) _norun=$((_norun+1)) ;;
     esac
-    echo "    This task is closed-world -- the answer must come from the MCP" >&2
-    echo "    sidecars and /workspace/data, not the open web. Findings are listed" >&2
-    echo "    above and saved to each run's internet_audit.json." >&2
-    echo >&2
-    echo "    Not delivering this run. To inspect without blocking:" >&2
-    echo "      INTERNET_AUDIT_WARN=1 scripts/run_task.sh ..." >&2
-    exit 2
+  done
+
+  [ "$_skipped" -gt 0 ] && \
+    echo "[run_task] internet audit: $_skipped run(s) had no trajectory and no proxy log -- not audited, NOT clean" >&2
+
+  # Not an internet finding, so it never blocks -- but pass@k counts these as
+  # attempts, so a mean reward over the job is diluted by runs that never ran.
+  [ "$_norun" -gt 0 ] && \
+    echo "[run_task] internet audit: $_norun run(s) made no tool calls (API error or rate limit); still counted in pass@k" >&2
+
+  [ "$_attempted" -gt 0 ] && [ "$_reached" -eq 0 ] && \
+    echo "[run_task] internet audit: $_attempted run(s) reached for the web and were refused; nothing left the sandbox" >&2
+
+  [ "$dirty" -eq 0 ] && return 0
+
+  # A real breach. Withdraw the delivered copy before saying it is withheld:
+  # harbor_to_output.py writes delivery_output/ at the end of the reshape, which
+  # is BEFORE this stage runs, so the old "Not delivering this run" was printed
+  # over a directory that had already been written.
+  local _delivered="$(dirname "$OUTPUT_DIR")/delivery_output/$OUT_SLUG"
+  local _withdrawn=""
+  if [ -d "$_delivered" ]; then
+    rm -rf "$_delivered" && _withdrawn=" (delivered copy withdrawn)"
   fi
+
+  echo >&2
+  if [ "$_reached" -gt 0 ]; then
+    echo "==> DELIVERY WITHHELD: the model reached the open internet$_withdrawn" >&2
+    echo "    $_reached of $seen audited run(s) got traffic out of the sandbox." >&2
+  else
+    echo "==> DELIVERY WITHHELD: egress with no witness$_withdrawn" >&2
+    echo "    $_unwitnessed of $seen audited run(s) reached for the web with no" >&2
+    echo "    egress proxy in the path, so the run was not isolated and there is" >&2
+    echo "    nothing to show the attempts failed." >&2
+  fi
+  echo "    This task is closed-world: the answer comes from the MCP sidecars" >&2
+  echo "    and /workspace/data. Per-run detail: <run>/internet_audit.json" >&2
+  echo "    Inspect without blocking: INTERNET_AUDIT_WARN=1 scripts/run_task.sh ..." >&2
+  echo >&2
+  exit 2
 }
+
 
 stage_reshape() {
   stage_host_rubric
