@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import json
 import os
 import shutil
@@ -769,6 +770,154 @@ def _parse_judge_json(text: str):
     return None
 
 
+# ---------------------------------------------------------------------------
+# Resume: re-ask the judge only for criteria a previous pass did not grade.
+#
+# One judge call grades the WHOLE rubric (see _judge_prompt), so a reply that
+# comes back short -- truncated, unparseable, or cut off by the 600s codex
+# timeout -- costs the entire pass today: _compute_scores reads a missing number
+# as satisfied=False, and the only way back is to re-ask for all 76 criteria and
+# pay Codex's ~14.5K-token scaffold plus up to 300K chars of evidence again.
+#
+# A reused verdict carries a score somebody else measured, so it is comparable
+# only if it was measured under the same conditions this run measures under.
+# That is what the identity guard below is for.
+
+
+def _criterion_fingerprint(c: dict) -> str:
+    """Identity of ONE criterion. Its number alone is not enough.
+
+    Keying reuse on `number` would reuse a verdict across an EDITED criterion --
+    same slot, different question -- and would collapse two criteria sharing a
+    number onto one verdict. The fingerprint covers everything the judge is
+    actually shown about a criterion (_judge_prompt's payload), so a rubric edit
+    invalidates exactly the rows it changed and no others.
+    """
+    payload = json.dumps(
+        {
+            "number": str(c.get("number", "")),
+            "criterion": c.get("criterion"),
+            "evaluation_target": c.get("evaluation_target", "trajectory"),
+            "is_positive": bool(c.get("is_positive", True)),
+        },
+        sort_keys=True,
+    )
+    return hashlib.sha256(payload.encode()).hexdigest()[:16]
+
+
+def _transport_of(model: str) -> str:
+    """Which CLI grades this model -- the provider half of score identity."""
+    if model in CODEX_MODELS:
+        return "codex"
+    if model in CLAUDE_MODELS:
+        return "claude"
+    return "unknown"
+
+
+def _resume_identity(model: str, traj_ctx: str, final_ctx: str) -> dict:
+    """The conditions a verdict was measured under.
+
+    `judge_model` / `judge_transport`: a verdict from gpt-5.6-sol and one from
+    claude-sonnet-4-5 are not the same measurement. The output records ONE
+    model, so silently merging the two publishes a single score, under a single
+    declared judge, drawn from two populations -- and nothing downstream can
+    tell.
+
+    `evidence_sha256`: the same argument for the thing being judged. Re-running
+    after the trajectory was rebuilt (a longer agent log, a changed evidence
+    budget, a fixed builder) means the prior verdicts answer a question about a
+    DIFFERENT artifact.
+
+    `headroom`: GRADER_HEADROOM_ENABLED rewrites the prompt the judge reads --
+    host_rubric_pass pins it into the judge container for exactly this reason --
+    so a compressed-evidence verdict and an uncompressed one are not
+    interchangeable.
+    """
+    digest = hashlib.sha256()
+    digest.update(traj_ctx.encode())
+    digest.update(b"\x00")
+    digest.update((final_ctx or "").encode())
+    return {
+        "judge_model": model,
+        "judge_transport": _transport_of(model),
+        "evidence_sha256": digest.hexdigest(),
+        "headroom": os.environ.get("GRADER_HEADROOM_ENABLED", "false"),
+    }
+
+
+def _load_resume(path: Path, identity: dict, criteria: list[dict]) -> tuple[list[dict], dict]:
+    """Read a prior rubric_breakdown.json; return (reusable verdicts, decision).
+
+    A mismatch REFUSES the reuse rather than raising: regrading costs judge calls
+    and loses nothing, while a merged score is wrong in a way no later reader can
+    detect. The decision is recorded either way, because a resume that does not
+    say what it reused is a resume nobody can reconcile.
+    """
+    prior = json.loads(path.read_text())
+    prior_identity = ((prior.get("meta") or {}).get("identity")) or {}
+    divergent = sorted(k for k, v in identity.items() if prior_identity.get(k) != v)
+
+    meta = {
+        "resumed_from": path.name,
+        "prior_identity": {k: prior_identity.get(k) for k in identity},
+        "current_identity": dict(identity),
+        "divergent_fields": divergent,
+    }
+
+    if divergent:
+        meta["decision"] = "refused"
+        meta["reason"] = (
+            "the prior verdicts were measured under different conditions, so "
+            "reusing them would merge two populations into one score"
+        )
+        meta["criteria_reused"] = 0
+        meta["criteria_regraded"] = len(criteria)
+        print(
+            f"[resume] REFUSED {path.name}: {', '.join(divergent)} differ from "
+            f"this run; regrading every criterion",
+            file=sys.stderr,
+        )
+        return [], meta
+
+    # A prior row with no fingerprint predates this field and cannot be matched
+    # safely, so it is regraded rather than trusted.
+    prior_rows = {
+        (str(row.get("number", "")), row["fingerprint"]): row
+        for row in (prior.get("per_criterion") or [])
+        if row.get("fingerprint")
+    }
+
+    reused: list[dict] = []
+    for c in criteria:
+        row = prior_rows.get((str(c.get("number", "")), _criterion_fingerprint(c)))
+        # `graded` separates "the judge answered false" from "the judge never
+        # answered", which _compute_scores otherwise records identically. The
+        # second kind is precisely what a resume exists to re-ask.
+        if row is None or not row.get("graded"):
+            continue
+        reused.append(
+            {
+                "number": str(c.get("number", "")),
+                "satisfied": bool(row.get("satisfied", False)),
+                "justification": row.get("justification", ""),
+                "reused": True,
+            }
+        )
+
+    # Counted over THIS run's criteria, not the prior file's rows. Counting the
+    # prior file would report reuse that never happened whenever the rubric
+    # gained or edited criteria in between.
+    meta["decision"] = "accepted"
+    meta["criteria_reused"] = len(reused)
+    meta["criteria_regraded"] = len(criteria) - len(reused)
+    print(
+        f"[resume] loaded {path.name}: {len(reused)} criteria to reuse, "
+        f"{len(criteria) - len(reused)} to regrade",
+        file=sys.stderr,
+    )
+    return reused, meta
+
+
 def _compute_scores(criteria: list[dict], results: list[dict]) -> dict:
     by_num = {str(r.get("number", "")): r for r in results}
     pos_total = pos_earned = neg_total = neg_hit = 0.0
@@ -801,6 +950,13 @@ def _compute_scores(criteria: list[dict], results: list[dict]) -> dict:
                 "is_positive": is_pos,
                 "satisfied": satisfied,
                 "justification": r.get("justification", ""),
+                # Three fields that exist so a LATER pass can resume this one.
+                # `graded` is the important one: without it a criterion the
+                # judge never answered is indistinguishable on disk from one it
+                # answered "no" to, and a resume would happily reuse the hole.
+                "graded": num in by_num,
+                "fingerprint": _criterion_fingerprint(c),
+                "reused": bool(r.get("reused", False)),
             }
         )
 
@@ -837,6 +993,12 @@ def main() -> None:
     ap.add_argument("--model", default=None,
                     help="judge model; defaults to JUDGE_MODEL, else whichever "
                          "of the codex / claude CLIs is installed here")
+    ap.add_argument("--resume-from", default=None,
+                    help="path to a prior rubric_breakdown.json. Criteria it "
+                         "already graded under the same judge, transport and "
+                         "evidence are reused; only ungraded ones are re-asked. "
+                         "Must not be --output: a judge crash writes a zero stub "
+                         "there, which would destroy the verdicts being resumed")
     a = ap.parse_args()
     if not a.model:
         a.model = _default_judge_model()
@@ -845,6 +1007,18 @@ def main() -> None:
     _token_out = Path(a.token_output) if a.token_output else None
     rubric_path = Path(a.rubric)
     traj_path = Path(a.trajectory)
+    resume_path = Path(a.resume_from) if a.resume_from else None
+
+    # Resuming from the file we are about to write is not merely redundant: the
+    # module-level exception handler writes a {"score": 0.0, per_criterion: []}
+    # stub to --output on any judge crash, so a failed resume would erase the
+    # very verdicts it was resuming from. Callers pass a snapshot instead
+    # (host_rubric_pass.py writes rubric_breakdown.pre_resume.json).
+    if resume_path is not None and resume_path.resolve() == _out_path.resolve():
+        print(f"--resume-from and --output are the same file ({_out_path}); "
+              f"resume from a copy so a judge crash cannot destroy it",
+              file=sys.stderr)
+        sys.exit(2)
 
     if not rubric_path.exists():
         print(f"rubric not found: {rubric_path}", file=sys.stderr)
@@ -896,30 +1070,60 @@ def main() -> None:
           f"budget {_budget:,} (derived; transport cap {_TRANSPORT_MAX_CHARS:,})"
           + ("  ** BUDGET BOUND: steps omitted **" if _omitted else ""))
 
-    print(f"Grading {len(criteria)} criteria with {a.model}")
-    results = asyncio.run(_run_judge(criteria, traj_ctx, final_ctx, a.model))
+    identity = _resume_identity(a.model, traj_ctx, final_ctx)
 
-    # A judge that answered but whose reply would not parse must not leave a
-    # breakdown of silent falses behind. wraysbury run 5 billed 2,937 output
-    # tokens, wrote no verdicts, and published reward 0 with the best Channel A
-    # of its eight trials -- the only trace was the token bill. Fail loudly and
-    # write nothing, so the reader records the trial as UNSCORED rather than as
-    # an agent that satisfied nothing.
-    if not results:
-        marker = _out_path.parent / "rubric_judge_failed.txt"
-        marker.parent.mkdir(parents=True, exist_ok=True)
-        marker.write_text(
-            f"judge produced no parseable verdicts\n"
-            f"model: {a.model}\n"
-            f"criteria: {len(criteria)}\n"
-            f"evidence chars: {len(traj_ctx)}\n"
-            f"steps: {_n_steps}\n"
-            f"budget bound: {_omitted}\n"
-        )
-        print(f"ERROR: judge returned no parseable verdicts for {len(criteria)} "
-              f"criteria; rubric channel is UNSCORED. See {marker}", file=sys.stderr)
-        raise SystemExit(1)
+    reused: list[dict] = []
+    resume_meta: dict | None = None
+    if resume_path is not None:
+        if resume_path.exists():
+            reused, resume_meta = _load_resume(resume_path, identity, criteria)
+        else:
+            print(f"[resume] {resume_path} does not exist; grading every criterion",
+                  file=sys.stderr)
 
+    reused_numbers = {v["number"] for v in reused}
+    pending = [c for c in criteria if str(c.get("number", "")) not in reused_numbers]
+
+    fresh: list[dict] = []
+    if pending:
+        print(f"Grading {len(pending)} criteria with {a.model}"
+              + (f" ({len(reused)} reused from {resume_path.name})" if reused else ""))
+        fresh = asyncio.run(_run_judge(pending, traj_ctx, final_ctx, a.model))
+
+        # A judge that answered but whose reply would not parse must not leave a
+        # breakdown of silent falses behind. wraysbury run 5 billed 2,937 output
+        # tokens, wrote no verdicts, and published reward 0 with the best Channel A
+        # of its eight trials -- the only trace was the token bill. Fail loudly and
+        # write nothing, so the reader records the trial as UNSCORED rather than as
+        # an agent that satisfied nothing.
+        #
+        # Tested against the PENDING subset, not the merged list: under resume the
+        # reused verdicts would otherwise carry an empty judge reply past this
+        # guard and publish the re-asked criteria as a block of silent falses --
+        # the exact outcome this check exists to prevent. Nothing is written, so
+        # the file named by --resume-from keeps its verdicts for the next attempt.
+        if not fresh:
+            marker = _out_path.parent / "rubric_judge_failed.txt"
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.write_text(
+                f"judge produced no parseable verdicts\n"
+                f"model: {a.model}\n"
+                f"criteria: {len(pending)} pending of {len(criteria)}\n"
+                f"reused: {len(reused)}\n"
+                f"evidence chars: {len(traj_ctx)}\n"
+                f"steps: {_n_steps}\n"
+                f"budget bound: {_omitted}\n"
+            )
+            print(f"ERROR: judge returned no parseable verdicts for {len(pending)} "
+                  f"criteria; rubric channel is UNSCORED. See {marker}", file=sys.stderr)
+            raise SystemExit(1)
+    else:
+        # Every criterion was reusable, so there is no judge call at all -- the
+        # whole point of the flag on a pass that only failed to write its output.
+        print(f"[resume] all {len(criteria)} criteria already graded; "
+              f"recomputing the score without calling the judge")
+
+    results = reused + fresh
     doc = _compute_scores(criteria, results)
     doc["evidence"] = {
         "budget_chars": _budget,
@@ -929,6 +1133,14 @@ def main() -> None:
         "budget_bound": _omitted,
         "transport_max_chars": _TRANSPORT_MAX_CHARS,
     }
+
+    # Identity travels WITH the score, because it is what makes the next resume
+    # decidable. A breakdown that does not say which judge, which transport and
+    # which evidence produced it can only be reused on trust.
+    meta = {"identity": identity, "criteria_total": len(criteria)}
+    if resume_meta is not None:
+        meta["resume"] = resume_meta
+    doc["meta"] = meta
 
     _out_path.parent.mkdir(parents=True, exist_ok=True)
     _out_path.write_text(json.dumps(doc, indent=2))
