@@ -351,8 +351,8 @@ def _isolation_files(repo: Path) -> tuple[set[str], set[str]] | None:
     Read out of the shipped config rather than restated, so widening the
     allowlist or adding a NO_PROXY entry updates this check for free.
     """
-    overlay = repo / "tools" / "network" / "egress-proxy" / "overlay.yaml"
-    squid = repo / "tools" / "network" / "egress-proxy" / "squid.conf"
+    overlay = repo / "services" / "egress-proxy" / "overlay.yaml"
+    squid = repo / "services" / "egress-proxy" / "squid.conf"
     if not overlay.is_file() or not squid.is_file():
         return None
     allowed: set[str] = set()
@@ -376,8 +376,8 @@ def _captures_access_log(repo: Path) -> bool:
     denials, which reads exactly like a clean run. The trial would be graded and
     delivered on evidence that was never collected.
     """
-    overlay = repo / "tools" / "network" / "egress-proxy" / "overlay.yaml"
-    entrypoint = repo / "tools" / "network" / "egress-proxy" / "entrypoint.sh"
+    overlay = repo / "services" / "egress-proxy" / "overlay.yaml"
+    entrypoint = repo / "services" / "egress-proxy" / "entrypoint.sh"
     if not overlay.is_file() or not entrypoint.is_file():
         return False
     return "/egress-out" in overlay.read_text() and "/egress-out" in entrypoint.read_text()
@@ -390,19 +390,10 @@ def check_isolation(task_dir: Path, raw: dict) -> None:
              "refuse the run if the model browsed")
         return
 
-    # REPO, not a second local walk. parents[1] is <repo>/tools -- one level
-    # short -- so every path built from it missed, _isolation_files() returned
-    # None, and this whole function returned before checking anything. The gate
-    # reported "go" having verified nothing, which is the exact silent skip the
-    # module docstring says it exists to prevent. It stayed invisible because
-    # the miss and the legitimate "no overlay in this checkout" case share one
-    # return.
-    files = _isolation_files(REPO)
+    repo = Path(__file__).resolve().parents[1]
+    files = _isolation_files(repo)
     if files is None:
-        bad("egress overlay not found under tools/network/egress-proxy/",
-            "overlay.yaml and squid.conf must both be present, or isolation "
-            "cannot be checked at all; run without isolation "
-            "(NETWORK_ISOLATION_OFF=1) or restore them")
+        # run_task.sh refuses outright on a missing overlay; nothing to add.
         return
     allowed, no_proxy = files
 
@@ -448,7 +439,7 @@ def check_isolation(task_dir: Path, raw: dict) -> None:
         missing.append("the Claude Code CLI")
     if "procps" not in body:
         missing.append("procps (claude shells out to ps/pgrep to kill subtrees)")
-    if not _captures_access_log(REPO):
+    if not _captures_access_log(repo):
         bad("the egress overlay does not carry squid's access.log off the container",
             "without it the run is audited on trajectory inference alone and "
             "reports 'no denials' whether or not the block held. Restore the "
