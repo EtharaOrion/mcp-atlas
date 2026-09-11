@@ -1142,6 +1142,14 @@ def main() -> None:
         meta["resume"] = resume_meta
     doc["meta"] = meta
 
+    # Identity travels WITH the score, because it is what makes the next resume
+    # decidable. A breakdown that does not say which judge, which transport and
+    # which evidence produced it can only be reused on trust.
+    meta = {"identity": identity, "criteria_total": len(criteria)}
+    if resume_meta is not None:
+        meta["resume"] = resume_meta
+    doc["meta"] = meta
+
     _out_path.parent.mkdir(parents=True, exist_ok=True)
     _out_path.write_text(json.dumps(doc, indent=2))
     print(f"score={doc['score']} rc={doc['rc']} rb={doc['rb']} passed={doc['rubric_passed']}")

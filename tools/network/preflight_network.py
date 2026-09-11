@@ -390,6 +390,13 @@ def check_isolation(task_dir: Path, raw: dict) -> None:
              "refuse the run if the model browsed")
         return
 
+    # REPO, not a second local walk. parents[1] is <repo>/tools -- one level
+    # short -- so every path built from it missed, _isolation_files() returned
+    # None, and this whole function returned before checking anything. The gate
+    # reported "go" having verified nothing, which is the exact silent skip the
+    # module docstring says it exists to prevent. It stayed invisible because
+    # the miss and the legitimate "no overlay in this checkout" case share one
+    # return.
     files = _isolation_files(REPO)
     if files is None:
         bad("egress overlay not found under tools/network/egress-proxy/",

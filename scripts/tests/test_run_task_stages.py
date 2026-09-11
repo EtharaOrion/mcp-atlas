@@ -1,13 +1,17 @@
-"""Stage plumbing in scripts/run_task.sh.
+"""scripts/run_task.sh: the stage plumbing.
 
-Harbor itself is stubbed on PATH, so these cover what the script decides -- the
-run_N a stage owns, the state it hands to the next stage, the runs it protects
-from being wiped -- without building a container.
+Harbor is stubbed on PATH, so these cover what the script decides -- the run_N a
+stage owns, the state it hands to the next stage, the runs it protects from
+being wiped -- without building a container.
 """
+from __future__ import annotations
+
 import json
 import os
+import re
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -104,8 +108,37 @@ def test_help_lists_the_stages():
     r = subprocess.run([str(RUN_TASK), "--help"], capture_output=True, text=True,
                        cwd=str(REPO), timeout=60)
     assert r.returncode == 0
-    for stage in ("preflight", "harbor", "reshape", "finance"):
+    for stage in ("preflight", "harbor", "reshape", "finance", "mask", "summary"):
         assert stage in r.stdout
+
+
+def _dispatch_all_branch() -> str:
+    """The CODE in the `all)` arm of run_task.sh's dispatch case.
+
+    Comments are stripped, and that is not fussiness: the arm carries a comment
+    mentioning stage_summary by name, so a bare substring check over the raw
+    text passes even when the call itself is deleted. Asserting against prose
+    that happens to sit near the code is a test that cannot fail.
+    """
+    body = RUN_TASK.read_text()
+    start = body.index("  all)")
+    arm = body[start:body.index(";;", start)]
+    return "\n".join(line.split("#", 1)[0] for line in arm.splitlines())
+
+
+@pytest.mark.parametrize("stage", ["stage_preflight", "stage_harbor",
+                                   "stage_reshape", "stage_finance",
+                                   "stage_summary"])
+def test_a_full_run_reaches_every_stage_it_should(stage):
+    """`--stage all` is what `make run-task` and run_batch.py invoke, so a stage
+    missing from this arm is a stage that only runs if someone types it by hand.
+
+    stage_summary was exactly that: defined, dispatchable as `--stage summary`,
+    and absent here -- so the graded table it exists to print never printed on a
+    normal run, which is the whole problem the host-grade work set out to fix.
+    stage_mask is deliberately NOT listed: stage_finance calls it itself.
+    """
+    assert stage in _dispatch_all_branch()
 
 
 def test_harbor_stage_records_state_for_the_next_stage(env):
@@ -154,22 +187,6 @@ def test_harbor_argv_carries_the_job_and_attempt_count(env):
 def test_oracle_agent_gets_no_model_flag(env):
     env.run("harbor", RUN_OFFSET=0, AGENT="oracle", MODEL="m1")
     assert "--model" not in env.harbor_argv()
-
-
-# ---------------------------------------------------------------------------
-# ---------------------------------------------------------------------------
-
-DOCKER_STUB = """#!/usr/bin/env bash
-printf '%s\\n' "$*" >> "$DOCKER_CALLS"
-exit 0
-"""
-
-# ---------------------------------------------------------------------------
-# ---------------------------------------------------------------------------
-
-BUNDLES = sorted(p for p in (REPO / "tasks").glob("*/environment/docker-compose.yaml")) \
-    if (REPO / "tasks").is_dir() else []
-
 
 
 def _stale_trial(env, name="alpha__stale"):
@@ -257,3 +274,4 @@ def test_one_invocation_writes_exactly_one_run(env, tmp_path):
 
     runs = [p.name for d in env.output.glob("*/trajectory") for p in d.glob("run_*")]
     assert runs == ["run_1"], runs
+

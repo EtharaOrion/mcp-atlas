@@ -621,6 +621,43 @@ stage_preflight() {
     }
   fi
 
+  # The builtin collect hook is OPTIONAL in shared mode and MANDATORY in
+  # separate mode. patch_harbor.py appends `python3
+  # /harness/scoring/collect_artifacts.py` to _collect_hooks_for(); that hook is
+  # the only thing that publishes /workspace into /logs/artifacts, which is the
+  # only channel by which the agent's deliverables reach a SEPARATE verifier.
+  # In shared mode the grader sits in the agent's own container and reads
+  # /workspace directly, so a missing hook is survivable there and this check
+  # only warns.
+  #
+  # It can go missing without anyone touching it. patch_harbor.py resolves its
+  # target with importlib.find_spec("harbor") on whatever python3 runs it and
+  # only falls back to `which harbor` when that fails -- so activating any venv
+  # with harbor importable patches THAT copy while `command harbor` keeps
+  # running the one on PATH. There is a second, unpatched harbor 0.13.2 in
+  # ~/ethara-harbor on at least one machine. `uv tool upgrade harbor` also wipes
+  # the patches. Either way the failure is silent: /workspace never arrives and
+  # every deliverable assertion scores False against a published reward.
+  local _vmode _hbin _hroot _htrial
+  _vmode="$(grep -m1 -E '^[[:space:]]*environment_mode[[:space:]]*=' "$TASK/task.toml" 2>/dev/null \
+            | sed -E 's/.*"([^"]+)".*/\1/')"
+  _hbin="$(command -v harbor 2>/dev/null || true)"
+  if [ -n "$_hbin" ]; then
+    _hroot="$(cd "$(dirname "$(readlink "$_hbin" 2>/dev/null || echo "$_hbin")")/.." && pwd)"
+    _htrial="$(ls "$_hroot"/lib/python*/site-packages/harbor/trial/trial.py 2>/dev/null | head -1)"
+    if [ -n "$_htrial" ] && ! grep -q 'harbor-patch: builtin collect' "$_htrial"; then
+      echo "[run_task] harbor on PATH has NO builtin collect hook: $_htrial" >&2
+      echo "           Re-run scripts/patch_harbor.py with no venv active." >&2
+      if [ "$_vmode" = "separate" ]; then
+        echo "[run_task] REFUSING: this task grades in a separate verifier, where" >&2
+        echo "           /workspace reaches the grader ONLY through that hook." >&2
+        echo "           Every deliverable assertion would score False silently." >&2
+        exit 2
+      fi
+      echo "           (shared mode: survivable, continuing)" >&2
+    fi
+  fi
+
   if ! docker info >/dev/null 2>&1; then
     echo "[run_task] docker not running — starting OrbStack/Docker"
     open -a OrbStack 2>/dev/null || open -a Docker 2>/dev/null || true
@@ -727,6 +764,17 @@ stage_harbor() {
   # pointed at host.docker.internal, which network isolation cannot route to.
   local _iso; _iso="$(network_isolation_overlay)"
   [ -n "$_iso" ] && args+=(--extra-docker-compose "$_iso")
+  # Grade the rubric INSIDE the job, on TrialEvent.END, so the metric on
+  # Harbor's progress bar and the tables it prints are the ledger's numbers.
+  # Harbor prints those from the reward a trial carried at trial exit
+  # (cli/jobs.py:1416, before any plugin finalizes), and the container cannot
+  # judge the rubric -- so without this it reported 0.082 for a run the ledger
+  # credited with 40.0. The plugin is a no-op when HOST_GRADE_OFF=1, which
+  # leaves stage_host_rubric below to do it the old way, after the fact.
+  if [ "${HOST_GRADE_OFF:-0}" != "1" ]; then
+    args+=(--plugin adapters.mcp_atlas.host_grade_plugin:HostGradePlugin
+           --pk "task=$TASK")
+  fi
   [ "$AGENT" != "oracle" ] && args+=(--model "$MODEL")
   if [ "$AGENT" = "claude-code" ]; then
     [ -n "$THINKING" ] && args+=(--ak "thinking=$THINKING")
@@ -759,7 +807,10 @@ stage_harbor() {
   local _pre; _pre="$(list_trial_dirs)"
   echo "[run_task] harbor ${args[*]}"
   local _hrc=0
-  HARBOR_OUTPUT_OFF=1 command harbor "${args[@]}" \
+  # PYTHONPATH: the `harbor` console script puts its own bin dir on sys.path,
+  # not the cwd, so `adapters.mcp_atlas...` is unimportable without this.
+  HARBOR_OUTPUT_OFF=1 PYTHONPATH="$REPO${PYTHONPATH:+:$PYTHONPATH}" \
+    command harbor "${args[@]}" \
     || { _hrc=$?; echo "[run_task] harbor exited $_hrc; checking whether a trial actually ran" >&2; }
 
   # A trial DIRECTORY is not a trial that RAN. Harbor creates it in
@@ -1102,6 +1153,13 @@ stage_host_rubric() {
   # Loop over ALL trial dirs: Harbor may produce >1 when run with --n-attempts N.
   local py; py="$REPO/.venv/bin/python"; [ -x "$py" ] || py=python3
   local trial _codex_graded _tokens any_graded=0 seen=0
+  # RESUME_RUBRIC=1 reuses criteria the trial's existing rubric_breakdown.json
+  # already graded. It only ever bites alongside FORCE_HOST_RUBRIC=1, because the
+  # two skip guards below hand a cleanly-graded trial straight back -- which is
+  # the point: a forced regrade after a short or timed-out judge reply re-asks
+  # the ungraded criteria and pays for those alone.
+  local _resume_args=""
+  [ "${RESUME_RUBRIC:-0}" = "1" ] && _resume_args="--resume"
   while IFS= read -r trial; do
     [ -n "$trial" ] || continue
     seen=$((seen+1))
@@ -1123,7 +1181,16 @@ PYEOF
       any_graded=1
       continue
     fi
-    if "$py" "$REPO/scripts/host_rubric_pass.py" --trial "$trial" --task "$TASK"; then
+    # The in-job plugin (host_grade_plugin.py) grades on TrialEvent.END and
+    # stamps producer=host_rubric_pass. A judge run is a billed API call, so
+    # seeing that stamp means this stage must not buy another one.
+    if [ "${FORCE_HOST_RUBRIC:-0}" != "1" ] \
+       && grep -q '"producer": "host_rubric_pass"' "$trial/verifier/reward.json" 2>/dev/null; then
+      echo "[run_task] rubric already graded in-job for $(basename "$trial"); skipping"
+      any_graded=1
+      continue
+    fi
+    if "$py" "$REPO/scripts/host_rubric_pass.py" --trial "$trial" --task "$TASK" $_resume_args; then
       any_graded=1
     else
       # A failed rubric is not a failed run: Channel A and the state channel are

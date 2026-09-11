@@ -126,7 +126,11 @@ build-light-servers: # build light-servers Docker image (all software + utility 
 build-verifier-base: # build the shared eval base image (pytest + scoring + judge CLI) used by separate-verifier bundles
 	docker build -t verifier-base:latest services/verifier/
 
-build-rubric-judge: 
+# The rubric channel's own container -- built once, shared by every task, and
+# deliberately NOT folded into verifier-base: it is the only image that gets a
+# judge credential mounted, so it holds the judge and nothing else. See
+# services/rubric-judge/Dockerfile for the full argument.
+build-rubric-judge: # build the isolated LLM-judge image that grades the rubric channel
 	docker build -t rubric-judge:latest -f services/rubric-judge/Dockerfile services/
 
 build-egress-proxy: # build the egress allowlist proxy (network isolation for the agent phase)

@@ -403,7 +403,24 @@ def test_unparseable_trajectory_blocks(tmp_path):
     r = subprocess.run([sys.executable, str(DETECT), str(bad)],
                        capture_output=True, text=True)
     assert r.returncode == 2
-    
+
+
+# --- what counts as a call: the payload, not the command line ---------------
+#
+# In-process rather than through the CLI like everything above. These assert
+# where scan_command LOOKS for a hint, and a subprocess only shows the verdict;
+# when one regresses you want the finding list, not an exit code.
+#
+# The blocking case is real. A run scoring 0.95 was refused because the agent
+# audited its OWN html deliverable for external references:
+#
+#     grep -Ein "https?://|fetch\(|XMLHttpRequest|<link|@import|src=" page.html
+#
+# INLINE_NETWORK_HINTS was swept over the whole raw command, so the pattern the
+# agent was searching FOR read as a call it had made. That command opens no
+# socket and names no host, and checking your own output for external
+# references is precisely what a closed-world task wants.
+
 import importlib.util
 
 
