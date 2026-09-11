@@ -699,6 +699,21 @@ def _enabled_tools(task_dir: Path | None) -> list[str]:
 # per-trial reshaping
 # ---------------------------------------------------------------------------
 
+# Every class classify_failure can return; keep in sync (test_failure_classes.py).
+FAILURE_CLASSES = (
+    "infrastructure",
+    "passed",
+    "no_mcp_tool_use",
+    "no_tool_use",
+    "guard_violation",
+    "grader_incomplete",
+    "tool_discipline",
+    "wrong_answer",
+    "partial",
+    "unknown",
+)
+
+
 def classify_failure(passed: bool, traj_rows: list[dict], rubric_rows: list[dict],
                      stream: dict, exception: dict | None,
                      rubric_expected: bool = False) -> tuple[str, str]:
@@ -1645,7 +1660,8 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
         # a scored component and only averages trials that were actually scored.
         scored_rewards = [e["judge"]["reward"] for e in all_eps if e.get("scored", True)]
         n_unscored = len(all_eps) - len(scored_rewards)
-        hist: dict[str, int] = {}
+        # Seed every class at 0; .get() tolerates a stale class from an old summary.
+        hist: dict[str, int] = {k: 0 for k in FAILURE_CLASSES}
         for e in all_eps:
             hist[e["failure_class"]] = hist.get(e["failure_class"], 0) + 1
         stamp = _now()
