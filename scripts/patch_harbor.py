@@ -253,6 +253,45 @@ ALREADY_PATCHED_MARKER_PREBAKE = "harbor-patch: claude pre-baked"
 NATIVE_PREBAKE_GUARD = "_installed_claude_satisfies_version"
 
 
+# --- Suppress harbor's own score tables ---------------------------------------
+# print_job_results_tables() is the single choke point for every score table
+# harbor prints -- five call sites across cli/jobs.py and cli/exec.py. Those
+# tables are rendered from the in-container verifier result, which is produced
+# BEFORE the host rubric pass, so their numbers are always stale. Reading them
+# as the run's result is the easiest way to be misled about a trial; the real
+# reward is printed afterwards by this harness.
+#
+# Exceptions are still printed. Suppressing a table must not also swallow the
+# fact that a trial errored -- that is the one number in it that is not stale.
+# HARBOR_SHOW_SCORES=1 restores the tables verbatim.
+#
+# Anchored on the def line plus the loop that follows it: both are unique in
+# jobs.py, and in an unpatched file they are adjacent.
+ANCHOR_SUPPRESS_SCORES = (
+    "def print_job_results_tables(job_result) -> None:\n"
+    "    for evals_key, dataset_stats in job_result.stats.evals.items():"
+)
+REPLACEMENT_SUPPRESS_SCORES = (
+    "def print_job_results_tables(job_result) -> None:\n"
+    "    # harbor-patch: suppress pre-rubric scores\n"
+    "    import os as _os\n"
+    '    if _os.getenv("HARBOR_SHOW_SCORES") != "1":\n'
+    "        for _key, _stats in job_result.stats.evals.items():\n"
+    "            if _stats.n_errors:\n"
+    "                console.print(\n"
+    '                    f"[yellow]{_key}: {_stats.n_errors} exception(s)[/yellow]"\n'
+    "                )\n"
+    "        console.print(\n"
+    '            "[dim]harbor\'s score tables are suppressed: they are printed before "\n'
+    '            "the host rubric pass and are always stale. The published reward "\n'
+    '            "follows below. HARBOR_SHOW_SCORES=1 restores them.[/dim]"\n'
+    "        )\n"
+    "        return\n"
+    "    for evals_key, dataset_stats in job_result.stats.evals.items():"
+)
+ALREADY_PATCHED_MARKER_SUPPRESS_SCORES = "harbor-patch: suppress pre-rubric scores"
+
+
 ANCHOR_FALLBACK = """\
         CliFlag(
             "fallback_model",
@@ -315,6 +354,15 @@ def find_harbor_trial() -> Path:
     if trial.exists():
         return trial
     raise RuntimeError(f"Could not locate harbor/trial/trial.py (tried {trial})")
+
+
+def find_harbor_jobs() -> Path:
+    claude_code = find_harbor_claude_code()
+    harbor_pkg_dir = claude_code.parent.parent.parent
+    jobs = harbor_pkg_dir / "cli" / "jobs.py"
+    if jobs.exists():
+        return jobs
+    raise RuntimeError(f"Could not locate harbor/cli/jobs.py (tried {jobs})")
 
 
 def main() -> None:
@@ -494,6 +542,38 @@ def main() -> None:
         print(f"[patch_harbor] Written: {trial}")
     elif trial_changed:
         print(f"[patch_harbor] Would write (audit): {trial}")
+
+    # A missing jobs.py is itself drift worth reporting, not a traceback.
+    try:
+        jobs = find_harbor_jobs()
+    except RuntimeError as exc:
+        print(f"[patch_harbor] jobs.py: NOT found -- {exc}", file=sys.stderr)
+        failures.append("jobs.py not found (score-table suppression unapplied)")
+        _report(failures, audit)
+        return
+    jobs_text = jobs.read_text(encoding="utf-8")
+    jobs_changed = False
+
+    if ALREADY_PATCHED_MARKER_SUPPRESS_SCORES in jobs_text:
+        print(f"[patch_harbor] Score-table suppression: already applied")
+    elif ANCHOR_SUPPRESS_SCORES not in jobs_text:
+        print(
+            f"[patch_harbor] Score-table suppression: NOT applied -- anchor not found in {jobs}",
+            file=sys.stderr,
+        )
+        failures.append(f"score-table suppression  ({jobs.name})")
+    else:
+        jobs_text = jobs_text.replace(
+            ANCHOR_SUPPRESS_SCORES, REPLACEMENT_SUPPRESS_SCORES, 1
+        )
+        jobs_changed = True
+        print(f"[patch_harbor] Score-table suppression: applied")
+
+    if jobs_changed and not audit:
+        jobs.write_text(jobs_text, encoding="utf-8")
+        print(f"[patch_harbor] Written: {jobs}")
+    elif jobs_changed:
+        print(f"[patch_harbor] Would write (audit): {jobs}")
 
     _report(failures, audit)
 
