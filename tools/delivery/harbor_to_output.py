@@ -699,16 +699,7 @@ def _enabled_tools(task_dir: Path | None) -> list[str]:
 # per-trial reshaping
 # ---------------------------------------------------------------------------
 
-# Every class classify_failure can return, in that function's own decision
-# order. The histogram is seeded from this so a class that did not occur
-# reports 0 instead of being absent. An absent key and a zero read the same to
-# anyone who does not already know the full set, and a rollup summing
-# histograms across tasks cannot tell "never happened" from "never emitted" --
-# so the shape of the document changed with its contents, which is exactly what
-# a histogram should not do.
-#
-# Keep in sync with the returns in classify_failure below; guarded by
-# scripts/tests/test_failure_classes.py.
+# Every class classify_failure can return; keep in sync (test_failure_classes.py).
 FAILURE_CLASSES = (
     "infrastructure",
     "passed",
@@ -1665,11 +1656,7 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
         # a scored component and only averages trials that were actually scored.
         scored_rewards = [e["judge"]["reward"] for e in all_eps if e.get("scored", True)]
         n_unscored = len(all_eps) - len(scored_rewards)
-        # Seeded with every class at 0, not built up from what occurred -- see
-        # FAILURE_CLASSES. .get() stays on the increment: episodes merged
-        # forward from an older summary.json may carry a class this version no
-        # longer emits, and dropping those counts would silently rewrite
-        # history.
+        # Seed every class at 0; .get() tolerates a stale class from an old summary.
         hist: dict[str, int] = {k: 0 for k in FAILURE_CLASSES}
         for e in all_eps:
             hist[e["failure_class"]] = hist.get(e["failure_class"], 0) + 1

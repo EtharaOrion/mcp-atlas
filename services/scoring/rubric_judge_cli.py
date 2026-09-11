@@ -74,71 +74,26 @@ def _load_criteria(rubric_path: Path) -> list[dict]:
     )
 
 
-# Overall evidence ceiling for one judge prompt, in CHARACTERS.
-#
-# Budget in chars, calibrate against the WORST-CASE chars/token ratio. The ratio
-# is not constant: these steps are json.dumps output and run ~1.8 chars/token,
-# where prose runs ~3.9. Sizing against the average silently overruns on exactly
-# the JSON-dense trajectories that need the room.
-#
-# Sized against a 200K window, from the MEASURED whole-prompt ratio.
-#
-# The 1.8 chars/token this was first built on is a worst-case guess. Measure it
-# the only way that matters -- len(_judge_prompt(...)) against the judge's own
-# reported input_tokens, over four trials of the lydbury bundle: 3.03, 2.98,
-# 3.07, 3.03. Use 3.03. (Do NOT derive it as evidence_chars/(input-cache): the
-# cached figure is a constant 11,136 that does not correspond to any prefix of
-# this prompt, and subtracting it inflates the ratio to ~3.2, which is enough
-# to push a budget 2% over the window while appearing to leave margin.)
-#
-# The prompt is larger than the evidence by 12K-17K chars: the preamble, the
-# criteria payload, and the final message, which _judge_prompt sends a second
-# time even though _render_trajectory already appended it as "Final:".
-#
-#     budget + 17,151 overhead, / 3.03, + 7,007 reply  <=  200,000
-#       550,000 ->  194,186 tok   2.9% margin   <- chosen
-#       567,788 ->  200,056 tok   0.0%          the largest recorded trajectory;
-#                                               it does not fit safely, so it
-#                                               loses a handful of middle steps
-#                                               rather than the 296 it lost at
-#                                               300,000
-#       580,000 ->  204,087 tok  -2.0%  OVER
-#     1,000,000 ->  342,700 tok -71.4%  OVER
-#
-# 550,000 grades 3 of 7 recorded trajectories whole (up from 2) and takes the
-# rest from 20-59% of their steps to 60-100%.
-#
-# Do NOT raise this past ~588,000 without confirming the judge model's context.
-# _codex_exec has no branch for an over-length prompt: it raises only on a
-# nonzero exit or an empty event stream, so an overflow surfaces as a generic
-# transport error after four retries, or as a silently truncated prompt that
-# still produces a scored rubric. Headroom compression does not buy margin here
-# either -- measured 11.4% on a 567K-char trial and 0% on a 921K one, where the
-# library's own size gate declines to compress at all.
-_EVIDENCE_BUDGET_CHARS = int(os.environ.get("JUDGE_EVIDENCE_BUDGET_CHARS", "550000"))
+# Hard char limit the codex-exec transport rejects prompts over.
+_TRANSPORT_MAX_CHARS = int(os.environ.get("JUDGE_TRANSPORT_MAX_CHARS", "1048576"))
+_SAFETY_MARGIN_CHARS = int(os.environ.get("JUDGE_SAFETY_MARGIN_CHARS", "8192"))
+
+_EVIDENCE_BUDGET_CHARS = int(os.environ.get("JUDGE_EVIDENCE_BUDGET_CHARS", "0")) or None
+
+
+def _evidence_budget(criteria: list[dict], final_message: str) -> int:
+    """Evidence chars this call can afford: cap minus measured prompt overhead."""
+    if _EVIDENCE_BUDGET_CHARS:
+        return _EVIDENCE_BUDGET_CHARS
+    fixed = len(_judge_prompt(criteria, "", "")) + len(final_message or "")
+    return max(0, _TRANSPORT_MAX_CHARS - _SAFETY_MARGIN_CHARS - fixed)
 
 
 def _render_trajectory(traj: dict, budget: int | None = None) -> str:
-    """Render a trajectory for the judge, whole steps first, budget last.
-
-    There used to be three per-item caps here -- 400 chars of arguments, 400 of
-    response, 2000 of final message. Per-item clipping is uniformly destructive:
-    a 30-char response and a 30KB schedule table were both cut to 400, so the
-    tool results carrying the actual evidence (the figures read, the rows
-    written) were reduced to their opening fragment on every step. Measured, the
-    judge was seeing roughly a tenth of the trajectory, and the part it saw was
-    the beginning -- where an agent reads sources and reasons well, before the
-    late-stage failures the negative criteria are written to catch. Across four
-    bundles not one negative criterion ever fired.
-
-    So: render steps intact and spend a single overall budget instead. When the
-    budget binds, drop whole steps from the middle rather than truncating one --
-    a half-rendered tool call is evidence of nothing -- and always keep the
-    final message complete, since every `evaluation_target: final_answer`
-    criterion is graded on it (measured finals here ran 3,265 and 5,739 chars,
-    so the old 2,000 cap was already cutting half of them away).
-    """
-    budget = _EVIDENCE_BUDGET_CHARS if budget is None else budget
+    """Render steps whole; when the budget binds, drop whole steps from the middle."""
+    if budget is None:
+        raise ValueError("_render_trajectory now requires an explicit budget; "
+                         "use _evidence_budget(criteria, final_message)")
     steps = traj.get("steps", []) or []
 
     rendered: list[str] = []
@@ -149,18 +104,13 @@ def _render_trajectory(traj: dict, budget: int | None = None) -> str:
         resp_s = json.dumps(resp) if not isinstance(resp, str) else str(resp)
         rendered.append(f"tool={step.get('tool')} args={args_s} → {resp_s}")
 
-    final = traj.get("final_message", "") or ""
-    tail = f"Final: {final}" if final else ""
+    # Final message is carried by _judge_prompt's own section, not duplicated here.
+    tail = ""
 
-    # The final message is not negotiable; the steps share what is left.
     step_budget = max(0, budget - len(tail))
     total = sum(len(p) + 1 for p in rendered)
 
     if total > step_budget and rendered:
-        # Keep the opening (how the agent framed the task) and the closing (what
-        # it actually did), and drop from the middle, which is where repetitive
-        # tool churn lives. Dropping the tail instead would remove precisely the
-        # late-run evidence this change exists to expose.
         head: list[str] = []
         tail_steps: list[str] = []
         used = 0
@@ -470,6 +420,11 @@ def _run_judge_claude(
             break
         except (JudgeResponseError, OSError, subprocess.SubprocessError) as err:
             last = err
+            # Over-cap prompts fail deterministically; don't waste retries.
+            if "input_too_large" in str(err) or "maximum length" in str(err):
+                raise JudgeResponseError(
+                    f"prompt over transport cap ({_TRANSPORT_MAX_CHARS:,} chars); "
+                    f"not retrying: {err}") from err
             if n >= _MAX_ATTEMPTS:
                 raise JudgeResponseError(f"claude judge failed: {err}") from err
             delay = min(_BACKOFF_BASE_SEC * 2 ** (n - 1), _BACKOFF_CAP_SEC)
@@ -566,6 +521,11 @@ def _run_judge_codex(
             break
         except (JudgeResponseError, OSError, subprocess.SubprocessError) as err:
             last = err
+            # Over-cap prompts fail deterministically; don't waste retries.
+            if "input_too_large" in str(err) or "maximum length" in str(err):
+                raise JudgeResponseError(
+                    f"prompt over transport cap ({_TRANSPORT_MAX_CHARS:,} chars); "
+                    f"not retrying: {err}") from err
             if n >= _MAX_ATTEMPTS:
                 raise JudgeResponseError(f"codex judge failed: {err}") from err
             delay = min(_BACKOFF_BASE_SEC * 2 ** (n - 1), _BACKOFF_CAP_SEC)
@@ -921,8 +881,9 @@ def main() -> None:
         sys.exit(0)
 
     traj = json.loads(traj_path.read_text())
-    traj_ctx = _render_trajectory(traj)
     final_ctx = traj.get("final_message", "")
+    _budget = _evidence_budget(criteria, final_ctx)
+    traj_ctx = _render_trajectory(traj, budget=_budget)
 
     # Say how much evidence actually went in. Without this the only way to know
     # the judge was reading a fraction of the trajectory was to diff its input
@@ -931,8 +892,8 @@ def main() -> None:
     # prose runs nearer 3.9, so this over-estimates rather than surprising us.
     _n_steps = len(traj.get("steps") or [])
     _omitted = "...[" in traj_ctx and "steps omitted" in traj_ctx
-    print(f"[judge] evidence {len(traj_ctx):,} chars (~{len(traj_ctx)//1.8:,.0f} tok "
-          f"worst-case) over {_n_steps} steps, budget {_EVIDENCE_BUDGET_CHARS:,}"
+    print(f"[judge] evidence {len(traj_ctx):,} chars over {_n_steps} steps, "
+          f"budget {_budget:,} (derived; transport cap {_TRANSPORT_MAX_CHARS:,})"
           + ("  ** BUDGET BOUND: steps omitted **" if _omitted else ""))
 
     print(f"Grading {len(criteria)} criteria with {a.model}")
@@ -960,6 +921,14 @@ def main() -> None:
         raise SystemExit(1)
 
     doc = _compute_scores(criteria, results)
+    doc["evidence"] = {
+        "budget_chars": _budget,
+        "rendered_chars": len(traj_ctx),
+        "steps_total": _n_steps,
+        "steps_rendered": traj_ctx.count("tool="),
+        "budget_bound": _omitted,
+        "transport_max_chars": _TRANSPORT_MAX_CHARS,
+    }
 
     _out_path.parent.mkdir(parents=True, exist_ok=True)
     _out_path.write_text(json.dumps(doc, indent=2))
