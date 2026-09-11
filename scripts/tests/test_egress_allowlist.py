@@ -31,6 +31,9 @@ OVERLAY = PROXY_DIR / "overlay.yaml"
 DOCKERFILE = PROXY_DIR / "Dockerfile"
 ENTRYPOINT = PROXY_DIR / "entrypoint.sh"
 DETECTOR = REPO / "tools" / "network" / "detect_internet_use.py"
+# INTERNAL_HOSTS moved here when the rules became shared between the audit
+# and the in-container PreToolUse hook; detect_internet_use.py imports them.
+RULES = REPO / "tools" / "network" / "egress_rules.py"
 
 # The whole point of the sidecar. Widening this set is a deliberate act and
 # should have to edit a test that says so out loud.
@@ -63,15 +66,15 @@ def overlay() -> dict:
 def internal_hosts() -> set[str]:
     """INTERNAL_HOSTS read from source, not imported.
 
-    detect_internet_use.py is a CLI with argparse at module scope in some
-    revisions; parsing the literal keeps this test from depending on whether
-    importing it has side effects.
+    egress_rules.py is also a CLI (it runs as the PreToolUse hook); parsing the
+    literal keeps this test from depending on whether importing it has side
+    effects, and from needing the sys.path juggling that import would want.
     """
-    tree = ast.parse(DETECTOR.read_text())
+    tree = ast.parse(RULES.read_text())
     for node in ast.walk(tree):
         if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "INTERNAL_HOSTS":
             return set(ast.literal_eval(node.value))
-    pytest.fail("INTERNAL_HOSTS not found in detect_internet_use.py")
+    pytest.fail(f"INTERNAL_HOSTS not found in {RULES}")
 
 
 # --------------------------------------------------------------- allowlist
