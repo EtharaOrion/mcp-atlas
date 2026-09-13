@@ -701,12 +701,38 @@ def test_bundle_declares_no_networks_of_its_own(task_toml):
     if not compose.is_file():
         pytest.skip("no compose file")
     spec = yaml.safe_load(compose.read_text()) or {}
-    declared = set(spec.get("networks") or {})
-    assert not declared - {"default", EGRESS_NETWORK}, (
-        f"{task_toml.parent.name} declares networks {sorted(declared)}; the "
-        "overlay only makes `default` internal"
+    services = spec.get("services") or {}
+    def _profiled(svc: dict) -> bool:
+        return bool((svc or {}).get("profiles"))
+
+    agent_reachable_nets: set[str] = set()
+    for name, svc in services.items():
+        svc = svc or {}
+        nets = set(svc.get("networks") or ["default"])
+        if _profiled(svc):
+            assert "default" not in nets, (
+                f"{name} is profile-gated but joins `default`; that puts it on "
+                "the agent's bridge and makes its other networks a route out "
+                "of the isolation the overlay installs"
+            )
+            continue
+        agent_reachable_nets |= nets
+
+    assert not agent_reachable_nets - {"default", EGRESS_NETWORK}, (
+        f"{task_toml.parent.name} puts non-profiled services on "
+        f"{sorted(agent_reachable_nets)}; the overlay only makes `default` "
+        "internal"
     )
-    for name, svc in (spec.get("services") or {}).items():
+
+    # Any network no non-profiled service joins is unreachable from the agent.
+    declared = set(spec.get("networks") or {})
+    unreachable = declared - agent_reachable_nets
+    assert not (declared - unreachable) - {"default", EGRESS_NETWORK}, (
+        f"{task_toml.parent.name} declares networks {sorted(declared)} that "
+        "agent-reachable services join; the overlay only makes `default` internal"
+    )
+
+    for name, svc in services.items():
         assert not (svc or {}).get("network_mode"), (
             f"{name} sets network_mode; the overlay cannot reach it"
         )

@@ -167,7 +167,7 @@ def _sync_harbor_result(trial: Path, reward: float) -> None:
 
 
 # --- judge transport ---------------------------------------------------------
-# The judge runs in its OWN container by default (services/rubric-judge/):
+# The judge ran in its OWN container from a SHARED image. That image is gone:
 # not on the host, and not in the verifier.
 #
 # It is off the HOST because the host is the one place a scoring step should not
@@ -613,7 +613,22 @@ def main() -> int:
         # a different transport than the one the operator asked for and publish
         # the number as if nothing happened -- the exact class of silent drift
         # this split exists to remove.
-        print("[host-rubric] judge image %s is not built" % RUBRIC_JUDGE_IMAGE,
+        print("[host-rubric] REFUSING: the shared judge image %s no longer exists."
+              % RUBRIC_JUDGE_IMAGE, file=sys.stderr)
+        print("[host-rubric]   services/rubric-judge/ was deleted: every bundle now",
+              file=sys.stderr)
+        print("[host-rubric]   builds its own judge inline in its compose file, and",
+              file=sys.stderr)
+        print("[host-rubric]   runs it with GRADING=compose. This bundle has not been",
+              file=sys.stderr)
+        print("[host-rubric]   migrated yet, so it has no judge at all.", file=sys.stderr)
+        print("[host-rubric]   Migrate it -- do NOT let the run continue: an ungraded",
+              file=sys.stderr)
+        print("[host-rubric]   rubric is DROPPED FROM THE DENOMINATOR, which RAISES the",
+              file=sys.stderr)
+        print("[host-rubric]   reward rather than lowering it, with no error anywhere.",
+              file=sys.stderr)
+        print("[host-rubric] (was: judge image %s is not built)" % RUBRIC_JUDGE_IMAGE,
               file=sys.stderr)
         print("[host-rubric] run `make build-rubric-judge`, or pass "
               "--judge-runner host to grade on this machine", file=sys.stderr)

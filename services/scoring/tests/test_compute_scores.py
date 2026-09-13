@@ -355,8 +355,20 @@ def _run_main(tmp_path, monkeypatch, criteria, *, resume_from=None, judge=None):
 
 
 def _identity_for_the_fixture_trajectory():
+    """The identity `main()` will compute for the fixture trajectory.
+
+    The budget is DERIVED here the same way main() derives it
+    (`_evidence_budget(criteria, final_message)`), not passed as a constant.
+    `_render_trajectory` refuses a `None` budget outright, and the rendered text
+    is what `_resume_identity` hashes -- so a budget that differs from main()'s
+    yields a different `evidence_sha256`, every criterion looks like it was
+    graded against different evidence, and resume silently regrades the lot.
+    Reproducing main()'s derivation is what makes these tests exercise resume
+    rather than exercise a cache miss.
+    """
     traj = {"steps": [{"tool": "bash", "input": "ls"}], "final_message": "done"}
-    return rj._resume_identity(MODEL, rj._render_trajectory(traj), "done")
+    budget = rj._evidence_budget(_criteria(), "done")
+    return rj._resume_identity(MODEL, rj._render_trajectory(traj, budget=budget), "done")
 
 
 def test_a_fully_reusable_rubric_never_calls_the_judge(tmp_path, monkeypatch):

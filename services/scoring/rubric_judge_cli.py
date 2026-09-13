@@ -980,6 +980,40 @@ def _compute_scores(criteria: list[dict], results: list[dict]) -> dict:
     }
 
 
+def _ungraded_doc(reason: str) -> dict:
+    """The breakdown written when the judge graded NOTHING.
+
+    `score` is None, NOT 0.0, and the difference is the whole point.
+
+    A weight-3 criterion scored 0.0 is a judgement: the run was assessed and
+    found wanting. A criterion that was never graded is an absence of evidence.
+    Both consumers distinguish them -- test_outputs.py:810 and
+    host_rubric_pass.py:668 both guard with `isinstance(v, (int, float))`, so a
+    None lands as status "unscored" and is dropped from the denominator, while a
+    0.0 is multiplied into the numerator as a real zero.
+
+    Writing 0.0 here silently DEPRESSES the reward of every run whose judge died
+    -- an expired codex token, a routing typo, a rubric with no LLM criteria --
+    and it looks exactly like an agent that did poorly. Measured on
+    homes-tour-packet-visuals: a judge that graded 0 criteria (stale
+    ~/.codex/auth.json, "Failed to refresh token") published
+    {"score": 0.0, "per_criterion": []} and the ledger recorded
+    `rubric: scored, value 0.0` while the orchestration logs alongside it
+    correctly said "rubric channel stays UNSCORED". The two disagreed and the
+    file won.
+
+    `rc`/`rb` stay 0.0: they are only read alongside a numeric score.
+    """
+    return {
+        "score": None,
+        "rc": 0.0,
+        "rb": 0.0,
+        "rubric_passed": False,
+        "per_criterion": [],
+        "ungraded_reason": reason,
+    }
+
+
 def main() -> None:
     global _out_path, _token_out
 
@@ -1010,9 +1044,9 @@ def main() -> None:
     resume_path = Path(a.resume_from) if a.resume_from else None
 
     # Resuming from the file we are about to write is not merely redundant: the
-    # module-level exception handler writes a {"score": 0.0, per_criterion: []}
-    # stub to --output on any judge crash, so a failed resume would erase the
-    # very verdicts it was resuming from. Callers pass a snapshot instead
+    # module-level exception handler writes an UNGRADED stub (score: None) to
+    # --output on any judge crash, so a failed resume would erase the very
+    # verdicts it was resuming from. Callers pass a snapshot instead
     # (host_rubric_pass.py writes rubric_breakdown.pre_resume.json).
     if resume_path is not None and resume_path.resolve() == _out_path.resolve():
         print(f"--resume-from and --output are the same file ({_out_path}); "
@@ -1034,12 +1068,7 @@ def main() -> None:
     if routing_error:
         print(routing_error, file=sys.stderr)
         _out_path.parent.mkdir(parents=True, exist_ok=True)
-        _out_path.write_text(
-            json.dumps(
-                {"score": 0.0, "rc": 0.0, "rb": 0.0, "rubric_passed": False, "per_criterion": []},
-                indent=2,
-            )
-        )
+        _out_path.write_text(json.dumps(_ungraded_doc(routing_error), indent=2))
         sys.exit(0)
 
     criteria = _load_criteria(rubric_path)
@@ -1047,10 +1076,7 @@ def main() -> None:
         print("no LLM-graded criteria found in rubric", file=sys.stderr)
         _out_path.parent.mkdir(parents=True, exist_ok=True)
         _out_path.write_text(
-            json.dumps(
-                {"score": 0.0, "rc": 0.0, "rb": 0.0, "rubric_passed": False, "per_criterion": []},
-                indent=2,
-            )
+            json.dumps(_ungraded_doc("no LLM-graded criteria found in rubric"), indent=2)
         )
         sys.exit(0)
 
@@ -1152,7 +1178,9 @@ def main() -> None:
 
     _out_path.parent.mkdir(parents=True, exist_ok=True)
     _out_path.write_text(json.dumps(doc, indent=2))
-    print(f"score={doc['score']} rc={doc['rc']} rb={doc['rb']} passed={doc['rubric_passed']}")
+    _sc = doc["score"]
+    print(f"score={'UNGRADED' if _sc is None else _sc} rc={doc['rc']} "
+          f"rb={doc['rb']} passed={doc['rubric_passed']}")
     print(f"Written: {_out_path}")
 
 
@@ -1167,7 +1195,7 @@ if __name__ == "__main__":
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(
             json.dumps(
-                {"score": 0.0, "rc": 0.0, "rb": 0.0, "rubric_passed": False, "per_criterion": [], "error": str(exc)},
+                {**_ungraded_doc(f"judge crashed: {exc}"), "error": str(exc)},
                 indent=2,
             )
         )

@@ -108,7 +108,7 @@ def test_help_lists_the_stages():
     r = subprocess.run([str(RUN_TASK), "--help"], capture_output=True, text=True,
                        cwd=str(REPO), timeout=60)
     assert r.returncode == 0
-    for stage in ("preflight", "harbor", "reshape", "finance", "mask", "summary"):
+    for stage in ("preflight", "harbor", "reshape", "finance", "mask"):
         assert stage in r.stdout
 
 
@@ -127,15 +127,11 @@ def _dispatch_all_branch() -> str:
 
 
 @pytest.mark.parametrize("stage", ["stage_preflight", "stage_harbor",
-                                   "stage_reshape", "stage_finance",
-                                   "stage_summary"])
+                                   "stage_reshape", "stage_finance"])
 def test_a_full_run_reaches_every_stage_it_should(stage):
     """`--stage all` is what `make run-task` and run_batch.py invoke, so a stage
     missing from this arm is a stage that only runs if someone types it by hand.
 
-    stage_summary was exactly that: defined, dispatchable as `--stage summary`,
-    and absent here -- so the graded table it exists to print never printed on a
-    normal run, which is the whole problem the host-grade work set out to fix.
     stage_mask is deliberately NOT listed: stage_finance calls it itself.
     """
     assert stage in _dispatch_all_branch()

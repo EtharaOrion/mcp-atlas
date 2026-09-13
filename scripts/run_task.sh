@@ -103,6 +103,18 @@ while [ $# -gt 0 ]; do
 done
 
 TASK="${TASK:?usage: scripts/run_task.sh [--stage all|preflight|harbor|reshape|finance|mask] <task-dir>}"
+
+# COMPOSE-ONLY BUNDLE: no tests/Dockerfile means harbor's verifier phase has
+# nothing to build. Detected here, not in stage_preflight, because `--stage
+# harbor` never calls preflight. An explicit GRADING= always wins.
+if [ -z "${GRADING:-}" ] \
+   && grep -q '^environment_mode *= *"separate"' "$TASK/task.toml" 2>/dev/null \
+   && [ ! -f "$TASK/tests/Dockerfile" ]; then
+  export GRADING=compose
+  echo "[run_task] $(basename "$TASK") is COMPOSE-ONLY (no tests/Dockerfile; its" >&2
+  echo "           verifier is inline in environment/docker-compose.yaml)." >&2
+  echo "           Using GRADING=compose automatically." >&2
+fi
 [ -f "$TASK/task.toml" ] || { echo "not a task dir (no task.toml): $TASK" >&2; exit 2; }
 case "$STAGE" in
   all|preflight|harbor|reshape|finance|mask) ;;
@@ -117,6 +129,24 @@ else
   MODEL="${MODEL:-claude-opus-5}"
 fi
 N="${N:-1}"
+
+# ONE TRIAL PER INVOCATION UNDER COMPOSE GRADING. The compose volumes carry a
+# literal `name:`, so all N trials share one /workspace and one verdict is
+# published N times. run_batch.py is safe: it pins N=1 per unit.
+case "$STAGE" in
+  all|harbor)
+    if [ "${GRADING:-}" = "compose" ] && [ "$N" != "1" ]; then
+      echo "[run_task] REFUSING: GRADING=compose with N=$N." >&2
+      echo "[run_task]   The grading volumes are named per JOB, not per trial, so all" >&2
+      echo "[run_task]   $N trials would share one /workspace and be published with one" >&2
+      echo "[run_task]   verdict repeated $N times." >&2
+      echo "[run_task]   Use N=1 and invoke again for each attempt, or drive it with:" >&2
+      echo "[run_task]     scripts/run_batch.py --task $TASK --n $N" >&2
+      exit 2
+    fi
+    ;;
+esac
+
 # Pin the rubric grader for the whole run. Left unset, rubric_judge_cli picks a
 # model from whichever CLI the machine has, so the host pass grades on
 # gpt-5.6-sol while an in-container pass grades on a Claude model -- one
@@ -577,23 +607,14 @@ for svc in (doc.get("services") or {}).values():
 # to build a 5.4 GB image no `harbor run` would ever start. Re-add it only if a
 # bundle actually pins that bare name.
 #
-# verifier-base and rubric-judge are here for the same reason light-servers is:
-# they exist only in this checkout, no registry serves them, and NOTHING in a run
-# produces them. They are also invisible to the compose scan below -- verifier-base
-# is the FROM of each bundle's tests/Dockerfile (harbor builds that image during
-# the VERIFIER phase, by which point the agent has already run for its full
-# duration), and rubric-judge is never in a compose file at all: host_rubric_pass.py
-# starts it directly (RUBRIC_JUDGE_IMAGE, :488) on behalf of the
-# host_grade_plugin.py this repo passes as --plugin. So a fresh clone used to
-# boot the fleet, run the agent to completion, and only then fail with no eval
-# image to build -- the most expensive possible moment to discover a missing
-# `make build-verifier-base`.
+# rubric-judge and verifier-base are both gone: every bundle now builds its
+# verifier and judge inline in its own compose file, so nothing to prebuild.
+
 image_build_context() {
   case "${1%%:*}" in
     light-servers) echo "$REPO/services/light-servers" ;;
     egress-proxy)  echo "$REPO/tools/network/egress-proxy" ;;
-    verifier-base) echo "$REPO/services/verifier" ;;
-    # Context is services/, NOT services/rubric-judge: the Dockerfile COPYs
+    # Context is services/: the Dockerfile COPYs
     # sibling trees (scoring/) that a narrower context would put out of reach.
     # Hence the -f override below. Matches `make build-rubric-judge` exactly.
     rubric-judge)  echo "$REPO/services" ;;
@@ -604,7 +625,6 @@ image_build_context() {
 # default and `docker build` finds it itself.
 image_build_dockerfile() {
   case "${1%%:*}" in
-    rubric-judge) echo "$REPO/services/rubric-judge/Dockerfile" ;;
   esac
 }
 
@@ -662,6 +682,33 @@ ensure_image() {
   [ -z "${SKIP_IMAGE_REFRESH:-}" ] || return 0
   docker build ${fflag[@]+"${fflag[@]}"} -q -t "$img" "$ctx" >/dev/null \
     || { echo "[run_task] failed to refresh $img from $ctx" >&2; exit 3; }
+}
+
+# --no-delete means harbor never tears its project down, so light-servers keeps
+# ${JOB}_ctl open and a stale .collect_done lets the next verifier grade a
+# PREVIOUS run's trajectory. Scoped by job slug; other tasks are untouched.
+atlas_clean_job_env() {
+  local when="$1" prefix proj cids nets
+  docker info >/dev/null 2>&1 || return 0
+  # harbor names its project after the trial session id, lowercased
+  # (_sanitize_docker_compose_project_name, harbor docker.py:68).
+  prefix="$(printf '%s' "$JOB" | tr '[:upper:]' '[:lower:]')"
+  while IFS= read -r proj; do
+    [ -n "$proj" ] || continue
+    # Prefix match via `case`, not grep -E: a job slug is not a regex, and a dot
+    # in one would silently widen the match to other jobs.
+    case "$proj" in "${prefix}__"*) ;; *) continue ;; esac
+    echo "[run_task] $when: removing leftover harbor project $proj" >&2
+    cids="$(docker ps -aq --filter "label=com.docker.compose.project=$proj" 2>/dev/null || true)"
+    [ -z "$cids" ] || docker rm -f $cids >/dev/null 2>&1 || true
+    nets="$(docker network ls -q --filter "label=com.docker.compose.project=$proj" 2>/dev/null || true)"
+    [ -z "$nets" ] || docker network rm $nets >/dev/null 2>&1 || true
+  done < <(docker ps -a --format '{{.Label "com.docker.compose.project"}}' 2>/dev/null | sort -u)
+  # Nothing holds them now, so these can actually go. By name, because that is
+  # how the compose file declares them (name: ${ATLAS_VOL:-atlas}_*) and so they
+  # are invisible to any project-scoped teardown.
+  docker volume rm -f "${JOB}_workspace" "${JOB}_ctl" "${JOB}_judge_in" \
+                      "${JOB}_grade_out" "${JOB}_judge_out" >/dev/null 2>&1 || true
 }
 
 # The interpreter that can import harbor. `harbor` is installed as a uv tool, so
@@ -775,11 +822,8 @@ stage_preflight() {
       ensure_image "$_base"
     fi
   fi
-  # rubric-judge is started by host_rubric_pass.py, not by compose, and only when
-  # there is a rubric to grade.
-  if [ -f "$TASK/tests/rubric.json" ]; then
-    ensure_image "${RUBRIC_JUDGE_IMAGE:-rubric-judge:latest}"
-  fi
+  # The judge needs no prebuild here any more: every bundle builds its own
+  # inline, as part of the grading project. services/rubric-judge/ is gone.
   unset _base
 }
 
@@ -867,6 +911,33 @@ stage_harbor() {
   # pointed at host.docker.internal, which network isolation cannot route to.
   local _iso; _iso="$(network_isolation_overlay)"
   [ -n "$_iso" ] && args+=(--extra-docker-compose "$_iso")
+
+  # COMPOSE-ORCHESTRATED GRADING (plan.md). Verifier and judge become siblings
+  # of the agent. --disable-verification stops a second, separately BILLED judge
+  # run; --no-delete stops harbor killing the graders the moment it returns.
+  if [ "${GRADING:-}" = "compose" ]; then
+    # COMPOSE_PROFILES deliberately NOT set for harbor: env.stop() would kill
+    # the graders mid-wait. Harbor WRITES the volumes; stage_host_rubric starts
+    # the graders afterwards, in their own project, to READ them.
+    export ATLAS_UID="$(id -u)" ATLAS_GID="$(id -g)"
+    # Per JOB, NOT per trial -- which is why the N>1 refusal above exists.
+    export ATLAS_VOL="$JOB"
+    # Before harbor, not only after: a crashed run never reaches the post-grade
+    # cleanup, and its leftover sentinel is what would poison this one.
+    atlas_clean_job_env "pre-run cleanup"
+    # The `rubric` sibling owns this channel; the in-job plugin would buy a
+    # SECOND billed verdict for the same trajectory.
+    export HOST_GRADE_OFF=1
+    args+=(--disable-verification --no-delete)
+    echo "[run_task] GRADING=compose -- verifier and judge run as SIBLING" >&2
+    echo "[run_task]   CONTAINERS; harbor's own verifier is disabled." >&2
+    # Both env vars matter: this project/volume pair is not the Makefile's
+    # default (atlasgrade over atlas_*), and the bare command would `down -v`
+    # someone else's volumes. Only needed if the run dies before reshape.
+    echo "[run_task]   If this run is interrupted before reshape, collect with:" >&2
+    echo "[run_task]     make grade-wait TASK=$TASK \\" >&2
+    echo "[run_task]       ATLAS_VOL=$JOB ATLAS_PROJ=atlasgrade-${JOB//[^a-zA-Z0-9]/}" >&2
+  fi
   # Grade the rubric INSIDE the job, on TrialEvent.END, so the metric on
   # Harbor's progress bar and the tables it prints are the ledger's numbers.
   # Harbor prints those from the reward a trial carried at trial exit
@@ -1248,6 +1319,120 @@ network_isolation_overlay() {
 # rather than the rubric-less one. Checkpointed, because a resume must not spend
 # judge quota re-grading a trial it already graded.
 stage_host_rubric() {
+  # GRADING=compose owns the rubric in a sibling CONTAINER. This host-side pass
+  # would grade it a second time and pay for a second verdict -- and because the
+  # two verdicts disagree at the margin, whichever wrote last would silently
+  # decide the reward. Skip entirely.
+  if [ "${GRADING:-}" = "compose" ]; then
+    # stage_reshape is documented re-runnable and calls this first. Without the
+    # guard a second `--stage reshape` restarts both graders against volumes
+    # `down -v` already destroyed: 30 min waiting on a sentinel never coming.
+    if [ "$(state_get host_rubric_done)" = "1" ]; then
+      echo "[run_task] compose grading already ran for this trial; skipping"
+      return 0
+    fi
+    # This is where the graders RUN. They could not run inside harbor's trial,
+    # so they run here, reading the volumes it left behind. Both block on a
+    # sentinel the collect hook already wrote, so arriving late costs nothing.
+    local _cf="$TASK/environment/docker-compose.yaml"
+    local _proj="atlasgrade-${JOB//[^a-zA-Z0-9]/}"
+    # IN ORDER, not a fan-out: the verifier hands the trajectory over, and the
+    # judge must finish before pytest -- a late verdict reads as "unscored",
+    # drops a weight-3 criterion from the denominator and RAISES the reward.
+    echo "[run_task] GRADING=compose: project $_proj"
+    echo "[run_task]   1/2 starting VERIFIER (hands the trajectory over)"
+    COMPOSE_PROFILES=grading ATLAS_VOL="$JOB" \
+      ATLAS_UID="$(id -u)" ATLAS_GID="$(id -g)" \
+      docker compose -f "$_cf" -p "$_proj" up --build --no-deps -d verifier >&2 || {
+        echo "[run_task] could not start the verifier" >&2; return 1; }
+
+    # Wait for the handoff, then start the judge. Bounded: if the verifier never
+    # produces a trajectory there is nothing to grade, and the judge would only
+    # sit waiting for it.
+    local _hand=0 _deadline_h=$(( $(date +%s) + 600 ))
+    while [ "$(date +%s)" -lt "$_deadline_h" ]; do
+      if docker run --rm -v "${JOB}_judge_in:/s:ro" alpine:3.21 \
+           test -s /s/trajectory.json >/dev/null 2>&1; then _hand=1; break; fi
+      docker inspect "${_proj}-verifier-1" --format '{{.State.Running}}' 2>/dev/null \
+        | grep -q true || break
+      sleep 5
+    done
+    if [ "$_hand" = 1 ]; then
+      echo "[run_task]   2/2 starting JUDGE (trajectory handed over)"
+    else
+      echo "[run_task]   2/2 starting JUDGE -- WARNING: no trajectory handed over;" >&2
+      echo "              it will fail soft and the rubric channel stays UNSCORED." >&2
+    fi
+    COMPOSE_PROFILES=grading ATLAS_VOL="$JOB" \
+      ATLAS_UID="$(id -u)" ATLAS_GID="$(id -g)" \
+      docker compose -f "$_cf" -p "$_proj" up --build --no-deps -d rubric >&2 || {
+        echo "[run_task] could not start the judge" >&2; return 1; }
+
+    # Block on the VERIFIER, not the rubric: the verifier finishes last by
+    # construction, because it waits for the judge's verdict before running
+    # pytest (test_outputs.py folds the rubric into the ledger at pytest time).
+    COMPOSE_PROFILES=grading ATLAS_VOL="$JOB" \
+      docker compose -f "$_cf" -p "$_proj" wait verifier >&2 \
+      || echo "[run_task] verifier exited non-zero" >&2
+
+    # EXTRACT FIRST, then report. The reward lives in a named volume until it
+    # is copied out, so there is nothing on the host to test before this point.
+    local _trials _tname _tdir _v _any=0
+    _trials="$(state_get trials)"
+    if [ -z "$_trials" ]; then
+      echo "[run_task] WARNING: no trials recorded for this invocation; nothing" >&2
+      echo "           to stamp. Inspect the verdict with:" >&2
+      echo "             docker run --rm -v ${JOB}_grade_out:/s alpine ls /s" >&2
+    fi
+    while IFS= read -r _tname; do
+      [ -n "$_tname" ] || continue
+      _tdir="$OUTPUT_DIR/$JOB/$_tname"
+      [ -d "$_tdir" ] || continue
+      mkdir -p "$_tdir/verifier"
+      # --user so the files land owned by the OPERATOR: a root-owned copy is
+      # how the atlas_ctl bug silently killed the collect hook.
+      for _v in "${JOB}_grade_out" "${JOB}_judge_out"; do
+        docker run --rm --user "$(id -u):$(id -g)" \
+          -v "$_v:/src:ro" -v "$_tdir/verifier:/dst" alpine:3.21 \
+          sh -c 'cp -r /src/. /dst/ 2>/dev/null || true' >/dev/null 2>&1 || true
+      done
+      if [ -s "$_tdir/verifier/reward.json" ]; then
+        _any=1
+        echo "[run_task] compose grading produced:"; cat "$_tdir/verifier/reward.json"
+        python3 - "$_tdir/verifier/reward.json" <<'PYSTAMP'
+import json, sys, pathlib
+p = pathlib.Path(sys.argv[1])
+try:
+    d = json.loads(p.read_text())
+except Exception:
+    sys.exit(0)
+d["producer"] = "compose_grading"
+p.write_text(json.dumps(d, indent=2))
+print(f"[run_task]   stamped producer=compose_grading -> {p}")
+PYSTAMP
+      fi
+    done < <(printf '%s\n' "$_trials" | tr ',' '\n')
+
+    if [ "$_any" != 1 ]; then
+      echo "[run_task] WARNING: the grading project produced no reward.json." >&2
+      echo "           Look for collect_never_signalled.txt:" >&2
+      echo "             docker run --rm -v ${JOB}_grade_out:/s alpine ls /s" >&2
+    fi
+
+    # -v takes the grading volumes with it. They are named per JOB, so leaving
+    # one behind would let the next run of THIS task read this run's verdict.
+    COMPOSE_PROFILES=grading ATLAS_VOL="$JOB" \
+      docker compose -f "$_cf" -p "$_proj" down -v >/dev/null 2>&1 || true
+    # ...and harbor's OWN project, which actually holds workspace/ctl open --
+    # without this the `down -v` above silently removes nothing. Safe: the
+    # verdict is already on the host and no later stage reads the volumes.
+    atlas_clean_job_env "post-grade cleanup"
+
+    # Only on a verdict that landed: marking a failed run "done" would make the
+    # retry skip itself and publish a rubric-less, silently raised reward.
+    [ "$_any" = "1" ] && state_put host_rubric_done 1
+    return 0
+  fi
   [ "$(state_get host_rubric_done)" = "1" ] && { echo "[run_task] host rubric already graded; skipping"; return 0; }
   # Trial dirs are named after the TASK slug, not the job: JOB=Input_1_oracle
   # still produces Input_1__PMNhXaa. Globbing on "$JOB__*" therefore found
