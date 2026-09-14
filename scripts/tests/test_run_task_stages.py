@@ -1,18 +1,21 @@
-"""Stage plumbing in scripts/run_task.sh.
+"""Stage plumbing in scripts/run_task.sh, and the harbor patch it runs first.
 
 Harbor itself is stubbed on PATH, so these cover what the script decides -- the
 run_N a stage owns, the state it hands to the next stage, the runs it protects
-from being wiped -- without building a container.
+from being wiped -- without building a container. The same PATH stub lets the
+last section patch a mirrored harbor rather than the installed one.
 """
+import importlib.util
 import json
 import os
 import subprocess
 import sys
+import types
 from pathlib import Path
 
 import pytest
 
-from conftest import mirror_harbor_package, requires_docker
+from conftest import mirror_harbor_package, requires_docker, requires_harbor
 
 REPO = Path(__file__).resolve().parent.parent.parent
 RUN_TASK = REPO / "scripts" / "run_task.sh"
@@ -266,3 +269,174 @@ def test_one_invocation_writes_exactly_one_run(env, tmp_path):
 
     runs = [p.name for d in env.output.glob("*/trajectory") for p in d.glob("run_*")]
     assert runs == ["run_1"], runs
+
+
+# ---------------------------------------------------------------------------
+# The collect hook the patcher installs (scripts/patch_harbor.py)
+# ---------------------------------------------------------------------------
+#
+# Every way this hook can fail is quiet: harbor logs a failed collect hook and
+# carries on, and collect_artifacts.py exits 0 by contract, so a run that
+# collected nothing looks exactly like a run that collected everything.
+
+PATCHER = REPO / "scripts" / "patch_harbor.py"
+
+_spec = importlib.util.spec_from_file_location("patch_harbor", PATCHER)
+ph = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(ph)
+
+
+class _Hook:
+    """Stands in for harbor's VerifierCollectConfig, which the patch only reads .command from."""
+
+    def __init__(self, command):
+        self.command = command
+
+
+def _collect_hooks(existing, monkeypatch):
+    """Run the patched body of harbor's _collect_hooks over *existing* hooks."""
+    config = types.ModuleType("harbor.models.task.config")
+    config.VerifierCollectConfig = _Hook
+    for name, mod in (
+        ("harbor", types.ModuleType("harbor")),
+        ("harbor.models", types.ModuleType("harbor.models")),
+        ("harbor.models.task", types.ModuleType("harbor.models.task")),
+        ("harbor.models.task.config", config),
+    ):
+        monkeypatch.setitem(sys.modules, name, mod)
+
+    ns: dict = {}
+    exec(compile("def _run(hooks):\n" + ph.REPLACEMENT_COLLECT_V1, "<patch>", "exec"), ns)
+    return ns["_run"](list(existing))
+
+
+def _builtin_command(monkeypatch):
+    return _collect_hooks([], monkeypatch)[-1].command
+
+
+def _mirrored_trial(tmp_path):
+    return next(tmp_path.glob("lib/python*/site-packages/harbor/trial/trial.py"))
+
+
+def _run_patcher(tmp_path):
+    """Patch the mirror, never the real install: PATH decides which harbor is found."""
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir(exist_ok=True)
+    stub = bin_dir / "harbor"
+    stub.write_text("#!/bin/sh\nexit 0\n")
+    stub.chmod(0o755)
+    e = dict(os.environ, PATH=f"{bin_dir}:{os.environ['PATH']}")
+    return subprocess.run([sys.executable, str(PATCHER)],
+                          capture_output=True, text=True, env=e, timeout=120)
+
+
+def test_the_anchor_does_not_survive_its_own_replacement():
+    """Re-running the patcher cannot double-apply, because the anchor is consumed.
+
+    The patcher decides what is already applied by searching for a marker
+    string. Any patch whose replacement still contains its own anchor would
+    apply again on every pass that reaches it.
+    """
+    assert ph.ANCHOR_COLLECT not in ph.REPLACEMENT_COLLECT
+    assert ph.ANCHOR_COLLECT_V1 not in ph.REPLACEMENT_COLLECT_V1
+    assert ph.ALREADY_PATCHED_MARKER_COLLECT in ph.REPLACEMENT_COLLECT
+    assert ph.ALREADY_PATCHED_MARKER_COLLECT in ph.REPLACEMENT_COLLECT_V1
+
+
+@requires_harbor
+def test_patching_twice_leaves_exactly_one_hook(tmp_path):
+    if not mirror_harbor_package(tmp_path):
+        pytest.skip("harbor is not installed; cannot mirror its package")
+
+    first = _run_patcher(tmp_path)
+    assert first.returncode == 0, first.stdout + first.stderr
+    once = _mirrored_trial(tmp_path).read_text()
+
+    second = _run_patcher(tmp_path)
+    assert second.returncode == 0, second.stdout + second.stderr
+
+    assert _mirrored_trial(tmp_path).read_text() == once
+    assert once.count(ph.ALREADY_PATCHED_MARKER_COLLECT) == 1
+
+
+@requires_harbor
+def test_a_harbor_patched_by_the_previous_revision_is_upgraded(tmp_path):
+    """The prior patch consumed the anchor, so a new revision must recognise its output.
+
+    Without that, the anchor search misses on every already-patched machine and
+    the patcher exits 1 -- which run_task.sh (:1510) runs under `set -e`, so the
+    run dies before dispatch rather than grading anything.
+    """
+    if not mirror_harbor_package(tmp_path):
+        pytest.skip("harbor is not installed; cannot mirror its package")
+
+    trial = _mirrored_trial(tmp_path)
+    text = trial.read_text()
+    for current in (ph.REPLACEMENT_COLLECT_V1, ph.ANCHOR_COLLECT):
+        if current in text:
+            trial.write_text(text.replace(current, ph.ANCHOR_COLLECT_V1, 1))
+            break
+    assert ph.ANCHOR_COLLECT_V1 in trial.read_text()
+
+    result = _run_patcher(tmp_path)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+    patched = trial.read_text()
+    assert ph.ANCHOR_COLLECT_V1 not in patched
+    assert patched.count(ph.ALREADY_PATCHED_MARKER_COLLECT) == 1
+
+
+def test_a_task_hook_that_merely_mentions_the_collector_does_not_displace_it(monkeypatch):
+    """Dedup by equality, not containment.
+
+    A task hook that names the collector in passing -- wrapping it, logging it,
+    running it somewhere else -- used to satisfy a substring test and suppress
+    the builtin, taking every artifact with it.
+    """
+    mention = _Hook("echo running python3 /harness/scoring/collect_artifacts.py now")
+
+    hooks = _collect_hooks([mention], monkeypatch)
+
+    assert len(hooks) == 2
+    assert hooks[0] is mention
+    assert hooks[-1].command == _builtin_command(monkeypatch)
+
+
+@pytest.mark.parametrize("already", ["current", "prior"])
+def test_the_builtin_is_not_appended_beside_itself(monkeypatch, already):
+    """Both the current command and the one the previous revision emitted count as present."""
+    command = (_builtin_command(monkeypatch) if already == "current"
+               else "python3 /harness/scoring/collect_artifacts.py")
+
+    hooks = _collect_hooks([_Hook(command)], monkeypatch)
+
+    assert [h.command for h in hooks] == [command]
+
+
+def _run_hook_shell(command, tmp_path, scoring):
+    """Run the hook the way harbor does -- docker.py hands it to `sh -c`."""
+    return subprocess.run(["sh", "-c", command.replace("/harness/scoring", str(scoring))],
+                          capture_output=True, text=True, cwd=tmp_path, timeout=60)
+
+
+def test_a_missing_scoring_mount_is_named_and_still_not_fatal(monkeypatch, tmp_path):
+    command = _builtin_command(monkeypatch)
+    assert "/harness/scoring/collect_artifacts.py" in command
+
+    result = _run_hook_shell(command, tmp_path, tmp_path / "absent")
+
+    assert result.returncode == 0
+    assert "is not mounted" in result.stderr
+    assert "docker-compose.yaml" in result.stderr
+
+
+def test_a_mounted_scoring_dir_runs_the_collector(monkeypatch, tmp_path):
+    scoring = tmp_path / "scoring"
+    scoring.mkdir()
+    (scoring / "collect_artifacts.py").write_text("print('[artifacts] ran')\n")
+
+    result = _run_hook_shell(_builtin_command(monkeypatch), tmp_path, scoring)
+
+    assert result.returncode == 0
+    assert "[artifacts] ran" in result.stdout
+    assert result.stderr == ""

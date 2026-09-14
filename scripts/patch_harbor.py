@@ -56,16 +56,48 @@ ANCHOR_COLLECT = """\
         if step_cfg is not None:
             hooks.extend(step_cfg.verifier.collect)
         return hooks"""
-REPLACEMENT_COLLECT = """\
-        if step_cfg is not None:
-            hooks.extend(step_cfg.verifier.collect)
+
+# v1's own output, so an already-patched harbor upgrades in place. Without it
+# the anchor search misses (v1 consumed it), and the run dies: run_task.sh:1510
+# calls this script under `set -e`.
+ANCHOR_COLLECT_V1 = """\
         # harbor-patch: builtin collect
         _BUILTIN_CMD = "python3 /harness/scoring/collect_artifacts.py"
         if not any(_BUILTIN_CMD in h.command for h in hooks):
             from harbor.models.task.config import VerifierCollectConfig as _VCC
             hooks.append(_VCC(command=_BUILTIN_CMD))
         return hooks"""
-ALREADY_PATCHED_MARKER_COLLECT = "harbor-patch: builtin collect"
+
+# Plain shell, not `sh -c '...'`: harbor already wraps it (docker.py,
+# `exec_command.extend(["sh", "-c", cmd])`), so a second shell buys only nested
+# quoting. Guarded because this failure is otherwise invisible -- harbor treats
+# a failed collect hook as non-fatal and collect_artifacts.py exits 0 by
+# contract, so an unmounted /harness/scoring loses every artifact in silence.
+#
+# Dedup by equality, not containment: a task hook that merely MENTIONED the path
+# suppressed the builtin and lost the artifacts with it. Collecting twice is
+# harmless (copy2 overwrites, exit 0 always), so that is the safe side.
+_COLLECT_BLOCK = """\
+        # harbor-patch: builtin collect v2
+        _BUILTIN_CMD = (
+            'if [ -f /harness/scoring/collect_artifacts.py ]; then '
+            'python3 /harness/scoring/collect_artifacts.py; else '
+            'echo "[artifacts] FATAL: /harness/scoring is not mounted -- '
+            'check the ../ depth in environment/docker-compose.yaml; '
+            'NO agent artifacts were collected" >&2; fi'
+        )
+        _BUILTIN_PRIOR = "python3 /harness/scoring/collect_artifacts.py"
+        if not any(h.command.strip() in (_BUILTIN_CMD, _BUILTIN_PRIOR) for h in hooks):
+            from harbor.models.task.config import VerifierCollectConfig as _VCC
+            hooks.append(_VCC(command=_BUILTIN_CMD))
+        return hooks"""
+
+REPLACEMENT_COLLECT = """\
+        if step_cfg is not None:
+            hooks.extend(step_cfg.verifier.collect)
+""" + _COLLECT_BLOCK
+REPLACEMENT_COLLECT_V1 = _COLLECT_BLOCK
+ALREADY_PATCHED_MARKER_COLLECT = "harbor-patch: builtin collect v2"
 
 
 # --- Agent failure classification ---------------------------------------------
@@ -512,6 +544,10 @@ def main() -> None:
 
     if ALREADY_PATCHED_MARKER_COLLECT in trial_text:
         print(f"[patch_harbor] Collect hook: already applied")
+    elif ANCHOR_COLLECT_V1 in trial_text:
+        trial_text = trial_text.replace(ANCHOR_COLLECT_V1, REPLACEMENT_COLLECT_V1, 1)
+        trial_changed = True
+        print(f"[patch_harbor] Collect hook: upgraded from v1")
     elif ANCHOR_COLLECT not in trial_text:
         print(
             f"[patch_harbor] Collect hook: NOT applied -- anchor not found in {trial}",

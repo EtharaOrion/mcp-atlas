@@ -48,9 +48,13 @@ _SKIP_EXTS = frozenset({".pyc", ".pyo"})
 
 
 def _int_env(name: str, default: int) -> int:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
     try:
-        return int(os.environ[name])
-    except (KeyError, ValueError):
+        return int(raw)
+    except ValueError:
+        print(f"[artifacts] {name}={raw!r} is not an integer; using default {default}")
         return default
 
 
@@ -110,6 +114,11 @@ def collect(src: Path, dest: Path, excluded: set[str],
 
 
 def main() -> int:
+    for suffix in ("SRC", "DEST", "EXCLUDE", "MAX_FILE", "MAX_TOTAL"):
+        if f"DEFAULT_{suffix}" in os.environ and f"ARTIFACT_{suffix}" not in os.environ:
+            print(f"[artifacts] DEFAULT_{suffix} is set in the environment but nothing "
+                  f"reads it; ARTIFACT_{suffix} is the key that configures this")
+
     src = Path(os.environ.get("ARTIFACT_SRC", DEFAULT_SRC))
     dest = Path(os.environ.get("ARTIFACT_DEST", DEFAULT_DEST))
     excluded = {p for p in os.environ.get("ARTIFACT_EXCLUDE", DEFAULT_EXCLUDE).split(":") if p}

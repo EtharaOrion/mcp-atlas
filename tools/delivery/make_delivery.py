@@ -237,8 +237,11 @@ def make_delivery(
             if (ver_src / fname).exists():
                 shutil.copy2(ver_src / fname, ver_dst / fname)
 
-        reward_val = norm_reward((_load(ver_src / "reward.json", {}) or {}).get("reward", 0))
-        _dump(ver_dst / "reward.json", {"reward": reward_val})
+        reward_src = _load(ver_src / "reward.json", {}) or {}
+        _dump(ver_dst / "reward.json", {
+            "reward": norm_reward(reward_src.get("reward", 0)),
+            **{k: reward_src[k] for k in ("comparable", "caveats") if k in reward_src},
+        })
 
         rubric = report.get("rubric", [])
         # harbor_to_output writes this key PRESENT and NULL when the rubric

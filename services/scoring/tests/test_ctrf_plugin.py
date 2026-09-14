@@ -6,10 +6,13 @@ harbor_to_output._junit_to_ctrf() built from --junitxml, or the shipped
 detail.json and report.json (both built off CTRF's rows) would shift meaning.
 """
 import json
+import os
 import subprocess
 import sys
 import textwrap
 from pathlib import Path
+
+import pytest
 
 REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO / "tools" / "delivery"))
@@ -181,3 +184,53 @@ def test_collect_missing_source_is_not_fatal(tmp_path):
     copied, total, skipped = ca.collect(tmp_path / "nope", tmp_path / "out", set(), 100, 100)
     assert (copied, total) == (0, 0)
     assert skipped and "does not exist" in skipped[0]
+
+
+# --- configuration that was ignored in silence ------------------------------
+
+def _run_main(tmp_path, monkeypatch, capsys, **env):
+    """Run the collector's entry point with only the given ARTIFACT_*/DEFAULT_* set."""
+    for stale in list(os.environ):
+        if stale.startswith(("ARTIFACT_", "DEFAULT_")):
+            monkeypatch.delenv(stale)
+    src = tmp_path / "workspace"
+    src.mkdir()
+    (src / "note.txt").write_text("hi")
+    monkeypatch.setenv("ARTIFACT_SRC", str(src))
+    monkeypatch.setenv("ARTIFACT_DEST", str(tmp_path / "out"))
+    for key, value in env.items():
+        monkeypatch.setenv(key, value)
+
+    assert ca.main() == 0
+    return capsys.readouterr().out
+
+
+def test_a_setting_under_a_name_nothing_reads_is_called_out(tmp_path, monkeypatch, capsys):
+    """DEFAULT_* are this module's fallbacks, not its env vars: setting one looks
+    like raising the cap that decides whether artifacts ship, and does nothing."""
+    out = _run_main(tmp_path, monkeypatch, capsys, DEFAULT_MAX_TOTAL="500 * 1024 * 1024")
+
+    assert "DEFAULT_MAX_TOTAL is set" in out
+    assert "ARTIFACT_MAX_TOTAL is the key" in out
+
+
+def test_the_real_key_beside_the_alias_draws_no_complaint(tmp_path, monkeypatch, capsys):
+    out = _run_main(tmp_path, monkeypatch, capsys,
+                    DEFAULT_MAX_TOTAL="1", ARTIFACT_MAX_TOTAL="999999")
+
+    assert "DEFAULT_MAX_TOTAL" not in out
+
+
+def test_an_unreadable_cap_says_so_instead_of_quietly_reverting(tmp_path, monkeypatch, capsys):
+    out = _run_main(tmp_path, monkeypatch, capsys, ARTIFACT_MAX_TOTAL="500 * 1024 * 1024")
+
+    assert "is not an integer" in out
+    assert str(ca.DEFAULT_MAX_TOTAL) in out
+
+
+@pytest.mark.parametrize("raw", ["", "   "])
+def test_an_empty_cap_is_treated_as_unset(tmp_path, monkeypatch, capsys, raw):
+    """Blank means "I did not set this", which is not a mistake worth naming."""
+    out = _run_main(tmp_path, monkeypatch, capsys, ARTIFACT_MAX_FILE=raw)
+
+    assert "not an integer" not in out
