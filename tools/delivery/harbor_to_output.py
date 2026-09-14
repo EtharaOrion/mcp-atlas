@@ -1033,7 +1033,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         _orig_rew = {}
 
     _producer = _orig_rew.get("producer")
-    if _producer not in ("host_rubric_pass", "container_test"):
+    if _producer not in ("host_rubric_pass", "container_test", "compose_grading"):
         print(
             f"[harbor_to_output] WARNING: reward.json producer={_producer!r}; "
             "host rubric was not run or refused to grade -- treating trial as unscored (reward=0)",
@@ -1053,7 +1053,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     # line reported 90.4, because it averaged the two channels the agent did
     # well on and ignored the one it did not. Anything reading pass_summary.json
     # as the headline number got the flattering figure.
-    if _producer == "host_rubric_pass":
+    if _producer in ("host_rubric_pass", "compose_grading"):
         # weighted ledger path: rescale to percentage
         _ledger_reward = _orig_rew.get("reward")
         if isinstance(_ledger_reward, (int, float)):

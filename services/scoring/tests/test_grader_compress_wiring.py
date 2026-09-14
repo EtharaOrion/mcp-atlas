@@ -14,8 +14,11 @@ runs on a host that has never seen headroom-ai.
 from __future__ import annotations
 
 import json
+import re
 import sys
 import types
+
+import yaml
 from pathlib import Path
 
 import pytest
@@ -231,3 +234,140 @@ def test_score_claims_is_not_wired():
     source = (_SCORING / "score_claims.py").read_text()
     assert "grader_compress" not in source
     assert "compress_messages" not in source
+
+
+# ---------------------------------------------------------------------------
+# The headroom pin must be the SAME in every bundle that grades. verifier-base
+# once made that structural; now each bundle duplicates the list, and the drift
+# is invisible -- compression rewrites the judge's PROMPT, so a bundle one pin
+# out scores the same trajectory differently and nothing errors.
+# ---------------------------------------------------------------------------
+
+REPO = Path(__file__).resolve().parents[3]
+
+# No canonical requirements file any more: consistency is checked BETWEEN
+# bundles rather than against a central copy.
+# ---------------------------------------------------------------------------
+# Per-bundle INLINE images must all carry the SAME pins. A verdict is a function
+# of MODEL and HARNESS -- the codex CLI changes prompt delivery, headroom rewrites
+# the prompt -- so one pin out of step makes the reward plausibly wrong.
+# These once globbed tasks/*/rubric/Dockerfile and silently SKIPPED when it was
+# removed; they read the compose files now and assert they found something.
+# ---------------------------------------------------------------------------
+
+BUNDLE_COMPOSES = sorted(REPO.glob("tasks/*/environment/docker-compose.yaml"))
+
+
+_CODEX_RE = re.compile(r"@openai/codex@([0-9][0-9A-Za-z.\-]*)")
+_HEADROOM_RE = re.compile(r"headroom-ai([><=!,0-9.\s]*)")
+
+
+def _inline_blocks(compose_path: Path) -> dict[str, str]:
+    """service -> its dockerfile_inline text, for services that define one."""
+    try:
+        spec = yaml.safe_load(compose_path.read_text()) or {}
+    except Exception:
+        return {}
+    out = {}
+    for name, svc in (spec.get("services") or {}).items():
+        inline = ((svc or {}).get("build") or {}).get("dockerfile_inline")
+        if inline:
+            out[name] = inline
+    return out
+
+
+def _strip_comments(text: str) -> str:
+    """Comments mention these package names too.
+
+    The first `headroom-ai` in an inline block is usually the comment explaining
+    why it is pinned, not the pip line that pins it -- matching that returns an
+    empty version and reads as "this bundle has no pin".
+    """
+    return "\n".join(
+        line for line in text.splitlines() if not line.strip().startswith("#")
+    )
+
+
+def _pin_set(text: str) -> dict:
+    body = _strip_comments(text)
+    pins = {}
+    m = _CODEX_RE.search(body)
+    if m:
+        pins["codex"] = m.group(1)
+    m = _HEADROOM_RE.search(body)
+    if m and m.group(1).strip():
+        pins["headroom"] = "".join(m.group(1).split()).strip('"\'')
+    return pins
+
+
+def test_inline_images_are_actually_being_checked():
+    """The guard must never go quiet just because a path moved.
+
+    An earlier version of these tests globbed a directory that was later
+    deleted; they skipped instead of failing and the pins went unguarded. If no
+    bundle defines an inline image any more, that is a finding, not a pass.
+    """
+    found = [c for c in BUNDLE_COMPOSES if _inline_blocks(c)]
+    assert found, (
+        "no bundle defines build.dockerfile_inline. If the images moved again, "
+        "point these tests at their new home -- do not let this guard skip."
+    )
+
+
+def test_every_inline_image_pins_the_same_versions():
+    """All bundles agree on the codex and headroom versions they bake."""
+    # Compared PER PIN, not per pin-set. The verifier image pins headroom but
+    # has no codex CLI (it runs pytest, not the judge), so grouping whole sets
+    # together reports a difference that is by design.
+    by_pin: dict[str, dict[str, list[str]]] = {}
+    for compose in BUNDLE_COMPOSES:
+        bundle = compose.parent.parent.name
+        for svc, text in _inline_blocks(compose).items():
+            for kind, version in _pin_set(text).items():
+                by_pin.setdefault(kind, {}).setdefault(version, []).append(
+                    f"{bundle}/{svc}"
+                )
+    for kind, versions in by_pin.items():
+        assert len(versions) == 1, (
+            f"bundles disagree on the {kind} pin, so the same trajectory would "
+            f"score differently depending on which bundle graded it: {versions}"
+        )
+
+
+# ---------------------------------------------------------------------------
+
+
+def _compose_services(compose_path: Path) -> dict:
+    try:
+        return (yaml.safe_load(compose_path.read_text()) or {}).get("services") or {}
+    except Exception:
+        return {}
+
+
+@pytest.mark.parametrize(
+    "compose", BUNDLE_COMPOSES, ids=lambda p: p.parent.parent.name
+)
+def test_agent_service_pins_a_non_root_uid(compose: Path):
+    """`main` declares a non-root user, so the image's USER cannot decide it."""
+    svcs = _compose_services(compose)
+    main = svcs.get("main")
+    if main is None:
+        pytest.skip("bundle has no main service")
+    # Only bundles wired for the three-container topology are held to this: the
+    # protection exists to guard /atlas-ctl, which only those bundles mount.
+    if not any("atlas-ctl" in str(v) for v in (main.get("volumes") or [])):
+        pytest.skip("bundle does not use /atlas-ctl")
+
+    user = str(main.get("user") or "")
+    assert user, (
+        f"{compose.parent.parent.name}: services.main sets no `user:`, so the "
+        "agent's uid comes from the image's USER line. A bundle whose Dockerfile "
+        "omits USER then runs the agent as ROOT and it can write /atlas-ctl -- "
+        "forging the trajectory the judge grades, with no error anywhere."
+    )
+    uid = user.split(":", 1)[0]
+    # Interpolated form is fine; what must never appear is a literal root.
+    assert uid not in ("0", "root"), (
+        f"{compose.parent.parent.name}: services.main runs as {user!r}. The "
+        "agent must be non-root or /atlas-ctl's ownership protects nothing."
+    )

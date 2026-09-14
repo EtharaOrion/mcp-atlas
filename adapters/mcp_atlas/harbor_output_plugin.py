@@ -4,8 +4,9 @@ complex-mcp `--layout harbor` shape) via tools/delivery/harbor_to_output.py.
 Attach with:
     harbor run ... --plugin adapters.mcp_atlas.harbor_output_plugin:HarborOutputPlugin
 
-The `harbor` shell function installed by scripts/harbor_shim.sh (sourced from ~/.zshrc) adds
-that flag automatically for every `harbor run`, so nothing has to be typed.
+Attached by hand only. scripts/run_task.sh does NOT use this plugin -- it sets
+HARBOR_OUTPUT_OFF=1 and runs the same converter itself in stage_reshape, so that
+the reshape is a stage that can be re-run independently of the agent phase.
 
 Env knobs:
     HARBOR_OUTPUT_DIR      where output/<task>/ goes      (default: <mcp-atlas repo>/output)
@@ -29,7 +30,7 @@ except Exception:  # pragma: no cover - allows importing outside a harbor env
             pass
 
 REPO = Path(__file__).resolve().parents[2]
-CONVERTER = REPO / "scripts" / "harbor_to_output.py"
+CONVERTER = REPO / "tools" / "delivery" / "harbor_to_output.py"
 
 
 class HarborOutputPlugin(BaseJobPlugin):
