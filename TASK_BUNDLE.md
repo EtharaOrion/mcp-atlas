@@ -100,8 +100,9 @@ Where both the agent and the verifier execute.
 
 ```dockerfile
 FROM python:3.12-slim
-RUN apt-get update && apt-get install -y --no-install-recommends curl procps && rm -rf /var/lib/apt/lists/*
-RUN pip install --no-cache-dir pytest "claude-agent-sdk>=0.1.45"
+RUN apt-get update && apt-get install -y --no-install-recommends curl procps jbig2dec && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir pytest "claude-agent-sdk>=0.1.45" \
+    openpyxl pillow pypdf pdfplumber
 RUN curl -fsSL https://downloads.claude.ai/claude-code-releases/bootstrap.sh | bash \
     && ln -sf /root/.local/bin/claude /usr/local/bin/claude \
     && chmod -R a+rX /root/.local && chmod a+x /root \
@@ -110,6 +111,20 @@ RUN curl -fsSL https://downloads.claude.ai/claude-code-releases/bootstrap.sh | b
 
 `claude-agent-sdk` transitively provides `mcp` and `anyio`, which is what lets `state_dump.py`
 speak MCP from the verifier. There is no `httpx` and no `requests`.
+
+**Bake every library the agent needs to READ the attachments, not just the ones
+the verifier imports.** `openpyxl`, `pillow`, `pypdf` and `pdfplumber` cover
+xlsx/png/jpg/pdf; add whatever else `data/` actually contains. `jbig2dec` is an
+apt package rather than a pip one because `pypdf` shells out to the binary, and
+without it a JBIG2-encoded PDF raises `DependencyError` instead of parsing.
+
+This layer used to be forgiving: a missing package meant the agent ran
+`pip install`, lost a turn to a connect timeout, and carried on. The PreToolUse
+guard (§2.5) now **refuses** `pip install` outright, so a task whose inputs need
+a library that is not here does not degrade — it fails. Verify with
+`docker run --rm <image> python3 -c "import openpyxl, PIL, pypdf, pdfplumber"`
+after building, which costs seconds and is the only check that actually covers
+this; a passing verifier suite does not, because the graders import none of them.
 
 **The CLI must be pre-baked, and `procps` must be present.** Harbor's
 `ClaudeCode.install()` normally installs both inside the container during agent

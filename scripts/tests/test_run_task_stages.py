@@ -196,6 +196,104 @@ def test_reshape_is_handed_only_this_invocations_trial(env):
 
 
 @requires_docker
+def test_host_rubric_does_not_grade_a_stale_trial(env):
+    """stage_harbor names the stale dirs "NOT part of this run" and stage_reshape
+    honours that, but the rubric pass globbed every *__* dir and graded one
+    anyway -- `find | sort` is alphabetical, so which one won was arbitrary. A
+    real run spent a full judge pass (60 criteria, ~1M chars) on a trial from an
+    earlier invocation and published it as this run's."""
+    _stale_trial(env)
+    assert env.run("harbor", RUN_OFFSET=0, N=1, STUB_TRIAL="alpha__fresh").returncode == 0
+    # stage_host_rubric is not independently selectable; stage_reshape calls it
+    # first, so reshape is the driver.
+    r = env.run("reshape", RUN_OFFSET=0)
+    blob = r.stdout + r.stderr
+    # Guard against a vacuous pass: if the stage never ran, absence proves nothing.
+    assert "unknown stage" not in blob, blob[-800:]
+    assert "alpha__stale" not in blob, (
+        f"the rubric pass reached a trial from an earlier invocation: {blob[-1500:]}")
+
+
+def _select_trials(tmp_path, state, names=("task__AAA", "task__BBB", "task__STALE")):
+    """Drive stage_host_rubric's trial selector directly.
+
+    The loop names a trial only on its "already graded" / "failed" branches, so
+    asserting on stage output cannot distinguish "selected and skipped" from
+    "never selected". This calls the selector itself.
+    `state` is None for an absent `trials` key, else the stored comma string.
+    """
+    job = tmp_path / "job"
+    for n in names:
+        (job / n).mkdir(parents=True)
+    has = "return 1" if state is None else "return 0"
+    get = "" if state is None else state
+    script = f"""
+        set -uo pipefail
+        OUTPUT_DIR={tmp_path}; JOB=job
+        state_has() {{ {has}; }}
+        state_get() {{ printf '%s' '{get}'; }}
+        {_selector_source()}
+        this_invocations_trials
+    """
+    out = subprocess.run(["bash", "-c", script], capture_output=True, text=True, timeout=60)
+    assert out.returncode == 0, out.stderr
+    return [Path(p).name for p in out.stdout.split() if p.strip()]
+
+
+def _selector_source():
+    body, keep = [], False
+    for line in RUN_TASK.read_text().splitlines():
+        if line.startswith("this_invocations_trials() {"):
+            keep = True
+        if keep:
+            body.append(line)
+            if line == "}":
+                break
+    assert body, "this_invocations_trials() not found in run_task.sh"
+    return "\n".join(body)
+
+
+def test_selector_absent_key_grades_every_trial(tmp_path):
+    """Hand-driven stage over a job dir with no state: grade what is there."""
+    assert sorted(_select_trials(tmp_path, None)) == ["task__AAA", "task__BBB", "task__STALE"]
+
+
+def test_selector_empty_value_grades_nothing(tmp_path):
+    """"harbor made nothing" must not collapse into "grade everything" -- that
+    is the same distinction stage_reshape draws, and the bug this pass had."""
+    assert _select_trials(tmp_path, "") == []
+
+
+def test_selector_keeps_every_trial_of_a_multi_attempt_run(tmp_path):
+    """Regression: an early version read the comma list with `printf '%s' | read`,
+    which dropped the last field because it was unterminated -- silently
+    narrowing an N=2 run to one trial."""
+    assert sorted(_select_trials(tmp_path, "task__AAA,task__BBB")) == ["task__AAA", "task__BBB"]
+
+
+def test_selector_skips_a_name_whose_dir_was_removed(tmp_path):
+    """A dir deleted by hand must not fail the whole stage."""
+    assert _select_trials(tmp_path, "task__AAA,task__GONE") == ["task__AAA"]
+
+
+def test_selector_never_returns_a_stale_dir(tmp_path):
+    """The bug: `find | sort` returned task__STALE and the judge graded it."""
+    assert "task__STALE" not in _select_trials(tmp_path, "task__AAA")
+
+
+@requires_docker
+def test_host_rubric_says_so_when_this_invocation_made_no_trial(env):
+    """"harbor made nothing" must not read as "the job dir is empty" -- a
+    state-tracking bug that grades nothing would otherwise look benign."""
+    _stale_trial(env)
+    assert env.run("harbor", RUN_OFFSET=0, N=1, STUB_TRIAL="").returncode == 0
+    r = env.run("reshape", RUN_OFFSET=0)
+    blob = r.stdout + r.stderr
+    assert "unknown stage" not in blob, blob[-800:]
+    assert "no trial dir of its own" in blob, blob[-2000:]
+
+
+@requires_docker
 def test_stale_trial_dirs_are_named_not_silently_dropped(env):
     _stale_trial(env)
     r = env.run("harbor", RUN_OFFSET=0, N=1, STUB_TRIAL="alpha__fresh")

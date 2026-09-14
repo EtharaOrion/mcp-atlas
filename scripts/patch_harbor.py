@@ -268,21 +268,40 @@ ALREADY_PATCHED_MARKER_PREBAKE = "harbor-patch: claude pre-baked"
 #     if await self._installed_claude_satisfies_version(environment):
 #         return
 #
-# Verified present in 0.13.2, 0.20.0 and 0.21.0 -- it is NOT new, so its
-# presence alone does not mean the guard below is unnecessary. This patch was
-# written anyway, which implies harbor's check does not fire in this harness
-# (its probe runs through environment.exec, not exec_as_agent, so a claude that
-# is pre-baked for one user can be invisible to the other).
+# CORRECTION: that method does NOT exist in 0.13.2, the version this harness
+# actually runs. Checked the whole installed package: the only match is
+# `_installed_codex_satisfies_version` (agents/installed/codex.py:85), which is
+# Codex's own, on Codex's class. `ClaudeCode.install()` has no version-satisfies
+# early return at all. The earlier "verified present in 0.13.2" was almost
+# certainly the codex method read as the claude one; 0.20.0 and 0.21.0 are
+# UNVERIFIED here, so treat the snippet above as a possibility, not a fact.
 #
-# So this constant is used only as a FALLBACK: it is consulted when the anchors
-# are gone, to distinguish "harbor restructured and still has some protection"
-# from "no protection at all". Where the anchors still match, the patch is
-# applied as before. Order matters -- see the prebake block in main().
+# This patch is therefore not merely belt-and-braces on 0.13.2 -- it is the only
+# protection there is. (Independently, harbor's probe would run through
+# environment.exec rather than exec_as_agent, so a claude pre-baked for one user
+# can be invisible to the other even where the method does exist.)
+#
+# The constant is used only as a FALLBACK: consulted when the anchors are gone,
+# to tell "harbor restructured but still has some protection" from "no
+# protection at all". Where the anchors still match, the patch is applied as
+# before, so on 0.13.2 this is never reached. Order matters -- see the prebake
+# block in main().
+#
+# Matched as a tuple because the name is version-dependent and, on 0.13.2
+# evidence, harbor's convention is `_installed_<agent>_satisfies_version`. A
+# rename that follows that convention should land on the fallback rather than on
+# the hard failure below, which would otherwise block every run after a harbor
+# upgrade for no reason. Kept as exact names, not a loose "satisfies_version"
+# substring: a false positive here lets a doomed run start and fail during agent
+# setup, whereas the hard failure refuses it up front with a clear message.
 #
 # What changed in 0.21.0: the inline `apk add --no-cache curl bash nodejs npm
 # procps` root block that ANCHOR_PREBAKE_ROOT targets was replaced by a call to
 # ensure_system_dependencies(), so that anchor can never match again there.
-NATIVE_PREBAKE_GUARD = "_installed_claude_satisfies_version"
+NATIVE_PREBAKE_GUARD = (
+    "_installed_claude_satisfies_version",
+    "_installed_claude_code_satisfies_version",
+)
 
 
 # --- Suppress harbor's own score tables ---------------------------------------
@@ -481,17 +500,19 @@ def main() -> None:
         text = text.replace(ANCHOR_PREBAKE_AGENT, REPLACEMENT_PREBAKE_AGENT, 1)
         changed = True
         print(f"[patch_harbor] Pre-baked CLI guard: applied")
-    elif NATIVE_PREBAKE_GUARD in text:
-        # Anchors gone (harbor >= 0.21.0 restructured install()), but harbor's
-        # own _installed_claude_satisfies_version early return is still there.
-        # Non-fatal: blocking every run over a patch that has no place left to
-        # apply is worse than proceeding on harbor's own protection. Loud
-        # because that protection is not identical -- harbor probes via
-        # environment.exec, so if a run now fails during agent setup trying to
-        # reach the network, this line is the first place to look.
+    elif (_native := next((g for g in NATIVE_PREBAKE_GUARD if g in text), None)):
+        # Anchors gone (harbor >= 0.21.0 restructured install()), but harbor has
+        # a version-satisfies early return of its own. Non-fatal: blocking every
+        # run over a patch that has no place left to apply is worse than
+        # proceeding on harbor's own protection. Loud because that protection is
+        # not identical -- harbor probes via environment.exec, so if a run now
+        # fails during agent setup trying to reach the network, this line is the
+        # first place to look. The guard is NAMED in the message: on 0.13.2 no
+        # such method existed at all, so which one matched is the fact worth
+        # having when this fires.
         print(
             f"[patch_harbor] Pre-baked CLI guard: NOT applied -- anchors gone from {target.name};\n"
-            "  relying on harbor's own _installed_claude_satisfies_version early return.\n"
+            f"  relying on harbor's own {_native} early return.\n"
             "  If agent setup starts failing on network access, re-anchor this patch.",
             file=sys.stderr,
         )

@@ -156,6 +156,15 @@ def make_delivery(
     dst.mkdir(parents=True)
 
     task_src = tasks_dir / task_slug
+    if not task_src.exists():
+        # Bundles are not always directly under --tasks-dir. A collection layout
+        # (tasks/<collection>/<task>/) nests them one level deeper, and this is
+        # where delivery used to give up and ship an empty data/ dir. Look one
+        # level down before reporting the miss. The flat path is still checked
+        # first and still wins, so a run that resolves today is unaffected.
+        nested = sorted(p for p in tasks_dir.glob(f"*/{task_slug}") if p.is_dir())
+        if nested:
+            task_src = nested[0]
     if task_src.exists():
         shutil.copytree(
             task_src,
