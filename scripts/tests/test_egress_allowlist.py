@@ -137,6 +137,20 @@ def test_every_allow_rule_is_qualified_by_the_allowlist(squid_lines):
             )
 
 
+def test_glm_config_is_opus_config_plus_zbridge_only(squid_lines):
+    """GLM runs load squid-zbridge.conf. Without its zbridge lines it must be
+    squid.conf exactly, so the two cannot drift apart."""
+    zbridge_only = [
+        "acl zbridge_host dstdomain host.docker.internal",
+        "acl zbridge_port port 8766",
+        "http_access allow zbridge_host zbridge_port",
+    ]
+    glm = _directives((PROXY_DIR / "squid-zbridge.conf").read_text())
+    assert [l for l in glm if l not in zbridge_only] == squid_lines
+    assert all(l in glm for l in zbridge_only), glm
+    assert glm.index(zbridge_only[-1]) < glm.index("http_access deny all")
+
+
 # ------------------------------------------------- operational invariants
 # Each of these is called load-bearing in squid.conf's own comments; a proxy
 # that dies at startup is indistinguishable from a network outage inside main.

@@ -226,6 +226,7 @@ def flag(step: int | None, tool: str, kind: str, detail: str, evidence: str,
 # The one host squid lets out. tools/network/egress-proxy/squid.conf is the source of
 # truth and scripts/tests/test_egress_allowlist.py::EXPECTED_ALLOWLIST pins it
 # there; this is the third copy, so change one and look at the other two.
+# GLM runs add host.docker.internal (zbridge) with --proxy-allow.
 PROXY_ALLOWLIST = {"api.anthropic.com"}
 
 # Hosts the Claude Code CLI reaches on its own initiative -- update checks,
@@ -481,7 +482,11 @@ def main(argv=None) -> int:
     ap.add_argument("--strict", action="store_true",
                     help="fail on a BLOCKED attempt too, not just on one that "
                          "reached the internet")
+    ap.add_argument("--proxy-allow", action="append", default=[], metavar="HOST",
+                    help="one more host squid may let out for this run "
+                         "(GLM runs: host.docker.internal, where zbridge listens)")
     a = ap.parse_args(argv)
+    PROXY_ALLOWLIST.update(h.lower() for h in a.proxy_allow)
 
     if not a.trajectory.is_file():
         # No trajectory is not evidence of good behaviour, but it is also not
