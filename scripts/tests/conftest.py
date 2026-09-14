@@ -25,7 +25,7 @@ import pytest
 
 
 def mirror_harbor_package(tmp_path: Path) -> bool:
-    """Mirror the two files patch_harbor.py rewrites into a stub venv layout.
+    """Mirror the files patch_harbor.py rewrites into a stub venv layout.
 
     COPIES, never links: the patcher rewrites them in place, and a link would
     edit the real harbor install out from under every other test on the machine.
@@ -47,6 +47,11 @@ def mirror_harbor_package(tmp_path: Path) -> bool:
             (pkg / "agents" / "installed" / "claude_code.py", rel),
             (pkg / "trial" / "trial.py",
              rel.parent.parent.parent / "trial" / "trial.py"),
+            # patch_harbor.py's score-table suppression rewrites this one; without
+            # it the patcher reports a MISS, exits non-zero, and every stubbed
+            # harbor stage dies before dispatch.
+            (pkg / "cli" / "jobs.py",
+             rel.parent.parent.parent / "cli" / "jobs.py"),
         ):
             if src.exists():
                 dest = tmp_path / dest_rel

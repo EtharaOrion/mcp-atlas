@@ -559,6 +559,17 @@ image_build_context() {
   case "${1%%:*}" in
     light-servers) echo "$REPO/services/light-servers" ;;
     egress-proxy)  echo "$REPO/tools/network/egress-proxy" ;;
+    codex-judge)   echo "$REPO/tools/judge" ;;
+  esac
+}
+
+# Extra `docker build` flags, one per line, for images whose Dockerfile needs
+# more than its own context. codex-judge bakes in the shared grader from
+# services/scoring rather than mounting it, so the running judge holds no host
+# directory (tools/judge/Dockerfile).
+image_build_args() {
+  case "${1%%:*}" in
+    codex-judge) printf '%s\n' --build-context "scoring=$REPO/services/scoring" ;;
   esac
 }
 
@@ -579,8 +590,9 @@ image_build_context() {
 # BuildKit's own cache already answers the real question exactly, and answers it
 # in about a second when nothing changed.
 ensure_image() {
-  local img="$1" ctx
+  local img="$1" ctx a extra=()
   ctx="$(image_build_context "$img")"
+  while IFS= read -r a; do extra+=("$a"); done < <(image_build_args "$img")
 
   # Registry image: presence is the entire question.
   if [ -z "$ctx" ]; then
@@ -594,7 +606,7 @@ ensure_image() {
   # cached, so let the build print its own progress.
   if ! docker image inspect "$img" >/dev/null 2>&1; then
     echo "[run_task] $img is not present locally — building from $ctx"
-    docker build -t "$img" "$ctx" \
+    docker build ${extra[@]+"${extra[@]}"} -t "$img" "$ctx" \
       || { echo "[run_task] failed to build $img from $ctx" >&2; exit 3; }
     return 0
   fi
@@ -605,7 +617,7 @@ ensure_image() {
   # against a bundle that no longer exists on disk. Quiet, because the common
   # case is fully cached and prints one line.
   [ -z "${SKIP_IMAGE_REFRESH:-}" ] || return 0
-  docker build -q -t "$img" "$ctx" >/dev/null \
+  docker build -q ${extra[@]+"${extra[@]}"} -t "$img" "$ctx" >/dev/null \
     || { echo "[run_task] failed to refresh $img from $ctx" >&2; exit 3; }
 }
 
@@ -758,6 +770,14 @@ stage_harbor() {
   if [ -n "$_iso" ] && [ "${CC_MODE:-}" = "zbridge" ]; then
     write_zbridge_squid_conf
     args+=(--extra-docker-compose "$REPO/tools/network/egress-proxy/overlay-zbridge.yaml")
+  fi
+  # Bundles that grade the rubric in a judge container of their own: a per-run
+  # token and the login to mount, and under isolation the judge's own
+  # allowlisted way out. Called directly, not in $(...), so the exports reach
+  # harbor and compose.
+  if bundle_has_judge; then
+    prepare_judge
+    [ -n "$_iso" ] && args+=(--extra-docker-compose "$REPO/tools/network/egress-proxy/overlay-judge.yaml")
   fi
   [ "$AGENT" != "oracle" ] && args+=(--model "$MODEL")
   if [ "$AGENT" = "claude-code" ]; then
@@ -1204,7 +1224,89 @@ egress_guard_settings() {
   echo "$out"
 }
 
+# --- judge container ----------------------------------------------------------
+# A bundle may grade its rubric in a `judge` service of its own
+# (tools/judge/codexbridge.py, image codex-judge:latest). The codex login is
+# mounted there and nowhere else, and test.sh sends it this run's rubric and
+# trajectory -- it has no directory of runs to read. Detected per bundle, so one
+# without a judge service keeps grading exactly as before.
+
+bundle_has_judge() {
+  grep -qE '^  judge:[[:space:]]*$' "$TASK/environment/docker-compose.yaml" 2>/dev/null
+}
+
+# Export what the bundle's compose file and task.toml read. Call it directly,
+# not in $(...), or the exports are lost.
+#
+#   JUDGE_TOKEN      fresh per invocation, never taken from .env or the caller.
+#                    Compose hands it to the judge; task.toml [verifier.env] hands
+#                    it to test.sh. Harbor applies verifier env to the test script
+#                    only, so the agent -- on the same network as the judge --
+#                    never holds it.
+#   CODEX_AUTH_FILE  the host's codex login, mounted read-only into the judge
+#                    alone. Made absolute: compose resolves a relative bind source
+#                    against the bundle's environment/ dir.
+prepare_judge() {
+  local auth="${CODEX_AUTH_FILE:-${CODEX_HOME:-$HOME/.codex}/auth.json}"
+  if [ ! -s "$auth" ]; then
+    echo "[run_task] ERROR: codex login not found at $auth -- the judge container cannot grade" >&2
+    echo "[run_task]   Run: codex login   (or point CODEX_AUTH_FILE at an auth.json)" >&2
+    exit 4
+  fi
+  auth="$(cd "$(dirname "$auth")" && pwd)/$(basename "$auth")"
+  export CODEX_AUTH_FILE="$auth"
+  JUDGE_TOKEN="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
+  export JUDGE_TOKEN
+  echo "[run_task] judge container ON -- rubric graded in-bundle by $JUDGE_MODEL; codex login mounted into the judge only" >&2
+}
+
+# Did this trial's own reward already fold in a rubric graded by the judge
+# container? test.sh says so in verifier/reward_producer.json -- not in
+# reward.json, which harbor validates as numbers only and fails the trial on a
+# string. When it did, carry the producer into reward.json here, on the host,
+# so harbor_to_output.py publishes the bundle's reward instead of calling it
+# unscored.
+adopt_container_reward() {  # adopt_container_reward <trial-dir>
+  python3 - "$1/verifier" <<'PYEOF' 2>/dev/null
+import json, os, sys
+ver = sys.argv[1]
+try:
+    marker = json.load(open(os.path.join(ver, "reward_producer.json")))
+    if marker.get("producer") != "judge_container":
+        sys.exit(1)
+    path = os.path.join(ver, "reward.json")
+    doc = json.load(open(path))
+    doc["producer"] = "judge_container"
+    with open(path + ".tmp", "w") as fh:
+        fh.write(json.dumps(doc, indent=2))
+    os.replace(path + ".tmp", path)
+except Exception:
+    sys.exit(1)
+PYEOF
+}
+
+# The trial dirs this invocation owns: the names stage_harbor recorded. Globbing
+# the job dir instead also re-graded leftovers from earlier invocations,
+# spending judge quota on runs this one never made. No `trials` key at all (a
+# hand-driven --stage reshape over a job with no state) keeps the glob.
+host_rubric_trials() {
+  local d="$OUTPUT_DIR/$JOB" t
+  if state_has trials; then
+    for t in $(state_get trials | tr ',' ' '); do
+      [ -d "$d/$t" ] && printf '%s\n' "$d/$t"
+    done
+    return 0
+  fi
+  find "$d" -maxdepth 1 -type d -name "*__*" 2>/dev/null | sort
+}
+
 # Grade the rubric channel on the host, between harbor and reshape.
+#
+# Bundles with a `judge` service mostly skip this now: their rubric is graded in
+# the judge container and test.sh folds it into the reward. What stays here is
+# the fallback -- a judge container that could not grade, a bundle whose own
+# reward leaves the rubric out (its verdicts are reused, not re-bought), and
+# bundles without a judge -- which is what the rest of this note describes.
 #
 # The in-container judge cannot do it on the pinned grader: gpt-5.6-sol runs
 # over codex, and codex does not exist in python:3.12-slim. Putting one there
@@ -1221,34 +1323,27 @@ egress_guard_settings() {
 stage_host_rubric() {
   [ "$(state_get host_rubric_done)" = "1" ] && { echo "[run_task] host rubric already graded; skipping"; return 0; }
   # Trial dirs are named after the TASK slug, not the job: JOB=Input_1_oracle
-  # still produces Input_1__PMNhXaa. Globbing on "$JOB__*" therefore found
-  # nothing whenever JOB was overridden, and the pass skipped itself with
-  # "no trial dir" while the run looked fine.
-  # Loop over ALL trial dirs: Harbor may produce >1 when run with --n-attempts N.
+  # still produces Input_1__PMNhXaa. host_rubric_trials reads the names
+  # stage_harbor recorded instead of globbing on "$JOB__*", which found nothing
+  # whenever JOB was overridden. Harbor may produce >1 with --n-attempts N.
   local py; py="$REPO/.venv/bin/python"; [ -x "$py" ] || py=python3
-  local trial _codex_graded _tokens any_graded=0 seen=0
+  local trial any_graded=0 seen=0 hflags
   while IFS= read -r trial; do
     [ -n "$trial" ] || continue
     seen=$((seen+1))
-    _tokens="$trial/verifier/judge_tokens.json"
-    _codex_graded=0
-    if [ -s "$_tokens" ]; then
-      _codex_graded=$(python3 - "$_tokens" <<'PYEOF'
-import json,sys
-d=json.load(open(sys.argv[1]))
-m=(d[0] if isinstance(d,list) else d).get('model_name','')
-print(1 if m.startswith('gpt') else 0)
-PYEOF
-      2>/dev/null || echo 0)
-    fi
-    if [ "${FORCE_HOST_RUBRIC:-0}" != "1" ] \
-       && [ -s "$trial/verifier/rubric_breakdown.json" ] \
-       && [ "$_codex_graded" = "1" ]; then
-      echo "[run_task] rubric already graded in-container by codex for $(basename "$trial"); skipping"
+    # The bundle's own reward already carries a rubric its judge container
+    # graded (test.sh wrote reward_producer.json). Nothing to add but the label.
+    if [ "${FORCE_HOST_RUBRIC:-0}" != "1" ] && adopt_container_reward "$trial"; then
+      echo "[run_task] rubric graded in the judge container for $(basename "$trial"); host pass not needed"
       any_graded=1
       continue
     fi
-    if "$py" "$REPO/scripts/host_rubric_pass.py" --trial "$trial" --task "$TASK"; then
+    # Otherwise the host publishes the reward. host_rubric_pass.py reuses the
+    # verdicts a judge container already wrote and calls the judge here only
+    # when there are none. FORCE_HOST_RUBRIC=1 re-judges on the host regardless.
+    hflags=()
+    [ "${FORCE_HOST_RUBRIC:-0}" = "1" ] && hflags+=(--rejudge)
+    if "$py" "$REPO/scripts/host_rubric_pass.py" --trial "$trial" --task "$TASK" ${hflags[@]+"${hflags[@]}"}; then
       any_graded=1
     else
       # A failed rubric is not a failed run: Channel A and the state channel are
@@ -1256,7 +1351,7 @@ PYEOF
       # rerun retries this without repeating the agent phase.
       echo "[run_task] host rubric pass failed for $(basename "$trial"); rubric channel stays UNSCORED" >&2
     fi
-  done < <(find "$OUTPUT_DIR/$JOB" -maxdepth 1 -type d -name "*__*" 2>/dev/null | sort)
+  done < <(host_rubric_trials)
   if [ "$seen" -eq 0 ]; then
     echo "[run_task] no trial dir under $OUTPUT_DIR/$JOB; skipping host rubric" >&2
     return 0

@@ -1,4 +1,6 @@
-# The only container in a task project with a route off the compose bridge.
+# The only containers in a task project with a route off the compose bridge:
+# egress-proxy for the agent (squid.conf) and, in bundles with a judge service,
+# judge-proxy for the judge (squid-judge.conf, see overlay-judge.yaml).
 # See squid.conf for why this exists rather than a Harbor network_mode.
 # Pinned by digest, not by :latest. This container IS the enforcement boundary:
 # an unpinned tag means the thing deciding what the agent may reach can change
@@ -11,6 +13,7 @@
 FROM ubuntu/squid@sha256:6a097f68bae708cedbabd6188d68c7e2e7a38cedd05a176e1cc0ba29e3bbe029
 
 COPY squid.conf /etc/squid/squid.conf
+COPY squid-judge.conf /etc/squid/squid-judge.conf
 COPY entrypoint.sh /usr/local/bin/egress-entrypoint.sh
 
 RUN chmod +x /usr/local/bin/egress-entrypoint.sh
@@ -19,6 +22,7 @@ RUN chmod +x /usr/local/bin/egress-entrypoint.sh
 # container start looks exactly like a network outage from inside main, and
 # costs an agent phase to diagnose.
 RUN squid -k parse -f /etc/squid/squid.conf
+RUN squid -k parse -f /etc/squid/squid-judge.conf
 
 EXPOSE 3128
 

@@ -1033,10 +1033,11 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
         _orig_rew = {}
 
     _producer = _orig_rew.get("producer")
-    if _producer not in ("host_rubric_pass", "container_test"):
+    if _producer not in ("host_rubric_pass", "judge_container", "container_test"):
         print(
             f"[harbor_to_output] WARNING: reward.json producer={_producer!r}; "
-            "host rubric was not run or refused to grade -- treating trial as unscored (reward=0)",
+            "no rubric-inclusive reward from the judge container or the host rubric pass "
+            "-- treating trial as unscored (reward=0)",
             file=sys.stderr,
         )
         _producer = "unscored"
@@ -1053,8 +1054,9 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     # line reported 90.4, because it averaged the two channels the agent did
     # well on and ignored the one it did not. Anything reading pass_summary.json
     # as the headline number got the flattering figure.
-    if _producer == "host_rubric_pass":
-        # weighted ledger path: rescale to percentage
+    if _producer in ("host_rubric_pass", "judge_container"):
+        # weighted ledger path -- computed on the host, or by the bundle itself
+        # after its judge container graded the rubric: rescale to percentage
         _ledger_reward = _orig_rew.get("reward")
         if isinstance(_ledger_reward, (int, float)):
             final_reward = reward_pct(_ledger_reward)
@@ -1111,7 +1113,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     if not _scored:
         reward_pct_doc["unscored_reason"] = (
             failure_reason if failure_class == "infrastructure"
-            else "host rubric was not run or refused to grade")
+            else "no rubric-inclusive reward was published (judge container or host pass)")
 
     # Not fmt_reward: reward.txt ships bare repr ("90.4"), not padded ("90.40").
     reward_txt_val = str(norm_reward(final_reward)) if final_reward is not None else "0.0"

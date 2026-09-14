@@ -52,8 +52,9 @@ services:
       # Sidecar traffic must not be proxied -- it never leaves the bridge, and
       # routing it through squid would fail the allowlist. Mirrors the
       # INTERNAL_HOSTS set in tools/network/detect_internet_use.py.
-      NO_PROXY: "light-servers,main,egress-proxy,localhost,127.0.0.1,0.0.0.0,::1"
-      no_proxy: "light-servers,main,egress-proxy,localhost,127.0.0.1,0.0.0.0,::1"
+      # judge is the bundle's rubric judge; test.sh step 3 calls it directly.
+      NO_PROXY: "light-servers,main,judge,egress-proxy,localhost,127.0.0.1,0.0.0.0,::1"
+      no_proxy: "light-servers,main,judge,egress-proxy,localhost,127.0.0.1,0.0.0.0,::1"
       # Claude Code reaches more than api.anthropic.com: update checks, feature
       # flags, and two Datadog intakes for telemetry and error reports. squid
       # denies all of them, which is correct but wasteful -- each one is a

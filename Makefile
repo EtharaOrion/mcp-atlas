@@ -126,6 +126,9 @@ build-light-servers: # build light-servers Docker image (all software + utility 
 build-egress-proxy: # build the egress allowlist proxy (network isolation for the agent phase)
 	docker build -t egress-proxy:latest tools/network/egress-proxy/
 
+build-codex-judge: # build the rubric judge container (codexbridge + codex CLI + the shared grader)
+	docker build --build-context scoring=services/scoring -t codex-judge:latest tools/judge/
+
 # ---------------------------------------------------------------------------
 # zbridge — GLM-5.3 via z.ai (Anthropic-to-GLM proxy + OpenAI adapter)
 # Requires ZB_ZAI_API_KEY and ZB_BRIDGE_SECRET in .env

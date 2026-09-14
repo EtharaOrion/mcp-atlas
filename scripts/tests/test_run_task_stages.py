@@ -257,3 +257,31 @@ def test_one_invocation_writes_exactly_one_run(env, tmp_path):
 
     runs = [p.name for d in env.output.glob("*/trajectory") for p in d.glob("run_*")]
     assert runs == ["run_1"], runs
+
+
+def test_host_rubric_pass_looks_only_at_this_invocations_trials(env):
+    """The host pass globbed every *__* dir in the job, so a leftover trial from
+    an earlier invocation was graded again -- judge quota spent on a run this
+    invocation never made. It now takes the trial list stage_harbor recorded."""
+    (env.output / "alpha").mkdir(parents=True)
+    old = _trial(env, "alpha__old1")
+    (env.output / "alpha" / "config.json").write_text(
+        '{"agents": [{"name": "claude-code", "model_name": "m1"}]}')
+    (env.output / "alpha" / "result.json").write_text('{"id": "job-1"}')
+    assert env.run("harbor", RUN_OFFSET=0, N=1, STUB_TRIAL="alpha__fresh").returncode == 0
+    fresh = _trial(env, "alpha__fresh")
+    for d in (old, fresh):
+        (d / "verifier").mkdir(exist_ok=True)
+        (d / "verifier" / "reward.json").write_text('{"reward": 0.5}')
+        (d / "verifier" / "reward_producer.json").write_text('{"producer": "judge_container"}')
+    r = env.run("reshape", RUN_OFFSET=0)
+    out = r.stdout + r.stderr
+    assert "judge container for alpha__fresh" in out, out[-3000:]
+    graded = [l for l in out.splitlines() if "judge container for" in l]
+    assert not any("alpha__old1" in l for l in graded), graded
+    # harbor validates the container's reward.json as numbers only, so the label
+    # is added on the host -- to this invocation's trial alone.
+    assert "producer" not in json.loads((old / "verifier" / "reward.json").read_text())
+    published = json.loads(
+        (env.output / "alpha" / "trajectory" / "run_1" / "verifier" / "reward.json").read_text())
+    assert published.get("producer") == "judge_container", published

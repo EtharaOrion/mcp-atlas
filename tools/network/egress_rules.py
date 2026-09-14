@@ -66,8 +66,11 @@ from pathlib import Path
 # `curl 0.0.0.0:8000` against a server the agent just started is ordinary local
 # work. is_internal() does not otherwise cover it (it matches 127.* and
 # localhost, not 0.0.0.0).
+# judge is the bundle's rubric judge container (tools/judge): a sibling on the
+# same bridge that test.sh calls. Its own way out goes through judge-proxy, on a
+# network main never joins, so a curl at it leaves nothing.
 INTERNAL_HOSTS = {
-    "light-servers", "localhost", "127.0.0.1", "0.0.0.0", "::1", "main",
+    "light-servers", "localhost", "127.0.0.1", "0.0.0.0", "::1", "main", "judge",
 }
 
 # --------------------------------------------------------------------------

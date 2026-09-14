@@ -69,7 +69,7 @@ Read by **harbor** (to build and schedule the trial) and by **`scripts/harbor_to
 | `[agent]` | `timeout_sec` | Agent wall-clock budget (2400 here) |
 | `[verifier]` | `timeout_sec` | Verifier budget (300 here) |
 | | `environment_mode` | `shared` — verifier runs alongside the still-live servers |
-| `[verifier.env]` | | Env passed to the verifier (e.g. `CLAUDE_CODE_OAUTH_TOKEN` for the rubric judge) |
+| `[verifier.env]` | | Env passed to the verifier: `CLAUDE_CODE_OAUTH_TOKEN`, and `JUDGE_TOKEN = "${JUDGE_TOKEN}"` for the judge container (§2.6a) |
 | `[environment]` | `cpus`, `memory_mb`, … | Resource caps |
 | `[[environment.mcp_servers]]` | `name`, `transport`, `url` | Servers wired into the agent's MCP config |
 
@@ -223,7 +223,8 @@ blocks delivery regardless, because configuration regresses quietly.
 |---|---|---|---|
 | 1 | Parse the agent stream into a trajectory | `/logs/agent/claude-code.txt` | `/tmp/agent_trajectory.json` |
 | 2 | Capture the post-run world | trajectory (for `session_id`) + light-servers | `/logs/verifier/end_env.json` |
-| 3 | Grade the rubric | `/tests/rubric.json`, trajectory | `rubric_breakdown.json`, `judge_tokens.json` |
+| 3 | Grade the rubric in the `judge` container (`judge_client.py`) | `/tests/rubric.json`, trajectory | `rubric_breakdown.json`, `judge_tokens.json`, `judge_container.json` |
+| 3b | Report where it was graded (`tests/test_judge_container.py`) | `judge_container.json` | `judge-container-test.txt` |
 | 4 | Run the scored suite | `/tests/test_outputs.py` | `junit.xml`, `reward_channel_a.json`, `state_channel.json` |
 | 5 | Publish the reward | `reward_channel_a.json` | `/logs/verifier/reward.json` |
 
@@ -233,6 +234,37 @@ That shape is the *only* thing `test_outputs.py` sees — it never touches the r
 Stage 3 is fatal if the grader binary is absent (a mount misconfiguration is a config error, not a
 run outcome) but non-fatal if the grader runs and errors — that leaves a
 `rubric_judge_failed.txt` marker and lets the deterministic pytest reward still be produced.
+
+### 2.6a The `judge` service — where the rubric is graded
+
+The rubric is graded by gpt-5.6-sol over codex, and codex needs a login. That login never enters
+`main` (the agent ran there) and the judge never runs on the host (where `codex exec --sandbox
+read-only` can still read every other run on disk). It runs in a third service, `judge`
+(`tools/judge/codexbridge.py`, image `codex-judge:latest`), declared in the bundle's compose file:
+
+```yaml
+  judge:
+    image: codex-judge:latest
+    environment:
+      JUDGE_TOKEN: "${JUDGE_TOKEN:?set per run by scripts/run_task.sh}"
+      JUDGE_MODEL: "gpt-5.6-sol"
+    volumes:
+      - "${CODEX_AUTH_FILE:?set by scripts/run_task.sh to the host codex login}:/run/codex-auth/auth.json:ro"
+    healthcheck:
+      test: ["CMD", "python3", "/judge/codexbridge.py", "--health"]
+```
+
+| Piece | What it does |
+|---|---|
+| Step 3 of `test.sh` | Calls `/harness/scoring/judge_client.py` (same flags as `rubric_judge_cli.py`), which POSTs this run's rubric and trajectory to `http://judge:8770/grade` |
+| `JUDGE_TOKEN` | Fresh per run (`run_task.sh`). Reaches the judge via compose and `test.sh` via `[verifier.env]`; harbor never gives verifier env to the agent |
+| Login | The only mount the judge has, read-only; copied into the container at start |
+| Network | Under isolation `tools/network/egress-proxy/overlay-judge.yaml` gives the judge its own squid (`squid-judge.conf`: `chatgpt.com`, `auth.openai.com`) on a network `main` never joins |
+| `[verifier] timeout_sec` | At least 1800: the grade now happens inside the verifier window |
+| Reward | When the reward already includes the container's rubric, step 5 writes `reward_producer.json` (`{"producer": "judge_container"}`) and `run_task.sh` carries it into `reward.json` on the host. Never write a string into `reward.json` itself: harbor validates it as `dict[str, float \| int]` and fails the trial. If the judge could not grade, `run_task.sh` grades on the host as before |
+
+`tests/test_judge_container.py` is report-only and is not listed in `test_weights.json` — a judge
+outage must never move the agent's score or failure class.
 
 ### 2.7 `tests/test_outputs.py` — the scored suite
 
@@ -419,6 +451,8 @@ would leak into the prompt.
 | No `uv run` | The `main` container has no `uv` — use `python3` |
 | Must contain a stream-json trajectory parser | Nothing else produces `/tmp/agent_trajectory.json` |
 | No `from benchmark import` | See §2.15 |
+| Step 3 calls `judge_client.py`, never `rubric_judge_cli.py` | A judge in `main` would need the codex login in the container the agent just used (§2.6a) |
+| Declare the `judge` service and `JUDGE_TOKEN` in `[verifier.env]` | Without the token step 3 cannot authenticate and the rubric falls back to the host |
 
 ### `task.toml`, not `dataset.toml`
 

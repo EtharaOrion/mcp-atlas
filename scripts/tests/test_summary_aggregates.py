@@ -589,3 +589,24 @@ def test_an_empty_only_trials_converts_nothing(tmp_path):
     around" -- that is the extra-runs bug with an extra step."""
     job, out = _build_job(tmp_path, [{"reward": 0.0}])
     assert h2o.convert_job(job, out, ks=[], run_offset=0, only_trials=set()) == []
+
+
+def test_judge_container_reward_publishes_like_the_host_ledger(tmp_path):
+    """producer=judge_container is stamped by a bundle whose own reward already
+    includes the rubric its judge container graded. It must publish exactly as a
+    host-pass ledger does -- rescaled and scored -- not be zeroed as unscored,
+    which is what any producer the reshaper does not know gets."""
+    published = {}
+    for producer in ("host_rubric_pass", "judge_container"):
+        root = tmp_path / producer
+        root.mkdir()
+        job, out = _build_job(
+            root, [{"completion_rate": 0.9, "misbehave_rate": 0.0, "reward": 0.0}],
+            {"reward": 0.75, "completion_rate": 0.9, "misbehave_rate": 0.0, "producer": producer},
+        )
+        written = h2o.convert_job(job, out, ks=[], run_offset=0)
+        assert written
+        published[producer] = json.loads(
+            (written[0] / "trajectory" / "run_1" / "verifier" / "reward.json").read_text())
+    assert published["judge_container"]["reward"] == published["host_rubric_pass"]["reward"] == 75.0
+    assert published["judge_container"].get("producer") == "judge_container"
