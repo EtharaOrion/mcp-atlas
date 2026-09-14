@@ -88,18 +88,23 @@ DOTENV_FORBIDDEN_KEYS=" NETWORK_ISOLATION_OFF "
 
 load_dotenv() {
   [ -f "$REPO/.env" ] || return 0
-  local line key val skipped="" refused=""
+  local line key val skipped="" refused="" quoted=""
   while IFS= read -r line; do
     key="${line%%=*}"
     val="${line#*=}"
     case "$DOTENV_FORBIDDEN_KEYS" in
       *" $key "*) refused="$refused $key"; continue ;;
     esac
-    # Conservative value charset, inherited from the `source` implementation this
-    # replaces. Values outside it are still skipped -- but they are now NAMED
-    # instead of vanishing, which is how ZB_MODEL_ALIAS_JSON sat in .env doing
-    # nothing while looking like configuration.
+    # Balanced quotes are taken verbatim: the charset filter guards a BARE value
+    # against re-splitting, which quoting already does. Both styles, because
+    # finance_reporter.py:119 strips both -- a value dropped here and loaded there
+    # is how the Odoo gate warns "unauthenticated" about a token that is set.
+    # Unbalanced quotes fall through to the filter rather than half-parsing.
+    # What the filter still skips is NAMED, which is how ZB_MODEL_ALIAS_JSON sat
+    # in .env doing nothing while looking like configuration.
     case "$val" in
+      \"*\") val="${val#\"}"; val="${val%\"}"; quoted="$quoted $key" ;;
+      \'*\') val="${val#\'}"; val="${val%\'}"; quoted="$quoted $key" ;;
       *[!A-Za-z0-9_./:@~-]*) skipped="$skipped $key"; continue ;;
     esac
     if [ -z "${!key+set}" ]; then
@@ -108,6 +113,9 @@ load_dotenv() {
   done < <(sed 's/[[:space:]]*$//' "$REPO/.env" | grep -E '^[A-Za-z_][A-Za-z0-9_]*=')
   if [ -n "$skipped" ]; then
     echo "[run_task] .env: skipped (value has unsupported characters):$skipped" >&2
+  fi
+  if [ -n "$quoted" ]; then
+    echo "[run_task] .env: loaded with quotes stripped:$quoted" >&2
   fi
   if [ -n "$refused" ]; then
     echo "[run_task] .env: REFUSED (per-run only, not a file setting):$refused" >&2

@@ -12,7 +12,8 @@ on:
       - "adapters/**"
       - "services/scoring/**"
       - "services/mcp_eval/**"
-      - "scripts/smoke_test.py"
+      - "scripts/**"
+      - "tools/**"
       - "requirements.txt"
       - "Makefile"
       - ".github/workflows/python-tests.yml"
@@ -22,7 +23,8 @@ on:
       - "adapters/**"
       - "services/scoring/**"
       - "services/mcp_eval/**"
-      - "scripts/smoke_test.py"
+      - "scripts/**"
+      - "tools/**"
       - "requirements.txt"
       - "Makefile"
       - ".github/workflows/python-tests.yml"
@@ -49,7 +51,7 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pyyaml
       - name: Unit tests
-        run: python -m pytest adapters services/scoring/tests services/mcp_eval/tests -q
+        run: python -m pytest adapters services/scoring/tests services/mcp_eval/tests scripts/tests -q
 
   smoke:
     runs-on: ubuntu-latest

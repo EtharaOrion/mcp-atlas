@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import mirror_harbor_package
+from conftest import mirror_harbor_package, requires_docker
 
 REPO = Path(__file__).resolve().parent.parent.parent
 RUN_TASK = REPO / "scripts" / "run_task.sh"
@@ -108,6 +108,7 @@ def test_help_lists_the_stages():
         assert stage in r.stdout
 
 
+@requires_docker
 def test_harbor_stage_records_state_for_the_next_stage(env):
     r = env.run("harbor", RUN_OFFSET=2, MODEL="m1", AGENT="claude-code", N=1)
     assert r.returncode == 0, r.stderr
@@ -143,6 +144,7 @@ def test_earlier_runs_are_stashed_outside_the_job_dir(env):
     assert env.output / "alpha" not in stash.parents
 
 
+@requires_docker
 def test_harbor_argv_carries_the_job_and_attempt_count(env):
     env.run("harbor", RUN_OFFSET=0, MODEL="m1", N=1)
     argv = env.harbor_argv()
@@ -180,6 +182,7 @@ def _stale_trial(env, name="alpha__stale"):
     return d
 
 
+@requires_docker
 def test_reshape_is_handed_only_this_invocations_trial(env):
     """The extra-runs bug: convert_job globs every *__* dir with a config.json,
     so one N=1 invocation emitted one run per stale trial dir as well."""
@@ -189,6 +192,7 @@ def test_reshape_is_handed_only_this_invocations_trial(env):
     assert env.state()["trials"] == "alpha__fresh"
 
 
+@requires_docker
 def test_stale_trial_dirs_are_named_not_silently_dropped(env):
     _stale_trial(env)
     r = env.run("harbor", RUN_OFFSET=0, N=1, STUB_TRIAL="alpha__fresh")
@@ -196,6 +200,7 @@ def test_stale_trial_dirs_are_named_not_silently_dropped(env):
     assert "alpha__stale" in r.stderr
 
 
+@requires_docker
 def test_every_trial_of_a_multi_attempt_run_is_kept(env):
     """N>1 legitimately makes several trials; only the pre-existing ones drop out."""
     _stale_trial(env)
@@ -204,6 +209,7 @@ def test_every_trial_of_a_multi_attempt_run_is_kept(env):
     assert env.state()["trials"] == "alpha__b,alpha__c"
 
 
+@requires_docker
 def test_no_trial_at_all_records_an_empty_list(env):
     """Nothing ran: reshape must convert nothing, not adopt the leftovers."""
     _stale_trial(env)
@@ -212,6 +218,7 @@ def test_no_trial_at_all_records_an_empty_list(env):
     assert env.state()["trials"] == ""
 
 
+@requires_docker
 def test_a_new_trial_that_never_started_is_still_caught(env):
     """A stale dir has a config.json, so probing the newest dir by mtime let an
     aborted trial pass the guard silently -- the case the guard exists for."""
@@ -221,6 +228,7 @@ def test_a_new_trial_that_never_started_is_still_caught(env):
     assert "AGENT PHASE DID NOT RUN" in r.stderr
 
 
+@requires_docker
 def test_one_empty_trial_among_several_is_caught(env):
     r = env.run("harbor", RUN_OFFSET=0, N=2,
                 STUB_TRIAL="alpha__good", STUB_TRIAL_EMPTY="alpha__aborted")
@@ -240,6 +248,7 @@ def _trial(env, name, *, started=True):
     return d
 
 
+@requires_docker
 def test_one_invocation_writes_exactly_one_run(env, tmp_path):
     """End to end over both stages: a job dir carrying two dead trials from
     earlier invocations must still yield exactly ONE new trajectory/run_N."""

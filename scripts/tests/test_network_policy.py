@@ -41,7 +41,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from conftest import mirror_harbor_package
+from conftest import mirror_harbor_package, requires_docker
 
 REPO = Path(__file__).resolve().parents[2]
 PROXY_DIR = REPO / "tools" / "network" / "egress-proxy"
@@ -111,8 +111,13 @@ def _mirror_harbor_package(tmp_path: Path, bin_dir: Path) -> None:
     and two copies of the venv-layout knowledge would drift the moment harbor
     changes it. bin_dir is unused; kept in the signature so callers here read the
     same as before.
+
+    Skips when harbor is absent: without a package to mirror, patch_harbor.py
+    raises inside run_task.sh and the assertion that follows reports a dispatch
+    bug that is not there.
     """
-    mirror_harbor_package(tmp_path)
+    if not mirror_harbor_package(tmp_path):
+        pytest.skip("harbor is not installed; cannot mirror its package")
 
 
 def _run_harbor_stage(tmp_path: Path, **overrides) -> HarborRun:
@@ -414,6 +419,7 @@ def test_headroom_run_is_refused_under_isolation(tmp_path, fake_headroom):
     assert "REFUSING" in run.stderr, run.stderr[-2000:]
 
 
+@requires_docker
 def test_headroom_flag_without_a_proxy_does_not_refuse(tmp_path):
     """The refusal is about a route, not about a flag.
 
