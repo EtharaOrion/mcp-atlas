@@ -5,7 +5,7 @@
                                   [--access-log run_N/logs/egress-access.log]
 
 Exit 0 = clean. Exit 2 = the model reached for the internet; the run is
-blocked. Whether it got there is a separate question -- see _outcome().
+blocked. Whether it got there is a separate question -- see _verdict().
 
 WHY THIS EXISTS
 
@@ -81,65 +81,47 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import shlex
 import sys
+import textwrap
 from pathlib import Path
 
-# Reachable over the compose bridge, not over the internet. A curl at any of
-# these is the bundle working as designed.
-# Hosts that never leave the compose bridge. Peer definition:
-# tools/network/egress-proxy/overlay.yaml's NO_PROXY is the same set applied to the
-# run rather than to the transcript, and squid.conf's comment makes keeping the
-# two in agreement a standing pact.
+# --------------------------------------------------------------------------
+# THE RULES THEMSELVES LIVE IN egress_rules.py
 #
-# host.docker.internal is deliberately gone. It was half of the divergence
-# scripts/tests/test_egress_allowlist.py carried as an xfail: this file called it
-# internal, so a call to it passed the audit, while NO_PROXY omitted it, so the
-# same call went to squid and took a 403. Reconciled in the direction the xfail
-# recommended -- `internal: true` leaves the bridge with no gateway, so the
-# host-gateway address has no route no matter what the proxy settings say. A
-# trajectory call to it is a real failed egress attempt and belongs in findings.
+# They used to live here, and that was correct while this audit was the only
+# thing reading them. It stopped being correct when the run began DENYING a
+# command as well as reporting it: the PreToolUse hook shipped into the
+# container (tools/network/egress_rules.py, hook mode) has to agree with this
+# file exactly, and two copies of "what counts as egress" drift in the
+# expensive direction -- a command the hook allows and this audit later blocks
+# costs a whole graded run, discarded after the fact for something that could
+# have been refused in the turn it was typed.
 #
-# 0.0.0.0 was the OTHER half, and dropping it too was wrong. The xfail treated
-# both as one case, but they are not: host.docker.internal names a route OFF the
-# container, while 0.0.0.0 as a DESTINATION is a local bind address -- `curl
-# 0.0.0.0:8000` against a server the agent just started is ordinary local work,
-# not egress. Removing it made that a blocking finding, and is_internal() does
-# not otherwise cover it (it matches 127.* and localhost, not 0.0.0.0). It is
-# back here, and added to NO_PROXY to keep the pact whole; sending a bind address
-# to the proxy was never useful anyway.
+# So the classification is imported, never redefined. What stays here is the
+# half that needs an OUTCOME rather than an intention: the proxy log, the
+# install-success markers, and the reporting.
 #
-# Safe because this scanner reads TRAJECTORY TOOL CALLS only. The cc-bridge and
-# zbridge do use host.docker.internal, but as the Claude Code process's own
-# ANTHROPIC_BASE_URL -- that traffic is never a Bash step and never appears here.
-INTERNAL_HOSTS = {
-    "light-servers", "localhost", "127.0.0.1", "0.0.0.0", "::1", "main",
-}
+# sys.path, not a package import: this file is run as a script by
+# scripts/run_task.sh and by its tests, so `tools.network` is not importable.
+# --------------------------------------------------------------------------
 
-# Tool names that are internet access by definition -- no argument inspection
-# can make them local.
-WEB_TOOLS = {"WebSearch", "WebFetch"}
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-# Shell verbs that move bytes to or from a host named on the command line.
-FETCHERS = {
-    "curl", "wget", "nc", "ncat", "netcat", "telnet",
-    "ssh", "scp", "sftp", "rsync", "ftp", "svn",
-}
-
-# Shell verbs that reach a package index. No host on the command line, so these
-# are judged by their flags instead.
-INSTALLERS = {
-    ("pip", "install"), ("pip3", "install"), ("uv", "pip"), ("uv", "add"),
-    ("npm", "install"), ("npm", "i"), ("npm", "ci"), ("yarn", "add"),
-    ("pnpm", "add"), ("pnpm", "install"), ("npx", ""),
-    ("apt", "install"), ("apt-get", "install"), ("apk", "add"),
-    ("yum", "install"), ("dnf", "install"), ("brew", "install"),
-    ("gem", "install"), ("cargo", "install"), ("go", "get"),
-}
-
-# Flags that pin an installer to something already on disk. `pip install
-# --no-index ./wheel` touches no index and is not egress.
-OFFLINE_FLAGS = {"--no-index", "--offline", "--frozen", "--cached", "--no-download"}
+from egress_rules import (            # noqa: E402
+    DENIAL_MARKER,
+    GIT_NETWORK_SUBCOMMANDS,
+    HEREDOC_RE,
+    INLINE_NETWORK_HINTS,
+    INSTALLERS,
+    INTERNAL_HOSTS,
+    NAMESPACE_URI_PREFIXES,
+    OFFLINE_FLAGS,
+    URL_RE,
+    WEB_TOOLS,
+    classify_tool,
+    host_of,
+    is_internal,
+)
 
 # Lines an installer prints only after it has actually pulled something from an
 # index. These are read out of the STEP'S RESPONSE, which is the one place a
@@ -162,60 +144,27 @@ INSTALL_SUCCESS_MARKERS = (
     re.compile(r"^\s*added\s+\d+\s+packages?", re.M),               # npm
     re.compile(r"^\s*\+\s+\S+(?:@|==)\d", re.M),                     # npm/yarn/pnpm/uv per package
     re.compile(r"^\s*Setting up\s+\S+\s+\(", re.M),                  # apt / apt-get / dpkg
+    # apt again, and the reason it is here: `apt-get install -y -q chromium
+    # 2>&1 | tail -3` keeps exactly these trigger lines and cuts every "Setting
+    # up" line above them. A real run installed chromium that way and the audit
+    # reported only an attempt. dpkg runs triggers when a package's files have
+    # actually been unpacked onto the disk, so the line means the same thing.
+    re.compile(r"^\s*Processing triggers for\s+\S", re.M),
+    re.compile(r"^\s*Unpacking\s+\S+\s+\(", re.M),                   # apt, mid-install
     re.compile(r"^\s*Get:\d+\s+https?://", re.M),                    # apt, fetching from a mirror
+    # pip's self-check asks PyPI which version of pip is current and prints
+    # this. It is not an install marker and it is deliberately weaker than the
+    # others -- but install_landed() is only ever consulted on a command that
+    # ALREADY produced an installer finding, so this can strengthen a finding
+    # and can never invent one. `pip install --quiet Pillow 2>&1 | tail -2`
+    # printed nothing else, and this was the only surviving proof of reach.
+    re.compile(r"^\s*\[notice\].*new release of pip is available", re.M),
     re.compile(r"^\(\d+/\d+\)\s+Installing\s+\S", re.M),            # apk
     re.compile(r"^\s*Downloaded\s+\S+\s+v?\d", re.M),               # cargo
     re.compile(r"^\s*go: downloading\s+\S", re.M),                   # go get
     re.compile(r"^==>\s+Pouring\s+\S", re.M),                        # brew
 )
 
-# git only reaches the network for these; `git status` and `git log` do not.
-GIT_NETWORK_SUBCOMMANDS = {"clone", "fetch", "pull", "push", "remote", "ls-remote", "submodule"}
-
-# Network access smuggled through an interpreter. Matched on the source text of
-# a `python3 -c` / `node -e` payload rather than on the command name, which is
-# why these are substrings and not verbs.
-INLINE_NETWORK_HINTS = (
-    "urllib.request", "urllib2", "requests.get", "requests.post", "requests.request",
-    "httpx.", "aiohttp", "socket.create_connection", "http.client",
-    "urlopen", "fetch(", "XMLHttpRequest",
-)
-
-# URLs that are IDENTIFIERS rather than addresses. XML namespaces are spelled
-# as URLs by the spec and are never dereferenced: an SVG generator writes
-# xmlns="http://www.w3.org/2000/svg" without a socket ever opening, and every
-# .docx these bundles unpack is full of schemas.openxmlformats.org.
-#
-# Exempt from the bare URL SWEEP ONLY. A fetcher verb aimed at one of these
-# hosts still trips the `fetch` rule, because `curl http://www.w3.org/x` is a
-# real request whatever the host is famous for. That split is the whole point:
-# the sweep is a string match and can afford to be wrong in the quiet
-# direction; the verb rules cannot.
-#
-# Seen in the wild: a run was blocked because the agent printed
-# `'http://www.w3.org/2000/svg'` while CHECKING ITS OWN OUTPUT had no external
-# references. A false positive there costs a clean run; the miss it risks is a
-# curl the verb rules catch anyway.
-NAMESPACE_URI_PREFIXES = (
-    "www.w3.org/1999/",
-    "www.w3.org/2000/svg",
-    "www.w3.org/2001/XMLSchema",
-    "www.w3.org/XML/1998/",
-    "schemas.openxmlformats.org/",
-    "schemas.microsoft.com/",
-    "purl.org/dc/",
-)
-
-_NAMESPACE_RE = re.compile(
-    r"https?://(?:" + "|".join(re.escape(x) for x in NAMESPACE_URI_PREFIXES) + ")"
-)
-
-URL_RE = re.compile(r"\b(?:https?|ftp|ssh)://([^\s/'\"\\)>;|]+)", re.I)
-
-# `cmd << EOF` / `cmd <<-'EOF'` / `cmd <<"EOF"`. The delimiter is group 2; the
-# quoting around it only decides whether the shell expands the body, which is
-# not this tool's business.
-HEREDOC_RE = re.compile(r"<<[-~]?\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1")
 
 FINDINGS: list[dict] = []
 
@@ -226,37 +175,38 @@ FINDINGS: list[dict] = []
 # looking at a transcript that does not exist.
 HAD_TRAJECTORY = True
 
+# How many tool calls the trajectory held. Separate from HAD_TRAJECTORY because
+# a trajectory can exist, parse, and still record nothing the agent did: a
+# recorded run died on its first model call with "Weekly/Monthly Limit
+# Exhausted" and published two steps, a prompt and an error. The audit printed
+# "ok  0 tool call(s), no internet access" -- a green tick on a run that never
+# happened -- and the trial still counted as an attempt, halving the job's mean
+# reward. Neither is an internet finding, so neither blocks; both need saying.
+TOOL_CALLS = 0
+
 
 def _c(code: str, s: str) -> str:
     return f"\033[{code}m{s}\033[0m" if sys.stdout.isatty() else s
 
 
-def flag(step: int | None, tool: str, kind: str, detail: str, evidence: str) -> None:
+def flag(step: int | None, tool: str, kind: str, detail: str, evidence: str,
+         *, suppressed: bool = False, stopped_by: str | None = None) -> None:
     """step is None for findings that come from the proxy log rather than a
     trajectory step -- they are real findings and must block, but they have no
-    step number to point at."""
-    FINDINGS.append(
-        {"step": step, "tool": tool, "kind": kind, "detail": detail,
-         "evidence": evidence[:400]}
-    )
+    step number to point at.
 
+    `suppressed` marks a command that piped its own output away, so the absence
+    of an install-success marker proves nothing. `stopped_by` names what refused
+    the command, when something did. _verdict() and _stopped_by() read both.
+    """
+    record = {"step": step, "tool": tool, "kind": kind, "detail": detail,
+              "evidence": evidence[:400]}
+    if suppressed:
+        record["evidence_suppressed"] = True
+    if stopped_by:
+        record["stopped_by"] = stopped_by
+    FINDINGS.append(record)
 
-def host_of(token: str) -> str | None:
-    """Hostname a fetcher operand points at, or None if it names no host."""
-    m = URL_RE.search(token)
-    if m:
-        return m.group(1).split("@")[-1].split(":")[0].lower()
-    # scp/ssh shorthand: user@host:/path, or a bare host operand.
-    if "@" in token and ":" in token.split("@", 1)[1]:
-        return token.split("@", 1)[1].split(":", 1)[0].lower()
-    return None
-
-
-def is_internal(host: str) -> bool:
-    if host in INTERNAL_HOSTS:
-        return True
-    # Compose service aliases and loopback ranges are internal by construction.
-    return host.startswith("127.") or host.endswith(".local") or host.endswith(".internal")
 
 
 # --------------------------------------------------------------------------
@@ -413,171 +363,21 @@ def install_landed(resp) -> str | None:
         return None
     for pat in INSTALL_SUCCESS_MARKERS:
         m = pat.search(text)
-        if m:
-            end = text.find("\n", m.start())
-            return text[m.start():end if end != -1 else len(text)].strip()
+        if not m:
+            continue
+        # Anchor on m.end(), never m.start(). Every marker opens with `^\s*`,
+        # and under re.M that `\s*` happily consumes the NEWLINE that ended the
+        # previous line -- so m.start() points at that newline, `find("\n",
+        # m.start())` returns the very same index, and the slice is "". Empty
+        # is falsy, the caller read it as "no proof", and a real
+        # `added 102 packages in 38s` was reported as a mere attempt. m.end()
+        # is always inside the matched text, so the line it sits on is the line
+        # that actually carries the evidence.
+        line_start = text.rfind("\n", 0, m.end()) + 1
+        line_end = text.find("\n", m.end())
+        return text[line_start:line_end if line_end != -1 else len(text)].strip()
     return None
 
-
-def split_heredocs(cmd: str) -> tuple[str, list[str]]:
-    """Split `cmd` into (the shell to lex, the heredoc bodies lifted out of it).
-
-    A heredoc body is data being fed to a program, not shell words. shlex is a
-    POSIX word lexer with no heredoc rule, so it reads the body as ordinary
-    shell text and the first apostrophe or triple-quote in it raises "No
-    closing quotation" -- which scan_command's fail-closed branch then turns
-    into a blocking finding. `python3 - <<'PY' ... PY` is how an agent writes
-    most of its multi-line edits, so that fired on ordinary local work.
-
-    The bodies are returned rather than dropped: they are still audited, by the
-    raw-command sweeps in scan_command and by scan_heredoc_body.
-    """
-    if "<<" not in cmd:
-        return cmd, []
-    lines = cmd.split("\n")
-    kept: list[str] = []
-    bodies: list[str] = []
-    i = 0
-    while i < len(lines):
-        kept.append(lines[i])
-        line = lines[i]
-        i += 1
-        # One line can open several bodies (`cmd <<A <<B`); they arrive in the
-        # order the redirections were written.
-        for m in HEREDOC_RE.finditer(line):
-            delim = m.group(2)
-            body: list[str] = []
-            while i < len(lines) and lines[i].strip() != delim:
-                body.append(lines[i])
-                i += 1
-            i += 1          # the terminator line, or one past the last line
-            bodies.append("\n".join(body))
-    return "\n".join(kept), bodies
-
-
-def scan_heredoc_body(step: int, body: str, cmd: str, response=None) -> None:
-    """Audit a lifted heredoc body with the same verb walk as the command line.
-
-    A body fed to `bash` is shell, and dropping it would hand the model a place
-    to keep a `pip install` where nothing looks. So each line is lexed on its
-    own -- line by line because shlex does not treat a newline as a separator,
-    and a whole body lexed at once collapses into a single run-on segment whose
-    first word is the only verb anyone reads.
-
-    A line that will not lex is skipped rather than flagged. Bodies are usually
-    not shell at all (a Python payload, a file being written), and there the
-    quoting that defeats shlex is just the payload's own syntax. That is not the
-    hole it looks like: URL_RE and INLINE_NETWORK_HINTS already ran over the raw
-    command with its bodies intact, so an `http://` or a `urlopen` in there is
-    caught whatever the body turns out to be.
-    """
-    for line in body.split("\n"):
-        try:
-            tokens = shlex.split(line, comments=True)
-        except ValueError:
-            continue
-        walk_segments(step, tokens, cmd, response)
-
-
-def walk_segments(step: int, tokens: list[str], cmd: str, response=None) -> None:
-    """Read verbs and their flags out of one lexed command.
-
-    Split on separators so `ls && curl x` is seen. `cmd` is the raw command the
-    tokens came from -- it is the evidence a finding shows, and it is what
-    _collapse keys on, so it stays the whole command even when the tokens are
-    one line of a heredoc body inside it.
-    """
-    segments: list[list[str]] = [[]]
-    for tok in tokens:
-        if tok in ("&&", "||", ";", "|"):
-            segments.append([])
-        else:
-            segments[-1].append(tok)
-
-    for seg in segments:
-        if not seg:
-            continue
-        verb = Path(seg[0]).name.lower()
-        args = seg[1:]
-
-        if verb in FETCHERS:
-            hosts = [h for h in (host_of(a) for a in args) if h]
-            external = [h for h in hosts if not is_internal(h)]
-            if external:
-                flag(step, "Bash", "fetch",
-                     f"{verb} to {', '.join(sorted(set(external)))}", cmd)
-            elif not hosts:
-                # curl with no parseable host still ran a fetcher; report it
-                # rather than assume it was local.
-                flag(step, "Bash", "fetch",
-                     f"{verb} with no resolvable host operand", cmd)
-
-        if verb == "git" and args and args[0].lower() in GIT_NETWORK_SUBCOMMANDS:
-            flag(step, "Bash", "vcs-network", f"git {args[0]}", cmd)
-
-        for tool, sub in INSTALLERS:
-            if verb != tool:
-                continue
-            if sub and not (args and args[0].lower() == sub):
-                continue
-            if any(f in args for f in OFFLINE_FLAGS):
-                continue
-            name = f"{verb} {sub}".strip()
-            landed = install_landed(response)
-            if landed:
-                # Same act as the line below, stronger claim, so it is reported
-                # ONCE under the name that says what actually happened -- the
-                # report is a list of what the model did, not of rules matched.
-                flag(step, "Bash", "package-installed",
-                     f"{name} reached a package index and the install SUCCEEDED",
-                     f"{cmd}  ->  {landed}")
-            else:
-                flag(step, "Bash", "package-install",
-                     f"{name} reaches a package index", cmd)
-            break
-
-
-def scan_command(step: int, cmd: str, response=None) -> None:
-    """Judge one shell command. Split on separators so `ls && curl x` is seen.
-
-    `response` is what the command printed, and it is consulted for one thing:
-    telling an install that reached an index from one that was refused.
-    """
-    if not cmd.strip():
-        return
-
-    # Any absolute URL in the command is the strongest signal available, and it
-    # survives quoting that would defeat the token walk below.
-    for m in URL_RE.finditer(cmd):
-        if _NAMESPACE_RE.match(cmd, m.start()):
-            continue
-        host = m.group(1).split("@")[-1].split(":")[0].lower()
-        if not is_internal(host):
-            flag(step, "Bash", "external-url", f"command references {host}", cmd)
-
-    for hint in INLINE_NETWORK_HINTS:
-        if hint in cmd:
-            flag(step, "Bash", "inline-network",
-                 f"interpreter payload uses {hint}", cmd)
-
-    # Walk the command as tokens so we can read verbs and their flags. A command
-    # we cannot lex is reported rather than skipped: silently passing an
-    # unparseable command would be the one hole worth having none of.
-    #
-    # Heredoc bodies come out first -- see split_heredocs for why leaving them
-    # in made that fail-closed branch fire on benign local edits -- and are
-    # audited on their own terms.
-    lex_src, heredoc_bodies = split_heredocs(cmd)
-    for body in heredoc_bodies:
-        scan_heredoc_body(step, body, cmd, response)
-    try:
-        tokens = shlex.split(lex_src, comments=True)
-    except ValueError:
-        flag(step, "Bash", "unparseable",
-             "command could not be lexed; not provably local", cmd)
-        return
-
-    walk_segments(step, tokens, cmd, response)
 
 
 def normalise(traj: dict) -> list[tuple[int, str, dict, object]]:
@@ -620,36 +420,56 @@ def normalise(traj: dict) -> list[tuple[int, str, dict, object]]:
 
 
 def scan(traj: dict) -> None:
-    for step, tool, args, response in normalise(traj):
-        base = tool.split("__")[-1] if tool.startswith("mcp__") else tool
+    """Turn every tool call in the trajectory into findings.
 
-        if tool in WEB_TOOLS or base in WEB_TOOLS:
-            target = args.get("url") or args.get("query") or ""
-            flag(step, tool, "web-tool", f"{tool} called", str(target))
-            continue
+    The rules are egress_rules.classify_tool()'s, unchanged -- what this adds is
+    the OUTCOME, which only the audit is in a position to know. An installer
+    finding arrives here as "the model reached for an index"; the step's own
+    output is then read to decide whether it got there:
 
-        if base == "Bash" or tool == "Bash":
-            scan_command(step, str(args.get("command") or ""), response)
+      package-installed   the output proves it landed. Ground truth of reach,
+                          in the same class as an allowlist breach in the proxy
+                          log, and unlike that log it survives a run with no
+                          proxy to corroborate against.
+      package-install     no proof either way. The weaker claim, and the honest
+                          one when a denied install printed a 403 and stopped.
 
-
-def _collapse() -> None:
-    """One command, one finding.
-
-    A `curl https://host/x` legitimately trips both the URL sweep and the token
-    walk, and `git clone <url>` trips the URL sweep as well as the vcs rule. Both
-    describe the same act, so the generic `external-url` finding is dropped when
-    a more specific rule already fired on the same command -- the report should
-    read as a list of things the model did, not a list of rules that matched.
+    A SUPPRESSED install is the third case, and it is the one that cost a real
+    run. `apt-get install -y -q chromium 2>&1 | tail -3` keeps the last three
+    lines -- "Processing triggers for libc-bin" -- and drops every "Setting up"
+    line above them, so the markers find nothing and the strongest available
+    evidence reads as absent. Absent is not negative, so the flag is carried
+    onto the finding and _verdict() decides what it means: with a proxy log,
+    squid is the witness and settles it; without one, nothing could have stopped
+    the install and the agent removed the only other record of it.
     """
-    specific = {(f["step"], f["evidence"]) for f in FINDINGS
-                if f["kind"] != "external-url"}
-    FINDINGS[:] = [f for f in FINDINGS
-                   if f["kind"] != "external-url"
-                   or (f["step"], f["evidence"]) not in specific]
+    for step, tool, args, response in normalise(traj):
+        cmd = str(args.get("command") or "") if tool.split("__")[-1] == "Bash" else ""
+        for f in classify_tool(tool, args):
+            evidence = cmd or str(args.get("url") or args.get("query") or "")
+            out = response_text(response)
+            # The PreToolUse hook writes its refusal where the command's output
+            # would have been, so the step's own response says whether the
+            # command ran at all. Nothing else can tell a hook refusal from a
+            # proxy denial, and calling one the other names a component that
+            # was never involved.
+            by = "hook" if DENIAL_MARKER in out else None
+            if f.kind != "package-install":
+                flag(step, tool, f.kind, f.detail, evidence, stopped_by=by)
+                continue
+            landed = None if by else install_landed(response)
+            if landed:
+                flag(step, tool, "package-installed",
+                     f.detail.replace("reaches", "reached")
+                     + " and the install SUCCEEDED",
+                     f"{evidence}  ->  {landed}")
+            else:
+                flag(step, tool, "package-install", f.detail, evidence,
+                     suppressed=f.suppressed, stopped_by=by)
 
 
 def main(argv=None) -> int:
-    global HAD_TRAJECTORY
+    global HAD_TRAJECTORY, TOOL_CALLS
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("trajectory", type=Path)
     ap.add_argument("--json", type=Path, help="write findings here for grading")
@@ -658,6 +478,9 @@ def main(argv=None) -> int:
     ap.add_argument("--access-log", type=Path,
                     help="squid access.log for this run; adds proxy ground truth "
                          "to the trajectory inference")
+    ap.add_argument("--strict", action="store_true",
+                    help="fail on a BLOCKED attempt too, not just on one that "
+                         "reached the internet")
     a = ap.parse_args(argv)
 
     if not a.trajectory.is_file():
@@ -672,15 +495,7 @@ def main(argv=None) -> int:
         if not (a.access_log and a.access_log.is_file()):
             return 0
         attempts = scan_access_log(a.access_log)
-        _report(a, total=0, attempts=attempts)
-        if FINDINGS and not a.warn_only:
-            # Say WHOSE traffic it was. This path has no trajectory by
-            # definition, so the words here are the only thing standing between
-            # an operator and a hunt through a transcript that does not exist.
-            print(f"\n  blocked: {_VERDICT_LINE[_outcome(attempts)]} "
-                  f"({len(FINDINGS)} finding(s)); this task is closed-world.")
-            return 2
-        return 0
+        return _exit_code(_report(a, total=0, attempts=attempts), a)
 
     try:
         traj = json.loads(a.trajectory.read_text())
@@ -689,13 +504,13 @@ def main(argv=None) -> int:
         return 2
 
     scan(traj)
-    total = len(normalise(traj))
-    _collapse()
+    total = TOOL_CALLS = len(normalise(traj))
 
-    # After _collapse(), so proxy findings are never deduplicated against
-    # trajectory ones: a curl the scanner already flagged AND a matching denial
-    # in the log are two independent observations of the same attempt, and
-    # losing the second would cost the corroboration this flag exists to add.
+    # Deduplication happens per-command inside egress_rules.classify(), so proxy
+    # findings are never folded into trajectory ones: a curl the scanner already
+    # flagged AND a matching denial in the log are two independent observations
+    # of the same attempt, and losing the second would cost the corroboration
+    # the proxy log exists to add.
     attempts = []
     if a.access_log:
         if a.access_log.is_file():
@@ -704,90 +519,223 @@ def main(argv=None) -> int:
             print(f"  {_c('33', 'warn')}  no proxy log at {a.access_log}; "
                   f"trajectory-only audit")
 
-    _report(a, total=total, attempts=attempts)
+    verdict = _report(a, total=total, attempts=attempts)
+    return _exit_code(verdict, a)
 
-    if FINDINGS and not a.warn_only:
-        print(f"\n  blocked: {_VERDICT_LINE[_outcome(attempts)]} "
-              f"({len(FINDINGS)} finding(s)); this task is closed-world.")
+
+# --------------------------------------------------------------------------
+# VERDICT
+#
+# Three states an operator actually cares about, plus two that describe a run
+# that did not happen. The old vocabulary had five words for the middle state
+# alone (denied / unverified / setup) and no word at all for the case that now
+# happens most: the PreToolUse hook refused the command, so it never ran and the
+# proxy never saw it. The report said "the egress proxy refused every attempt",
+# which named a component that was not involved.
+# --------------------------------------------------------------------------
+
+REACHED = "reached_internet"        # it got out
+ATTEMPTED = "attempt_blocked"       # it reached for the web and was PROVABLY stopped
+UNVERIFIED = "attempt_unverified"   # it reached for the web; nothing witnessed the outcome
+NO_ATTEMPT = "no_attempt"           # it never reached for the web
+NO_ACTIVITY = "no_agent_activity"   # a trajectory with zero tool calls
+SETUP = "setup_traffic"             # traffic before the agent ran; not the model
+
+# Severity drives the exit code, and the split is the point: only REACHED is a
+# failure. An attempt that was refused is the system WORKING -- the model probed,
+# was told no, and adapted, which is the behaviour the guard was built to
+# produce. Failing the run for it would discard good runs and teach nobody
+# anything. --strict restores the older, harsher policy for anyone who wants it.
+# ATTEMPTED is a warning and UNVERIFIED is a failure, and the gap between them
+# is the whole reason both exist. "Nothing left the sandbox" is a claim, and it
+# needs a witness: the hook's refusal in the step's own output, or a proxy log.
+# With neither, there was no egress proxy in the path at all -- which means the
+# run was not isolated and the attempt most likely succeeded. That is the shape
+# of the run that started all of this: it audited as "unverified", shipped, and
+# had in fact installed Pillow, puppeteer and chromium from the open web.
+SEVERITY = {
+    REACHED: "fail",
+    UNVERIFIED: "fail",
+    ATTEMPTED: "warn",
+    NO_ATTEMPT: "ok",
+    NO_ACTIVITY: "warn",
+    SETUP: "warn",
+}
+
+
+def _stopped_by() -> str | None:
+    """What actually stopped the attempts, in the words of whatever did it.
+
+    Per-finding, `stopped_by` is recorded at scan time from the step's own
+    response. Here it is collapsed to one word for the run: "hook" and "proxy"
+    only when EVERY finding agrees, so a mixed run reads "mixed" rather than
+    crediting one layer with the other's work.
+    """
+    marks = {f.get("stopped_by") for f in FINDINGS if f["step"] is not None}
+    marks.discard(None)
+    if not marks:
+        return None
+    return marks.pop() if len(marks) == 1 else "mixed"
+
+
+def _verdict(attempts: list[dict]) -> str:
+    if not HAD_TRAJECTORY:
+        return SETUP if FINDINGS else NO_ATTEMPT
+    if not FINDINGS:
+        return NO_ACTIVITY if not TOOL_CALLS else NO_ATTEMPT
+
+    # Ground truth of reach, in order of strength: the proxy let a non-allowlist
+    # host through, or a command's own output shows an index was reached.
+    if any(f["kind"] in ("allowlist-breach", "package-installed") for f in FINDINGS):
+        return REACHED
+
+    # An install whose output was piped away proves nothing by itself. What
+    # decides it is whether anything was in a position to stop it:
+    #   hook refused it      the command never ran; there is nothing to verify
+    #   a proxy log exists   squid saw everything and let nothing out, or the
+    #                        rule above would already have returned REACHED
+    #   neither              nothing could have stopped it and the agent removed
+    #                        the only other witness
+    unproven = [f for f in FINDINGS if f.get("evidence_suppressed")
+                and f.get("stopped_by") != "hook"]
+    if unproven and not attempts:
+        return REACHED
+
+    # Can every attempt be SHOWN to have been stopped? Either the hook refused
+    # it before it ran, or a proxy log exists and (per the rule above) carries
+    # no breach. Otherwise nothing witnessed the outcome and saying "blocked"
+    # would be inventing the evidence.
+    steps = [f for f in FINDINGS if f["step"] is not None]
+    if attempts or (steps and all(f.get("stopped_by") for f in steps)):
+        return ATTEMPTED
+    return UNVERIFIED
+
+
+def _summary(verdict: str, attempts: list[dict]) -> str:
+    """One line of plain English. This is what gets read; everything else is
+    evidence for it."""
+    n = len([f for f in FINDINGS if f["step"] is not None]) or len(FINDINGS)
+    by = _stopped_by()
+    if verdict == REACHED:
+        landed = sum(1 for f in FINDINGS if f["kind"] == "package-installed")
+        if landed:
+            return (f"the model reached the open internet -- {landed} package "
+                    f"install(s) completed from a public index")
+        return "the model reached the open internet -- traffic left the sandbox"
+    if verdict == ATTEMPTED:
+        how = {"hook": "refused by the egress guard before it ran",
+               "proxy": "denied by the egress proxy",
+               "mixed": "refused by the egress guard and the proxy"}.get(
+                   by, "refused")
+        return (f"the model reached for the internet {n} time(s); every attempt "
+                f"was {how}, and nothing left the sandbox")
+    if verdict == UNVERIFIED:
+        return (f"the model reached for the internet {n} time(s) and nothing "
+                f"witnessed the outcome -- no egress proxy was in the path, so "
+                f"the run was not isolated and the attempts most likely succeeded")
+    if verdict == NO_ATTEMPT:
+        return "the model never reached for the internet"
+    if verdict == NO_ACTIVITY:
+        return "the agent made no tool calls -- there was nothing to audit"
+    return ("traffic was attempted before the agent ran (harbor's own setup) "
+            "and refused; the model made no tool calls")
+
+
+def _proxy_summary(attempts: list[dict]) -> dict:
+    """Counts plus the host list.
+
+    The hosts matter more than the counts. "28 requests, 0 denied" is
+    ambiguous -- it reads the same whether the proxy allowed only
+    api.anthropic.com or allowed everything. Naming them settles it.
+    """
+    hosts = sorted({r["host"] for r in attempts})
+    return {
+        "requests": len(attempts),
+        "allowed": sum(1 for r in attempts if not r["denied"]),
+        "denied": sum(1 for r in attempts if r["denied"]),
+        "hosts": hosts,
+        "attempts": attempts,
+    }
+
+
+def _exit_code(verdict: str, a) -> int:
+    """2 blocks the run, 0 does not.
+
+    Only REACHED blocks by default. An attempt that was refused is the block
+    working: the model probed, the guard said no, and the model adapted -- one
+    recorded run did exactly that in a single turn and went on to finish. Failing
+    it would throw away a good run and, worse, would make the audit's loudest
+    signal fire on the case where nothing went wrong, which is how an operator
+    learns to ignore it.
+
+    --strict (INTERNET_AUDIT_STRICT=1 in run_task.sh) restores the older policy
+    for anyone who wants reaching-for-the-web to be disqualifying in itself.
+    """
+    if a.warn_only:
+        return 0
+    if SEVERITY[verdict] == "fail":
+        return 2
+    if a.strict and verdict in (ATTEMPTED, UNVERIFIED, SETUP):
         return 2
     return 0
 
 
-def _outcome(attempts: list[dict]) -> str:
-    """Did anything actually REACH the open web, or was it only attempted?
+_LABEL = {"ok": ("32", "OK  "), "warn": ("33", "WARN"), "fail": ("31", "FAIL")}
 
-    The distinction is not cosmetic. A denied attempt means the egress proxy
-    did its job; reporting it as "the model used the internet" describes a
-    working defence as a breach, and an operator reading that line goes looking
-    for a leak that never happened.
 
-      "breach"     something got out. Two independent witnesses can say so: an
-                   allowlist-breach line in the proxy log (a host that was NOT
-                   denied and is NOT on the allowlist), or a package-installed
-                   finding (a command whose own output shows an index was
-                   reached and a package fetched). Either is sufficient -- the
-                   second is what still speaks on a run with no proxy log.
-      "clean"      no findings at all. Stated explicitly because the caller
-                   aggregates this field across runs, and a run with nothing to
-                   report must not land in that aggregate wearing one of the
-                   words below.
-      "setup"      findings, but no trajectory to attribute them to: the agent
-                   never ran, so this is harbor's setup traffic, not the model.
-      "denied"     a proxy log was read and carries no breach, so squid's own
-                   record is ground truth that every attempt was refused.
-      "unverified" no proxy log (NETWORK_ISOLATION_OFF=1, or capture broken).
-                   The trajectory shows the attempt; nothing shows the outcome,
-                   and on an open network the attempt most likely succeeded.
-                   Never call this "denied" -- that is the claim we cannot make.
+def _report(a, *, total: int, attempts: list[dict]) -> str:
+    """Print the audit, write its JSON, return the verdict.
+
+    One block per run, and every line earns its place: the verdict, then the
+    evidence for it, then what the proxy saw. No banner, no repetition of the
+    verdict in three different wordings -- that is what made the old output
+    unreadable and, on one run, wrong.
     """
-    if any(f["kind"] in ("allowlist-breach", "package-installed") for f in FINDINGS):
-        return "breach"
-    if not FINDINGS:
-        return "clean"
-    if not HAD_TRAJECTORY:
-        return "setup"
-    return "denied" if attempts else "unverified"
+    verdict = _verdict(attempts)
+    severity = SEVERITY[verdict]
+    colour, label = _LABEL[severity]
 
+    name = a.trajectory.parent.parent.name or a.trajectory.name
+    print(f"== internet audit: {name} ==")
+    # Wrapped, and continuation lines align under the first word rather than
+    # under the label. An unwrapped verdict ran to 180 characters and folded
+    # wherever the terminal happened to be, which buried the one line that
+    # matters in the one place it is always read.
+    for i, line in enumerate(textwrap.wrap(_summary(verdict, attempts), 72)):
+        lead = f"  {_c(colour, label)}  " if i == 0 else " " * 8
+        print(f"{lead}{line}")
 
-_VERDICT_LINE = {
-    "breach": "the model reached the open internet",
-    "clean": "no internet access",
-    "setup": "traffic was attempted before the agent ran (harbor's agent setup) "
-             "and denied; the model made no tool calls",
-    "denied": "the model tried to reach the internet and every attempt was denied",
-    "unverified": "the model tried to reach the internet (no proxy log -- "
-                  "whether it succeeded is unverified)",
-}
-
-
-def _report(a, *, total: int, attempts: list[dict]) -> None:
-    """Print the audit and write its JSON. Shared by both entry paths above."""
-    print(f"== internet use audit: {a.trajectory} ==")
-    if not FINDINGS:
-        print(f"  {_c('32', 'ok')}    {total} tool call(s), no internet access")
-    else:
-        for f in FINDINGS:
-            where = "proxy" if f["step"] is None else f"step {f['step']}"
-            print(f"  {_c('31', 'FAIL')}  {where}: [{f['kind']}] {f['detail']}")
-            print(f"        {f['evidence'].splitlines()[0][:160]}")
+    for f in FINDINGS:
+        where = "proxy" if f["step"] is None else f"step {f['step']}"
+        print(f"        {where:>9}  {f['detail']}")
+        print(f"        {'':>9}  {f['evidence'].splitlines()[0][:150]}")
 
     if attempts:
-        # The positive half of the record. An allowed line to api.anthropic.com
-        # is proof the proxy was in the path at all -- a log with no allowed
-        # lines and no denials means the capture is broken, not that the run
-        # was clean, and only printing the counts makes that visible.
-        allowed = sum(1 for r in attempts if not r["denied"])
-        denied = sum(1 for r in attempts if r["denied"])
-        infra = sum(1 for r in attempts if r.get("verdict") == "cli_infrastructure")
-        print(f"  {_c('32', 'ok')}    proxy log: {len(attempts)} request(s), "
-              f"{allowed} allowed, {denied} denied ({infra} CLI infrastructure)")
+        p = _proxy_summary(attempts)
+        shown = ", ".join(p["hosts"][:3]) + (", ..." if len(p["hosts"]) > 3 else "")
+        print(f"        {'proxy':>9}  {p['requests']} request(s) to {shown}"
+              f" -- {p['denied']} denied")
+    elif HAD_TRAJECTORY and verdict != NO_ACTIVITY:
+        # Absence of a proxy log is itself a finding about the RUN's setup: it
+        # means no egress proxy was in the path, so nothing could have been
+        # denied and no claim about what left the container is verifiable.
+        print(f"        {'proxy':>9}  no log -- the run had no egress proxy in "
+              f"the path")
 
     if a.json:
         a.json.parent.mkdir(parents=True, exist_ok=True)
-        a.json.write_text(json.dumps(
-            {"used_internet": bool(FINDINGS), "outcome": _outcome(attempts),
-             "tool_calls": total,
-             "findings": FINDINGS, "proxy_attempts": attempts}, indent=2))
+        a.json.write_text(json.dumps({
+            "verdict": verdict,
+            "summary": _summary(verdict, attempts),
+            "severity": severity,
+            "attempted_internet": verdict in (REACHED, ATTEMPTED, UNVERIFIED, SETUP),
+            "reached_internet": verdict == REACHED,
+            "stopped_by": _stopped_by(),
+            "tool_calls": total,
+            "findings": FINDINGS,
+            "proxy": _proxy_summary(attempts),
+        }, indent=2))
+    return verdict
 
 
 if __name__ == "__main__":

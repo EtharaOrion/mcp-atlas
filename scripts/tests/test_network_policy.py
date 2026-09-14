@@ -372,14 +372,79 @@ def test_zbridge_run_is_refused_under_isolation(tmp_path, fake_zbridge):
     assert "REFUSING" in run.stderr, run.stderr[-2000:]
 
 
-def test_headroom_run_is_refused_under_isolation(tmp_path):
-    run = _run_harbor_stage(tmp_path, AGENT_HEADROOM_ENABLED="true")
+@pytest.fixture
+def fake_headroom():
+    """A health endpoint on the port route_agent_through_proxy probes.
+
+    Answering it is what makes the run ACTUALLY routed through
+    host.docker.internal, which is the thing isolation conflicts with. Without
+    it the flag is set and nothing is routed -- a different case, and the one
+    below asserts they are treated differently.
+    """
+    import http.server
+    import threading
+
+    class _Health(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-Length", "2")
+            self.end_headers()
+            self.wfile.write(b"ok")
+
+        def log_message(self, *_):
+            pass
+
+    srv = http.server.HTTPServer(("127.0.0.1", 0), _Health)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        yield {"HEADROOM_PROXY_PORT": str(srv.server_address[1])}
+    finally:
+        srv.shutdown()
+        srv.server_close()
+
+
+def test_headroom_run_is_refused_under_isolation(tmp_path, fake_headroom):
+    """A LIVE headroom proxy still conflicts, and must still be refused."""
+    run = _run_harbor_stage(tmp_path, AGENT_HEADROOM_ENABLED="true", **fake_headroom)
     assert not run.invoked, "a headroom run reached harbor under isolation"
     assert run.returncode != 0, (
         "run_task exited 0 after refusing -- the refusal did not propagate out "
         "of the command substitution"
     )
     assert "REFUSING" in run.stderr, run.stderr[-2000:]
+
+
+def test_headroom_flag_without_a_proxy_does_not_refuse(tmp_path):
+    """The refusal is about a route, not about a flag.
+
+    This test exists because of what the old behaviour cost. The refusal fired
+    on AGENT_HEADROOM_ENABLED alone, so a machine with the flag left true in
+    .env and NO headroom proxy running could not start an isolated run at all --
+    and the way out of it was NETWORK_ISOLATION_OFF=1, also in .env, which
+    turned the egress block off for every run from then on. A closed-world task
+    then installed Pillow, puppeteer and chromium off the public internet.
+
+    With no proxy answering, ANTHROPIC_BASE_URL is never set, nothing is routed
+    at host.docker.internal, and there is no conflict to refuse. run_task clears
+    the flag to say so rather than refusing on a stale one.
+    """
+    run = _run_harbor_stage(
+        tmp_path,
+        AGENT_HEADROOM_ENABLED="true",
+        # Nothing listens here. Fixed high port rather than the 8787 default so
+        # a developer's own headroom proxy cannot make this test flap.
+        HEADROOM_PROXY_PORT="59787",
+    )
+    assert "REFUSING" not in run.stderr, (
+        "refused an isolated run over a headroom proxy that is not running:\n"
+        + run.stderr[-2000:]
+    )
+    assert run.invoked, (
+        "the run never reached harbor:\n" + run.stderr[-2000:]
+    )
+    assert "--extra-docker-compose" in run.argv, (
+        "the run reached harbor without the isolation overlay -- open network"
+    )
 
 
 def test_zbridge_is_allowed_when_isolation_is_off(tmp_path, fake_zbridge):

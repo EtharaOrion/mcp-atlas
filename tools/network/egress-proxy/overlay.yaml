@@ -63,6 +63,31 @@ services:
       # This turns the optional traffic off at the source instead. It does not
       # relax the allowlist: anything still attempted is still denied.
       CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
+      # Package managers, told to stop before they start.
+      #
+      # These change NOTHING about what can leave -- the routing table already
+      # settled that. What they change is how long it takes to find out: an
+      # unconfigured `pip install pandas` opens a socket toward a gateway that
+      # does not exist and waits out a connect timeout, then a retry, then
+      # another, and the agent spends the whole time watching. With these set it
+      # refuses in milliseconds and the turn is cheap.
+      #
+      # PIP_NO_INDEX lived in .env for a while doing exactly nothing: it is a
+      # variable on the HOST shell, no code in the repo read it, and harbor
+      # forwards no such thing into the container. THIS is where it had to be.
+      PIP_NO_INDEX: "1"
+      PIP_RETRIES: "0"
+      PIP_TIMEOUT: "5"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      npm_config_offline: "true"
+      npm_config_fetch_retries: "0"
+      npm_config_audit: "false"
+      npm_config_fund: "false"
+      # apt has no offline switch and needs none: it honours http_proxy, which
+      # the block above points at squid, so `apt-get install` gets a 403 with a
+      # hostname in it rather than a hang. Nothing to add here -- and adding a
+      # variable that does not actually do anything is the mistake this comment
+      # is here to avoid repeating.
     depends_on:
       # Compose merges this into the task file's own depends_on mapping. Without
       # it the agent can start before squid is listening, and the first model

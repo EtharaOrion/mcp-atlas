@@ -180,16 +180,40 @@ that takes the sidecars with it and grades the run 0, and `"allowlist"` is
 rejected outright by the docker provider. Where the network may *go* is this
 overlay's question, not harbor's.
 
-A second layer sits above the routing block: while isolation is on, the agent
-is started with `--disallowedTools WebSearch,WebFetch`, so those tools are
-absent from its tool list rather than present-and-failing. The block does not
-depend on it — an agent run without that flag is still isolated — but it saves
-the turn the model would otherwise spend discovering the failure. Override the
-list with `DISALLOWED_TOOLS`.
+Two more layers sit above the routing block, and neither is load-bearing on its
+own — an agent run without either is still isolated. They exist because a block
+that says nothing is expensive: under isolation a `pip install` does not fail
+fast, it waits out a connect timeout toward a gateway that is not there, and the
+model then reasons about the error and tries the next package manager. One
+recorded run spent seven consecutive Bash calls that way.
 
-`NETWORK_ISOLATION_OFF=1` disables both. `scripts/detect_internet_use.py` still
-audits every trajectory afterwards and still blocks delivery, because
-configuration regresses quietly.
+**The tool list.** While isolation is on the agent is started with
+`--disallowedTools WebSearch,WebFetch`, so those tools are absent rather than
+present-and-failing. Override with `DISALLOWED_TOOLS`.
+
+**The PreToolUse guard.** `run_task.sh` generates a Claude Code `--settings`
+file (`tools/network/make_guard_settings.py`) whose hook is the whole of
+`tools/network/egress_rules.py`, base64'd inline. It refuses an egress command
+before it runs and replies with what to use instead — the MCP sidecars,
+`/workspace/data`, the stdlib — so the model re-plans in one turn. Same rules the
+post-run audit applies, because it is literally the same file:
+`detect_internet_use.py` imports it, and `scripts/tests/test_egress_guard.py`
+asserts the two never disagree.
+
+`NETWORK_ISOLATION_OFF=1` disables all three, for one run:
+
+```sh
+NETWORK_ISOLATION_OFF=1 scripts/run_task.sh tasks/<task>
+```
+
+**It cannot be set in `.env`,** and `load_dotenv` refuses it by name. It sat
+there once — put there to work around a `REFUSING` message about a headroom
+proxy that was not even running — and every run on that machine was an open run
+for as long as nobody looked. A closed-world task then installed Pillow,
+puppeteer and chromium off the public internet and graded as though it had not.
+
+`tools/network/detect_internet_use.py` audits every trajectory afterwards and
+blocks delivery regardless, because configuration regresses quietly.
 
 ### 2.6 `tests/test.sh` — the verifier entrypoint
 
