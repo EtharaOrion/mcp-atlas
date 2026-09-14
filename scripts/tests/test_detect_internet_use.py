@@ -648,6 +648,22 @@ def test_the_proxy_line_names_its_hosts(tmp_path):
     assert "api.anthropic.com" in r.stdout, r.stdout
 
 
+def test_zbridge_through_squid_is_allowed_only_with_proxy_allow(tmp_path):
+    """GLM runs reach zbridge on the host through squid. run_task.sh passes
+    --proxy-allow for them; without it the same line is a breach."""
+    alog = tmp_path / "egress-access.log"
+    alog.write_text(
+        "1757500002.000 900 172.20.0.3 TCP_MISS/200 1200 POST "
+        "http://host.docker.internal:8766/v1/messages - HIER_DIRECT/0.250.250.254 text/event-stream\n")
+    data, _ = verdict_of([bash("ls /workspace")], "--access-log", str(alog), tmp_path=tmp_path)
+    assert "allowlist-breach" in [f["kind"] for f in data["findings"]], data
+
+    data, r = verdict_of([bash("ls /workspace")], "--access-log", str(alog),
+                         "--proxy-allow", "host.docker.internal", tmp_path=tmp_path)
+    assert data["findings"] == [], data
+    assert r.returncode == 0, r.stdout
+
+
 def test_a_reached_run_still_fails(tmp_path):
     """The one state that withholds delivery, with or without --strict."""
     data, r = verdict_of([bash_out("pip install pandas", PIP_LANDED)],

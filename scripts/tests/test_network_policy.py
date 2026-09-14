@@ -315,8 +315,9 @@ def test_only_the_overlay_path_reaches_the_return_channel():
 
 
 # --- refusals ----------------------------------------------------------------
-# Both host-side proxies point the agent at host.docker.internal, which an
-# internal network has no route to. The refusal has to actually stop the run:
+# A live headroom proxy points the agent at host.docker.internal, which an
+# internal network has no route to. GLM runs are not refused: they reach zbridge
+# through squid instead. The refusal has to actually stop the run:
 # `exit 2` fires inside a command substitution, so it kills the subshell, and
 # only reaches the parent because the assignment is a statement of its own
 # under `set -e`. Writing it as `local _iso="$(...)"` would swallow the status
@@ -359,17 +360,20 @@ def fake_zbridge():
         srv.server_close()
 
 
-def test_zbridge_run_is_refused_under_isolation(tmp_path, fake_zbridge):
+def test_zbridge_run_is_isolated_through_squid(tmp_path, fake_zbridge):
+    """GLM runs keep the block and reach zbridge through squid, on its port only."""
+    port = fake_zbridge["ZB_PORT"]
     run = _run_harbor_stage(tmp_path, CC_MODE="zbridge", **fake_zbridge)
-    assert not run.invoked, (
-        "a zbridge run reached harbor under isolation; the agent would be "
-        "pointed at host.docker.internal with no route to it"
-    )
-    assert run.returncode != 0, (
-        "run_task exited 0 after refusing -- the refusal did not propagate out "
-        "of the command substitution"
-    )
-    assert "REFUSING" in run.stderr, run.stderr[-2000:]
+    assert "REFUSING" not in run.stderr, run.stderr[-2000:]
+    assert run.invoked, "the run never reached harbor:\n" + run.stderr[-2000:]
+
+    overlays = [run.argv[i + 1] for i, a in enumerate(run.argv) if a == "--extra-docker-compose"]
+    assert overlays == [str(OVERLAY), str(PROXY_DIR / "overlay-zbridge.yaml")], overlays
+
+    conf = Path(run.env["EGRESS_SQUID_CONF"])
+    assert f"acl zbridge_port port {port}" in conf.read_text().splitlines()
+    assert run.env.get("ANTHROPIC_BASE_URL") == f"http://host.docker.internal:{port}"
+    assert any(a.startswith("disallowed_tools=") for a in run.argv), run.argv
 
 
 @pytest.fixture

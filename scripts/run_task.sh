@@ -754,6 +754,11 @@ stage_harbor() {
   # pointed at host.docker.internal, which network isolation cannot route to.
   local _iso; _iso="$(network_isolation_overlay)"
   [ -n "$_iso" ] && args+=(--extra-docker-compose "$_iso")
+  # GLM runs: a second overlay lets squid also reach zbridge on the host.
+  if [ -n "$_iso" ] && [ "${CC_MODE:-}" = "zbridge" ]; then
+    write_zbridge_squid_conf
+    args+=(--extra-docker-compose "$REPO/tools/network/egress-proxy/overlay-zbridge.yaml")
+  fi
   [ "$AGENT" != "oracle" ] && args+=(--model "$MODEL")
   if [ "$AGENT" = "claude-code" ]; then
     [ -n "$THINKING" ] && args+=(--ak "thinking=$THINKING")
@@ -1056,6 +1061,13 @@ route_agent_through_proxy() {
   # the Anthropic-bound one. Without this the export below would silently
   # overwrite the ANTHROPIC_BASE_URL ensure_zbridge just set.
   if [ "${CC_MODE:-}" = "zbridge" ]; then
+    # Under isolation squid only allows zbridge's own port, so skip the chain.
+    if [ -z "${NETWORK_ISOLATION_OFF:-}" ]; then
+      echo "[run_task] network isolation ON: GLM agent goes straight to zbridge, headroom chain skipped" >&2
+      AGENT_HEADROOM_ENABLED=false
+      export AGENT_HEADROOM_ENABLED
+      return 0
+    fi
     local chained; chained="$(ensure_headroom_zbridge_chain)" || true
     if [ -z "$chained" ]; then
       echo "[run_task] keeping direct zbridge route; agent-path compression OFF" >&2
@@ -1106,15 +1118,16 @@ network_isolation_overlay() {
     exit 2
   }
 
-  # Both of these point the agent at host.docker.internal, which an internal
+  # A headroom proxy points the agent at host.docker.internal, which an internal
   # network has no route to. Failing here is the whole point: the alternative is
   # an agent phase that dies on its first model call and reads like an outage.
-  if [ "${CC_MODE:-}" = "zbridge" ] || [ "${AGENT_HEADROOM_ENABLED:-false}" = "true" ]; then
+  # GLM runs are not refused: squid routes them to zbridge (write_zbridge_squid_conf).
+  if [ "${AGENT_HEADROOM_ENABLED:-false}" = "true" ]; then
     echo "[run_task] REFUSING: network isolation cannot coexist with a host-side proxy." >&2
-    echo "[run_task]   CC_MODE=${CC_MODE:-unset} AGENT_HEADROOM_ENABLED=${AGENT_HEADROOM_ENABLED:-unset}" >&2
-    echo "[run_task]   Both route the agent through host.docker.internal, which main" >&2
+    echo "[run_task]   AGENT_HEADROOM_ENABLED=${AGENT_HEADROOM_ENABLED:-unset}" >&2
+    echo "[run_task]   It routes the agent through host.docker.internal, which main" >&2
     echo "[run_task]   cannot reach once its default network is internal." >&2
-    echo "[run_task]   Run without them, or set NETWORK_ISOLATION_OFF=1 to drop the block." >&2
+    echo "[run_task]   Run without it, or set NETWORK_ISOLATION_OFF=1 to drop the block." >&2
     exit 2
   fi
 
@@ -1124,6 +1137,26 @@ network_isolation_overlay() {
   ensure_image "egress-proxy:latest" >&2
   echo "[run_task] network isolation ON -- egress allowlist: api.anthropic.com" >&2
   echo "$overlay"
+}
+
+# GLM runs only. Writes squid-zbridge.conf with the real zbridge port and exports
+# its path for overlay-zbridge.yaml. Call it directly, not in $(...), or the
+# export is lost.
+write_zbridge_squid_conf() {
+  local port="${ZB_PORT:-8766}" dir="$OUTPUT_DIR/.egress-zbridge"
+  case "$port" in
+    ''|*[!0-9]*) echo "[run_task] ERROR: ZB_PORT must be a number, got '$port'" >&2; exit 2 ;;
+  esac
+  mkdir -p "$dir"
+  dir="$(cd "$dir" && pwd)"
+  sed "s/^acl zbridge_port port 8766\$/acl zbridge_port port $port/" \
+    "$REPO/tools/network/egress-proxy/squid-zbridge.conf" > "$dir/squid.conf"
+  grep -q "^acl zbridge_port port $port\$" "$dir/squid.conf" || {
+    echo "[run_task] ERROR: could not set zbridge port in $dir/squid.conf" >&2
+    exit 2
+  }
+  export EGRESS_SQUID_CONF="$dir/squid.conf"
+  echo "[run_task] GLM run: squid also allows zbridge at host.docker.internal:$port" >&2
 }
 
 # Echo the path of a generated Claude Code --settings file whose PreToolUse hook
@@ -1283,6 +1316,8 @@ stage_netaudit() {
   # the system working -- one recorded run did exactly that and went on to
   # finish. Blocking it would discard good runs.
   [ -n "${INTERNET_AUDIT_STRICT:-}" ] && flags+=(--strict)
+  # GLM runs reach zbridge on the host through squid. That is the model call, not a breach.
+  [ "${CC_MODE:-}" = "zbridge" ] && flags+=(--proxy-allow host.docker.internal)
 
   local traj run_dir dirty=0 seen=0 empty=0
   # Iterate RUN DIRECTORIES, not trajectory files.
