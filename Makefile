@@ -4,7 +4,7 @@ IMAGE_NAME = agent-environment
 VERSION = 1.2.7
 GHCR_REPO = ghcr.io/scaleapi/mcp-atlas
 
-.PHONY: build run-docker shell push install-harness run-harness install-python run-eval test build-light-servers build-verifier-base build-rubric-judge judge-codex-check run-eval-codex run-batch batch-status
+.PHONY: build run-docker shell push install-harness run-harness install-python run-eval test build-light-servers grade-env grade-build grade-wait grade-down check-isolation judge-codex-check run-eval-codex run-batch batch-status
 
 # ---------------------------------------------------------------------------
 # Agent Environment (docker image with the 36 MCP servers)
@@ -123,18 +123,103 @@ finance-usage: # POST one run's token/cost usage to the Finance API
 build-light-servers: # build light-servers Docker image (all software + utility servers bundled in services/light-servers/)
 	docker build -t light-servers:latest services/light-servers/
 
-build-verifier-base: # build the shared eval base image (pytest + scoring + judge CLI) used by separate-verifier bundles
-	docker build -t verifier-base:latest services/verifier/
+# NOTE: `build-verifier-base` is gone. Each bundle's tests/Dockerfile now starts
+# FROM python:3.12-slim and installs the shared grader deps itself, because the
+# build context Harbor pins for a verifier env is tests/ and cannot reach a file
+# at the repo root. Each bundle bakes its own pins inline and
+# list and test_grader_compress_wiring.py asserts the bundles match it.
 
-# The rubric channel's own container -- built once, shared by every task, and
-# deliberately NOT folded into verifier-base: it is the only image that gets a
-# judge credential mounted, so it holds the judge and nothing else. See
-# services/rubric-judge/Dockerfile for the full argument.
-build-rubric-judge: # build the isolated LLM-judge image that grades the rubric channel
-	docker build -t rubric-judge:latest -f services/rubric-judge/Dockerfile services/
+# NOTE: `build-rubric-judge` is gone, along with services/rubric-judge/. Every
+# bundle now defines its own judge image inline in its compose file, so there is
+# no shared image to build. A bundle that still expects one has not been
+# migrated; host_rubric_pass.py refuses rather than grading it without a rubric.
 
 build-egress-proxy: # build the egress allowlist proxy (network isolation for the agent phase)
 	docker build -t egress-proxy:latest tools/network/egress-proxy/
+
+# ---------------------------------------------------------------------------
+# Compose-orchestrated grading (plan.md)
+#
+# OPT-IN. The `verifier` and `rubric` services carry profiles: ["grading"], so
+# nothing below runs unless COMPOSE_PROFILES=grading is set. A plain harbor run
+# against the same bundle is unaffected -- that is the point of the profile, and
+# it stays that way until parity is proven at a fixed seed against the
+# shared-mode baseline.
+# ---------------------------------------------------------------------------
+
+TASK ?= tasks/homes-tour-packet-visuals
+
+# HOW THE AGENT PHASE ACTUALLY HAPPENS.
+#
+# These services do not run the agent -- `main` is `sleep infinity` and harbor
+# is still what execs the agent into it and fires the collect hook that releases
+# the graders. The integration needs NO harbor patch, just three things set on
+# the harbor invocation:
+#
+#   COMPOSE_PROFILES=grading   harbor shells out to `docker compose`, which
+#                              reads this from the environment, so the two
+#                              grading services come up in harbor's OWN project
+#                              alongside main and light-servers.
+#   --disable-verification     harbor must NOT also run its own verifier. Left
+#                              on, the bundle is graded twice and the second
+#                              grader BILLS THE JUDGE AGAIN (its test.sh runs
+#                              stage 3 with no ATLAS_RUBRIC_SIBLING set).
+#   --no-delete                harbor tears the project down as soon as its own
+#                              verifier phase returns, which with verification
+#                              disabled is immediately. Without this it kills
+#                              both graders mid-flight, seconds after the
+#                              sentinel released them.
+#
+# Then `make grade-wait` blocks until the graders finish and tears down.
+grade-env: # print the harbor invocation this profile requires
+	@echo 'COMPOSE_PROFILES=grading <your harbor/run_task invocation> \'
+	@echo '  --disable-verification --no-delete'
+	@echo ''
+	@echo 'then: make grade-wait TASK=$(TASK)'
+
+grade-build: # build the two grading images for TASK
+	COMPOSE_PROFILES=grading docker compose \
+	  -f "$(TASK)/environment/docker-compose.yaml" build verifier rubric
+
+# Blocks on the VERIFIER, not on the rubric: the verifier is last to finish by
+# construction (it waits for the rubric's verdict before running pytest, because
+# test_outputs.py folds the rubric into the weighted ledger at pytest time).
+# Waiting on the rubric instead would tear down while pytest was still running.
+grade-wait: # after a --no-delete harbor run: wait for grading, report, tear down
+	@COMPOSE_PROFILES=grading ATLAS_VOL="$${ATLAS_VOL:-atlas}" docker compose \
+	  -f "$(TASK)/environment/docker-compose.yaml" -p "$${ATLAS_PROJ:-atlasgrade}" wait verifier \
+	  && echo "[grade] verifier finished" || echo "[grade] verifier exited non-zero"
+	@echo "── reward ──"; docker run --rm \
+	  -v "$${ATLAS_VOL:-atlas}_grade_out:/s:ro" alpine:3.21 cat /s/reward.json 2>/dev/null \
+	  || echo "NO reward.json -- check: docker run --rm -v $${ATLAS_VOL:-atlas}_grade_out:/s alpine ls /s"
+	@echo "── rubric ──"; docker run --rm \
+	  -v "$${ATLAS_VOL:-atlas}_judge_out:/s:ro" alpine:3.21 \
+	  sh -c 'test -s /s/rubric_breakdown.json && echo graded || { echo "UNSCORED:"; cat /s/judge_error.txt 2>/dev/null; }' 2>/dev/null \
+	  || echo "(judge output volume empty)"
+	COMPOSE_PROFILES=grading ATLAS_VOL="$${ATLAS_VOL:-atlas}" docker compose \
+	  -f "$(TASK)/environment/docker-compose.yaml" -p "$${ATLAS_PROJ:-atlasgrade}" down -v
+
+grade-down: # tear down the grading project without waiting (aborts grading)
+	COMPOSE_PROFILES=grading docker compose \
+	  -f "$(TASK)/environment/docker-compose.yaml" down -v
+
+# Proves the isolation contract instead of asserting it. Run DURING the agent
+# phase, while every container is up -- that is the only window in which a leak
+# is reachable. Cheap enough to run every time, and it is what catches the day
+# somebody adds a convenience mount to `main`.
+#
+# Exits non-zero on the FIRST leak found. Each probe is a separate line so the
+# failure names the specific thing that leaked rather than just "isolation bad".
+check-isolation: # assert the agent cannot see the tests, the rubric or the graders
+	@docker compose -f "$(TASK)/environment/docker-compose.yaml" exec -T main sh -c '\
+	  ls /tests               >/dev/null 2>&1 && { echo "LEAK: /tests visible to the agent";       exit 1; }; \
+	  ls /judge-in            >/dev/null 2>&1 && { echo "LEAK: /judge-in writable by the agent";   exit 1; }; \
+	  ls /var/run/docker.sock >/dev/null 2>&1 && { echo "LEAK: docker.sock -- agent can read the verifier image"; exit 1; }; \
+	  getent hosts verifier   >/dev/null 2>&1 && { echo "LEAK: verifier reachable over the network"; exit 1; }; \
+	  getent hosts rubric     >/dev/null 2>&1 && { echo "LEAK: rubric reachable over the network";   exit 1; }; \
+	  find / -name oracle.json -o -name rubric.json -o -name test_outputs.py 2>/dev/null \
+	    | grep . && { echo "LEAK: answer key on disk in the agent container"; exit 1; }; \
+	  echo "isolation OK"'
 
 # ---------------------------------------------------------------------------
 # zbridge — GLM-5.3 via z.ai (Anthropic-to-GLM proxy + OpenAI adapter)
