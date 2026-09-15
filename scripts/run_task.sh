@@ -118,6 +118,29 @@ load_dotenv() {
 }
 load_dotenv
 
+# Docker bind mounts are colon-delimited (source:target:mode), so a checkout or
+# jobs directory whose path contains a ":" cannot be mounted at all -- compose
+# rejects it as "too many colons", and the structured long syntax fails the same
+# way because it is serialised back to that string for the daemon. Measured on a
+# clone under ~/Downloads/feat:new_eval_container: the trial died in
+# "starting environment..." with the compose error forty lines below the cause,
+# and the run looked like a harness bug.
+#
+# Checked here, before anything is built or spent, because every mount this
+# harness adds -- the graders, the bundle tests, harbor's own per-trial log dirs
+# -- carries one of these paths.
+refuse_uncmountable_paths() {
+  local bad="" p
+  for p in "$REPO" "${OUTPUT_DIR:-$REPO/output}"; do
+    case "$p" in *:*) bad="$bad $p" ;; esac
+  done
+  [ -z "$bad" ] && return 0
+  echo "[run_task] ERROR: a path here contains a colon, which docker cannot bind-mount:" >&2
+  for p in $bad; do echo "[run_task]   $p" >&2; done
+  echo "[run_task]   Move the checkout (and OUTPUT_DIR) somewhere without a ':' in the name." >&2
+  exit 2
+}
+
 STAGE="${STAGE:-all}"
 TASK=""
 while [ $# -gt 0 ]; do
@@ -1640,6 +1663,7 @@ stage_finance() {
 
 python3 "$REPO/scripts/patch_harbor.py"
 
+refuse_uncmountable_paths
 resolve_auth
 check_credentials
 check_finance_env

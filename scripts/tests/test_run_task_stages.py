@@ -285,3 +285,17 @@ def test_host_rubric_pass_looks_only_at_this_invocations_trials(env):
     published = json.loads(
         (env.output / "alpha" / "trajectory" / "run_1" / "verifier" / "reward.json").read_text())
     assert published.get("producer") == "judge_container", published
+
+
+def test_a_colon_in_the_path_is_refused_before_anything_runs(env, tmp_path):
+    """Docker bind mounts are colon-delimited, so a checkout or jobs dir with a
+    ":" in its name cannot be mounted -- compose says "too many colons" and the
+    long syntax fails identically. Measured on a clone under
+    ~/Downloads/feat:new_eval_container: the trial died in "starting
+    environment..." and read like a harness bug."""
+    colon_out = tmp_path / "feat:new_eval" / "output"
+    colon_out.mkdir(parents=True)
+    r = env.run("harbor", RUN_OFFSET=0, N=1, OUTPUT_DIR=str(colon_out))
+    assert r.returncode != 0, r.stdout
+    assert "colon" in r.stderr, r.stderr[-1500:]
+    assert not env.harbor_argv() or env.harbor_argv() == [""], "harbor was invoked anyway"
