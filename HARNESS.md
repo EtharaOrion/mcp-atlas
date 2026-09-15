@@ -233,8 +233,8 @@ Key verifier output files:
 
 | File | Contents |
 |---|---|
-| `judge_container.json` | Whether the evaluation ran in the judge container, and if not, why |
-| `reward_producer.json` | `{"producer": "judge_container"}` when the reward already folds in the container's rubric |
+| `judge_container.json` | Whether the evaluation ran in the judge container, and if not, why. Read during the run; pruned from the published tree |
+| `reward_producer.json` | `{"producer": "judge_container"}` when the reward already folds in the container's rubric. `run_task.sh` copies the label into `reward.json`, then it is pruned from the published tree |
 | `state_channel.json` | `{completion, misbehave, missing, unexpected, changed}` |
 | `reward_channel_a.json` | `{reward, channel_a, rubric, ledger, missed, guards_tripped}` |
 | `rubric_breakdown.json` | Per-criterion scores from LLM judge |
