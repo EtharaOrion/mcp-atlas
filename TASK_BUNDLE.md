@@ -100,8 +100,9 @@ Where both the agent and the verifier execute.
 
 ```dockerfile
 FROM python:3.12-slim
-RUN apt-get update && apt-get install -y --no-install-recommends curl procps && rm -rf /var/lib/apt/lists/*
-RUN pip install --no-cache-dir pytest "claude-agent-sdk>=0.1.45"
+RUN apt-get update && apt-get install -y --no-install-recommends curl procps jbig2dec && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir pytest "claude-agent-sdk>=0.1.45" \
+    openpyxl pillow pypdf pdfplumber
 RUN curl -fsSL https://downloads.claude.ai/claude-code-releases/bootstrap.sh | bash \
     && ln -sf /root/.local/bin/claude /usr/local/bin/claude \
     && chmod -R a+rX /root/.local && chmod a+x /root \
@@ -110,6 +111,20 @@ RUN curl -fsSL https://downloads.claude.ai/claude-code-releases/bootstrap.sh | b
 
 `claude-agent-sdk` transitively provides `mcp` and `anyio`, which is what lets `state_dump.py`
 speak MCP from the verifier. There is no `httpx` and no `requests`.
+
+**Bake every library the agent needs to READ the attachments, not just the ones
+the verifier imports.** `openpyxl`, `pillow`, `pypdf` and `pdfplumber` cover
+xlsx/png/jpg/pdf; add whatever else `data/` actually contains. `jbig2dec` is an
+apt package rather than a pip one because `pypdf` shells out to the binary, and
+without it a JBIG2-encoded PDF raises `DependencyError` instead of parsing.
+
+This layer used to be forgiving: a missing package meant the agent ran
+`pip install`, lost a turn to a connect timeout, and carried on. The PreToolUse
+guard (§2.5) now **refuses** `pip install` outright, so a task whose inputs need
+a library that is not here does not degrade — it fails. Verify with
+`docker run --rm <image> python3 -c "import openpyxl, PIL, pypdf, pdfplumber"`
+after building, which costs seconds and is the only check that actually covers
+this; a passing verifier suite does not, because the graders import none of them.
 
 **The CLI must be pre-baked, and `procps` must be present.** Harbor's
 `ClaudeCode.install()` normally installs both inside the container during agent
@@ -137,13 +152,16 @@ Mounts on `main`, and what each is for:
 |---|---|
 | `workspace_data:/workspace` | Shared scratch between `main` and `light-servers` |
 | `../data:/workspace/data:ro` | The attachments |
-| `../../services/scoring:/harness/scoring:ro` | The shared graders, incl. `rubric_judge_cli.py` |
+| `../../../services/scoring:/harness/scoring:ro` | The shared graders, incl. `rubric_judge_cli.py` |
 
-> **The relative depth is exactly two levels.** Compose resolves relative paths against the
-> compose file's own directory (`<task>/environment/`), so `../../services/scoring` reaches
-> `<repo>/services/scoring`. An extra `../` escapes the repo, and Docker **silently creates the
-> missing host directory** and mounts it empty rather than erroring — the grader then vanishes
-> with no signal beyond one line in verifier stdout.
+> **The path must land exactly on `<repo>/services/scoring`.** Compose resolves relative paths
+> against the compose file's own directory, so the number of `../` depends on where your bundle
+> sits — count it, do not copy it. A bundle at `<repo>/tasks/<task>/environment/`, which is where
+> `make_delivery.py --tasks-dir` puts them by default, needs **three** levels:
+> `../../../services/scoring`. A bundle directly at `<repo>/<task>/environment/` needs two.
+> Get it wrong in either direction and Docker **silently creates the missing host directory** and
+> mounts it empty rather than erroring — the grader then vanishes with no signal beyond one line
+> in verifier stdout.
 
 `light-servers` environment:
 
@@ -642,7 +660,7 @@ Everything the verifier touches, by absolute path:
 | `/workspace` | `workspace_data` volume | Agent scratch, shared with light-servers |
 | `/workspace/data` | `../data` (ro) | Attachments |
 | `/tests` | task `tests/` | The whole verifier kit |
-| `/harness/scoring` | `../../services/scoring` (ro) | Shared graders |
+| `/harness/scoring` | `../../../services/scoring` (ro) | Shared graders |
 | `/logs/agent/claude-code.txt` | agent phase | Raw `stream-json` transcript |
 | `/tmp/agent_trajectory.json` | `test.sh` stage 1 | Flattened trajectory |
 | `/logs/verifier/` | verifier phase | All grading artifacts |
@@ -717,8 +735,9 @@ Drawn from defects found in real runs. Each line is a failure that actually happ
 - [ ] Distractors are distinguishable from the target by something stated, not by authorial intent.
 
 **Grading**
-- [ ] `../../services/scoring` — exactly two levels. Verify `/harness/scoring` is non-empty in
-      verifier stdout.
+- [ ] The `services/scoring` mount resolves to `<repo>/services/scoring` from your bundle's own
+      location — `../../../` from `tasks/<task>/environment/`. Verify `/harness/scoring` is
+      non-empty in verifier stdout; an empty mount is the failure this catches.
 - [ ] Every weight in `test_weights.json` corresponds to a test that can actually pass.
 - [ ] Guards cover every entity a wrong run could damage, not just the intended target.
 - [ ] `graded: true` only where a grader really runs.

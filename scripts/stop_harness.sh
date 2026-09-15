@@ -120,16 +120,57 @@ if [ "$ALL" = 1 ]; then
   run docker container prune -f
   run docker volume prune -f
 else
-  # Harbor names its compose project "<trial>__env", so containers land as
-  # "<trial>__env-<service>-1" and volumes as "<trial>__env_<name>". Scoping to
-  # that infix leaves unrelated Docker projects on this machine alone.
+  # Scoped to harbor's own compose projects so unrelated Docker projects on this
+  # machine are left alone.
+  #
+  # This used to scope on the name infix "__env-", from a harbor that named its
+  # compose project "<trial>__env". It does not any more -- the project is just
+  # the lowercased trial name, e.g. "sakshi_lydbury-departmental-oper__3hthstd",
+  # so containers are "<project>-<service>-1" and volumes "<project>_<name>".
+  # Neither filter had matched anything for a long time, so this script was a
+  # no-op on the very containers it exists to remove: a stuck light-servers held
+  # most of Docker's memory until every later run's egress-proxy was OOM-killed
+  # (exit 137) and never started `main`, and dangling volumes leaked alongside.
+  #
+  # Containers are selected by COMPOSE LABEL rather than by name: harbor may
+  # rename its projects again, but a container it created always carries
+  # com.docker.compose.project, and harbor's trial names always contain "__".
+  # Volumes fall back to the name infix because `docker volume ls --format`
+  # does not expose .Label -- the project name is embedded in the volume name
+  # anyway, so the same "__" marker applies.
+  _harness_containers() {  # _harness_containers <status>... -> ids on stdout
+    local _st _args=()
+    for _st in "$@"; do _args+=(--filter "status=$_st"); done
+    docker ps -a --filter "label=com.docker.compose.project" "${_args[@]}" \
+        --format '{{.Label "com.docker.compose.project"}}	{{.ID}}' 2>/dev/null \
+      | awk -F'\t' '$1 ~ /__/ {print $2}'
+  }
+  # The default sweep stays stopped-only on purpose: a RUNNING container may
+  # belong to a trial the live-run guard above could not see (a bare `harbor
+  # run` owns no run_task.sh wrapper to match), and removing it would destroy
+  # that trial. --force already promises to kill a live run, so only under
+  # --force do stuck containers join the sweep. That is the "cannot stop
+  # container -- did not receive an exit event" case: it never reaches a stopped
+  # state, so the stopped-only filter never collected it and the container and
+  # its volume leaked until someone removed them by hand.
+  STATUSES=(exited created dead)
+  if [ "$FORCE" = 1 ]; then
+    STATUSES+=(running restarting removing)
+  fi
   CTRS=()
-  while read -r c; do [ -n "$c" ] && CTRS+=("$c"); done < <(docker ps -aq \
-      --filter status=exited --filter status=created --filter status=dead \
-      --filter name='__env-' 2>/dev/null)
+  while read -r c; do [ -n "$c" ] && CTRS+=("$c"); done < <(_harness_containers "${STATUSES[@]}")
   if [ "${#CTRS[@]}" -gt 0 ]; then
     for c in "${CTRS[@]}"; do say "rm container $c  $(docker inspect -f '{{.Name}} {{.State.Status}}' "$c" 2>/dev/null)"; done
-    run docker rm "${CTRS[@]}"
+    # Batch first, then a per-container -f retry for whatever survived. One
+    # unremovable container used to fail the whole batch and take the rest of
+    # the sweep's exit code with it, so the leak was reported as a success.
+    if ! run docker rm "${CTRS[@]}"; then
+      for c in "${CTRS[@]}"; do
+        docker inspect "$c" >/dev/null 2>&1 || continue   # already gone
+        say "rm -f container $c (plain rm failed)"
+        run docker rm -f "$c" || say "WARNING: could not remove $c -- remove it by hand"
+      done
+    fi
   else
     say "no stopped harness containers"
   fi
@@ -138,7 +179,7 @@ else
   # container reads as in-use and would survive the sweep.
   VOLS=()
   while read -r v; do [ -n "$v" ] && VOLS+=("$v"); done < <(docker volume ls -q \
-      --filter dangling=true --filter name='__env_' 2>/dev/null)
+      --filter dangling=true --filter name='__' 2>/dev/null)
   if [ "${#VOLS[@]}" -gt 0 ]; then
     for v in "${VOLS[@]}"; do say "rm volume $v"; done
     run docker volume rm "${VOLS[@]}"

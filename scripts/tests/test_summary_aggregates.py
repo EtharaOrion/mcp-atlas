@@ -48,6 +48,18 @@ def _load_delivery():
 md = _load_delivery()
 
 
+def _load_host_rubric():
+    spec = importlib.util.spec_from_file_location(
+        "host_rubric_pass", _SCRIPTS / "host_rubric_pass.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+hrp = _load_host_rubric()
+
+
 def _build_job(
     tmp_path: Path, per_trial: list[dict], trial_reward: dict | None = None,
     agent_cost: float | None = None,
@@ -589,3 +601,144 @@ def test_an_empty_only_trials_converts_nothing(tmp_path):
     around" -- that is the extra-runs bug with an extra step."""
     job, out = _build_job(tmp_path, [{"reward": 0.0}])
     assert h2o.convert_job(job, out, ks=[], run_offset=0, only_trials=set()) == []
+
+
+# ---------------------------------------------------------------------------
+# A reward built from fewer channels (host_rubric_pass.recompute_reward)
+# ---------------------------------------------------------------------------
+#
+# An unscored component leaves BOTH halves of the fraction, so a partial grade
+# is a different quantity on the same 0..1 scale -- and can land either side of
+# the full one.
+
+WEIGHTS = {
+    "components": {
+        "traj_tests": {"graded": True, "weight": 5},
+        "rubric": {"graded": True, "weight": 3},
+        "state_completion": {"graded": True, "weight": 5},
+        "state_misbehave": {"graded": True, "weight": -5},
+    }
+}
+
+FULL = dict(chan_a=0.8, rubric_value=0.9, rc_val=1.0, rb_val=0.0)
+
+
+def _grade(**overrides):
+    values = {**FULL, **overrides}
+    reward, ledger = hrp.recompute_reward(WEIGHTS, guards_tripped=[], **values)
+    comparable, caveats = hrp._comparability(ledger)
+    return reward, comparable, caveats
+
+
+def test_a_fully_graded_run_is_comparable():
+    reward, comparable, caveats = _grade()
+
+    assert reward == 0.89
+    assert comparable is True
+    assert caveats == []
+
+
+def test_dropping_the_weakest_channel_raises_the_reward_and_is_flagged():
+    """No channel_a, so traj_tests leaves the divisor with it: 0.89 -> 0.96 on
+    less evidence. Published unflagged beside full grades, that number reads as
+    the better run."""
+    full, _, _ = _grade()
+    reward, comparable, caveats = _grade(chan_a=None)
+
+    assert reward > full
+    assert (reward, full) == (0.96, 0.89)
+    assert comparable is False
+    assert caveats == ["traj_tests unscored: dropped from the reward's divisor"]
+
+
+@pytest.mark.parametrize("missing, component", [
+    ("chan_a", "traj_tests"),
+    ("rubric_value", "rubric"),
+    ("rc_val", "state_completion"),
+])
+def test_every_missing_channel_names_itself(missing, component):
+    _, comparable, caveats = _grade(**{missing: None})
+
+    assert comparable is False
+    assert [c.split(" ")[0] for c in caveats] == [component]
+
+
+def test_an_unscored_misbehave_channel_reports_the_penalty_it_could_not_apply():
+    """Distinct wording because the consequence is distinct: state_misbehave
+    only ever subtracts, so leaving it out cannot shrink the reward -- it can
+    only leave misconduct unpunished."""
+    _, comparable, caveats = _grade(rb_val=None)
+
+    assert comparable is False
+    assert caveats == ["state_misbehave unscored: no misbehaviour penalty was applied"]
+
+
+def test_a_retired_component_is_not_a_caveat():
+    """Weighted out on purpose is not evidence missing by accident."""
+    weights = {"components": {**WEIGHTS["components"],
+                              "rubric": {"graded": False, "weight": 0}}}
+    _, ledger = hrp.recompute_reward(weights, 0.8, None, 1.0, 0.0, [])
+
+    assert ledger["rubric"]["status"] == "retired"
+    assert hrp._comparability(ledger) == (True, [])
+
+
+def test_a_run_with_nothing_scored_is_not_silently_a_zero():
+    reward, comparable, caveats = _grade(
+        chan_a=None, rubric_value=None, rc_val=None, rb_val=None)
+
+    assert reward == 0.0
+    assert comparable is False
+    assert len(caveats) == 4
+
+
+# ---------------------------------------------------------------------------
+# What the delivered reward.json is allowed to drop (make_delivery.make_delivery)
+# ---------------------------------------------------------------------------
+
+SLUG = "demo-task"
+
+
+def _deliver(tmp_path: Path, reward_json: dict) -> dict:
+    """Run a one-run bundle through make_delivery and read back its reward.json."""
+    run = tmp_path / "output" / SLUG / "trajectory" / "run_1"
+    (run / "verifier").mkdir(parents=True)
+    (tmp_path / "output" / SLUG / "pass_summary.json").write_text(
+        json.dumps({"model": "claude-opus-5", "per_run": []}))
+    (run / "report.json").write_text(
+        json.dumps({"model": "claude-opus-5", "rubric": []}))
+    (run / "verifier" / "reward.json").write_text(json.dumps(reward_json))
+
+    md.make_delivery(SLUG, tmp_path / "output", tmp_path / "tasks",
+                     tmp_path / "delivery")
+
+    delivered = next((tmp_path / "delivery" / SLUG / "trajectory").rglob("reward.json"))
+    return json.loads(delivered.read_text())
+
+
+def test_delivery_keeps_the_caveats_on_a_partial_grade(tmp_path):
+    """The delivered reward.json is rebuilt key by key, not copied, so a field
+    added upstream ships only if it is named there."""
+    delivered = _deliver(tmp_path, {
+        "reward": 0.96, "completion_rate": 1.0, "misbehave_rate": 0.0,
+        "comparable": False,
+        "caveats": ["traj_tests unscored: dropped from the reward's divisor"],
+        "producer": "host_rubric_pass",
+    })
+
+    assert delivered["comparable"] is False
+    assert delivered["caveats"] == ["traj_tests unscored: dropped from the reward's divisor"]
+    assert delivered["reward"] == 0.96
+    # Rebuilt, not copied: the run's internal bookkeeping stays internal.
+    assert "producer" not in delivered
+
+
+def test_delivery_marks_a_full_grade_comparable(tmp_path):
+    delivered = _deliver(tmp_path, {"reward": 0.89, "comparable": True, "caveats": []})
+
+    assert delivered == {"reward": 0.89, "comparable": True, "caveats": []}
+
+
+def test_a_reward_json_written_before_the_flag_existed_delivers_unchanged(tmp_path):
+    """Absent stays absent -- no default that would claim a grade was checked."""
+    assert _deliver(tmp_path, {"reward": 0.5}) == {"reward": 0.5}

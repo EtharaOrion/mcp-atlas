@@ -156,6 +156,15 @@ def make_delivery(
     dst.mkdir(parents=True)
 
     task_src = tasks_dir / task_slug
+    if not task_src.exists():
+        # Bundles are not always directly under --tasks-dir. A collection layout
+        # (tasks/<collection>/<task>/) nests them one level deeper, and this is
+        # where delivery used to give up and ship an empty data/ dir. Look one
+        # level down before reporting the miss. The flat path is still checked
+        # first and still wins, so a run that resolves today is unaffected.
+        nested = sorted(p for p in tasks_dir.glob(f"*/{task_slug}") if p.is_dir())
+        if nested:
+            task_src = nested[0]
     if task_src.exists():
         shutil.copytree(
             task_src,
@@ -237,8 +246,11 @@ def make_delivery(
             if (ver_src / fname).exists():
                 shutil.copy2(ver_src / fname, ver_dst / fname)
 
-        reward_val = norm_reward((_load(ver_src / "reward.json", {}) or {}).get("reward", 0))
-        _dump(ver_dst / "reward.json", {"reward": reward_val})
+        reward_src = _load(ver_src / "reward.json", {}) or {}
+        _dump(ver_dst / "reward.json", {
+            "reward": norm_reward(reward_src.get("reward", 0)),
+            **{k: reward_src[k] for k in ("comparable", "caveats") if k in reward_src},
+        })
 
         rubric = report.get("rubric", [])
         # harbor_to_output writes this key PRESENT and NULL when the rubric
