@@ -14,12 +14,12 @@ from pathlib import Path
 
 import pytest
 
+from conftest import requires_docker, requires_harbor
+
+pytestmark = requires_harbor
+
 REPO = Path(__file__).resolve().parent.parent.parent
 RUN_TASK = REPO / "scripts" / "run_task.sh"
-
-# A real bundle, only so the `task.toml` existence check passes. No stage that
-# reads it ever runs: the gate exits first.
-TASK = "tasks/leith-herring-cure-restatement"
 
 VALID = {
     "ODOO_URL": "https://odoo.example",
@@ -34,12 +34,19 @@ VALID = {
 }
 
 
-def run(**overrides):
+@pytest.fixture(scope="module")
+def task_dir(tmp_path_factory):
+    d = tmp_path_factory.mktemp("bundle")
+    (d / "task.toml").write_text('name = "finance-gate-fixture"\n')
+    return str(d)
+
+
+def run(task_dir, **overrides):
     e = dict(os.environ)
     e.update(VALID)
     e.update(overrides)
     return subprocess.run(
-        [str(RUN_TASK), "--stage", "preflight", TASK],
+        [str(RUN_TASK), "--stage", "preflight", task_dir],
         capture_output=True, text=True, env=e, cwd=str(REPO), timeout=120)
 
 
@@ -59,37 +66,41 @@ def run(**overrides):
     ({"ODOO_URL": "projects-stage.ethara.ai"}, "ODOO_URL must start with"),
     ({"FINANCE_PHASE_NUMBER": "one"}, "FINANCE_PHASE_NUMBER must be a number"),
 ])
-def test_bad_value_stops_the_run_before_it_starts(override, needle):
-    r = run(**override)
+def test_bad_value_stops_the_run_before_it_starts(task_dir, override, needle):
+    r = run(task_dir, **override)
     assert r.returncode == 4, r.stdout + r.stderr
     assert needle in r.stderr
     # Nothing downstream ran: the gate is in dispatch, above every stage.
     assert "harbor run" not in r.stdout
 
 
-def test_empty_optional_values_fall_back_the_way_the_reporter_does():
+@requires_docker
+def test_empty_optional_values_fall_back_the_way_the_reporter_does(task_dir):
     """env() is `(os.environ.get(name) or default)` -- "" and unset are the same
     thing to it, so an empty value with a default is legal, not an error."""
-    r = run(FINANCE_RFP_SUB_TYPE="", FINANCE_BUDGET_TYPE="", FINANCE_PHASE_NUMBER="")
+    r = run(task_dir, FINANCE_RFP_SUB_TYPE="", FINANCE_BUDGET_TYPE="", FINANCE_PHASE_NUMBER="")
     assert "finance: OK" in r.stdout, r.stdout + r.stderr
     assert "rfp_sub_type=Testing" in r.stdout
 
 
-def test_empty_odoo_url_disables_reporting_instead_of_demanding_attribution():
-    r = run(ODOO_URL="", FINANCE_PROJECT_ID="")
+@requires_docker
+def test_empty_odoo_url_disables_reporting_instead_of_demanding_attribution(task_dir):
+    r = run(task_dir, ODOO_URL="", FINANCE_PROJECT_ID="")
     assert "usage reporting disabled" in r.stdout, r.stdout + r.stderr
     assert r.returncode != 4
 
 
-def test_case_only_mismatch_warns_but_does_not_block():
+@requires_docker
+def test_case_only_mismatch_warns_but_does_not_block(task_dir):
     """project_type and team_type are forwarded to Odoo unvalidated
     (finance_reporter.py:276,279), so a casing slip can only be a warning."""
-    r = run(FINANCE_PROJECT_TYPE="technical")
+    r = run(task_dir, FINANCE_PROJECT_TYPE="technical")
     assert "differs only in CASE" in r.stderr
     assert r.returncode != 4
 
 
-def test_the_gate_can_be_bypassed():
-    r = run(FINANCE_ENV_CHECK_OFF="1", FINANCE_PROJECT_ID="")
+@requires_docker
+def test_the_gate_can_be_bypassed(task_dir):
+    r = run(task_dir, FINANCE_ENV_CHECK_OFF="1", FINANCE_PROJECT_ID="")
     assert r.returncode != 4
     assert "finance env check FAILED" not in r.stderr

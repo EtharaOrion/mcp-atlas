@@ -48,6 +48,18 @@ def _load_delivery():
 md = _load_delivery()
 
 
+def _load_host_rubric():
+    spec = importlib.util.spec_from_file_location(
+        "host_rubric_pass", _SCRIPTS / "host_rubric_pass.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+hrp = _load_host_rubric()
+
+
 def _build_job(
     tmp_path: Path, per_trial: list[dict], trial_reward: dict | None = None,
     agent_cost: float | None = None,

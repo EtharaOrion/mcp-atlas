@@ -19,6 +19,8 @@ This is that helper, shared, so the next file to stub `harbor` gets it for free.
 from __future__ import annotations
 
 import shutil
+import subprocess
+from functools import lru_cache
 from pathlib import Path
 
 import pytest
@@ -67,3 +69,44 @@ def harbor_package_mirror(tmp_path):
     if not mirror_harbor_package(tmp_path):
         pytest.skip("harbor is not installed; cannot mirror its package")
     return tmp_path
+
+
+@lru_cache(maxsize=1)
+def docker_is_usable() -> bool:
+    """Whether a daemon actually answers -- not merely whether a client is installed.
+
+    The `docker` client stays on PATH after Desktop or OrbStack stops, so
+    which() alone calls a machine ready when it cannot build an image.
+    """
+    if shutil.which("docker") is None:
+        return False
+    try:
+        return subprocess.run(
+            ["docker", "info"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30,
+        ).returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+requires_docker = pytest.mark.skipif(
+    not docker_is_usable(),
+    reason="needs a running Docker daemon. run_task.sh reaches it two ways, "
+           "both fatal: it waits 120s for one to appear and then exits 3 "
+           "(run_task.sh:652-655), or it fails provisioning an image "
+           "(ensure_image, run_task.sh:581-610). Either lands well before the "
+           "behaviour under test. Marked per-test rather than per-module "
+           "because most tests in these files stop at an earlier gate and pass "
+           "without a daemon -- skipping those too would cost real coverage.",
+)
+
+
+requires_harbor = pytest.mark.skipif(
+    shutil.which("harbor") is None,
+    reason="harbor is not installed. run_task.sh runs patch_harbor.py (:1510) "
+           "before it dispatches any stage, and that raises outright when the "
+           "harbor package cannot be located -- so the script exits 1 long "
+           "before the behaviour under test. Same reasoning as "
+           "mirror_harbor_package(): a machine without harbor is not a broken "
+           "run_task.sh, and CI runners do not have it on PATH.",
+)

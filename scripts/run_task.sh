@@ -88,18 +88,23 @@ DOTENV_FORBIDDEN_KEYS=" NETWORK_ISOLATION_OFF "
 
 load_dotenv() {
   [ -f "$REPO/.env" ] || return 0
-  local line key val skipped="" refused=""
+  local line key val skipped="" refused="" quoted=""
   while IFS= read -r line; do
     key="${line%%=*}"
     val="${line#*=}"
     case "$DOTENV_FORBIDDEN_KEYS" in
       *" $key "*) refused="$refused $key"; continue ;;
     esac
-    # Conservative value charset, inherited from the `source` implementation this
-    # replaces. Values outside it are still skipped -- but they are now NAMED
-    # instead of vanishing, which is how ZB_MODEL_ALIAS_JSON sat in .env doing
-    # nothing while looking like configuration.
+    # Balanced quotes are taken verbatim: the charset filter guards a BARE value
+    # against re-splitting, which quoting already does. Both styles, because
+    # finance_reporter.py:119 strips both -- a value dropped here and loaded there
+    # is how the Odoo gate warns "unauthenticated" about a token that is set.
+    # Unbalanced quotes fall through to the filter rather than half-parsing.
+    # What the filter still skips is NAMED, which is how ZB_MODEL_ALIAS_JSON sat
+    # in .env doing nothing while looking like configuration.
     case "$val" in
+      \"*\") val="${val#\"}"; val="${val%\"}"; quoted="$quoted $key" ;;
+      \'*\') val="${val#\'}"; val="${val%\'}"; quoted="$quoted $key" ;;
       *[!A-Za-z0-9_./:@~-]*) skipped="$skipped $key"; continue ;;
     esac
     if [ -z "${!key+set}" ]; then
@@ -108,6 +113,9 @@ load_dotenv() {
   done < <(sed 's/[[:space:]]*$//' "$REPO/.env" | grep -E '^[A-Za-z_][A-Za-z0-9_]*=')
   if [ -n "$skipped" ]; then
     echo "[run_task] .env: skipped (value has unsupported characters):$skipped" >&2
+  fi
+  if [ -n "$quoted" ]; then
+    echo "[run_task] .env: loaded with quotes stripped:$quoted" >&2
   fi
   if [ -n "$refused" ]; then
     echo "[run_task] .env: REFUSED (per-run only, not a file setting):$refused" >&2
@@ -1377,7 +1385,15 @@ stage_host_rubric() {
     fi
   done < <(host_rubric_trials)
   if [ "$seen" -eq 0 ]; then
-    echo "[run_task] no trial dir under $OUTPUT_DIR/$JOB; skipping host rubric" >&2
+    # Two different conditions, said differently on purpose: a state-tracking
+    # bug that grades nothing must not read as an empty job dir.
+    if state_has trials && [ -n "$(find "$OUTPUT_DIR/$JOB" -maxdepth 1 -type d -name "*__*" 2>/dev/null)" ]; then
+      echo "[run_task] host rubric: this invocation produced no trial dir of its own;" >&2
+      echo "           the dirs under $OUTPUT_DIR/$JOB belong to earlier runs and are NOT graded." >&2
+      echo "           To grade one deliberately: scripts/host_rubric_pass.py --trial <dir> --task \$TASK" >&2
+    else
+      echo "[run_task] no trial dir under $OUTPUT_DIR/$JOB; skipping host rubric" >&2
+    fi
     return 0
   fi
   [ "$any_graded" = "1" ] && state_put host_rubric_done 1
