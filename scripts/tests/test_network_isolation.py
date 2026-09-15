@@ -58,7 +58,14 @@ def test_overlay_isolates_main(task_toml: Path):
              # the overlay declares it `:?` so an unmounted proxy log fails at
              # `compose up` instead of silently producing an empty audit. Any
              # path works here -- nothing is started.
-             "HOST_AGENT_LOGS_PATH": "/tmp/egress-out-test"},
+             "HOST_AGENT_LOGS_PATH": "/tmp/egress-out-test",
+             # Exported by scripts/run_task.sh for bundles with a judge service;
+             # their compose file declares both `:?`. Values irrelevant here.
+             "JUDGE_TOKEN": "compose-config-test",
+             "CODEX_AUTH_FILE": "/tmp/codex-auth-test.json",
+             # harbor binds its per-trial verifier log dir (trial.py:798); the judge
+             # writes its reports straight into it, so the compose file declares it `:?`.
+             "HOST_VERIFIER_LOGS_PATH": "/tmp/verifier-logs-test"},
     )
     if proc.returncode != 0:
         pytest.fail(f"compose config failed:\n{proc.stderr}")
@@ -238,6 +245,10 @@ def _harbor_argv(tmp_path, **overrides) -> list[str]:
                 (real_pkg / "agents" / "installed" / "claude_code.py", rel),
                 (real_pkg / "trial" / "trial.py",
                  rel.parent.parent.parent / "trial" / "trial.py"),
+                # Same gap as conftest.mirror_harbor_package: patch_harbor.py now
+                # rewrites cli/jobs.py too, and a MISS stops the stage before harbor.
+                (real_pkg / "cli" / "jobs.py",
+                 rel.parent.parent.parent / "cli" / "jobs.py"),
             ):
                 dest = tmp_path / dest_rel
                 dest.parent.mkdir(parents=True, exist_ok=True)

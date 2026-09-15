@@ -188,6 +188,8 @@ def main() -> int:
     ap.add_argument("--task", required=True, help="tasks/<task>/")
     ap.add_argument("--model", default=None, help="judge model (default: JUDGE_MODEL, else codex)")
     ap.add_argument("--dry-run", action="store_true", help="convert and report, do not call the judge")
+    ap.add_argument("--rejudge", action="store_true",
+                    help="call the judge here even when the judge container already wrote verdicts")
     a = ap.parse_args()
 
     trial, task = Path(a.trial), Path(a.task)
@@ -218,18 +220,31 @@ def main() -> int:
         print(f"[host-rubric] dry run; trajectory at {traj_path}")
         return 0
 
-    cmd = [sys.executable, str(REPO / "services" / "scoring" / "rubric_judge_cli.py"),
-           "--rubric", str(rubric), "--trajectory", str(traj_path),
-           "--output", str(breakdown),
-           "--token-output", str(verifier / "judge_tokens.json")]
-    if a.model:
-        cmd += ["--model", a.model]
-    print(f"[host-rubric] judging with {a.model or os.getenv('JUDGE_MODEL') or 'codex default'} ...")
-    proc = subprocess.run(cmd)
-    traj_path.unlink(missing_ok=True)
-    if proc.returncode != 0:
-        print("[host-rubric] judge failed; rubric channel stays UNSCORED", file=sys.stderr)
-        return proc.returncode
+    # Verdicts the bundle's judge container already wrote (tools/judge). Reused,
+    # not re-bought: for such a trial the host's only job is the ledger, which
+    # the bundle's own reward may leave the rubric out of.
+    graded_in = "host"
+    container = _load(verifier / "judge_container.json", {}) or {}
+    prior = _load(breakdown, {}) or {}
+    prior_rows = prior.get("per_criterion") or prior.get("results")
+    if container.get("ok") is True and prior_rows and not a.rejudge:
+        graded_in = "judge-container"
+        traj_path.unlink(missing_ok=True)
+        print(f"[host-rubric] rubric already graded in the judge container "
+              f"({container.get('model')}); recomputing the ledger only")
+    else:
+        cmd = [sys.executable, str(REPO / "services" / "scoring" / "rubric_judge_cli.py"),
+               "--rubric", str(rubric), "--trajectory", str(traj_path),
+               "--output", str(breakdown),
+               "--token-output", str(verifier / "judge_tokens.json")]
+        if a.model:
+            cmd += ["--model", a.model]
+        print(f"[host-rubric] judging with {a.model or os.getenv('JUDGE_MODEL') or 'codex default'} ...")
+        proc = subprocess.run(cmd)
+        traj_path.unlink(missing_ok=True)
+        if proc.returncode != 0:
+            print("[host-rubric] judge failed; rubric channel stays UNSCORED", file=sys.stderr)
+            return proc.returncode
 
     rb = _load(breakdown, {}) or {}
     rubric_value = rb.get("score")
@@ -254,8 +269,8 @@ def main() -> int:
 
     out = dict(prior)
     out.update({"reward": reward, "rubric": norm_reward(rubric_value),
-                "ledger": ledger, "comparable": comparable, "caveats": caveats,
-                "rubric_graded_on": "host", "grader": "weighted_ledger"})
+                "ledger": ledger,
+                "rubric_graded_on": graded_in, "grader": "weighted_ledger"})
     (verifier / "reward_channel_a.json").write_text(json.dumps(out, indent=2))
     (verifier / "reward.json").write_text(json.dumps(
         {"reward": reward,

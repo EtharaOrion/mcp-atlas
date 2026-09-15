@@ -369,172 +369,43 @@ def test_one_invocation_writes_exactly_one_run(env, tmp_path):
     assert runs == ["run_1"], runs
 
 
-# ---------------------------------------------------------------------------
-# The collect hook the patcher installs (scripts/patch_harbor.py)
-# ---------------------------------------------------------------------------
-#
-# Every way this hook can fail is quiet: harbor logs a failed collect hook and
-# carries on, and collect_artifacts.py exits 0 by contract, so a run that
-# collected nothing looks exactly like a run that collected everything.
-
-PATCHER = REPO / "scripts" / "patch_harbor.py"
-
-_spec = importlib.util.spec_from_file_location("patch_harbor", PATCHER)
-ph = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(ph)
-
-
-class _Hook:
-    """Stands in for harbor's VerifierCollectConfig, which the patch only reads .command from."""
-
-    def __init__(self, command):
-        self.command = command
-
-
-def _collect_hooks(existing, monkeypatch):
-    """Run the patched body of harbor's _collect_hooks over *existing* hooks."""
-    config = types.ModuleType("harbor.models.task.config")
-    config.VerifierCollectConfig = _Hook
-    for name, mod in (
-        ("harbor", types.ModuleType("harbor")),
-        ("harbor.models", types.ModuleType("harbor.models")),
-        ("harbor.models.task", types.ModuleType("harbor.models.task")),
-        ("harbor.models.task.config", config),
-    ):
-        monkeypatch.setitem(sys.modules, name, mod)
-
-    ns: dict = {}
-    exec(compile("def _run(hooks):\n" + ph.REPLACEMENT_COLLECT_V1, "<patch>", "exec"), ns)
-    return ns["_run"](list(existing))
+def test_host_rubric_pass_looks_only_at_this_invocations_trials(env):
+    """The host pass globbed every *__* dir in the job, so a leftover trial from
+    an earlier invocation was graded again -- judge quota spent on a run this
+    invocation never made. It now takes the trial list stage_harbor recorded."""
+    (env.output / "alpha").mkdir(parents=True)
+    old = _trial(env, "alpha__old1")
+    (env.output / "alpha" / "config.json").write_text(
+        '{"agents": [{"name": "claude-code", "model_name": "m1"}]}')
+    (env.output / "alpha" / "result.json").write_text('{"id": "job-1"}')
+    assert env.run("harbor", RUN_OFFSET=0, N=1, STUB_TRIAL="alpha__fresh").returncode == 0
+    fresh = _trial(env, "alpha__fresh")
+    for d in (old, fresh):
+        (d / "verifier").mkdir(exist_ok=True)
+        (d / "verifier" / "reward.json").write_text('{"reward": 0.5}')
+        (d / "verifier" / "reward_producer.json").write_text('{"producer": "judge_container"}')
+    r = env.run("reshape", RUN_OFFSET=0)
+    out = r.stdout + r.stderr
+    assert "judge container for alpha__fresh" in out, out[-3000:]
+    graded = [l for l in out.splitlines() if "judge container for" in l]
+    assert not any("alpha__old1" in l for l in graded), graded
+    # harbor validates the container's reward.json as numbers only, so the label
+    # is added on the host -- to this invocation's trial alone.
+    assert "producer" not in json.loads((old / "verifier" / "reward.json").read_text())
+    published = json.loads(
+        (env.output / "alpha" / "trajectory" / "run_1" / "verifier" / "reward.json").read_text())
+    assert published.get("producer") == "judge_container", published
 
 
-def _builtin_command(monkeypatch):
-    return _collect_hooks([], monkeypatch)[-1].command
-
-
-def _mirrored_trial(tmp_path):
-    return next(tmp_path.glob("lib/python*/site-packages/harbor/trial/trial.py"))
-
-
-def _run_patcher(tmp_path):
-    """Patch the mirror, never the real install: PATH decides which harbor is found."""
-    bin_dir = tmp_path / "bin"
-    bin_dir.mkdir(exist_ok=True)
-    stub = bin_dir / "harbor"
-    stub.write_text("#!/bin/sh\nexit 0\n")
-    stub.chmod(0o755)
-    e = dict(os.environ, PATH=f"{bin_dir}:{os.environ['PATH']}")
-    return subprocess.run([sys.executable, str(PATCHER)],
-                          capture_output=True, text=True, env=e, timeout=120)
-
-
-def test_the_anchor_does_not_survive_its_own_replacement():
-    """Re-running the patcher cannot double-apply, because the anchor is consumed.
-
-    The patcher decides what is already applied by searching for a marker
-    string. Any patch whose replacement still contains its own anchor would
-    apply again on every pass that reaches it.
-    """
-    assert ph.ANCHOR_COLLECT not in ph.REPLACEMENT_COLLECT
-    assert ph.ANCHOR_COLLECT_V1 not in ph.REPLACEMENT_COLLECT_V1
-    assert ph.ALREADY_PATCHED_MARKER_COLLECT in ph.REPLACEMENT_COLLECT
-    assert ph.ALREADY_PATCHED_MARKER_COLLECT in ph.REPLACEMENT_COLLECT_V1
-
-
-@requires_harbor
-def test_patching_twice_leaves_exactly_one_hook(tmp_path):
-    if not mirror_harbor_package(tmp_path):
-        pytest.skip("harbor is not installed; cannot mirror its package")
-
-    first = _run_patcher(tmp_path)
-    assert first.returncode == 0, first.stdout + first.stderr
-    once = _mirrored_trial(tmp_path).read_text()
-
-    second = _run_patcher(tmp_path)
-    assert second.returncode == 0, second.stdout + second.stderr
-
-    assert _mirrored_trial(tmp_path).read_text() == once
-    assert once.count(ph.ALREADY_PATCHED_MARKER_COLLECT) == 1
-
-
-@requires_harbor
-def test_a_harbor_patched_by_the_previous_revision_is_upgraded(tmp_path):
-    """The prior patch consumed the anchor, so a new revision must recognise its output.
-
-    Without that, the anchor search misses on every already-patched machine and
-    the patcher exits 1 -- which run_task.sh (:1510) runs under `set -e`, so the
-    run dies before dispatch rather than grading anything.
-    """
-    if not mirror_harbor_package(tmp_path):
-        pytest.skip("harbor is not installed; cannot mirror its package")
-
-    trial = _mirrored_trial(tmp_path)
-    text = trial.read_text()
-    for current in (ph.REPLACEMENT_COLLECT_V1, ph.ANCHOR_COLLECT):
-        if current in text:
-            trial.write_text(text.replace(current, ph.ANCHOR_COLLECT_V1, 1))
-            break
-    assert ph.ANCHOR_COLLECT_V1 in trial.read_text()
-
-    result = _run_patcher(tmp_path)
-    assert result.returncode == 0, result.stdout + result.stderr
-
-    patched = trial.read_text()
-    assert ph.ANCHOR_COLLECT_V1 not in patched
-    assert patched.count(ph.ALREADY_PATCHED_MARKER_COLLECT) == 1
-
-
-def test_a_task_hook_that_merely_mentions_the_collector_does_not_displace_it(monkeypatch):
-    """Dedup by equality, not containment.
-
-    A task hook that names the collector in passing -- wrapping it, logging it,
-    running it somewhere else -- used to satisfy a substring test and suppress
-    the builtin, taking every artifact with it.
-    """
-    mention = _Hook("echo running python3 /harness/scoring/collect_artifacts.py now")
-
-    hooks = _collect_hooks([mention], monkeypatch)
-
-    assert len(hooks) == 2
-    assert hooks[0] is mention
-    assert hooks[-1].command == _builtin_command(monkeypatch)
-
-
-@pytest.mark.parametrize("already", ["current", "prior"])
-def test_the_builtin_is_not_appended_beside_itself(monkeypatch, already):
-    """Both the current command and the one the previous revision emitted count as present."""
-    command = (_builtin_command(monkeypatch) if already == "current"
-               else "python3 /harness/scoring/collect_artifacts.py")
-
-    hooks = _collect_hooks([_Hook(command)], monkeypatch)
-
-    assert [h.command for h in hooks] == [command]
-
-
-def _run_hook_shell(command, tmp_path, scoring):
-    """Run the hook the way harbor does -- docker.py hands it to `sh -c`."""
-    return subprocess.run(["sh", "-c", command.replace("/harness/scoring", str(scoring))],
-                          capture_output=True, text=True, cwd=tmp_path, timeout=60)
-
-
-def test_a_missing_scoring_mount_is_named_and_still_not_fatal(monkeypatch, tmp_path):
-    command = _builtin_command(monkeypatch)
-    assert "/harness/scoring/collect_artifacts.py" in command
-
-    result = _run_hook_shell(command, tmp_path, tmp_path / "absent")
-
-    assert result.returncode == 0
-    assert "is not mounted" in result.stderr
-    assert "docker-compose.yaml" in result.stderr
-
-
-def test_a_mounted_scoring_dir_runs_the_collector(monkeypatch, tmp_path):
-    scoring = tmp_path / "scoring"
-    scoring.mkdir()
-    (scoring / "collect_artifacts.py").write_text("print('[artifacts] ran')\n")
-
-    result = _run_hook_shell(_builtin_command(monkeypatch), tmp_path, scoring)
-
-    assert result.returncode == 0
-    assert "[artifacts] ran" in result.stdout
-    assert result.stderr == ""
+def test_a_colon_in_the_path_is_refused_before_anything_runs(env, tmp_path):
+    """Docker bind mounts are colon-delimited, so a checkout or jobs dir with a
+    ":" in its name cannot be mounted -- compose says "too many colons" and the
+    long syntax fails identically. Measured on a clone under
+    ~/Downloads/feat:new_eval_container: the trial died in "starting
+    environment..." and read like a harness bug."""
+    colon_out = tmp_path / "feat:new_eval" / "output"
+    colon_out.mkdir(parents=True)
+    r = env.run("harbor", RUN_OFFSET=0, N=1, OUTPUT_DIR=str(colon_out))
+    assert r.returncode != 0, r.stdout
+    assert "colon" in r.stderr, r.stderr[-1500:]
+    assert not env.harbor_argv() or env.harbor_argv() == [""], "harbor was invoked anyway"

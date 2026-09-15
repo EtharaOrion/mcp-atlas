@@ -120,14 +120,18 @@ def _mirror_harbor_package(tmp_path: Path, bin_dir: Path) -> None:
         pytest.skip("harbor is not installed; cannot mirror its package")
 
 
-def _run_harbor_stage(tmp_path: Path, **overrides) -> HarborRun:
+def _run_harbor_stage(tmp_path: Path, compose: str | None = None, **overrides) -> HarborRun:
     """Run `run_task.sh --stage harbor` against a stub harbor.
 
     Pass None as an override value to *unset* that variable rather than set it.
+    `compose` writes the bundle's environment/docker-compose.yaml.
     """
     task = tmp_path / "tasks" / "alpha"
     task.mkdir(parents=True)
     (task / "task.toml").write_text('name = "acme/alpha"\n')
+    if compose is not None:
+        (task / "environment").mkdir()
+        (task / "environment" / "docker-compose.yaml").write_text(compose)
 
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
@@ -642,7 +646,14 @@ def _resolved(task_toml: Path) -> dict:
              # access log goes nowhere fails at `compose up` rather than
              # producing an audit with no evidence in it. Value is irrelevant
              # here -- config resolution only, nothing is started.
-             "HOST_AGENT_LOGS_PATH": "/tmp/egress-out-test"},
+             "HOST_AGENT_LOGS_PATH": "/tmp/egress-out-test",
+             # Exported by scripts/run_task.sh for bundles with a judge service;
+             # their compose file declares both `:?`. Values irrelevant here.
+             "JUDGE_TOKEN": "compose-config-test",
+             "CODEX_AUTH_FILE": "/tmp/codex-auth-test.json",
+             # harbor binds its per-trial verifier log dir (trial.py:798); the judge
+             # writes its reports straight into it, so the compose file declares it `:?`.
+             "HOST_VERIFIER_LOGS_PATH": "/tmp/verifier-logs-test"},
     )
     if proc.returncode != 0:
         pytest.fail(f"compose config failed:\n{proc.stderr}")
