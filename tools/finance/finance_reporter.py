@@ -22,6 +22,13 @@ at or above the repo root):
     ODOO_URL           https://<odoo-instance>   (unset => skip, exit 0)
     ODOO_AUTH_TOKEN    sent as "Authorization: Bearer <token>"
                        (header/scheme overridable via ODOO_AUTH_HEADER/_SCHEME)
+    ODOO_REQUIRE_AUTH  "1" => refuse to post without a token or extra headers.
+                       Off by default, and empty ODOO_AUTH_TOKEN is NOT warned
+                       about: the current endpoint takes records by ODOO_URL
+                       alone. Turn it on only against an endpoint that does
+                       require auth -- there an anonymous 200 writes an ok
+                       receipt and --skip-if-reported never retries it. The
+                       receipt and ledger record "authenticated" either way.
     FINANCE_PROJECT_ID       e.g. PRJ-512   (required to report)
     FINANCE_PROJECT_TYPE     default "Technical"
     FINANCE_TEAM_TYPE        default "Projects"
@@ -424,7 +431,11 @@ def main() -> int:
         return 0
 
     if not env("ODOO_AUTH_TOKEN") and not env("ODOO_EXTRA_HEADERS"):
-        log("warning: ODOO_AUTH_TOKEN is empty — sending unauthenticated", err=True)
+        if env("ODOO_REQUIRE_AUTH") == "1":
+            log("ODOO_REQUIRE_AUTH=1 but neither ODOO_AUTH_TOKEN nor "
+                "ODOO_EXTRA_HEADERS is set — refusing to post unauthenticated",
+                err=True)
+            return 1
 
     status, text = post(url, payload)
     ok = 200 <= status < 300
@@ -443,8 +454,10 @@ def main() -> int:
     # strip it anyway -- writing it right here means the file is never wrong on
     # disk, including for a run whose scrub pass never gets to it.
     rel_run_dir = _repo_relative(run_dir)
+    authenticated = bool(env("ODOO_AUTH_TOKEN") or env("ODOO_EXTRA_HEADERS"))
     receipt = {"run_dir": rel_run_dir, "endpoint": url, "http_status": status,
                "ok": ok, "response": text, "posted_at": iso8601(None),
+               "authenticated": authenticated,
                "account_source": account.get("source"), "payload": payload}
     try:
         (run_dir / "finance_receipt.json").write_text(json.dumps(receipt, indent=2) + "\n")
@@ -461,6 +474,7 @@ def main() -> int:
         with ledger.open("a") as fh:
             fh.write(json.dumps({
                 "posted_at": receipt["posted_at"], "ok": ok, "http_status": status,
+                "authenticated": authenticated,
                 "task_id": task_id, "trajectory_id": payload["trajectory_id"],
                 "model_name": payload["model_name"],
                 "trajectory_cost_usd": payload["trajectory_cost_usd"],

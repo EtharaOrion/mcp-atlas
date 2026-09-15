@@ -97,8 +97,10 @@ load_dotenv() {
     esac
     # Balanced quotes are taken verbatim: the charset filter guards a BARE value
     # against re-splitting, which quoting already does. Both styles, because
-    # finance_reporter.py:119 strips both -- a value dropped here and loaded there
-    # is how the Odoo gate warns "unauthenticated" about a token that is set.
+    # finance_reporter.py:119 strips both -- a token dropped here but present in
+    # .env would post anonymously while the operator believed it was set. Nothing
+    # warns about that any more (the endpoint takes anonymous records by design),
+    # so the receipt's "authenticated" field is the only place it would show.
     # Unbalanced quotes fall through to the filter rather than half-parsing.
     # What the filter still skips is NAMED, which is how ZB_MODEL_ALIAS_JSON sat
     # in .env doing nothing while looking like configuration.
@@ -497,11 +499,10 @@ check_finance_env() {
   warn_finance_case FINANCE_PROJECT_TYPE "$FINANCE_DEFAULT_PROJECT_TYPE"
   warn_finance_case FINANCE_TEAM_TYPE    "$FINANCE_DEFAULT_TEAM_TYPE"
 
-  # Not fatal: the reporter posts unauthenticated and says so
-  # (finance_reporter.py:411-412). Some deployments accept that; refusing to run
-  # over it would break a working setup for a value this script cannot verify.
-  if [ -z "${ODOO_AUTH_TOKEN:-}" ] && [ -z "${ODOO_EXTRA_HEADERS:-}" ]; then
-    echo "[run_task] WARNING: ODOO_AUTH_TOKEN is empty — the usage POST will be unauthenticated" >&2
+  if [ -z "${ODOO_AUTH_TOKEN:-}" ] && [ -z "${ODOO_EXTRA_HEADERS:-}" ] \
+     && [ "${ODOO_REQUIRE_AUTH:-0}" = "1" ]; then
+    echo "[run_task] ERROR: ODOO_REQUIRE_AUTH=1 but neither ODOO_AUTH_TOKEN nor ODOO_EXTRA_HEADERS is set" >&2
+    fail=1
   fi
 
   [ "$fail" = "0" ] || {

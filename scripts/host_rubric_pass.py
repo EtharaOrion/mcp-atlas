@@ -105,14 +105,33 @@ def recompute_reward(weights: dict, chan_a, rubric_value, rc_val, rb_val,
     return reward, ledger
 
 
-def _comparability(ledger: dict) -> tuple[bool, list[str]]:
+def _comparability(ledger: dict, verifier: Path | None = None) -> tuple[bool, list[str]]:
     """Name the graded components the ledger had to leave out, if any.
 
     recompute_reward drops an unscored component from BOTH halves of the
     fraction, so a reward missing one is a different quantity from a full grade
     -- same 0..1 scale, different divisor, and the number itself cannot say so.
+
+    `verifier` adds the one distinction the ledger cannot make on its own. A
+    state channel reads "unscored" both when the bundle retired it and when the
+    capture ran and failed, and those are not the same claim: the first is a
+    grading decision, the second is an infrastructure fault that silently cost
+    a channel worth w=5. test.sh writes state_capture_failed.txt into this same
+    directory when it ends with no end_env.json, so the marker is the only
+    evidence that separates them -- and until now nothing read it.
     """
     caveats = []
+    marker = (verifier / "state_capture_failed.txt") if verifier else None
+    if marker is not None and marker.exists():
+        try:
+            detail = marker.read_text(encoding="utf-8", errors="replace").strip()
+        except OSError:
+            detail = ""
+        caveats.append(
+            "state capture FAILED: the state channels below are missing because "
+            "the post-run world could not be read, not because this task retired "
+            "them" + (f" ({detail})" if detail else "")
+        )
     for name, row in sorted(ledger.items()):
         if (row or {}).get("status") != "unscored":
             continue
@@ -265,7 +284,7 @@ def main() -> int:
     guards = prior.get("guards_tripped") or []
 
     reward, ledger = recompute_reward(weights, chan_a, rubric_value, rc_val, rb_val, guards)
-    comparable, caveats = _comparability(ledger)
+    comparable, caveats = _comparability(ledger, verifier)
 
     out = dict(prior)
     out.update({"reward": reward, "rubric": norm_reward(rubric_value),

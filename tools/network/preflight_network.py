@@ -89,6 +89,16 @@ class UnknownProvider(Exception):
     """--env-type named something harbor has no provider for."""
 
 
+class CapabilitiesUnreadable(Exception):
+    """The provider's capability flags could not be read without constructing it.
+
+    Distinct from UnknownProvider: the provider exists, it just will not answer
+    statically. Named so the caller can tell "you asked for a provider that does
+    not exist" from "I could not verify the guarantee you asked me to verify" --
+    those warrant different messages, and both are failures, not footnotes.
+    """
+
+
 def provider_capabilities(env_type: str):
     """The REAL capability flags of the provider `harbor run` will instantiate.
 
@@ -114,10 +124,15 @@ def provider_capabilities(env_type: str):
     caps = cls.__dict__.get("capabilities", cls.capabilities)
     if not isinstance(caps, property):
         return caps
-    # Some providers (modal) compute capabilities from instance state at
-    # construction, so there is nothing to read statically. That is a genuine
-    # limitation, not a caller mistake -- it degrades to a warn, not a FAIL.
-    return caps.fget(None)
+
+    try:
+        return caps.fget(None)
+    except AttributeError:
+        pass
+    try:
+        return caps.fget(cls.__new__(cls))
+    except Exception:
+        raise CapabilitiesUnreadable(cls.__name__) from None
 
 
 def sidecar_hosts(task_dir: Path, raw: dict) -> list[str]:
@@ -231,10 +246,17 @@ def check(task_dir: Path, env_type: str) -> None:
     except UnknownProvider as exc:
         bad(f"{exc}", "pass a real provider to --env-type; nothing below was checked")
         return
+    except CapabilitiesUnreadable as exc:
+        bad(f"{env_type}: capabilities could not be read ({exc}) -- policy "
+            f"enforceability was NOT checked",
+            "re-check provider_capabilities() against this harbor's source; to "
+            "run anyway, knowingly unverified, set PREFLIGHT_NETWORK_OFF=1")
+        return
     except Exception as exc:
-        warn(f"{env_type} computes its capabilities at construction "
-             f"({type(exc).__name__}: {exc}) -- policy enforceability was NOT checked",
-             "this provider cannot be inspected statically; run it to find out")
+        bad(f"{env_type}: reading capabilities raised "
+            f"{type(exc).__name__}: {exc} -- policy enforceability was NOT checked",
+            "this is a bug in provider_capabilities(), not a task defect; to "
+            "run anyway, knowingly unverified, set PREFLIGHT_NETWORK_OFF=1")
         return
 
     # Mirror Trial._validate_network_policy_modes EXACTLY: a task with [[steps]]
