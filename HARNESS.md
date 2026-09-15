@@ -212,17 +212,29 @@ Port map:
 
 ## Scoring pipeline
 
+Nothing is scored in `main`, the container the agent worked in. Every channel runs in the
+bundle's `judge` service (`tools/judge/`, image `codex-judge:latest`), which holds the codex
+login and the answer files that `main` never gets.
+
 1. Agent runs, writing to live light-servers
-2. Verifier runs `test.sh`, which:
-   - Calls `state_dump.py` to capture `end_env.json`
-   - Runs `test_outputs.py` (pytest) for trajectory assertions and state diff - writes `reward_channel_a.json` and `state_channel.json`
+2. Verifier runs `test.sh` in `main`, which only parses the agent stream into a trajectory and
+   hands it to the judge (`judge_client.py` -> `POST /evaluate`)
+3. The judge runs the bundle's `tests/evaluate.sh`, which:
+   - Calls `state_dump.py` to capture `end_env.json` (over MCP against the live light-servers)
    - Runs the rubric judge against `rubric.json` - writes `rubric_breakdown.json`
-3. `scripts/harbor_to_output.py` reshapes the Harbor job into `output/<task>/`
+   - Runs `test_outputs.py` (pytest) for trajectory assertions and state diff - writes `reward_channel_a.json` and `state_channel.json`
+   - Publishes `reward.json`, plus `reward_producer.json` - the label `run_task.sh` copies into
+     `reward.json` on the host, because harbor validates that file as numbers only
+
+   Reports are written straight into harbor's per-trial `/logs/verifier`, mounted in the judge.
+4. `tools/delivery/harbor_to_output.py` reshapes the Harbor job into `output/<task>/`
 
 Key verifier output files:
 
 | File | Contents |
 |---|---|
+| `judge_container.json` | Whether the evaluation ran in the judge container, and if not, why |
+| `reward_producer.json` | `{"producer": "judge_container"}` when the reward already folds in the container's rubric |
 | `state_channel.json` | `{completion, misbehave, missing, unexpected, changed}` |
 | `reward_channel_a.json` | `{reward, channel_a, rubric, ledger, missed, guards_tripped}` |
 | `rubric_breakdown.json` | Per-criterion scores from LLM judge |

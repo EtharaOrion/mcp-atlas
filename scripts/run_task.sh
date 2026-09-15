@@ -1225,11 +1225,12 @@ egress_guard_settings() {
 }
 
 # --- judge container ----------------------------------------------------------
-# A bundle may grade its rubric in a `judge` service of its own
-# (tools/judge/codexbridge.py, image codex-judge:latest). The codex login is
-# mounted there and nowhere else, and test.sh sends it this run's rubric and
-# trajectory -- it has no directory of runs to read. Detected per bundle, so one
-# without a judge service keeps grading exactly as before.
+# A bundle may grade every channel in a `judge` service of its own
+# (tools/judge/codexbridge.py, image codex-judge:latest): Channel A, the state
+# dump, the rubric and the ledger, none of them in `main`, the container the
+# agent had root in. The codex login is mounted there and nowhere else, and the
+# judge runs the bundle's own tests/evaluate.sh over the trajectory main sends
+# it. Detected per bundle, so one without a judge service grades as before.
 
 bundle_has_judge() {
   grep -qE '^  judge:[[:space:]]*$' "$TASK/environment/docker-compose.yaml" 2>/dev/null
@@ -1257,11 +1258,11 @@ prepare_judge() {
   export CODEX_AUTH_FILE="$auth"
   JUDGE_TOKEN="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
   export JUDGE_TOKEN
-  echo "[run_task] judge container ON -- rubric graded in-bundle by $JUDGE_MODEL; codex login mounted into the judge only" >&2
+  echo "[run_task] judge container ON -- every channel graded in-bundle (rubric by $JUDGE_MODEL); codex login mounted into the judge only" >&2
 }
 
-# Did this trial's own reward already fold in a rubric graded by the judge
-# container? test.sh says so in verifier/reward_producer.json -- not in
+# Did this trial's own reward come from the judge container? Its evaluate.sh
+# says so in verifier/reward_producer.json -- not in
 # reward.json, which harbor validates as numbers only and fails the trial on a
 # string. When it did, carry the producer into reward.json here, on the host,
 # so harbor_to_output.py publishes the bundle's reward instead of calling it

@@ -644,7 +644,10 @@ def _resolved(task_toml: Path) -> dict:
              # Exported by scripts/run_task.sh for bundles with a judge service;
              # their compose file declares both `:?`. Values irrelevant here.
              "JUDGE_TOKEN": "compose-config-test",
-             "CODEX_AUTH_FILE": "/tmp/codex-auth-test.json"},
+             "CODEX_AUTH_FILE": "/tmp/codex-auth-test.json",
+             # harbor binds its per-trial verifier log dir (trial.py:798); the judge
+             # writes its reports straight into it, so the compose file declares it `:?`.
+             "HOST_VERIFIER_LOGS_PATH": "/tmp/verifier-logs-test"},
     )
     if proc.returncode != 0:
         pytest.fail(f"compose config failed:\n{proc.stderr}")

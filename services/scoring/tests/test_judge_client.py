@@ -1,8 +1,10 @@
-"""judge_client.py: what tests/test.sh step 3 runs inside `main`.
+"""judge_client.py: what tests/test.sh runs in `main` once the trajectory exists.
 
-A fake judge stands in for the judge container, so these check the client's
-side of the contract -- what it writes, when it exits 0, and that it never
-routes the call through main's egress proxy -- without docker or quota.
+`main` grades nothing now. The client posts the trajectory to the judge
+container, which runs the bundle's evaluate.sh and writes the reports itself.
+A fake judge stands in for that container, so these check the client's side of
+the contract -- what it writes, when it exits 0, and that it never routes the
+call through main's egress proxy -- without docker or quota.
 """
 from __future__ import annotations
 
@@ -17,17 +19,18 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import judge_client  # noqa: E402
 
-VERDICTS = {"score": 1.0, "per_criterion": [{"number": "1", "satisfied": True, "justification": "x"}]}
-GRADE_OK = {"ok": True, "reason": None, "returncode": 0, "breakdown": VERDICTS,
-            "tokens": [{"model_name": "gpt-5.6-sol", "judge_output_tokens": 9}],
-            "log_tail": "score=1.0", "graded_in": "judge-container",
-            "model": "gpt-5.6-sol", "codex_version": "codex-cli 0.154.0"}
+EVALUATED = {"ok": True, "reason": None, "returncode": 0,
+             "reward": {"reward": 0.42, "completion_rate": 1.0, "misbehave_rate": 0.0},
+             "rubric_criteria": 12,
+             "written": ["ctrf.json", "reward.json", "rubric_breakdown.json"],
+             "log_tail": "[5/5 reward] {'reward': 0.42}", "graded_in": "judge-container",
+             "model": "gpt-5.6-sol", "codex_version": "codex-cli 0.154.0"}
 
 
 class FakeJudge:
     def __init__(self):
         self.health = []          # statuses to answer /healthz with, then 200
-        self.grade = (200, GRADE_OK)
+        self.evaluate = (200, EVALUATED)
         self.requests = []
 
 
@@ -53,8 +56,9 @@ def judge():
 
         def do_POST(self):
             body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
-            fake.requests.append({"token": self.headers.get("x-judge-token"), "body": body})
-            self._send(*fake.grade)
+            fake.requests.append({"path": self.path, "token": self.headers.get("x-judge-token"),
+                                  "body": body})
+            self._send(*fake.evaluate)
 
     srv = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
@@ -70,58 +74,63 @@ def run(tmp_path, monkeypatch, judge):
     monkeypatch.setenv("JUDGE_URL", judge.url)
     monkeypatch.setenv("JUDGE_TOKEN", "tok")
     monkeypatch.setenv("JUDGE_WAIT_SEC", "5")
-    (tmp_path / "rubric.json").write_text(json.dumps({"criteria": [{"number": "1"}]}))
     (tmp_path / "traj.json").write_text(json.dumps({"steps": [], "final_message": "done"}))
-    ver = tmp_path / "verifier"
+    logs = tmp_path / "verifier"
 
     def go():
-        rc = judge_client.main(["--rubric", str(tmp_path / "rubric.json"),
-                                "--trajectory", str(tmp_path / "traj.json"),
-                                "--output", str(ver / "rubric_breakdown.json"),
-                                "--token-output", str(ver / "judge_tokens.json")])
-        return rc, ver
+        rc = judge_client.main(["--trajectory", str(tmp_path / "traj.json"),
+                                "--logs-dir", str(logs)])
+        return rc, logs
     return go
 
 
-def _marker(ver):
-    return json.loads((ver / judge_client.MARKER_NAME).read_text())
+def _marker(logs):
+    return json.loads((logs / judge_client.MARKER_NAME).read_text())
 
 
-def test_verdicts_are_written_beside_a_marker_and_the_usage(run, judge):
-    rc, ver = run()
+def test_the_trajectory_is_posted_and_the_marker_records_the_outcome(run, judge):
+    rc, logs = run()
     assert rc == 0
-    assert json.loads((ver / "rubric_breakdown.json").read_text()) == VERDICTS
-    assert json.loads((ver / "judge_tokens.json").read_text())[0]["model_name"] == "gpt-5.6-sol"
-    marker = _marker(ver)
-    assert marker["ok"] is True and marker["graded_in"] == "judge-container"
     sent = judge.requests[0]
+    assert sent["path"] == "/evaluate"
     assert sent["token"] == "tok"
     assert sent["body"]["trajectory"]["final_message"] == "done"
+    marker = _marker(logs)
+    assert marker["ok"] is True and marker["graded_in"] == "judge-container"
+    assert marker["rubric_criteria"] == 12
+    assert "reward.json" in marker["written"]
 
 
-def test_a_failed_grade_leaves_no_breakdown_but_says_why(run, judge):
-    judge.grade = (200, {**GRADE_OK, "ok": False, "reason": "grader returned no verdicts",
-                         "breakdown": None})
-    rc, ver = run()
+def test_the_client_writes_no_reports_of_its_own(run, judge):
+    """The judge writes them into the same mounted dir; relaying them through
+    main would put the numbers back in the container the agent had root in."""
+    rc, logs = run()
+    assert rc == 0
+    assert sorted(p.name for p in logs.iterdir()) == [judge_client.MARKER_NAME]
+
+
+def test_a_failed_evaluation_says_why_and_fails(run, judge):
+    judge.evaluate = (200, {**EVALUATED, "ok": False, "reason": "evaluation exited 3",
+                            "reward": None})
+    rc, logs = run()
     assert rc == 1
-    assert not (ver / "rubric_breakdown.json").exists(), "a failed grade must read as UNSCORED, not zero"
-    assert _marker(ver) == {**_marker(ver), "ok": False, "graded_in": None,
-                            "reason": "grader returned no verdicts"}
-    assert (ver / "judge_tokens.json").exists(), "quota was spent; the usage must still be recorded"
+    marker = _marker(logs)
+    assert marker["ok"] is False and marker["graded_in"] is None
+    assert marker["reason"] == "evaluation exited 3"
 
 
 def test_no_token_means_no_call(run, judge, monkeypatch):
     monkeypatch.delenv("JUDGE_TOKEN")
-    rc, ver = run()
+    rc, logs = run()
     assert rc == 1 and not judge.requests
-    assert "JUDGE_TOKEN" in _marker(ver)["reason"]
+    assert "JUDGE_TOKEN" in _marker(logs)["reason"]
 
 
 def test_a_refusal_surfaces_the_judges_reason(run, judge):
-    judge.grade = (401, {"error": "bad or missing x-judge-token"})
-    rc, ver = run()
+    judge.evaluate = (401, {"error": "bad or missing x-judge-token"})
+    rc, logs = run()
     assert rc == 1
-    assert "401" in _marker(ver)["reason"] and "x-judge-token" in _marker(ver)["reason"]
+    assert "401" in _marker(logs)["reason"] and "x-judge-token" in _marker(logs)["reason"]
 
 
 def test_it_waits_for_the_judge_to_become_healthy(run, judge):
@@ -133,9 +142,15 @@ def test_it_waits_for_the_judge_to_become_healthy(run, judge):
 def test_an_unreachable_judge_is_reported_not_hung(run, monkeypatch):
     monkeypatch.setenv("JUDGE_URL", "http://127.0.0.1:1")
     monkeypatch.setenv("JUDGE_WAIT_SEC", "0")
-    rc, ver = run()
+    rc, logs = run()
     assert rc == 1
-    assert "unreachable" in _marker(ver)["reason"]
+    assert "unreachable" in _marker(logs)["reason"]
+
+
+def test_an_unreadable_trajectory_fails_before_the_call(run, judge, tmp_path):
+    rc = judge_client.main(["--trajectory", str(tmp_path / "missing.json"),
+                            "--logs-dir", str(tmp_path / "verifier")])
+    assert rc == 1 and not judge.requests
 
 
 def test_the_call_never_goes_through_mains_egress_proxy(run, monkeypatch):

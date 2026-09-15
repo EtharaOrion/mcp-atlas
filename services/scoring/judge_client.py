@@ -1,29 +1,26 @@
 #!/usr/bin/env python3
-"""Grade the rubric by asking the judge container, not by judging here.
+"""Hand this run to the judge container, which grades every channel.
 
-tests/test.sh calls this where it used to call rubric_judge_cli.py, with the
-same four flags, so a bundle switches by changing one path. It runs in `main`,
-the container the agent just used, which is exactly why no judge runs here: the
-codex login never enters `main`, and the grading model never sees anything but
-the one run it is sent.
+tests/test.sh runs in `main` -- the container the agent worked in -- so nothing
+is graded there any more. It builds the trajectory with the bundle's own parser
+and calls this, which posts the trajectory to the judge (tools/judge). The judge
+runs the bundle's /tests/evaluate.sh: the state dump, Channel A, the rubric and
+the ledger, all with the codex login and the answer files that `main` never gets.
 
-The judge is the `judge` service in the bundle's docker-compose.yaml
-(tools/judge/codexbridge.py). What it receives is this run's rubric and this
-run's trajectory, as request bodies -- it has no folder of runs to look in.
+Reports are NOT relayed back through here. The judge writes them straight into
+/logs/verifier, which harbor mounts into both containers, so the files land
+where harbor collects them no matter what main does afterwards.
 
-Writes next to --output:
-  rubric_breakdown.json   only when the judge returned real verdicts
-  judge_tokens.json       whenever the judge reported usage (--token-output)
-  judge_container.json    always: whether the rubric was graded in the judge
-                          container, and if not, why. tests/test_judge_container.py
-                          and test.sh's reward step read it.
+This writes one file of its own:
+  judge_container.json   whether the evaluation ran in the judge container, and
+                         if not, why. tests/test_judge_container.py reads it, and
+                         so does scripts/run_task.sh.
 
-Exit 0 only on real verdicts. Anything else exits 1, which test.sh turns into
-rubric_judge_failed.txt; scripts/run_task.sh then re-grades on the host.
+Exit 0 only when the judge reports a finished evaluation with a reward written.
 
 Env: JUDGE_TOKEN (required), JUDGE_URL (http://judge:8770),
      JUDGE_WAIT_SEC (120), JUDGE_REQUEST_TIMEOUT_SEC (1200 -- inside the
-     bundle's [verifier] timeout_sec of 1800, which also covers steps 1-5).
+     bundle's [verifier] timeout_sec of 1800).
 Stdlib only: `main` has no requests/httpx.
 """
 from __future__ import annotations
@@ -73,10 +70,9 @@ def wait_until_healthy(url: str, wait_sec: float) -> str | None:
         time.sleep(2)
 
 
-def request_grade(url: str, token: str, rubric: dict, trajectory: dict,
-                  timeout: float) -> dict:
-    body = json.dumps({"rubric": rubric, "trajectory": trajectory}).encode()
-    req = Request(f"{url}/grade", data=body, method="POST",
+def request_evaluation(url: str, token: str, trajectory: dict, timeout: float) -> dict:
+    body = json.dumps({"trajectory": trajectory}).encode()
+    req = Request(f"{url}/evaluate", data=body, method="POST",
                   headers={"Content-Type": "application/json", "x-judge-token": token})
     try:
         with _opener.open(req, timeout=timeout) as resp:
@@ -84,22 +80,22 @@ def request_grade(url: str, token: str, rubric: dict, trajectory: dict,
     except HTTPError as exc:
         return {"ok": False, "reason": f"judge answered {exc.code}: {_error_body(exc)}"}
     except (URLError, OSError, ValueError) as exc:
-        return {"ok": False, "reason": f"grade request failed: {exc}"}
+        return {"ok": False, "reason": f"evaluate request failed: {exc}"}
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--rubric", required=True)
-    ap.add_argument("--trajectory", required=True)
-    ap.add_argument("--output", required=True)
-    ap.add_argument("--token-output", default=None)
+    ap.add_argument("--trajectory", required=True,
+                    help="the trajectory tests/test.sh built from the agent log")
+    ap.add_argument("--logs-dir", default="/logs/verifier",
+                    help="where to leave judge_container.json (default: %(default)s)")
     a = ap.parse_args(argv)
 
     url = os.environ.get("JUDGE_URL", "http://judge:8770").rstrip("/")
     token = os.environ.get("JUDGE_TOKEN", "")
-    out = Path(a.output)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    marker = out.parent / MARKER_NAME
+    logs = Path(a.logs_dir)
+    logs.mkdir(parents=True, exist_ok=True)
+    marker = logs / MARKER_NAME
 
     def finish(doc: dict) -> int:
         ok = bool(doc.get("ok"))
@@ -111,33 +107,32 @@ def main(argv: list[str] | None = None) -> int:
             "model": doc.get("model"),
             "codex_version": doc.get("codex_version"),
             "returncode": doc.get("returncode"),
+            "rubric_criteria": doc.get("rubric_criteria"),
+            "written": doc.get("written"),
         }, indent=2))
         if doc.get("log_tail"):
             print(doc["log_tail"].rstrip())
-        if doc.get("tokens") is not None and a.token_output:
-            Path(a.token_output).write_text(json.dumps(doc["tokens"], indent=2))
         if ok:
-            out.write_text(json.dumps(doc["breakdown"], indent=2))
-            print(f"[judge-client] graded in {doc.get('graded_in')} by {doc.get('model')} -> {out}")
+            print(f"[judge-client] graded in {doc.get('graded_in')} by {doc.get('model')}: "
+                  f"{len(doc.get('written') or [])} report(s) in {logs}")
             return 0
-        print(f"[judge-client] rubric NOT graded in the judge container: {doc.get('reason')}",
-              file=sys.stderr)
+        print(f"[judge-client] the judge container did not finish the evaluation: "
+              f"{doc.get('reason')}", file=sys.stderr)
         return 1
 
     if not token:
         return finish({"ok": False, "reason": "JUDGE_TOKEN is not set in the verifier "
                                              "environment (task.toml [verifier.env])"})
     try:
-        rubric = json.loads(Path(a.rubric).read_text())
         trajectory = json.loads(Path(a.trajectory).read_text())
     except (OSError, ValueError) as exc:
-        return finish({"ok": False, "reason": f"cannot read inputs: {exc}"})
+        return finish({"ok": False, "reason": f"cannot read {a.trajectory}: {exc}"})
 
     why = wait_until_healthy(url, float(os.environ.get("JUDGE_WAIT_SEC", "120")))
     if why:
         return finish({"ok": False, "reason": why})
-    return finish(request_grade(url, token, rubric, trajectory,
-                                float(os.environ.get("JUDGE_REQUEST_TIMEOUT_SEC", "1200"))))
+    return finish(request_evaluation(url, token, trajectory,
+                                     float(os.environ.get("JUDGE_REQUEST_TIMEOUT_SEC", "1200"))))
 
 
 if __name__ == "__main__":

@@ -1,18 +1,23 @@
-"""The judge container: where the rubric is graded, and what it can see.
+"""The judge container: where every channel is graded, and what it can see.
 
-The rubric used to be graded on the host, where `codex exec --sandbox read-only`
-can still READ every other run on disk -- measured: a canary file outside the
-judge's working directory was cat'ed straight back. It is now graded in a
-`judge` service of each bundle (tools/judge/codexbridge.py) that holds the codex
-login and nothing else. These tests pin what makes that true, cheapest first:
+Grading used to happen in `main`, the container the agent had root in, and the
+rubric on the host, where `codex exec --sandbox read-only` can still READ every
+other run on disk (measured: a canary outside the working directory was cat'ed
+straight back). All four channels now run in the bundle's `judge` service
+(tools/judge/codexbridge.py), which runs the bundle's own tests/evaluate.sh --
+unchanged from what main ran -- so the numbers cannot drift. These tests pin
+what makes that true, cheapest first:
 
-  1. codexbridge in-process, against a fake grader: token, readiness, verdicts.
-  2. every bundle: the judge service, its one mount, the token, test.sh step 3.
+  1. codexbridge in-process, against a fake evaluate.sh: token, readiness,
+     reports, and that the command is fixed rather than taken from the caller.
+  2. every bundle: the judge service and its mounts, the token, the split
+     between test.sh (build the trajectory) and evaluate.sh (grade).
   3. the judge's own allowlist and the network shape overlay-judge.yaml builds.
   4. run_task.sh: builds the image, exports a fresh token, adds the overlay.
   5. the host fallback reuses container verdicts instead of re-buying them.
-  6. docker, skipped without the image: the running judge mounts one file.
-     JUDGE_LIVE=1 adds a real grade against gpt-5.6-sol (spends quota).
+  6. docker, skipped without the image: what the running judge can reach, and
+     that it carries pytest and the mcp client. JUDGE_LIVE=1 adds a real codex
+     grade (spends quota).
 """
 from __future__ import annotations
 
@@ -75,50 +80,64 @@ def _call(url: str, body: dict | None = None, token: str | None = None) -> tuple
 # 1. codexbridge, in-process
 # =============================================================================
 
-FAKE_GRADER = r'''
-import argparse, json, os, pathlib, sys
-ap = argparse.ArgumentParser()
-for f in ("--rubric", "--trajectory", "--output", "--token-output", "--model"):
-    ap.add_argument(f)
-a = ap.parse_args()
-mode = os.environ.get("FAKE_MODE", "ok")
-if mode == "fail":
-    print("boom", file=sys.stderr)
-    sys.exit(1)
-rubric = json.loads(pathlib.Path(a.rubric).read_text())
-traj = json.loads(pathlib.Path(a.trajectory).read_text())
-rows = [] if mode == "empty" else [
-    {"number": c["number"], "satisfied": True, "justification": traj["final_message"]}
-    for c in rubric["criteria"]]
-out = pathlib.Path(a.output)
-out.parent.mkdir(parents=True, exist_ok=True)
-out.write_text(json.dumps({"score": 1.0 if rows else 0.0, "per_criterion": rows}))
-pathlib.Path(a.token_output).write_text(json.dumps([{"model_name": a.model}]))
-print("graded", len(rows))
-'''
+FAKE_EVALUATE = r"""#!/bin/bash
+# Stands in for a bundle's tests/evaluate.sh: writes the same reports, without
+# codex, pytest or a world. In the container these paths are fixed at
+# /logs/verifier and /tmp/agent_trajectory.json; here they follow the fixture,
+# and the trajectory path is the one codexbridge exports to every child.
+set -u
+LOGS="${JUDGE_TEST_LOGS:-/logs/verifier}"
+TRAJ="${COMPLEXMCP_TRAJECTORY:-/tmp/agent_trajectory.json}"
+mkdir -p "$LOGS"
+echo "evaluate.sh ran with trajectory: $(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['final_message'])" "$TRAJ")"
+case "${FAKE_MODE:-ok}" in
+  fail)     echo "grader exploded" >&2; exit 3 ;;
+  noreward) echo '{"score": 1.0, "per_criterion": [{"number": "1", "satisfied": true}]}' > "$LOGS/rubric_breakdown.json" ;;
+  *)        echo '{"score": 1.0, "per_criterion": [{"number": "1", "satisfied": true}]}' > "$LOGS/rubric_breakdown.json"
+            echo '{"reward": 0.42, "completion_rate": 1.0, "misbehave_rate": 0.0}' > "$LOGS/reward.json"
+            echo '{"producer": "judge_container"}' > "$LOGS/reward_producer.json"
+            echo 'ctrf' > "$LOGS/ctrf.json" ;;
+esac
+"""
 
-RUBRIC = {"criteria": [{"number": "1", "criterion": "Refunds Kelso.", "is_positive": True}]}
 TRAJ = {"steps": [{"tool": "refund", "arguments": {}, "response": "ok"}], "final_message": "refunded"}
+RUBRIC = {"criteria": [{"number": "1", "criterion": "Refunds Kelso.", "is_positive": True}]}
 
 
 @pytest.fixture
 def bridge(tmp_path, monkeypatch):
+    """codexbridge with a fake evaluate.sh, a fake codex, and a real log dir."""
     mod = _load("codexbridge_under_test", BRIDGE)
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     codex = bin_dir / "codex"
     codex.write_text("#!/bin/sh\necho 'codex-cli 0.0.0-test'\n")
     codex.chmod(0o755)
-    grader = tmp_path / "fake_grader.py"
-    grader.write_text(FAKE_GRADER)
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    (tests / "evaluate.sh").write_text(FAKE_EVALUATE)
+    logs = tmp_path / "verifier"
+    logs.mkdir()
     auth = tmp_path / "mounted-auth.json"
     auth.write_text('{"tokens": "host copy"}')
+    # mcp is the state dump's client; the harness venv need not carry it, so a
+    # stub on sys.path is enough for the readiness check under test.
+    stub = tmp_path / "stubs"
+    (stub / "mcp").mkdir(parents=True)
+    (stub / "mcp" / "__init__.py").write_text("")
+    monkeypatch.syspath_prepend(str(stub))
 
     monkeypatch.setenv("PATH", f"{bin_dir}:{os.environ['PATH']}")
     monkeypatch.setenv("JUDGE_TOKEN", "s3cret")
-    monkeypatch.setenv("JUDGE_CLI", str(grader))
+    # The rubric grader is baked into the image at /judge; out here the repo copy
+    # is the same file, and readiness only asks whether it is present.
+    monkeypatch.setenv("JUDGE_CLI", str(REPO / "services" / "scoring" / "rubric_judge_cli.py"))
     monkeypatch.setenv("CODEX_AUTH_SRC", str(auth))
     monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex-home"))
+    monkeypatch.setenv("JUDGE_TEST_LOGS", str(logs))
+    monkeypatch.setattr(mod, "EVALUATE_SH", tests / "evaluate.sh")
+    monkeypatch.setattr(mod, "VERIFIER_DIR", logs)
+    monkeypatch.setattr(mod, "TRAJECTORY_PATH", tmp_path / "agent_trajectory.json")
     mod._state["credential_error"] = mod.install_credential()
 
     srv = mod.make_server("127.0.0.1", 0)
@@ -129,12 +148,14 @@ def bridge(tmp_path, monkeypatch):
         url = f"http://127.0.0.1:{srv.server_address[1]}"
         home = tmp_path / "codex-home"
         mounted = auth
+        logs_dir = logs
+        script = tests / "evaluate.sh"
     yield B
     srv.shutdown()
     srv.server_close()
 
 
-def test_health_is_ok_when_a_grade_could_run(bridge):
+def test_health_is_ok_when_an_evaluation_could_run(bridge):
     status, doc = _call(f"{bridge.url}/healthz")
     assert status == 200, doc
     assert doc["status"] == "ok"
@@ -157,46 +178,79 @@ def test_health_names_a_missing_login(bridge, monkeypatch, tmp_path):
     assert "codex login not mounted" in doc["reason"]
 
 
+def test_health_names_a_bundle_that_shipped_no_evaluate_sh(bridge, monkeypatch, tmp_path):
+    """Without it there is nothing to grade with, and the trial must not start."""
+    monkeypatch.setattr(bridge.module, "EVALUATE_SH", tmp_path / "missing" / "evaluate.sh")
+    status, doc = _call(f"{bridge.url}/healthz")
+    assert status == 503
+    assert "evaluate.sh" in doc["reason"] and "mounted" in doc["reason"]
+
+
+def test_health_names_an_unwritable_report_dir(bridge, monkeypatch, tmp_path):
+    """harbor's per-trial /logs/verifier is where the reports have to land."""
+    ro = tmp_path / "readonly"
+    ro.mkdir(mode=0o500)
+    monkeypatch.setattr(bridge.module, "VERIFIER_DIR", ro)
+    status, doc = _call(f"{bridge.url}/healthz")
+    assert status == 503
+    assert "not writable" in doc["reason"]
+
+
 @pytest.mark.parametrize("token", [None, "", "wrong"])
-def test_grading_needs_the_run_token(bridge, token):
+def test_evaluating_needs_the_run_token(bridge, token):
     """The agent shares a network with the judge. The token is what keeps it out."""
-    status, doc = _call(f"{bridge.url}/grade", {"rubric": RUBRIC, "trajectory": TRAJ}, token)
+    status, doc = _call(f"{bridge.url}/evaluate", {"trajectory": TRAJ}, token)
     assert status == 401, doc
 
 
-def test_a_grade_returns_the_verdicts_for_what_was_sent(bridge):
-    status, doc = _call(f"{bridge.url}/grade", {"rubric": RUBRIC, "trajectory": TRAJ}, "s3cret")
+def test_an_evaluation_runs_the_bundle_script_and_reports_what_it_wrote(bridge):
+    status, doc = _call(f"{bridge.url}/evaluate", {"trajectory": TRAJ}, "s3cret")
     assert status == 200, doc
     assert doc["ok"] is True and doc["reason"] is None
     assert doc["graded_in"] == "judge-container"
-    rows = doc["breakdown"]["per_criterion"]
-    assert [r["number"] for r in rows] == ["1"]
-    assert rows[0]["justification"] == "refunded", "the grader did not see the trajectory it was sent"
-    assert doc["tokens"] == [{"model_name": "gpt-5.6-sol"}]
+    assert doc["reward"] == {"reward": 0.42, "completion_rate": 1.0, "misbehave_rate": 0.0}
+    assert set(doc["written"]) == {"ctrf.json", "reward.json", "reward_producer.json",
+                                   "rubric_breakdown.json"}
+    assert doc["rubric_criteria"] == 1
+    assert "refunded" in doc["log_tail"], "the script did not receive the posted trajectory"
+    assert (bridge.logs_dir / "reward.json").is_file(), "reports must land in the mounted log dir"
 
 
-def test_no_verdicts_is_not_a_grade(bridge, monkeypatch):
-    """rubric_judge_cli.py writes a zero breakdown with no criteria and exits 0
-    when its backend preflight fails. Passing that on would publish "failed every
-    criterion" for a run nobody graded."""
-    monkeypatch.setenv("FAKE_MODE", "empty")
-    status, doc = _call(f"{bridge.url}/grade", {"rubric": RUBRIC, "trajectory": TRAJ}, "s3cret")
-    assert status == 200
-    assert doc["ok"] is False and doc["breakdown"] is None
-    assert doc["reason"] == "grader returned no verdicts"
+def test_the_command_is_fixed_not_taken_from_the_caller(bridge, tmp_path):
+    """`main` is the container the agent worked in. If it could name the command,
+    the agent's leftovers could grade themselves."""
+    pwned = tmp_path / "pwned"
+    status, doc = _call(f"{bridge.url}/evaluate",
+                        {"trajectory": TRAJ, "command": f"touch {pwned}",
+                         "evaluate_sh": f"touch {pwned}"}, "s3cret")
+    assert status == 200 and doc["ok"] is True
+    assert not pwned.exists(), "the request steered what ran"
 
 
-def test_a_crashed_grader_is_reported_with_its_log(bridge, monkeypatch):
+def test_a_failing_script_is_reported_with_its_log(bridge, monkeypatch):
     monkeypatch.setenv("FAKE_MODE", "fail")
-    status, doc = _call(f"{bridge.url}/grade", {"rubric": RUBRIC, "trajectory": TRAJ}, "s3cret")
+    status, doc = _call(f"{bridge.url}/evaluate", {"trajectory": TRAJ}, "s3cret")
     assert status == 200
-    assert doc["ok"] is False and doc["reason"] == "grader exited 1"
-    assert "boom" in doc["log_tail"]
+    assert doc["ok"] is False and doc["reason"] == "evaluation exited 3"
+    assert "exploded" in doc["log_tail"]
+
+
+def test_an_evaluation_that_writes_no_reward_is_not_ok(bridge, monkeypatch):
+    """A rubric on its own is not a graded run; run_task.sh must fall back."""
+    monkeypatch.setenv("FAKE_MODE", "noreward")
+    status, doc = _call(f"{bridge.url}/evaluate", {"trajectory": TRAJ}, "s3cret")
+    assert status == 200
+    assert doc["ok"] is False and doc["reason"] == "no reward.json was written"
+
+
+def test_a_request_without_a_trajectory_is_refused(bridge):
+    status, _ = _call(f"{bridge.url}/evaluate", {"nope": 1}, "s3cret")
+    assert status == 400
 
 
 def test_an_oversized_body_is_refused(bridge, monkeypatch):
     monkeypatch.setenv("JUDGE_MAX_BODY_BYTES", "64")
-    status, _ = _call(f"{bridge.url}/grade", {"rubric": RUBRIC, "trajectory": TRAJ}, "s3cret")
+    status, _ = _call(f"{bridge.url}/evaluate", {"trajectory": TRAJ}, "s3cret")
     assert status == 413
 
 
@@ -220,8 +274,30 @@ def _ids(paths):
     return [p.parent.name[:40] for p in paths]
 
 
+def _code(script: str) -> str:
+    """A shell script with its comment lines dropped.
+
+    These scripts name, in their comments, the exact files the assertions below
+    forbid in their commands -- which grader moved where, and which marker is no
+    longer read. Grepping the raw text reads that documentation as behaviour."""
+    return "\n".join(l for l in script.splitlines() if not l.lstrip().startswith("#"))
+
+
 def _compose(task_toml: Path) -> dict:
     return yaml.safe_load((task_toml.parent / "environment" / "docker-compose.yaml").read_text())
+
+
+def _volume(spec: str) -> tuple[str, str, str | None]:
+    """(source, target, mode) for one compose volume string.
+
+    Splitting on colons from the right does not work here: the sources are
+    `${VAR:?message}` interpolations that carry colons of their own. The target
+    is the last absolute path in the string."""
+    mode = None
+    if spec.endswith((":ro", ":rw")):
+        spec, mode = spec[:-3], spec[-2:]
+    i = spec.rfind(":/")
+    return spec[:i], spec[i + 1:], mode
 
 
 @pytest_bundles
@@ -237,13 +313,32 @@ def test_bundle_declares_the_judge(task_toml):
 
 @pytest_bundles
 @pytest.mark.parametrize("task_toml", BUNDLES, ids=_ids(BUNDLES))
-def test_the_judge_mounts_the_login_and_nothing_else(task_toml):
-    """No task files, no output tree: the judge only sees the run it is sent."""
-    vols = (_compose(task_toml)["services"]["judge"].get("volumes")) or []
-    assert len(vols) == 1, vols
-    source, target, mode = str(vols[0]).rsplit(":", 2)
-    assert (target, mode) == (AUTH_TARGET, "ro"), vols
-    assert "CODEX_AUTH_FILE" in source, vols
+def test_the_judge_mounts_what_it_grades_and_nothing_more(task_toml):
+    """Everything the graders read, read-only, plus the one place reports go.
+
+    The output tree is not here: the judge sees this run's tests, this run's
+    workspace and this run's log dir, so it cannot read another run at all."""
+    vols = [str(v) for v in (_compose(task_toml)["services"]["judge"].get("volumes") or [])]
+    parsed = [_volume(v) for v in vols]
+    by_target = {target: (source, mode) for source, target, mode in parsed}
+    assert set(by_target) == {AUTH_TARGET, "/tests", "/harness/scoring", "/workspace",
+                              "/logs/verifier"}, vols
+    for target in (AUTH_TARGET, "/tests", "/harness/scoring", "/workspace"):
+        assert by_target[target][1] == "ro", f"{target} is writable: {by_target[target]}"
+    assert by_target["/logs/verifier"][1] is None, "reports could not be written"
+    assert "CODEX_AUTH_FILE" in by_target[AUTH_TARGET][0]
+    assert "HOST_VERIFIER_LOGS_PATH" in by_target["/logs/verifier"][0], (
+        "the report dir must be harbor's own per-trial mount, or the reports never "
+        "reach the trial directory")
+
+
+@pytest_bundles
+@pytest.mark.parametrize("task_toml", BUNDLES, ids=_ids(BUNDLES))
+def test_the_judge_waits_for_the_world_it_has_to_read(task_toml):
+    """tests/state_dump.py reads the world back out of light-servers."""
+    dep = ((_compose(task_toml)["services"]["judge"].get("depends_on") or {})
+           .get("light-servers") or {})
+    assert dep.get("condition") == "service_healthy", dep
 
 
 @pytest_bundles
@@ -269,13 +364,34 @@ def test_the_verifier_receives_the_token_and_room_to_grade(task_toml):
 
 @pytest_bundles
 @pytest.mark.parametrize("task_toml", BUNDLES, ids=_ids(BUNDLES))
-def test_step_3_asks_the_judge_and_3b_reports_it(task_toml):
+def test_main_builds_the_trajectory_and_grades_nothing(task_toml):
+    """The split: test.sh parses the agent stream and hands it over. Every scored
+    step lives in evaluate.sh, which runs in the judge container."""
     tests = task_toml.parent / "tests"
     sh = (tests / "test.sh").read_text()
-    assert "/harness/scoring/judge_client.py" in sh
-    assert "rubric_judge_cli.py" not in sh, "a judge in main would need the login where the agent ran"
-    assert "/tests/test_judge_container.py" in sh
+    assert "judge_client.py" in sh, "main never hands the run to the judge"
+    assert "/tests/test_judge_container.py" in sh, "nothing would report where grading ran"
     assert (tests / "test_judge_container.py").is_file()
+    code = _code(sh)
+    for grader in ("rubric_judge_cli.py", "state_dump.py", "/tests/test_outputs.py", "grade.py"):
+        assert grader not in code, f"{grader} still runs in main, the container the agent had root in"
+
+
+@pytest_bundles
+@pytest.mark.parametrize("task_toml", BUNDLES, ids=_ids(BUNDLES))
+def test_evaluate_sh_carries_every_scored_channel(task_toml):
+    """The bundle's own script, unchanged, is what the judge runs -- which is why
+    the published numbers do not move when grading changes container."""
+    tests = task_toml.parent / "tests"
+    ev = tests / "evaluate.sh"
+    assert ev.is_file(), "no evaluate.sh: the judge has nothing to grade with"
+    body = _code(ev.read_text())
+    assert "/harness/scoring/rubric_judge_cli.py" in body, "rubric channel missing"
+    assert "test_outputs.py" in body, "Channel A missing"
+    assert "reward.json" in body, "the ledger never publishes a reward"
+    if (tests / "state_dump.py").is_file():
+        assert "state_dump.py" in body, "state channel missing"
+    assert "judge_client.py" not in body, "the judge would call itself over HTTP"
 
 
 @pytest_bundles
@@ -300,10 +416,22 @@ def test_reward_is_stamped_only_where_it_includes_the_rubric(task_toml):
     own reward leaves the rubric out (bull-street's binary traj_pytest) must not
     claim it, or the published reward silently loses the rubric channel."""
     tests = task_toml.parent / "tests"
-    stamped = "reward_producer.json" in (tests / "test.sh").read_text()
+    stamped = "reward_producer.json" in (tests / "evaluate.sh").read_text()
     reads_rubric = any("rubric_breakdown" in f.read_text()
                        for f in (tests / "test_outputs.py", tests / "grade.py") if f.is_file())
     assert stamped == reads_rubric, f"stamped={stamped} but reward reads rubric={reads_rubric}"
+
+
+@pytest_bundles
+@pytest.mark.parametrize("task_toml", BUNDLES, ids=_ids(BUNDLES))
+def test_the_stamp_never_waits_on_a_marker_written_after_it(task_toml):
+    """judge_container.json is written by judge_client.py back in main, AFTER the
+    evaluation returns. An evaluate.sh that checks it never writes the label at
+    all: the host pass then re-grades every run, and reshape fails on the ones it
+    cannot re-grade (measured on an oracle run with an empty trajectory)."""
+    code = _code((task_toml.parent / "tests" / "evaluate.sh").read_text())
+    assert "judge_container.json" not in code, (
+        "evaluate.sh waits on a marker that cannot exist yet")
 
 
 @pytest_bundles
@@ -314,7 +442,7 @@ def test_step_5_keeps_reward_json_numeric(task_toml):
     ValidationError and scores it 0 -- which is exactly what the first
     end-to-end run of the judge container did with a producer stamp. The label
     travels in reward_producer.json and run_task.sh adds it on the host."""
-    sh = (task_toml.parent / "tests" / "test.sh").read_text()
+    sh = _code((task_toml.parent / "tests" / "evaluate.sh").read_text())
     assert 'doc["producer"]' not in sh and 'out["producer"]' not in sh
 
 
@@ -347,6 +475,24 @@ def test_the_judge_allowlist_is_tls_only_and_ends_in_deny():
         assert rule.startswith("http_access allow CONNECT SSL_ports judge_hosts"), rule
 
 
+def test_the_judge_reaches_the_sidecars_without_its_proxy():
+    """The state dump reads the world back out of light-servers, by hostname.
+
+    With HTTP(S)_PROXY set on the judge and only loopback exempt, those calls go
+    to judge-proxy, whose allowlist is OpenAI and nothing else. Measured twice:
+    at the proxy as `TCP_DENIED/403 POST http://light-servers:9142/mcp`, and in a
+    real trial as every app's dump failing with an ExceptionGroup while the state
+    channel reported unavailable -- a scored channel lost to a proxy setting.
+    """
+    env = yaml.safe_load(OVERLAY_JUDGE.read_text())["services"]["judge"]["environment"]
+    assert env["NO_PROXY"] == env["no_proxy"], "tools split on case; both must agree"
+    exempt = {h.strip() for h in env["NO_PROXY"].split(",")}
+    assert {"light-servers", "main", "judge"} <= exempt, sorted(exempt)
+    assert {"localhost", "127.0.0.1", "::1"} <= exempt, sorted(exempt)
+    # The model call is the one thing that must still go through the proxy.
+    assert not {"chatgpt.com", "auth.openai.com"} & exempt, sorted(exempt)
+
+
 def test_both_squid_configs_are_baked_and_parsed_at_build():
     body = (PROXY_DIR / "Dockerfile").read_text()
     assert "COPY squid-judge.conf /etc/squid/squid-judge.conf" in body
@@ -367,7 +513,10 @@ def _resolved(*files: Path, **extra_env) -> dict:
            "SCORING_DIR": str(REPO / "services" / "scoring"),
            "HOST_AGENT_LOGS_PATH": "/tmp/egress-out-test",
            "JUDGE_TOKEN": "compose-config-test",
-           "CODEX_AUTH_FILE": "/tmp/codex-auth-test.json", **extra_env}
+           "CODEX_AUTH_FILE": "/tmp/codex-auth-test.json",
+           # harbor binds its per-trial verifier log dir (trial.py:798); the judge
+           # writes its reports straight into it, so the compose file declares it `:?`.
+           "HOST_VERIFIER_LOGS_PATH": "/tmp/verifier-logs-test", **extra_env}
     args = ["docker", "compose"]
     for f in files:
         args += ["-f", str(f)]
@@ -579,47 +728,76 @@ def _image_present() -> bool:
 needs_image = pytest.mark.skipif(not _image_present(),
                                  reason=f"{JUDGE_IMAGE} not built (make build-codex-judge)")
 
+# A bundle small enough to start the judge against: the readiness check wants an
+# evaluate.sh and a writable report dir, so a container with neither never turns
+# healthy and every assertion below would report the fixture rather than the image.
+RUNTIME_EVALUATE_SH = """#!/bin/bash
+set -u
+echo '{"reward": 0.5, "completion_rate": 1.0, "misbehave_rate": 0.0}' > /logs/verifier/reward.json
+"""
+
 
 def _exec(name: str, *cmd: str, **kw) -> subprocess.CompletedProcess:
     return subprocess.run(["docker", "exec", name, *cmd], capture_output=True, text=True, **kw)
 
 
-def _start_judge(auth: Path, token: str) -> str:
+def _start_judge(tmp_path: Path, token: str = "t0ken") -> str:
+    auth = tmp_path / "auth.json"
+    auth.write_text('{"fake": "login"}')
+    tests = tmp_path / "tests"
+    tests.mkdir(exist_ok=True)
+    if not (tests / "evaluate.sh").exists():
+        (tests / "evaluate.sh").write_text(RUNTIME_EVALUATE_SH)
+    logs = tmp_path / "verifier"
+    logs.mkdir(exist_ok=True)
     name = f"judge-test-{uuid.uuid4().hex[:8]}"
     subprocess.run(["docker", "run", "-d", "--name", name, "-e", f"JUDGE_TOKEN={token}",
-                    "-v", f"{auth}:{AUTH_TARGET}:ro", JUDGE_IMAGE],
+                    "-v", f"{auth}:{AUTH_TARGET}:ro", "-v", f"{tests}:/tests:ro",
+                    "-v", f"{logs}:/logs/verifier", JUDGE_IMAGE],
                    check=True, capture_output=True)
     for _ in range(40):
         if _exec(name, "python3", "/judge/codexbridge.py", "--health").returncode == 0:
             return name
         time.sleep(0.5)
-    logs = subprocess.run(["docker", "logs", name], capture_output=True, text=True)
+    logs_out = subprocess.run(["docker", "logs", name], capture_output=True, text=True)
     subprocess.run(["docker", "rm", "-f", name], capture_output=True)
-    pytest.fail(f"judge never became healthy:\n{logs.stdout}{logs.stderr}")
+    pytest.fail(f"judge never became healthy:\n{logs_out.stdout}{logs_out.stderr}")
 
 
 @pytest.fixture
 def running_judge(tmp_path):
-    auth = tmp_path / "auth.json"
-    auth.write_text('{"fake": "login"}')
     canary = tmp_path / "canary.txt"
     canary.write_text("CANARY")
-    name = _start_judge(auth, "t0ken")
-    yield name, canary
+    name = _start_judge(tmp_path)
+    yield name, tmp_path
     subprocess.run(["docker", "rm", "-f", name], capture_output=True)
 
 
 @needs_image
-def test_the_running_judge_mounts_one_read_only_file(running_judge):
+def test_the_image_carries_every_grader_the_channels_need(running_judge):
+    """Channel A is pytest, the state dump speaks mcp, the rubric is codex. A
+    missing one would surface as a channel silently going unscored."""
+    name, _ = running_judge
+    out = _exec(name, "python3", "-c",
+                "import pytest, mcp, anyio, mcp.client.streamable_http as m;"
+                "from mcp.client.session import ClientSession; print('ok')")
+    assert out.stdout.strip() == "ok", out.stderr
+    assert "codex-cli" in _exec(name, "codex", "--version").stdout
+
+
+@needs_image
+def test_the_running_judge_mounts_only_what_it_grades(running_judge):
     name, _ = running_judge
     mounts = json.loads(subprocess.run(["docker", "inspect", name, "--format", "{{json .Mounts}}"],
                                        capture_output=True, text=True, check=True).stdout)
-    assert [(m["Destination"], m["RW"]) for m in mounts] == [(AUTH_TARGET, False)], mounts
+    by_target = {m["Destination"]: m["RW"] for m in mounts}
+    assert by_target == {AUTH_TARGET: False, "/tests": False, "/logs/verifier": True}, mounts
 
 
 @needs_image
 def test_host_files_are_not_visible_to_the_judge(running_judge):
-    name, canary = running_judge
+    name, canary_dir = running_judge
+    canary = canary_dir / "canary.txt"
     assert _exec(name, "test", "-e", str(canary)).returncode != 0, "the judge can see a host file"
     assert _exec(name, "sh", "-c", f"echo x >> {AUTH_TARGET}").returncode != 0, "the login mount is writable"
     mode = _exec(name, "sh", "-c", 'stat -c %a "$CODEX_HOME/auth.json"')
@@ -627,10 +805,10 @@ def test_host_files_are_not_visible_to_the_judge(running_judge):
 
 
 @needs_image
-def test_the_running_judge_refuses_a_grade_without_the_token(running_judge):
+def test_the_running_judge_refuses_an_evaluation_without_the_token(running_judge):
     name, _ = running_judge
     probe = ("import urllib.request as u\n"
-             "r=u.Request('http://127.0.0.1:8770/grade',data=b'{}',method='POST',"
+             "r=u.Request('http://127.0.0.1:8770/evaluate',data=b'{}',method='POST',"
              "headers={'Content-Type':'application/json'})\n"
              "try:\n    u.build_opener(u.ProxyHandler({})).open(r); print(200)\n"
              "except Exception as e:\n    print(getattr(e,'code',e))\n")
@@ -639,29 +817,55 @@ def test_the_running_judge_refuses_a_grade_without_the_token(running_judge):
 
 
 @needs_image
+def test_an_evaluation_runs_the_mounted_script_and_leaves_its_reports(running_judge):
+    """End to end through the real container: the bundle's script writes into
+    harbor's log dir, and the host sees the file without main touching it."""
+    name, tmp_path = running_judge
+    probe = ("import json,urllib.request as u\n"
+             "r=u.Request('http://127.0.0.1:8770/evaluate',"
+             "data=json.dumps({'trajectory':{'steps':[],'final_message':'x'}}).encode(),"
+             "method='POST',headers={'Content-Type':'application/json','x-judge-token':'t0ken'})\n"
+             "print(u.build_opener(u.ProxyHandler({})).open(r).read().decode())\n")
+    out = _exec(name, "python3", "-c", probe, timeout=300)
+    doc = json.loads(out.stdout)
+    assert doc["ok"] is True, doc
+    assert doc["written"] == ["reward.json"], doc
+    assert json.loads((tmp_path / "verifier" / "reward.json").read_text())["reward"] == 0.5
+
+
+@needs_image
 @pytest.mark.skipif(os.environ.get("JUDGE_LIVE") != "1", reason="set JUDGE_LIVE=1 to spend quota on a real grade")
-def test_live_grade_through_the_container(tmp_path):
+def test_live_rubric_grade_through_the_container(tmp_path):
+    """The real thing: codex grades a one-criterion rubric inside the image."""
     auth = Path(os.environ.get("CODEX_AUTH_FILE", Path.home() / ".codex" / "auth.json"))
     if not auth.is_file():
         pytest.skip("no codex login on this machine")
-    name = _start_judge(auth, "live-token")
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    (tests / "rubric.json").write_text(json.dumps({"criteria": [
+        {"number": "1", "criterion": "The agent refunds charge ch_1.",
+         "evaluation_target": "trajectory", "is_positive": True,
+         "importance": "critically_important", "score": 5, "weight": 5}]}))
+    (tests / "evaluate.sh").write_text(
+        "#!/bin/bash\nset -u\n"
+        "python3 /judge/rubric_judge_cli.py --rubric /tests/rubric.json "
+        "--trajectory /tmp/agent_trajectory.json --output /logs/verifier/rubric_breakdown.json "
+        "--token-output /logs/verifier/judge_tokens.json\n"
+        "echo '{\"reward\": 1.0}' > /logs/verifier/reward.json\n")
+    (tmp_path / "auth.json").write_bytes(auth.read_bytes())
+    name = _start_judge(tmp_path, token="live-token")
     try:
-        for src, dst in ((REPO / "services" / "scoring" / "judge_client.py", "/tmp/judge_client.py"),):
-            subprocess.run(["docker", "cp", str(src), f"{name}:{dst}"], check=True)
-        (tmp_path / "r.json").write_text(json.dumps({"criteria": [
-            {"number": "1", "criterion": "The agent refunds charge ch_1.", "evaluation_target": "trajectory",
-             "is_positive": True, "importance": "critically_important", "score": 5, "weight": 5}]}))
-        (tmp_path / "t.json").write_text(json.dumps(TRAJ))
-        subprocess.run(["docker", "cp", str(tmp_path / "r.json"), f"{name}:/tmp/r.json"], check=True)
-        subprocess.run(["docker", "cp", str(tmp_path / "t.json"), f"{name}:/tmp/t.json"], check=True)
-        out = subprocess.run(["docker", "exec", "-e", "JUDGE_URL=http://127.0.0.1:8770",
-                              "-e", "JUDGE_TOKEN=live-token", name, "python3", "/tmp/judge_client.py",
-                              "--rubric", "/tmp/r.json", "--trajectory", "/tmp/t.json",
-                              "--output", "/tmp/out/rubric_breakdown.json",
-                              "--token-output", "/tmp/out/judge_tokens.json"],
-                             capture_output=True, text=True, timeout=900)
-        assert out.returncode == 0, out.stdout + out.stderr
-        marker = json.loads(_exec(name, "cat", "/tmp/out/judge_container.json").stdout)
-        assert marker["ok"] is True and marker["model"] == "gpt-5.6-sol"
+        probe = ("import json,urllib.request as u\n"
+                 "r=u.Request('http://127.0.0.1:8770/evaluate',"
+                 "data=json.dumps({'trajectory':{'steps':[{'tool':'refund','arguments':"
+                 "{'charge':'ch_1'},'response':'ok'}],'final_message':'refunded ch_1'}}).encode(),"
+                 "method='POST',headers={'Content-Type':'application/json','x-judge-token':'live-token'})\n"
+                 "print(u.build_opener(u.ProxyHandler({})).open(r, timeout=900).read().decode())\n")
+        out = _exec(name, "python3", "-c", probe, timeout=900)
+        doc = json.loads(out.stdout)
+        assert doc["ok"] is True, doc
+        assert doc["rubric_criteria"] == 1, doc
+        breakdown = json.loads((tmp_path / "verifier" / "rubric_breakdown.json").read_text())
+        assert breakdown["per_criterion"][0]["justification"].strip()
     finally:
         subprocess.run(["docker", "rm", "-f", name], capture_output=True)

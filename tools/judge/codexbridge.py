@@ -1,20 +1,29 @@
 #!/usr/bin/env python3
-"""codexbridge: the rubric judge, inside its own container.
+"""codexbridge: the whole verifier, inside its own container.
 
-The rubric used to be graded on the host, where `codex exec --sandbox read-only`
-can still READ the whole disk -- other runs under output/, answer files under
-tasks/*/tests -- because read-only only forbids writes. This service runs the
-same grader (rubric_judge_cli.py, baked into the image) in a container that
-holds nothing but itself and one credential, so "the judge cannot see other
-runs" is a property of what is mounted, not of what the model chooses to do.
+Every scored channel runs in here now -- rubric, Channel A, the state dump and
+the ledger -- and none of them runs in `main`, the container the agent had root
+in. The bundle's own grading script (/tests/evaluate.sh) is what runs, byte for
+byte, so the numbers cannot drift from what main used to produce; this image
+just supplies what those scripts need (python, pytest, the mcp client, codex)
+and the mounts they read.
 
-  GET  /healthz   200 when a grade could run: token set, codex login installed,
-                  codex and the grader present. Compose's healthcheck calls it
+The rubric was moved first, for a different reason: on the host,
+`codex exec --sandbox read-only` can still READ the whole disk -- other runs
+under output/, answer files under tasks/*/tests -- because read-only only
+forbids writes.
+
+  GET  /healthz   200 when an evaluation could run: token set, codex login
+                  installed, codex + pytest + the bundle script present, and
+                  /logs/verifier writable. Compose's healthcheck calls it
                   (`codexbridge.py --health`) and harbor's `up --wait` holds the
-                  trial on it, so a missing credential fails before the agent
-                  phase instead of after it.
-  POST /grade     {"rubric": {...}, "trajectory": {...}} + header x-judge-token.
-                  Runs the grader and returns what it wrote.
+                  trial on it, so a broken grader fails before the agent phase
+                  instead of after it.
+  POST /evaluate  {"trajectory": {...}} + header x-judge-token. Writes the
+                  trajectory where the bundle scripts expect it, runs
+                  /tests/evaluate.sh, and reports what it wrote. The reports
+                  land in /logs/verifier, which is harbor's own per-trial
+                  directory on the host -- main never relays them.
 
 The token is made per run by scripts/run_task.sh and reaches two places only:
 this container's environment and the verifier step's (task.toml [verifier.env];
@@ -30,6 +39,7 @@ Stdlib only.
 from __future__ import annotations
 
 import hmac
+import importlib.util
 import json
 import os
 import shutil
@@ -44,6 +54,14 @@ from urllib.request import ProxyHandler, build_opener
 HERE = Path(__file__).resolve().parent
 GRADED_IN = "judge-container"
 LOG_TAIL_CHARS = 4000
+
+# Where the bundle's own grading script lives, and the file its steps read the
+# trajectory from. Both are fixed: the caller says what to grade, never how.
+# main builds the trajectory with the bundle's own parser (test.sh step 1) and
+# posts it, so Channel A sees exactly the evidence it saw before the move.
+EVALUATE_SH = Path(os.environ.get("JUDGE_EVALUATE_SH", "/tests/evaluate.sh"))
+TRAJECTORY_PATH = Path(os.environ.get("JUDGE_TRAJECTORY_PATH", "/tmp/agent_trajectory.json"))
+VERIFIER_DIR = Path(os.environ.get("JUDGE_VERIFIER_DIR", "/logs/verifier"))
 
 _state: dict[str, str | None] = {"credential_error": "codex login not installed yet"}
 _grade_lock = threading.Lock()
@@ -95,7 +113,16 @@ def not_ready() -> str | None:
     if not shutil.which("codex"):
         return "codex CLI not found on PATH"
     if not _judge_cli().is_file():
-        return f"grader missing at {_judge_cli()}"
+        return f"rubric grader missing at {_judge_cli()}"
+    if importlib.util.find_spec("pytest") is None:
+        return "pytest is not installed; Channel A cannot run here"
+    if importlib.util.find_spec("mcp") is None:
+        return "the mcp client is not installed; the state dump cannot run here"
+    if not EVALUATE_SH.is_file():
+        return (f"{EVALUATE_SH} is not mounted; the bundle's tests/ directory must be "
+                "mounted into this container (see the judge service in the bundle's compose file)")
+    if not os.access(VERIFIER_DIR, os.W_OK):
+        return f"{VERIFIER_DIR} is not writable; harbor's per-trial log dir must be mounted here"
     return None
 
 
@@ -118,58 +145,55 @@ def _load_json(path: Path):
         return None
 
 
-def grade(rubric: dict, trajectory: dict) -> dict:
-    """Run the grader once over one run's rubric and trajectory.
+def evaluate(trajectory: dict) -> dict:
+    """Run the bundle's whole grading script over one run.
 
-    `ok` means real verdicts came back. rubric_judge_cli.py writes a zero-score
-    breakdown with no criteria when its backend preflight fails, and exits 0;
-    passing that on would publish "failed every criterion" for a run nobody
-    graded, so an empty verdict list is a failure here.
+    The command is fixed here rather than taken from the request: `main` is the
+    container the agent worked in, and an endpoint that ran what main asked for
+    would hand the agent's leftovers a way to grade themselves. All the caller
+    supplies is the trajectory.
+
+    Reports are written by the script itself, into harbor's per-trial
+    /logs/verifier mount, so nothing has to be relayed back through main.
     """
-    with tempfile.TemporaryDirectory(prefix="grade-") as tmp:
-        work = Path(tmp)
-        out_dir = work / "out"
-        (work / "rubric.json").write_text(json.dumps(rubric))
-        (work / "trajectory.json").write_text(json.dumps(trajectory))
-        breakdown_path = out_dir / "rubric_breakdown.json"
-        tokens_path = out_dir / "judge_tokens.json"
-        cmd = [sys.executable, str(_judge_cli()),
-               "--rubric", str(work / "rubric.json"),
-               "--trajectory", str(work / "trajectory.json"),
-               "--output", str(breakdown_path),
-               "--token-output", str(tokens_path),
-               "--model", _model()]
-        try:
-            proc = subprocess.run(cmd, capture_output=True, text=True,
-                                  timeout=_grade_timeout(), cwd=tmp)
-            rc, log = proc.returncode, (proc.stdout or "") + (proc.stderr or "")
-        except subprocess.TimeoutExpired:
-            rc, log = None, f"grader timed out after {_grade_timeout():.0f}s"
+    TRAJECTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    TRAJECTORY_PATH.write_text(json.dumps(trajectory))
 
-        breakdown = _load_json(breakdown_path)
-        usage = _load_json(tokens_path)
-        failed_marker = out_dir / "rubric_judge_failed.txt"
-        failed = failed_marker.read_text() if failed_marker.is_file() else None
-        rows = (breakdown or {}).get("per_criterion") or (breakdown or {}).get("results") or []
+    env = dict(os.environ)
+    env.setdefault("JUDGE_MODEL", _model())
+    env["COMPLEXMCP_TRAJECTORY"] = env["ATLAS_TRAJECTORY"] = str(TRAJECTORY_PATH)
+    env["MCPATLAS_TRAJECTORY"] = str(TRAJECTORY_PATH)
+    try:
+        proc = subprocess.run(["bash", str(EVALUATE_SH)], capture_output=True, text=True,
+                              timeout=_grade_timeout(), cwd="/tmp", env=env)
+        rc, log = proc.returncode, (proc.stdout or "") + (proc.stderr or "")
+    except subprocess.TimeoutExpired:
+        rc, log = None, f"evaluation timed out after {_grade_timeout():.0f}s"
+    except OSError as exc:
+        rc, log = None, f"could not run {EVALUATE_SH}: {exc}"
 
-        reason = None
-        if rc != 0:
-            reason = f"grader exited {rc}" if rc is not None else "grader timed out"
-        elif failed:
-            reason = failed.strip().splitlines()[0] if failed.strip() else "grader wrote a failure marker"
-        elif not rows:
-            reason = "grader returned no verdicts"
-        return {
-            "ok": reason is None,
-            "reason": reason,
-            "returncode": rc,
-            "breakdown": breakdown if reason is None else None,
-            "tokens": usage,
-            "log_tail": log[-LOG_TAIL_CHARS:],
-            "graded_in": GRADED_IN,
-            "model": _model(),
-            "codex_version": codex_version(),
-        }
+    written = sorted(p.name for p in VERIFIER_DIR.glob("*")) if VERIFIER_DIR.is_dir() else []
+    reward = _load_json(VERIFIER_DIR / "reward.json")
+    breakdown = _load_json(VERIFIER_DIR / "rubric_breakdown.json") or {}
+    rubric_rows = breakdown.get("per_criterion") or breakdown.get("results") or []
+
+    reason = None
+    if rc != 0:
+        reason = f"evaluation exited {rc}" if rc is not None else "evaluation did not finish"
+    elif reward is None:
+        reason = "no reward.json was written"
+    return {
+        "ok": reason is None,
+        "reason": reason,
+        "returncode": rc,
+        "reward": reward,
+        "rubric_criteria": len(rubric_rows),
+        "written": written,
+        "log_tail": log[-LOG_TAIL_CHARS:],
+        "graded_in": GRADED_IN,
+        "model": _model(),
+        "codex_version": codex_version(),
+    }
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -195,7 +219,7 @@ class Handler(BaseHTTPRequestHandler):
                     "model": _model()})
 
     def do_POST(self):
-        if self.path != "/grade":
+        if self.path != "/evaluate":
             return self._send(404, {"error": "not found"})
         why = not_ready()
         if why:
@@ -214,16 +238,16 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(413, {"error": f"body {length} bytes exceeds {_max_body()}"})
         try:
             req = json.loads(self.rfile.read(length))
-            rubric, trajectory = req["rubric"], req["trajectory"]
-            if not isinstance(rubric, dict) or not isinstance(trajectory, dict):
-                raise TypeError("rubric and trajectory must be JSON objects")
+            trajectory = req["trajectory"]
+            if not isinstance(trajectory, dict):
+                raise TypeError("trajectory must be a JSON object")
         except (ValueError, KeyError, TypeError) as exc:
             return self._send(400, {"error": f"bad request: {exc}"})
         with _grade_lock:
             try:
-                doc = grade(rubric, trajectory)
+                doc = evaluate(trajectory)
             except Exception as exc:  # the verifier must hear about it, not time out
-                return self._send(500, {"error": f"grading crashed: {exc!r}"})
+                return self._send(500, {"error": f"evaluation crashed: {exc!r}"})
         self._send(200, doc)
 
 

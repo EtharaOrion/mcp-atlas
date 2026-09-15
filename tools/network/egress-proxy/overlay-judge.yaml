@@ -29,9 +29,16 @@ services:
       HTTPS_PROXY: "http://judge-proxy:3128"
       http_proxy: "http://judge-proxy:3128"
       https_proxy: "http://judge-proxy:3128"
-      # The healthcheck and the bridge's own loopback calls stay local.
-      NO_PROXY: "localhost,127.0.0.1,::1"
-      no_proxy: "localhost,127.0.0.1,::1"
+      # Everything on the compose bridge stays off the proxy. light-servers is
+      # the one that bites: tests/state_dump.py reads the world back out of it by
+      # hostname, and with only loopback exempt those calls went to judge-proxy,
+      # which allows OpenAI and nothing else. Measured as
+      # `TCP_DENIED/403 POST http://light-servers:9142/mcp` at the proxy and, in
+      # the trial, every app's dump failing while the state channel reported
+      # unavailable. Same set as main's NO_PROXY in overlay.yaml, with the
+      # judge's own proxy in place of the agent's.
+      NO_PROXY: "light-servers,main,judge,judge-proxy,localhost,127.0.0.1,0.0.0.0,::1"
+      no_proxy: "light-servers,main,judge,judge-proxy,localhost,127.0.0.1,0.0.0.0,::1"
     depends_on:
       judge-proxy:
         condition: service_healthy
