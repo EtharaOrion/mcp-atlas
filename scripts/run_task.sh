@@ -15,6 +15,7 @@
 #                NETWORK_ISOLATION_OFF (unset) DISALLOWED_TOOLS (WebSearch,WebFetch)
 #                CC_MODE (unset -> claude-opus-5; "zbridge" -> glm-5.3 via :8766)
 #                CC_BRIDGE_ENABLED (0)
+#                AGENT_HEADROOM_ENABLED (false) GRADER_HEADROOM_ENABLED (false)
 #
 # Values may also come from <repo>/.env, which is read as DEFAULTS only: anything
 # already in the environment wins over it. NETWORK_ISOLATION_OFF is the one key
@@ -184,7 +185,11 @@ N="${N:-1}"
 export JUDGE_MODEL="${JUDGE_MODEL:-gpt-5.6-sol}"
 BUILD_MULT="${BUILD_MULT:-3}"
 SETUP_MULT="${SETUP_MULT:-6}"
-AGENT_HEADROOM_ENABLED="${AGENT_HEADROOM_ENABLED:-false}"  # agent-path compression: OFF
+# Headroom prompt compression, both paths OFF unless asked for. Each turns on
+# one container: AGENT_ the headroom proxy in front of main, GRADER_ a judge
+# image carrying the library. Neither changes the egress allowlist.
+AGENT_HEADROOM_ENABLED="${AGENT_HEADROOM_ENABLED:-false}"    # agent-path compression: OFF
+GRADER_HEADROOM_ENABLED="${GRADER_HEADROOM_ENABLED:-false}"  # grader-path compression: OFF
 OUTPUT_DIR="${OUTPUT_DIR:-$REPO/output}"
 AT="${AT:-auto}"   # pass@k ks for the reshaper; auto = every k from 1..N runs
 JOB="${JOB:-$SLUG}"   # job dir == output/<task>/ (reshaped in place by the converter)
@@ -591,6 +596,8 @@ image_build_context() {
     light-servers) echo "$REPO/services/light-servers" ;;
     egress-proxy)  echo "$REPO/tools/network/egress-proxy" ;;
     codex-judge)   echo "$REPO/tools/judge" ;;
+    codex-judge-headroom) echo "$REPO/tools/judge" ;;
+    headroom-compress) echo "$REPO/tools/headroom" ;;
   esac
 }
 
@@ -601,6 +608,11 @@ image_build_context() {
 image_build_args() {
   case "${1%%:*}" in
     codex-judge) printf '%s\n' --build-context "scoring=$REPO/services/scoring" ;;
+    codex-judge-headroom)
+      printf '%s\n' --build-context "scoring=$REPO/services/scoring" \
+                    --build-arg WITH_HEADROOM=1 ;;
+    headroom-compress)
+      printf '%s\n' --build-context "scoring=$REPO/services/scoring" ;;
   esac
 }
 
@@ -711,6 +723,19 @@ stage_preflight() {
     ensure_image "$_img"
   done
 
+  headroom_memory_check
+
+  # The optional Headroom images, built here and only when this run asks for
+  # them. They are declared in overlays rather than in the bundle's compose
+  # file, so the loop above never sees them; and they are big (the judge image
+  # is ~440 MB larger than the plain one), so building them on every run would
+  # be a tax on the runs that do not use them.
+  if [ "${AGENT_HEADROOM_ENABLED:-false}" = "true" ]; then
+    ensure_image "$HEADROOM_IMAGE"
+  fi
+  if [ "${GRADER_HEADROOM_ENABLED:-false}" = "true" ] && bundle_has_judge; then
+    ensure_image "codex-judge-headroom:latest"
+  fi
 }
 
 # Harbor validates output/<job>/result.json against its own JobResult model
@@ -788,8 +813,10 @@ stage_harbor() {
   # container (empty values are dropped, so a failed proxy start is a no-op).
   ensure_cc_bridge
   [ "${CC_MODE:-}" = "zbridge" ] && ensure_zbridge
-  ensure_bundle_headroom
-  route_agent_through_proxy
+  # After ensure_zbridge: on a GLM run both set ANTHROPIC_BASE_URL, and with
+  # agent-path Headroom on it is the headroom container that must win, with
+  # zbridge behind it as the upstream.
+  route_agent_through_headroom
   local args=(run -y --path "$TASK" --agent "$AGENT" --jobs-dir "$OUTPUT_DIR" --job-name "$JOB" \
               --environment-build-timeout-multiplier "$BUILD_MULT" \
               --agent-setup-timeout-multiplier "$SETUP_MULT" --n-attempts "$N")
@@ -809,7 +836,18 @@ stage_harbor() {
   if bundle_has_judge; then
     prepare_judge
     [ -n "$_iso" ] && args+=(--extra-docker-compose "$REPO/tools/network/egress-proxy/overlay-judge.yaml")
+    # Grader-path Headroom: a judge image that carries the library, and the flag
+    # the grader reads. Nothing else changes -- the judge's own squid, mounts
+    # and token are the same, and compression happens inside the process.
+    if [ "${GRADER_HEADROOM_ENABLED:-false}" = "true" ]; then
+      args+=(--extra-docker-compose "$REPO/tools/network/egress-proxy/overlay-judge-headroom.yaml")
+      echo "[run_task] grader-path Headroom ON: judge runs codex-judge-headroom:latest" >&2
+    fi
   fi
+  # Last, so main's NO_PROXY here wins over the isolated overlay's.
+  while IFS= read -r _hr_overlay; do
+    if [ -n "$_hr_overlay" ]; then args+=(--extra-docker-compose "$_hr_overlay"); fi
+  done < <(agent_headroom_overlays "$_iso")
   [ "$AGENT" != "oracle" ] && args+=(--model "$MODEL")
   if [ "$AGENT" = "claude-code" ]; then
     [ -n "$THINKING" ] && args+=(--ak "thinking=$THINKING")
@@ -942,37 +980,65 @@ stage_harbor() {
   state_put host_rubric_done 0
 }
 
-# ---------------------------------------------------------------- agent proxy
-# Route the AGENT's traffic through the Headroom proxy, so its prompts are
-# compressed too. OFF unless AGENT_HEADROOM_ENABLED=true.
+# ------------------------------------------------------------- agent Headroom
+# Compress the AGENT's prompts with a Headroom proxy that runs IN THE BUNDLE, on
+# the same network as main. OFF unless AGENT_HEADROOM_ENABLED=true.
 #
-# Nothing is started here. `headroom proxy` already runs on this host (it is
-# what a Claude Code session points ANTHROPIC_BASE_URL at), so this stage only
-# re-points the CONTAINER at it. The whole job is fixing the host part of the
-# URL: the value inherited from the session is http://127.0.0.1:<port>, and
-# inside the container 127.0.0.1 is the container -- which is exactly why the
-# unset at the top of this script exists. host.docker.internal is the same
-# proxy as seen from inside.
+# It used to run on the host, with main pointed at host.docker.internal:8787. An
+# internal network has no route there, so an isolated Claude run was refused
+# outright and an isolated GLM run silently dropped compression: the feature was
+# unavailable on precisely the runs this harness makes. A container on the
+# bundle's own network is reachable, and its egress is squid's business like
+# everything else's (overlay-headroom-isolated.yaml).
 #
-# Health-checked first: pointing the agent at a dead port turns every turn into
-# "API Error: Connection refused", which reads as the agent refusing the task
-# rather than as infrastructure. If the proxy does not answer we leave
-# ANTHROPIC_BASE_URL unset and run direct, exactly as before.
-HEADROOM_PROXY_PORT="${HEADROOM_PROXY_PORT:-8787}"
+# Still opt-in, and still a change to what the benchmark measures: compression
+# rewrites the prompt prefix, so prompt caching misses and the trajectory is no
+# longer the record of what the model saw. See services/scoring/grader_compress.py.
+HEADROOM_SERVICE_PORT=8787            # tools/headroom/Dockerfile EXPOSEs this
+HEADROOM_IMAGE="headroom-compress:latest"
+HEADROOM_MIN_DOCKER_GB="${HEADROOM_MIN_DOCKER_GB:-12}"
 
-# Wire the bundle for grader-path Headroom, so GRADER_HEADROOM_ENABLED=true is
-# the ONLY thing an operator has to remember.
+# Refuse an agent-path Headroom run on a docker that cannot hold the project.
 #
-# The library has to be in the task image and the flag has to be on the `main`
-# service; a bundle missing either grades uncompressed and says nothing about
-# it. Making the run do it removes the two-command dance
-# (enable_headroom.sh -> run) and, more importantly, removes the failure mode
-# where someone enables the flag, sees no error, and assumes it worked.
+# WHY THIS IS A REFUSAL AND NOT A WARNING
 #
-# enable_headroom.sh is idempotent and its --disable reverts byte-identically,
-# so re-running this is free. Set HEADROOM_AUTO_WIRE=0 to keep the bundle
-# untouched -- useful when the bundle is committed and you do not want a run
-# dirtying your working tree.
+# Measured, on an 8 GB docker VM: the project already runs main, light-servers,
+# the judge and two squids, and headroom makes seven containers. The VM hit a
+# GLOBAL out-of-memory (dmesg: `global_oom ... task=headroom`), the kernel
+# killed the proxy, and because docker stops resolving the name of a container
+# that is gone, Claude Code ended the session with "API Error: Can't reach the
+# API server (EAI_AGAIN)" after ten turns. Harbor recorded no exception -- the
+# agent process exited 0 -- so the trial was published as a reward of 0, in a
+# job whose mean it then dragged down. An infrastructure death that looks like a
+# bad answer is worse than a run that never starts, and the cost lands on the
+# paid agent phase either way.
+#
+# HEADROOM_MIN_DOCKER_GB tunes the bar; HEADROOM_IGNORE_MEMORY=1 skips it.
+headroom_memory_check() {
+  [ "${AGENT_HEADROOM_ENABLED:-false}" = "true" ] || return 0
+  if [ -n "${HEADROOM_IGNORE_MEMORY:-}" ]; then
+    echo "[run_task] HEADROOM_IGNORE_MEMORY set; not checking docker's memory" >&2
+    return 0
+  fi
+  local total gb
+  total="$(docker info --format '{{.MemTotal}}' 2>/dev/null)" || return 0
+  case "$total" in ''|*[!0-9]*) return 0 ;; esac   # cannot tell; do not block
+  # Rounded, not floored. A VM set to 12 GB reports what is left after the
+  # kernel's own reservation -- 12,304,840 kB, i.e. 11.7 GiB -- so flooring
+  # called a correctly sized machine 11 GB and refused it. Being told to raise
+  # a limit that is already raised is how a guard gets commented out.
+  gb=$(( (total + 536870912) / 1073741824 ))
+  [ "$gb" -ge "$HEADROOM_MIN_DOCKER_GB" ] && return 0
+  echo "[run_task] REFUSING: docker has ${gb} GB of memory; agent-path Headroom needs" >&2
+  echo "[run_task]   at least ${HEADROOM_MIN_DOCKER_GB} GB. It adds a proxy container to a project that already" >&2
+  echo "[run_task]   runs main, light-servers, the judge and two squids." >&2
+  echo "[run_task]   At 8 GB the VM ran out and the kernel killed the proxy mid-run: the" >&2
+  echo "[run_task]   agent lost the API and the trial published a reward of 0." >&2
+  echo "[run_task]   Raise the memory in OrbStack/Docker Desktop settings, run without" >&2
+  echo "[run_task]   AGENT_HEADROOM_ENABLED, or set HEADROOM_IGNORE_MEMORY=1 to proceed." >&2
+  exit 2
+}
+
 ensure_cc_bridge() {
   # OFF by default. Nothing this script runs reads :4000 -- the agent talks to
   # api.anthropic.com (or to zbridge), and the rubric judge shells out to the
@@ -1054,102 +1120,52 @@ ensure_zbridge() {
   echo "[run_task] agent routed through zbridge ($ANTHROPIC_BASE_URL)"
 }
 
-ensure_bundle_headroom() {
-  [ "${GRADER_HEADROOM_ENABLED:-false}" = "true" ] || return 0
-  [ "${HEADROOM_AUTO_WIRE:-1}" = "1" ] || return 0
-  [ -x "$REPO/scripts/enable_headroom.sh" ] || return 0
-  local out
-  out="$(bash "$REPO/scripts/enable_headroom.sh" "$TASK" 2>&1)" || {
-    echo "[run_task] could not wire bundle for headroom; grading uncompressed" >&2
-    return 0
-  }
-  case "$out" in
-    *"already enabled"*) echo "[run_task] bundle already wired for headroom" ;;
-    *) echo "[run_task] wired bundle for headroom (Dockerfile + compose)" ;;
-  esac
-}
+# Point the agent at the Headroom container, and tell the pieces around it what
+# that implies: which upstream the proxy forwards to, and which squid config
+# guards its egress. Call it directly, not in $(...), or the exports are lost.
+#
+#   Claude:  main -> headroom -> squid -> api.anthropic.com
+#   GLM:     main -> headroom -> squid -> zbridge on the host -> z.ai
+route_agent_through_headroom() {
+  [ "${AGENT_HEADROOM_ENABLED:-false}" = "true" ] || return 0
 
-# Headroom proxy dedicated to the zbridge chain: agent -> headroom -> zbridge
-# -> z.ai. The plain :8787 proxy forwards to api.anthropic.com, so pointing a
-# GLM run at it made Claude Code ask Anthropic for "glm-5.3" and die with
-# "issue with the selected model" before a single tool call -- zbridge sat idle
-# while the run burnt an hour. A second proxy on its own port, with
-# ANTHROPIC_TARGET_API_URL aimed at zbridge, keeps agent-path compression AND
-# the GLM routing. The :8787 proxy is left untouched (it may be serving an
-# interactive session).
-ensure_headroom_zbridge_chain() {
-  local zport="${ZB_PORT:-8766}"
-  local port="${ZB_HEADROOM_PROXY_PORT:-8788}"
-  if curl -sf -m 2 "http://127.0.0.1:$port/health" >/dev/null 2>&1; then
-    # stderr, not stdout: this function's stdout IS the port, captured by
-    # command substitution. A stray line here lands inside ANTHROPIC_BASE_URL
-    # and the agent dies with "API Error: Invalid URL".
-    echo "[run_task] headroom->zbridge proxy already running on :$port" >&2
-    echo "$port"; return 0
-  fi
-  command -v headroom >/dev/null 2>&1 || {
-    echo "[run_task] headroom CLI not on PATH; cannot chain to zbridge" >&2
-    echo ""; return 1
-  }
-  local log_dir="$REPO/tools/bridges/zbridge/logs"; mkdir -p "$log_dir"
-  echo "[run_task] starting headroom->zbridge proxy on :$port" >&2
-  (ANTHROPIC_TARGET_API_URL="http://127.0.0.1:$zport" \
-     headroom proxy --port "$port" --host 127.0.0.1 \
-     >"$log_dir/headroom-zbridge.log" 2>&1 &)
-  local i=0
-  while [ $i -lt 20 ]; do
-    sleep 1; i=$((i+1))
-    curl -sf -m 1 "http://127.0.0.1:$port/health" >/dev/null 2>&1 && { echo "$port"; return 0; }
-  done
-  echo "[run_task] headroom->zbridge proxy did not come up; see $log_dir/headroom-zbridge.log" >&2
-  echo ""; return 1
-}
-
-route_agent_through_proxy() {
-  [ "$AGENT_HEADROOM_ENABLED" = "true" ] || return 0
-
-  # zbridge mode: chain through a headroom proxy that forwards to zbridge, not
-  # the Anthropic-bound one. Without this the export below would silently
-  # overwrite the ANTHROPIC_BASE_URL ensure_zbridge just set.
   if [ "${CC_MODE:-}" = "zbridge" ]; then
-    # Under isolation squid only allows zbridge's own port, so skip the chain.
-    if [ -z "${NETWORK_ISOLATION_OFF:-}" ]; then
-      echo "[run_task] network isolation ON: GLM agent goes straight to zbridge, headroom chain skipped" >&2
-      AGENT_HEADROOM_ENABLED=false
-      export AGENT_HEADROOM_ENABLED
-      return 0
-    fi
-    local chained; chained="$(ensure_headroom_zbridge_chain)" || true
-    if [ -z "$chained" ]; then
-      echo "[run_task] keeping direct zbridge route; agent-path compression OFF" >&2
-      return 0
-    fi
-    export ANTHROPIC_BASE_URL="http://host.docker.internal:$chained"
-    echo "[run_task] agent routed through headroom->zbridge ($ANTHROPIC_BASE_URL -> :${ZB_PORT:-8766})"
-    echo "[run_task]   NOTE: setting ANTHROPIC_BASE_URL makes harbor pin every model"
-    echo "[run_task]   alias (sonnet/opus/haiku/subagent) to $MODEL -- claude_code.py:1358."
-    return 0
+    # zbridge runs on the host, so the proxy in front of headroom needs the
+    # exemption main used to get. write_zbridge_squid_conf exports the generated
+    # conf; stage_harbor calls it again for main's own squid, and it is
+    # idempotent.
+    write_zbridge_squid_conf
+    export HEADROOM_UPSTREAM="http://host.docker.internal:${ZB_PORT:-8766}"
+    export HEADROOM_SQUID_CONF="$EGRESS_SQUID_CONF"
+  else
+    export HEADROOM_UPSTREAM="https://api.anthropic.com"
+    export HEADROOM_SQUID_CONF="$REPO/tools/network/egress-proxy/squid.conf"
   fi
 
-  if ! curl -sf -m 3 "http://127.0.0.1:$HEADROOM_PROXY_PORT/health" >/dev/null 2>&1; then
-    echo "[run_task] no headroom proxy on :$HEADROOM_PROXY_PORT; running direct" >&2
-    echo "[run_task]   start one with: headroom proxy --port $HEADROOM_PROXY_PORT" >&2
-    # Say so in the variable, not just on stderr. network_isolation_overlay()
-    # below refuses to run while this reads true, because a host-side proxy and
-    # an internal network cannot coexist -- but with no proxy actually LISTENING
-    # there is no conflict to refuse, only a flag left set. That refusal fired
-    # on a machine with no headroom running, and the way out of it was
-    # NETWORK_ISOLATION_OFF=1 in .env, which turned the egress block off for
-    # every run from then on. Clearing the flag here removes the reason anyone
-    # reached for that switch.
-    AGENT_HEADROOM_ENABLED=false
-    export AGENT_HEADROOM_ENABLED
-    return 0
+  # Built in stage_preflight. Warned about rather than built here: a bare
+  # `--stage harbor` on a machine without the image otherwise dies inside
+  # compose with "pull access denied", forty lines from the cause.
+  if docker info >/dev/null 2>&1 && ! docker image inspect "$HEADROOM_IMAGE" >/dev/null 2>&1; then
+    echo "[run_task] WARNING: $HEADROOM_IMAGE is not built; compose up will fail." >&2
+    echo "[run_task]   Build it with: make build-headroom-compress" >&2
   fi
-  export ANTHROPIC_BASE_URL="http://host.docker.internal:$HEADROOM_PROXY_PORT"
-  echo "[run_task] agent routed through headroom proxy ($ANTHROPIC_BASE_URL)"
+
+  # What harbor forwards into main (claude_code.py reads it from this
+  # environment). Setting it also makes harbor pin every model alias.
+  export ANTHROPIC_BASE_URL="http://headroom:$HEADROOM_SERVICE_PORT"
+  echo "[run_task] agent-path Headroom ON: main -> headroom -> $HEADROOM_UPSTREAM"
   echo "[run_task]   NOTE: setting ANTHROPIC_BASE_URL makes harbor pin every model"
   echo "[run_task]   alias (sonnet/opus/haiku/subagent) to $MODEL -- claude_code.py:1358."
+}
+
+# The overlays that add the headroom container to the project, one per line, or
+# nothing when the flag is off. The isolated one carries the proxy's own squid;
+# both must land after overlay.yaml, which the caller does by appending.
+agent_headroom_overlays() {  # agent_headroom_overlays [isolated]
+  [ "${AGENT_HEADROOM_ENABLED:-false}" = "true" ] || return 0
+  echo "$REPO/tools/network/egress-proxy/overlay-headroom.yaml"
+  [ -n "${1:-}" ] && echo "$REPO/tools/network/egress-proxy/overlay-headroom-isolated.yaml"
+  return 0
 }
 
 # Echo the path of the network-isolation compose overlay, or nothing if the run
@@ -1169,18 +1185,11 @@ network_isolation_overlay() {
     exit 2
   }
 
-  # A headroom proxy points the agent at host.docker.internal, which an internal
-  # network has no route to. Failing here is the whole point: the alternative is
-  # an agent phase that dies on its first model call and reads like an outage.
-  # GLM runs are not refused: squid routes them to zbridge (write_zbridge_squid_conf).
-  if [ "${AGENT_HEADROOM_ENABLED:-false}" = "true" ]; then
-    echo "[run_task] REFUSING: network isolation cannot coexist with a host-side proxy." >&2
-    echo "[run_task]   AGENT_HEADROOM_ENABLED=${AGENT_HEADROOM_ENABLED:-unset}" >&2
-    echo "[run_task]   It routes the agent through host.docker.internal, which main" >&2
-    echo "[run_task]   cannot reach once its default network is internal." >&2
-    echo "[run_task]   Run without it, or set NETWORK_ISOLATION_OFF=1 to drop the block." >&2
-    exit 2
-  fi
+  # This used to REFUSE a headroom run: the proxy was on the host, and main
+  # cannot reach host.docker.internal once its network is internal. The proxy is
+  # a container in the project now (overlay-headroom.yaml), so there is nothing
+  # left to refuse -- and the refusal was what sent people to
+  # NETWORK_ISOLATION_OFF=1 in .env, which turned the block off for every run.
 
   # stdout is the return channel here, and ensure_image narrates its build to
   # stdout. Without the redirect its progress lines end up inside the overlay

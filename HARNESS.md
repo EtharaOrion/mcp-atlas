@@ -240,6 +240,57 @@ Key verifier output files:
 | `rubric_breakdown.json` | Per-criterion scores from LLM judge |
 | `ctrf.json` | Per-test results with weights (CTRF format) + `final_reward` |
 
+## Headroom (optional prompt compression)
+
+Both paths are off. Each is one environment variable, and each adds one container to the
+project; neither changes the egress allowlist.
+
+```bash
+AGENT_HEADROOM_ENABLED=true  scripts/run_task.sh tasks/<task>   # agent's prompts
+GRADER_HEADROOM_ENABLED=true scripts/run_task.sh tasks/<task>   # rubric evidence
+```
+
+| | Where it runs | Path |
+|---|---|---|
+| Agent | `headroom` container (`tools/headroom`), with a squid of its own | main → headroom → squid → api.anthropic.com, or → zbridge on a GLM run |
+| Grader | inside the `judge` container (`codex-judge-headroom:latest`) | no network at all; compression happens before the codex call |
+
+Neither runs on the host any more. The host proxy could not be reached from an isolated run,
+so a Claude run was refused outright and a GLM run silently dropped compression — and a host
+proxy is outside squid, which matters: headroom reaches for HuggingFace, a litellm price list
+and an onnxruntime telemetry host while starting. In a container those are denied.
+
+**The agent path does not use `headroom proxy`.** That program rewrites the whole request, and
+it deleted Claude Code's deferred tool loading: measured, 61 tools in and 60 out, with the
+`server_tool_use` / `tool_search_tool_result` blocks stripped. With ~206 MCP tools Claude Code
+switches to deferred loading partway through a session (measured: assistant turn 10), so from that
+turn the conversation referenced a tool the request no longer declared and the API answered `400
+Tool reference 'tool_search_tool_regex' not found in available tools`. Two runs died that way.
+
+`tools/headroom/compress_proxy.py` replaces it. It forwards everything byte for byte except
+`messages`, and only when the compressed result has the same *shape*: same messages, same non-text
+blocks, same tool_use and tool_result ids. Anything else — an unparsable body, a raising
+compressor, a result that grew, a moved block — sends the original bytes, and after three failures
+it stops trying for the rest of the run. Cache breakpoints are carried back onto the compressed
+messages so prompt caching still applies. `scripts/tests/test_agent_compress.py` pins each of
+those.
+
+**The agent path needs memory.** It makes seven containers in one project, and on an 8 GB docker
+VM that was enough for a global out-of-memory: the kernel killed the proxy mid-run, docker stopped
+resolving its name, and the agent ended with `API Error: Can't reach the API server (EAI_AGAIN)`
+after ten turns — published as a reward of 0, because harbor sees an agent process that exited 0.
+`run_task.sh` now refuses below 12 GB (`HEADROOM_MIN_DOCKER_GB`, `HEADROOM_IGNORE_MEMORY=1`), the
+proxy is capped and restarted, and a run that loses the API is classed `infrastructure` and left
+unscored rather than averaged in as a zero.
+
+The agent path is still a change to what the benchmark measures, not just to what it costs: the
+trajectory stops being the record of what the model saw, and a compressor that re-decides what to
+crush as the conversation grows moves the cached prefix, so caching pays the write premium every
+turn instead of the read discount (`services/scoring/grader_compress.py` argues this at length;
+the breakpoints themselves are preserved). Measured saving on
+real trajectories from this harness is 0 to 3%, so treat both as cost experiments until a
+measurement on your own tasks says otherwise.
+
 ## CC-bridge
 
 `services/cc-bridge/cc_bridge.py` is an OpenAI-compatible proxy that routes LLM calls through the Claude Code CLI instead of the Anthropic API. Use it to run agents on Claude without a direct API key when a Claude Code subscription is active.

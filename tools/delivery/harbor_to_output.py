@@ -508,11 +508,33 @@ def _now() -> str:
 # trajectory parsing (Claude Code stream-json)
 # ---------------------------------------------------------------------------
 
+# The agent stopped because the model call failed, not because it was done.
+# Claude Code ends the session with its own "API Error: ..." string, and harbor
+# records no exception for it -- the agent process exits 0 -- so without this
+# the trial publishes whatever the graders make of a half-finished run.
+#
+# Three real ones from this harness, all published as a reward of 0:
+#
+#   API Error: Can't reach the API server ... (EAI_AGAIN)        proxy OOM-killed
+#   API Error: 400 Tool reference 'tool_search_tool_regex' ...    proxy rewrote the request
+#
+# ANY "API Error" that ends a run is infrastructure. An earlier version listed
+# transport wordings only (EAI_AGAIN, ECONNREFUSED, ...) and the two 400s slipped
+# through, which is the same silence again for a different reason.
+_TRANSPORT_ERROR = re.compile(
+    r"^\s*API Error\b"
+    r"|Can't reach the API server"
+    r"|(?:EAI_AGAIN|ENOTFOUND|ECONNREFUSED|ECONNRESET|socket hang up|fetch failed)",
+    re.IGNORECASE,
+)
+
+
 def parse_stream(path: Path) -> dict:
     """Walk the agent stream (claude-code.jsonl) once and pull out everything the reports need."""
     out = {
         "messages": [],        # flat OpenAI-shaped messages
         "trace": [],           # per tool call: step, tool, args, result, is_error
+        "transport_error": None,  # set when the run ended with the model unreachable
         "instruction": None,
         "final_answer": "",
         "valid": 0, "invalid": 0, "error": 0,
@@ -632,6 +654,13 @@ def parse_stream(path: Path) -> dict:
         elif et == "result":
             out["final_answer"] = ev.get("result") or ""
             out["termination_reason"] = ev.get("subtype") or ("error" if ev.get("is_error") else "end")
+            # A session that ended because the model API became unreachable.
+            # Recorded separately from termination_reason, which cannot carry
+            # it: Claude Code reports this with subtype "success" and
+            # is_error true, so the subtype wins and the run reads as a normal
+            # finish. classify_failure calls it infrastructure.
+            if _TRANSPORT_ERROR.search(out["final_answer"]):
+                out["transport_error"] = out["final_answer"][:200]
             u = ev.get("usage") or {}
             if u:
                 out["usage"] = {
@@ -727,6 +756,14 @@ def classify_failure(passed: bool, traj_rows: list[dict], rubric_rows: list[dict
     """
     if exception:
         return "infrastructure", f"{exception.get('exception_type')}: {str(exception.get('exception_message'))[:160]}"
+    # Before `passed` and before every rule that reads tool use: a run that lost
+    # the model mid-session has tool calls and rubric rows, so those rules all
+    # match and score it as an answer. Harbor records no exception for it --
+    # from its side the agent process exited 0 -- so this is the only signal.
+    if stream.get("transport_error"):
+        return "infrastructure", (
+            "agent lost its route to the model API and stopped: "
+            + stream["transport_error"][:160])
     if passed:
         return "passed", "reward met the task threshold"
     if stream["valid"] == 0 and stream["trace"]:

@@ -161,6 +161,10 @@ def _run_harbor_stage(tmp_path: Path, compose: str | None = None, **overrides) -
     for key in ("NETWORK_ISOLATION_OFF", "CC_MODE", "ANTHROPIC_BASE_URL"):
         env.pop(key, None)
     env["AGENT_HEADROOM_ENABLED"] = "false"
+    # Same reason, and it bit: this repo's own .env carries
+    # GRADER_HEADROOM_ENABLED=true, so every judge test inherited a third
+    # overlay and read as a dispatch bug.
+    env["GRADER_HEADROOM_ENABLED"] = "false"
 
     for key, value in overrides.items():
         if value is None:
@@ -385,80 +389,206 @@ def test_zbridge_run_is_isolated_through_squid(tmp_path, fake_zbridge):
     assert any(a.startswith("disallowed_tools=") for a in run.argv), run.argv
 
 
-@pytest.fixture
-def fake_headroom():
-    """A health endpoint on the port route_agent_through_proxy probes.
+# --- agent-path Headroom -----------------------------------------------------
+# What stood here was a REFUSAL: headroom ran on the host, so main was pointed
+# at host.docker.internal, which an internal network cannot route to. The proxy
+# is a container in the project now, so the run is expected to START -- with the
+# block still on, and with the proxy's own egress fenced separately.
 
-    Answering it is what makes the run ACTUALLY routed through
-    host.docker.internal, which is the thing isolation conflicts with. Without
-    it the flag is set and nothing is routed -- a different case, and the one
-    below asserts they are treated differently.
-    """
-    import http.server
-    import threading
-
-    class _Health(http.server.BaseHTTPRequestHandler):
-        def do_GET(self):
-            self.send_response(200)
-            self.send_header("Content-Length", "2")
-            self.end_headers()
-            self.wfile.write(b"ok")
-
-        def log_message(self, *_):
-            pass
-
-    srv = http.server.HTTPServer(("127.0.0.1", 0), _Health)
-    threading.Thread(target=srv.serve_forever, daemon=True).start()
-    try:
-        yield {"HEADROOM_PROXY_PORT": str(srv.server_address[1])}
-    finally:
-        srv.shutdown()
-        srv.server_close()
-
-
-def test_headroom_run_is_refused_under_isolation(tmp_path, fake_headroom):
-    """A LIVE headroom proxy still conflicts, and must still be refused."""
-    run = _run_harbor_stage(tmp_path, AGENT_HEADROOM_ENABLED="true", **fake_headroom)
-    assert not run.invoked, "a headroom run reached harbor under isolation"
-    assert run.returncode != 0, (
-        "run_task exited 0 after refusing -- the refusal did not propagate out "
-        "of the command substitution"
-    )
-    assert "REFUSING" in run.stderr, run.stderr[-2000:]
+HEADROOM_OVERLAY = PROXY_DIR / "overlay-headroom.yaml"
+HEADROOM_OVERLAY_ISOLATED = PROXY_DIR / "overlay-headroom-isolated.yaml"
 
 
 @requires_docker
-def test_headroom_flag_without_a_proxy_does_not_refuse(tmp_path):
-    """The refusal is about a route, not about a flag.
+def test_headroom_runs_under_isolation_in_its_own_container(tmp_path):
+    run = _run_harbor_stage(tmp_path, AGENT_HEADROOM_ENABLED="true")
+    assert "REFUSING" not in run.stderr, run.stderr[-2000:]
+    assert run.invoked, "the run never reached harbor:\n" + run.stderr[-2000:]
 
-    This test exists because of what the old behaviour cost. The refusal fired
-    on AGENT_HEADROOM_ENABLED alone, so a machine with the flag left true in
-    .env and NO headroom proxy running could not start an isolated run at all --
-    and the way out of it was NETWORK_ISOLATION_OFF=1, also in .env, which
-    turned the egress block off for every run from then on. A closed-world task
-    then installed Pillow, puppeteer and chromium off the public internet.
+    overlays = [run.argv[i + 1] for i, a in enumerate(run.argv) if a == "--extra-docker-compose"]
+    assert overlays == [str(OVERLAY), str(HEADROOM_OVERLAY), str(HEADROOM_OVERLAY_ISOLATED)], (
+        "the headroom overlays must come last: they re-set main's NO_PROXY, and "
+        "an earlier position would let overlay.yaml's own value win\n" + str(overlays)
+    )
+    assert run.env.get("ANTHROPIC_BASE_URL") == "http://headroom:8787", run.env.get("ANTHROPIC_BASE_URL")
+    assert run.env.get("HEADROOM_UPSTREAM") == "https://api.anthropic.com"
+    assert Path(run.env["HEADROOM_SQUID_CONF"]) == PROXY_DIR / "squid.conf"
 
-    With no proxy answering, ANTHROPIC_BASE_URL is never set, nothing is routed
-    at host.docker.internal, and there is no conflict to refuse. run_task clears
-    the flag to say so rather than refusing on a stale one.
+
+@requires_docker
+def test_headroom_on_a_glm_run_keeps_zbridge_behind_the_proxy(tmp_path, fake_zbridge):
+    """The case the host chain gave up on: isolation ON and CC_MODE=zbridge.
+
+    It used to clear AGENT_HEADROOM_ENABLED and route straight to zbridge, so a
+    GLM run asked for compression and silently got none.
     """
-    run = _run_harbor_stage(
-        tmp_path,
-        AGENT_HEADROOM_ENABLED="true",
-        # Nothing listens here. Fixed high port rather than the 8787 default so
-        # a developer's own headroom proxy cannot make this test flap.
-        HEADROOM_PROXY_PORT="59787",
+    port = fake_zbridge["ZB_PORT"]
+    run = _run_harbor_stage(tmp_path, AGENT_HEADROOM_ENABLED="true",
+                            CC_MODE="zbridge", **fake_zbridge)
+    assert run.invoked, run.stderr[-2000:]
+    assert run.env.get("ANTHROPIC_BASE_URL") == "http://headroom:8787", (
+        "the agent bypassed headroom; compression was dropped, not applied"
     )
-    assert "REFUSING" not in run.stderr, (
-        "refused an isolated run over a headroom proxy that is not running:\n"
-        + run.stderr[-2000:]
+    assert run.env.get("HEADROOM_UPSTREAM") == f"http://host.docker.internal:{port}"
+    conf = Path(run.env["HEADROOM_SQUID_CONF"])
+    assert f"acl zbridge_port port {port}" in conf.read_text().splitlines(), (
+        "headroom's own squid does not allow zbridge, so every model call is denied"
     )
-    assert run.invoked, (
-        "the run never reached harbor:\n" + run.stderr[-2000:]
+
+
+@requires_docker
+def test_no_headroom_container_unless_the_flag_is_set(tmp_path):
+    run = _run_harbor_stage(tmp_path)
+    assert run.invoked, run.stderr[-2000:]
+    assert str(HEADROOM_OVERLAY) not in run.argv, "compression is opt-in"
+    assert not run.env.get("ANTHROPIC_BASE_URL"), (
+        "a base URL was exported without the flag; harbor pins every model alias "
+        "to $MODEL whenever it is set"
     )
-    assert "--extra-docker-compose" in run.argv, (
-        "the run reached harbor without the isolation overlay -- open network"
+
+
+def test_the_headroom_overlay_exempts_it_from_mains_proxy():
+    """main reaches headroom directly, or squid denies a host not on its list."""
+    cfg = yaml.safe_load(HEADROOM_OVERLAY.read_text())
+    main_env = cfg["services"]["main"]["environment"]
+    for key in ("NO_PROXY", "no_proxy"):
+        assert "headroom" in main_env[key].split(","), main_env[key]
+    # Re-setting the key replaces it, so everything overlay.yaml exempted has to
+    # be repeated here -- light-servers above all, which is how main reads the world.
+    isolated = yaml.safe_load(OVERLAY.read_text())["services"]["main"]["environment"]
+    assert set(isolated["NO_PROXY"].split(",")) <= set(main_env["NO_PROXY"].split(",")), (
+        "the headroom overlay drops an exemption overlay.yaml made"
     )
+    assert cfg["services"]["headroom"]["image"] == "headroom-compress:latest"
+
+
+def test_the_headroom_overlay_leaves_claude_code_alone():
+    """Nothing about the agent's own behaviour is changed to suit compression.
+
+    ENABLE_TOOL_SEARCH=false sat here for two runs and did not help: the flag is
+    a mode selector rather than a switch, and the damage was on the proxy side
+    (61 tools in, 60 out). compress_proxy.py relays `tools` untouched, so the
+    agent is configured exactly as it is on a run without compression -- which
+    is also what keeps the two comparable.
+    """
+    cfg = yaml.safe_load(HEADROOM_OVERLAY.read_text())
+    env = cfg["services"]["main"]["environment"]
+    assert "ENABLE_TOOL_SEARCH" not in env, (
+        "the agent is being reconfigured for the compressor; a compressor that "
+        "needs that is not safe to put in front of it")
+    assert cfg["services"]["headroom"]["image"] == "headroom-compress:latest"
+
+
+def test_a_correctly_sized_vm_is_not_rounded_down_into_a_refusal(tmp_path):
+    """What docker reports for a VM set to 12 GB, measured: 12,304,840 kB.
+
+    The kernel's own reservation comes off the top, so flooring the division
+    called that machine 11 GB and refused it -- telling an operator to raise a
+    limit they had just raised, which is how a guard ends up commented out.
+    """
+    out = _drive_memory_check(tmp_path, str(12_304_840 * 1024))
+    assert "REACHED_THE_RUN" in out.stdout, out.stdout + out.stderr
+
+
+def test_headroom_gets_its_own_proxy_and_stays_out_of_the_agents_log():
+    cfg = yaml.safe_load(HEADROOM_OVERLAY_ISOLATED.read_text())
+    assert cfg["networks"]["headroom-net"]["internal"] is True
+    assert cfg["services"]["headroom"]["environment"]["HTTPS_PROXY"] == "http://headroom-proxy:3128"
+    # The agent's squid tees its access log into harbor's agent log dir, and
+    # detect_internet_use.py reads that as evidence of what the AGENT did.
+    # headroom's own blocked startup fetches (huggingface, a price list, an
+    # onnxruntime telemetry host) would be scored as the agent reaching for the
+    # web, so this proxy must not write there.
+    volumes = cfg["services"]["headroom-proxy"].get("volumes") or []
+    assert not any("/egress-out" in str(v) for v in volumes), volumes
+
+
+def _drive_memory_check(tmp_path: Path, mem_bytes: str | None, **env_over) -> subprocess.CompletedProcess:
+    """Run headroom_memory_check() out of run_task.sh against a stub docker.
+
+    Lifted rather than driven through a stage, the way test_network_isolation
+    drives load_dotenv: the check runs inside stage_preflight, and reaching it
+    for real would mean building images.
+    """
+    import re as _re
+    body = RUN_TASK.read_text()
+    m = _re.search(r"^headroom_memory_check\(\) \{.*?^\}", body, _re.S | _re.M)
+    assert m, "headroom_memory_check() not found in run_task.sh"
+
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir(parents=True, exist_ok=True)
+    docker = bin_dir / "docker"
+    # `docker info` answers with the byte count; anything else exits non-zero,
+    # so a check that shells out to something else fails loudly here.
+    docker.write_text(
+        "#!/bin/sh\n"
+        'if [ "$1" = "info" ]; then ' + (f'echo "{mem_bytes}"; exit 0; ' if mem_bytes is not None else "exit 1; ")
+        + "fi\nexit 9\n"
+    )
+    docker.chmod(0o755)
+
+    driver = tmp_path / "drive.sh"
+    driver.write_text(
+        "set -u\n"
+        f'PATH="{bin_dir}:$PATH"\n'
+        'AGENT_HEADROOM_ENABLED="${AGENT_HEADROOM_ENABLED:-true}"\n'
+        'HEADROOM_MIN_DOCKER_GB="${HEADROOM_MIN_DOCKER_GB:-12}"\n'
+        + m.group(0) + "\n"
+        "headroom_memory_check\n"
+        'echo REACHED_THE_RUN\n'
+    )
+    env = dict(os.environ)
+    # Pinned, not inherited: this repo's .env sets these, and a shell that
+    # carries AGENT_HEADROOM_ENABLED=false turns the refusal tests green
+    # without the refusal ever running.
+    env.pop("HEADROOM_IGNORE_MEMORY", None)
+    env.pop("HEADROOM_MIN_DOCKER_GB", None)
+    env["AGENT_HEADROOM_ENABLED"] = "true"
+    env.update({k: str(v) for k, v in env_over.items()})
+    return subprocess.run(["bash", str(driver)], capture_output=True, text=True, env=env, timeout=60)
+
+
+def test_a_docker_too_small_for_headroom_is_refused(tmp_path):
+    """The 8 GB case that killed a run: refuse before the agent phase is paid for."""
+    out = _drive_memory_check(tmp_path, str(8 * 1024**3))
+    assert out.returncode == 2, out.stdout + out.stderr
+    assert "REFUSING" in out.stderr, out.stderr
+    assert "REACHED_THE_RUN" not in out.stdout
+
+
+def test_enough_memory_runs(tmp_path):
+    out = _drive_memory_check(tmp_path, str(16 * 1024**3))
+    assert "REACHED_THE_RUN" in out.stdout, out.stdout + out.stderr
+
+
+def test_the_check_is_only_about_headroom_runs(tmp_path):
+    out = _drive_memory_check(tmp_path, str(4 * 1024**3), AGENT_HEADROOM_ENABLED="false")
+    assert "REACHED_THE_RUN" in out.stdout, out.stderr
+
+
+def test_an_unreadable_docker_does_not_block(tmp_path):
+    """No answer is not evidence of a small machine, and blocking on it would
+    make every CI box unable to run."""
+    out = _drive_memory_check(tmp_path, None)
+    assert "REACHED_THE_RUN" in out.stdout, out.stderr
+
+
+def test_the_memory_check_can_be_overridden(tmp_path):
+    out = _drive_memory_check(tmp_path, str(4 * 1024**3), HEADROOM_IGNORE_MEMORY="1")
+    assert "REACHED_THE_RUN" in out.stdout, out.stderr
+
+
+def test_run_task_knows_how_to_build_the_compressor():
+    body = RUN_TASK.read_text()
+    assert re.search(r'headroom-compress\)\s*echo "\$REPO/tools/headroom"', body), (
+        "image_build_context has no headroom-compress arm; ensure_image would pull it"
+    )
+    assert re.search(r"headroom-compress\)\s*\n?\s*printf .*scoring=", body, re.S), (
+        "the compressor image COPYs grader_compress.py --from=scoring; without the "
+        "named context the build fails"
+    )
+    assert (REPO / "tools" / "headroom" / "Dockerfile").is_file()
+    assert (REPO / "tools" / "headroom" / "compress_proxy.py").is_file()
 
 
 def test_zbridge_is_allowed_when_isolation_is_off(tmp_path, fake_zbridge):

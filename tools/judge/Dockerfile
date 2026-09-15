@@ -35,6 +35,25 @@ FROM python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1
 # standard library (checked across every bundle).
 RUN pip install --no-cache-dir --root-user-action=ignore pytest mcp
 
+# Optional grader-path Headroom (services/scoring/grader_compress.py). OFF by
+# default: the library pulls litellm and friends, ~440 MB on an image every run
+# uses, and measured 0 to 3% saving on real trajectories. Built as its own tag
+# when GRADER_HEADROOM_ENABLED=true, by scripts/run_task.sh or:
+#
+#   docker build --build-context scoring=services/scoring \
+#     --build-arg WITH_HEADROOM=1 -t codex-judge-headroom:latest tools/judge
+#
+# The tiktoken vocab is baked in the same layer because the judge cannot
+# download it: its squid allows chatgpt.com and auth.openai.com only.
+ARG WITH_HEADROOM=0
+RUN if [ "$WITH_HEADROOM" = "1" ]; then \
+        pip install --no-cache-dir --root-user-action=ignore "headroom-ai>=0.37,<0.38" \
+        && mkdir -p /opt/tiktoken \
+        && TIKTOKEN_CACHE_DIR=/opt/tiktoken python3 -c \
+           "import tiktoken; tiktoken.get_encoding('o200k_base'); tiktoken.get_encoding('cl100k_base')" \
+        && chmod -R a+rX /opt/tiktoken; \
+    fi
+
 COPY --from=codex /out/codex /usr/local/bin/codex
 COPY --from=codex /out/rg /usr/local/bin/rg
 COPY --from=scoring rubric_judge_cli.py grader_compress.py /judge/
