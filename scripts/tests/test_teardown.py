@@ -137,6 +137,50 @@ def test_stop_harness_removes_running_orphans_and_their_volumes(fake_project):
 
 
 @requires_docker
+def test_anonymous_volumes_are_swept_too():
+    """egress-proxy's base declares VOLUME twice, so each proxy leaks two.
+
+    64-hex name, no labels at all, so no compose-project filter will ever find
+    them once their container is gone. Four per run with the judge's proxy; two
+    interrupted runs left eight of them on the disk.
+    """
+    proj = "zz-pytest__anon__env"
+    name = f"{proj}-egress-proxy-1"
+    anon = []
+    try:
+        _sh("docker", "run", "-d", "--name", name,
+            "--label", f"com.docker.compose.project={proj}",
+            "-v", "/var/log/squid", "-v", "/var/spool/squid",
+            "alpine:3", "sleep", "600")
+        anon = _sh("docker", "inspect", name, "--format",
+                   "{{range .Mounts}}{{if eq .Type \"volume\"}}{{println .Name}}{{end}}{{end}}"
+                   ).stdout.split()
+        assert len(anon) == 2, anon
+        assert all(len(v) == 64 for v in anon), "expected anonymous volumes"
+        assert all(v in _volumes() for v in anon)
+
+        out = _sh("bash", str(STOP_HARNESS))
+        left = [v for v in anon if v in _volumes()]
+        assert not left, f"anonymous volumes survived: {left}\n{out.stdout}{out.stderr}"
+    finally:
+        _sh("docker", "rm", "-f", name)
+        for v in anon:
+            _sh("docker", "volume", "rm", "-f", v)
+
+
+@requires_docker
+def test_a_named_volume_nobody_owns_is_left_alone():
+    """Only anonymous volumes are taken on shape. A named one is somebody's."""
+    vol = "zz-pytest-precious-data"
+    try:
+        _sh("docker", "volume", "create", vol)
+        _sh("bash", str(STOP_HARNESS))
+        assert vol in _volumes(), "swept a named volume that is not harbor's"
+    finally:
+        _sh("docker", "volume", "rm", "-f", vol)
+
+
+@requires_docker
 def test_dry_run_reports_the_volume_it_would_remove(fake_project):
     """The old filter reported nothing here, which is how the leak stayed hidden."""
     fake_project()

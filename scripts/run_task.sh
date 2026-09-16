@@ -321,12 +321,28 @@ teardown_this_runs_projects() {
                   <(compose_projects_now | grep . | sort) 2>/dev/null \
          | grep '__' || true)"
   [ -n "$new" ] || return 0
+  local ids vols
   while IFS= read -r p; do
     [ -n "$p" ] || continue
     echo "[run_task] teardown: removing compose project $p" >&2
-    docker ps -aq --filter "label=com.docker.compose.project=$p" 2>/dev/null \
-      | xargs -r docker rm -f >/dev/null 2>&1 || true
+    ids="$(docker ps -aq --filter "label=com.docker.compose.project=$p" 2>/dev/null)"
+    # Read the mounts BEFORE the containers go. workspace_data carries the
+    # compose project label and can be found again by it, but egress-proxy's
+    # base image (ubuntu/squid) declares VOLUME /var/log/squid and
+    # /var/spool/squid, so each proxy also holds two ANONYMOUS volumes -- 64 hex
+    # characters, no labels, four per run counting the judge's proxy. Once their
+    # container is gone nothing can attribute them to this run again, and they
+    # sit on the disk forever.
+    vols=""
+    if [ -n "$ids" ]; then
+      vols="$(printf '%s\n' "$ids" | xargs -r docker inspect \
+          --format '{{range .Mounts}}{{if eq .Type "volume"}}{{println .Name}}{{end}}{{end}}' \
+          2>/dev/null | grep . | sort -u)"
+      printf '%s\n' "$ids" | xargs -r docker rm -f >/dev/null 2>&1 || true
+    fi
     docker volume ls -q --filter "label=com.docker.compose.project=$p" 2>/dev/null \
+      | xargs -r docker volume rm -f >/dev/null 2>&1 || true
+    [ -n "$vols" ] && printf '%s\n' "$vols" \
       | xargs -r docker volume rm -f >/dev/null 2>&1 || true
     docker network ls -q --filter "label=com.docker.compose.project=$p" 2>/dev/null \
       | xargs -r docker network rm >/dev/null 2>&1 || true

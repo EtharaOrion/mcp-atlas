@@ -2,8 +2,8 @@
 # Tear down the harness background services and reap Docker leftovers.
 #
 # Images and build cache are deliberately KEPT: they are the warm cache that
-# makes a second run fast. This reaps only stopped containers and the volumes
-# nothing is attached to.
+# makes a second run fast. This reaps harbor's containers and the volumes they
+# leave behind -- named and anonymous both -- and nothing else.
 #
 #   bash scripts/stop_harness.sh [--dry-run] [--all] [--force]
 #
@@ -145,32 +145,55 @@ else
         --format '{{.Label "com.docker.compose.project"}}	{{.ID}}' 2>/dev/null \
       | awk -F'\t' '$1 ~ /__/ {print $2}'
   }
-  # Volumes belonging to a harbor compose project and attached to nothing that
-  # outlives the container sweep. Same "__" marker as the containers above.
+  # Volume names mounted by the given containers, named and anonymous alike.
+  _volumes_of() {
+    [ "$#" -gt 0 ] || return 0
+    docker inspect "$@" \
+        --format '{{range .Mounts}}{{if eq .Type "volume"}}{{println .Name}}{{end}}{{end}}' \
+        2>/dev/null | grep . | sort -u
+  }
+
+  # What to remove: every volume a swept container mounts, plus every volume
+  # labelled with a harbor compose project, plus unused ANONYMOUS volumes --
+  # minus anything a surviving container still holds.
+  #
+  # The compose label alone is not enough, and this is where the rest of the
+  # leak lived. egress-proxy's base image (ubuntu/squid) declares
+  # VOLUME /var/log/squid and VOLUME /var/spool/squid, so every proxy container
+  # gets two volumes with 64-hex names and NO labels at all -- four per run,
+  # counting the judge's proxy. `docker compose down --volumes` takes them when
+  # a run ends normally. A run that is interrupted leaves them, and once their
+  # container is gone no label or name can attribute them to harbor again.
+  #
+  # So they are matched on shape instead: a 64-hex name is Docker's own marker
+  # for an anonymous volume (compose names its own "<project>_<volume>"), and an
+  # anonymous volume attached to nothing cannot be addressed by anybody. That is
+  # the same line `docker volume prune` draws by default -- it removes unused
+  # anonymous volumes and needs --all before it touches a named one.
   #
   # Takes the ids the sweep is removing and treats them as already gone. Under
   # --dry-run they are NOT actually removed, so without this every volume would
   # still read as in use and a dry run would promise to remove nothing -- the
   # exact blind spot that hid this bug.
   _harness_volumes() {  # _harness_volumes <container-id-being-removed>...
-    local attached="" c _s _keep=()
+    local c _x _s _keep=() _cand _live
+    _cand="$( { _volumes_of "$@"
+                docker volume ls --filter "label=com.docker.compose.project" \
+                    --format '{{.Label "com.docker.compose.project"}}	{{.Name}}' 2>/dev/null \
+                  | awk -F'\t' '$1 ~ /__/ {print $2}'
+                docker volume ls -q 2>/dev/null | grep -E '^[0-9a-f]{64}$'
+              } | grep . | sort -u )"
+    [ -n "$_cand" ] || return 0
     while read -r c; do
       [ -n "$c" ] || continue
       _s=0
       for _x in "$@"; do [ "$c" = "$_x" ] && _s=1; done
       [ "$_s" = 0 ] && _keep+=("$c")
     done < <(docker ps -aq 2>/dev/null)
-    if [ "${#_keep[@]}" -gt 0 ]; then
-      attached="$(docker inspect "${_keep[@]}" \
-          --format '{{range .Mounts}}{{if eq .Type "volume"}}{{println .Name}}{{end}}{{end}}' \
-          2>/dev/null | grep . | sort -u)"
-    fi
-    docker volume ls --filter "label=com.docker.compose.project" \
-        --format '{{.Label "com.docker.compose.project"}}	{{.Name}}' 2>/dev/null \
-      | awk -F'\t' '$1 ~ /__/ {print $2}' \
-      | while IFS= read -r v; do
-          printf '%s\n' "$attached" | grep -qxF -- "$v" || printf '%s\n' "$v"
-        done
+    _live="$(_volumes_of ${_keep[@]+"${_keep[@]}"})"
+    printf '%s\n' "$_cand" | while IFS= read -r v; do
+      printf '%s\n' "$_live" | grep -qxF -- "$v" || printf '%s\n' "$v"
+    done
   }
 
   # RUNNING containers are swept when nothing owns them. The live-run guard
