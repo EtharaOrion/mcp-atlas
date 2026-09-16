@@ -412,7 +412,8 @@ PRUNE_FROM_OUTPUT = ("trial.log", "lock.json")
 JUDGE_MARKERS = ("judge_container.json", "reward_producer.json",
                  "judge-container-test.txt")
 
-PRUNE_FROM_VERIFIER = ("junit.xml", "reward_channel_a.json") + JUDGE_MARKERS
+PRUNE_FROM_VERIFIER = ("junit.xml", "reward_channel_a.json",
+                       "test-stdout.txt", "grade_report.md") + JUDGE_MARKERS
 
 
 def _prune(*paths: Path) -> None:
@@ -1251,7 +1252,7 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     # the rubric alone. Leaving it behind made the published tree look complete
     # while quietly not being enough to reproduce its own reward.
     for f in ("ctrf.json", "reward.json", "reward_channel_a.json",
-              "test-stdout.txt", "detail.json",
+              "detail.json",
               "rubric_breakdown.json", "judge_tokens.json",
               "state_channel.json", "end_env.json"):
         _copy(ver / f, run_dir / "verifier" / f)

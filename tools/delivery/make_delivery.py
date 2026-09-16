@@ -242,9 +242,14 @@ def make_delivery(
         ver_dst = dst_run / "verifier"
         ver_dst.mkdir()
 
-        for fname in ("ctrf.json", "test-stdout.txt"):
-            if (ver_src / fname).exists():
-                shutil.copy2(ver_src / fname, ver_dst / fname)
+        if (ver_src / "ctrf.json").exists():
+            shutil.copy2(ver_src / "ctrf.json", ver_dst / "ctrf.json")
+
+        for src in (run_dir / "logs" / "verifier-stdout.txt",
+                    ver_src / "test-stdout.txt"):
+            if src.exists():
+                shutil.copy2(src, ver_dst / "test-stdout.txt")
+                break
 
         reward_src = _load(ver_src / "reward.json", {}) or {}
         _dump(ver_dst / "reward.json", {
