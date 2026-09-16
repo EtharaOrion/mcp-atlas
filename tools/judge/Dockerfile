@@ -3,11 +3,12 @@
 #   rubric        codex (gpt-5.6-sol) over /tests/rubric.json
 #   channel A     pytest over /tests/test_outputs.py
 #   state Rc/Rb   /tests/state_dump.py, over MCP against light-servers
-#   ledger        the bundle's own grade.py / reward writer
+#   ledger        /harness/scoring/tests/grade.py, over the bundle's weights
 #
-# The bundle's own scripts run here unchanged, so the numbers cannot drift from
-# what main used to produce. What this image supplies is exactly what they need:
-# python, pytest, the mcp client, and codex.
+# The grading scripts are the harness's, mounted with the rest of
+# services/scoring, so the numbers cannot drift from what main used to produce or
+# between one bundle and the next. What this image supplies is exactly what they
+# need: python, pytest, the mcp client, and codex.
 #
 # Build with the scoring tree as a named context -- the shared graders are baked
 # in, not mounted:

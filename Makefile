@@ -86,7 +86,10 @@ test-env: # verify mcp_server_template.json and install_mcp_packages.sh stay in 
 	cd services/agent-environment && uv sync && uv run pytest
 
 test-python: # adapter + scoring + mcp_eval + scripts unit tests (no Docker, no network)
-	$(PYTEST_PYTHON) -m pytest adapters services/scoring/tests services/mcp_eval/tests scripts/tests services/light-servers/tests -q
+	# services/scoring/tests/test_judge_container.py asserts on /logs/verifier and
+	# only runs inside a trial container; the judge runs it there by path.
+	$(PYTEST_PYTHON) -m pytest adapters services/scoring/tests services/mcp_eval/tests scripts/tests services/light-servers/tests \
+		--ignore=services/scoring/tests/test_judge_container.py -q
 
 smoke: # end-to-end bundle generation + Harbor validation (no Docker, no network)
 	$(PYTEST_PYTHON) scripts/smoke_test.py

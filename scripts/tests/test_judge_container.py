@@ -4,9 +4,9 @@ Grading used to happen in `main`, the container the agent had root in, and the
 rubric on the host, where `codex exec --sandbox read-only` can still READ every
 other run on disk (measured: a canary outside the working directory was cat'ed
 straight back). All four channels now run in the bundle's `judge` service
-(tools/judge/codexbridge.py), which runs the bundle's own tests/evaluate.sh --
-unchanged from what main ran -- so the numbers cannot drift. These tests pin
-what makes that true, cheapest first:
+(tools/judge/codexbridge.py), which runs services/scoring/tests/evaluate.sh --
+the harness's one copy for every bundle, unchanged from what main ran -- so the
+numbers cannot drift. These tests pin what makes that true, cheapest first:
 
   1. codexbridge in-process, against a fake evaluate.sh: token, readiness,
      reports, and that the command is fixed rather than taken from the caller.
@@ -54,6 +54,17 @@ JUDGE_IMAGE = "codex-judge:latest"
 AUTH_TARGET = "/run/codex-auth/auth.json"
 BUNDLES = sorted(REPO.glob("tasks/*/task.toml"))
 
+# The grading scripts are the harness's, one copy for every bundle, mounted into
+# the judge with the rest of services/scoring. They used to be copied into each
+# bundle's tests/ and drifted there: four different evaluate.sh, three bundles
+# with no grade.py at all. Where they are in a container:
+SCORING_IN_CONTAINER = "/harness/scoring"
+SHARED_TESTS = REPO / "services" / "scoring" / "tests"
+SHARED_EVALUATE = SHARED_TESTS / "evaluate.sh"
+SHARED_GRADE = SHARED_TESTS / "grade.py"
+SHARED_CONTAINER_CHECK = SHARED_TESTS / "test_judge_container.py"
+CONTAINER_CHECK_PATH = f"{SCORING_IN_CONTAINER}/tests/test_judge_container.py"
+
 _opener = build_opener(ProxyHandler({}))
 
 
@@ -82,7 +93,7 @@ def _call(url: str, body: dict | None = None, token: str | None = None) -> tuple
 # =============================================================================
 
 FAKE_EVALUATE = r"""#!/bin/bash
-# Stands in for a bundle's tests/evaluate.sh: writes the same reports, without
+# Stands in for the harness's evaluate.sh: writes the same reports, without
 # codex, pytest or a world. In the container these paths are fixed at
 # /logs/verifier and /tmp/agent_trajectory.json; here they follow the fixture,
 # and the trajectory path is the one codexbridge exports to every child.
@@ -179,12 +190,20 @@ def test_health_names_a_missing_login(bridge, monkeypatch, tmp_path):
     assert "codex login not mounted" in doc["reason"]
 
 
-def test_health_names_a_bundle_that_shipped_no_evaluate_sh(bridge, monkeypatch, tmp_path):
+def test_health_names_an_evaluate_sh_that_is_not_mounted(bridge, monkeypatch, tmp_path):
     """Without it there is nothing to grade with, and the trial must not start."""
     monkeypatch.setattr(bridge.module, "EVALUATE_SH", tmp_path / "missing" / "evaluate.sh")
     status, doc = _call(f"{bridge.url}/healthz")
     assert status == 503
     assert "evaluate.sh" in doc["reason"] and "mounted" in doc["reason"]
+
+
+def test_the_judge_defaults_to_the_harness_copy_of_the_grading(monkeypatch):
+    """The default path, not the fixture's. A judge that fell back to a bundle
+    path would grade with whatever that bundle happened to ship."""
+    monkeypatch.delenv("JUDGE_EVALUATE_SH", raising=False)
+    mod = _load("codexbridge_defaults", BRIDGE)
+    assert str(mod.EVALUATE_SH) == f"{SCORING_IN_CONTAINER}/tests/evaluate.sh"
 
 
 def test_health_names_an_unwritable_report_dir(bridge, monkeypatch, tmp_path):
@@ -314,6 +333,27 @@ def test_bundle_declares_the_judge(task_toml):
 
 @pytest_bundles
 @pytest.mark.parametrize("task_toml", BUNDLES, ids=_ids(BUNDLES))
+def test_no_bundle_ships_its_own_grading_scripts(task_toml):
+    """These three are the harness's. A copy left in a bundle is not read by
+    anything any more, so it can only drift and mislead whoever finds it."""
+    tests = task_toml.parent / "tests"
+    for name in ("evaluate.sh", "grade.py", "test_judge_container.py"):
+        assert not (tests / name).exists(), (
+            f"tests/{name} belongs to the harness now: services/scoring/tests/{name}")
+
+
+@pytest_bundles
+@pytest.mark.parametrize("task_toml", BUNDLES, ids=_ids(BUNDLES))
+def test_main_can_reach_the_judge_container_check(task_toml):
+    """test.sh's last step runs it from /harness/scoring, inside main. Without
+    the mount that step reports the grading never happened, on every run."""
+    vols = [str(v) for v in (_compose(task_toml)["services"]["main"].get("volumes") or [])]
+    targets = {target for _, target, _ in (_volume(v) for v in vols)}
+    assert SCORING_IN_CONTAINER in targets, vols
+
+
+@pytest_bundles
+@pytest.mark.parametrize("task_toml", BUNDLES, ids=_ids(BUNDLES))
 def test_the_judge_mounts_what_it_grades_and_nothing_more(task_toml):
     """Everything the graders read, read-only, plus the one place reports go.
 
@@ -371,28 +411,46 @@ def test_main_builds_the_trajectory_and_grades_nothing(task_toml):
     tests = task_toml.parent / "tests"
     sh = (tests / "test.sh").read_text()
     assert "judge_client.py" in sh, "main never hands the run to the judge"
-    assert "/tests/test_judge_container.py" in sh, "nothing would report where grading ran"
-    assert (tests / "test_judge_container.py").is_file()
+    assert CONTAINER_CHECK_PATH in sh, "nothing would report where grading ran"
+    assert SHARED_CONTAINER_CHECK.is_file()
+    assert not (tests / "test_judge_container.py").exists(), (
+        "a bundle copy would shadow the harness's; there is one check, in one place")
     code = _code(sh)
     for grader in ("rubric_judge_cli.py", "state_dump.py", "/tests/test_outputs.py", "grade.py"):
         assert grader not in code, f"{grader} still runs in main, the container the agent had root in"
 
 
-@pytest_bundles
-@pytest.mark.parametrize("task_toml", BUNDLES, ids=_ids(BUNDLES))
-def test_evaluate_sh_carries_every_scored_channel(task_toml):
-    """The bundle's own script, unchanged, is what the judge runs -- which is why
-    the published numbers do not move when grading changes container."""
-    tests = task_toml.parent / "tests"
-    ev = tests / "evaluate.sh"
-    assert ev.is_file(), "no evaluate.sh: the judge has nothing to grade with"
-    body = _code(ev.read_text())
-    assert "/harness/scoring/rubric_judge_cli.py" in body, "rubric channel missing"
-    assert "test_outputs.py" in body, "Channel A missing"
+def test_evaluate_sh_carries_every_scored_channel():
+    """One script, run by the judge for every bundle, so the published numbers
+    cannot move because a bundle shipped an older copy of the grading."""
+    assert SHARED_EVALUATE.is_file(), "no evaluate.sh: the judge has nothing to grade with"
+    body = _code(SHARED_EVALUATE.read_text())
+    assert f"{SCORING_IN_CONTAINER}/rubric_judge_cli.py" in body, "rubric channel missing"
+    assert "/tests/test_outputs.py" in body, "Channel A missing"
+    assert f"{SCORING_IN_CONTAINER}/tests/grade.py" in body, "the ledger never runs"
     assert "reward.json" in body, "the ledger never publishes a reward"
-    if (tests / "state_dump.py").is_file():
-        assert "state_dump.py" in body, "state channel missing"
+    assert "/tests/state_dump.py" in body, "state channel missing"
     assert "judge_client.py" not in body, "the judge would call itself over HTTP"
+
+
+def test_evaluate_sh_reads_every_per_bundle_file_from_the_bundle():
+    """What the harness owns is the grading; what the task owns is what to grade.
+    A per-bundle file read out of /harness/scoring would grade every task against
+    one bundle's answers."""
+    body = _code(SHARED_EVALUATE.read_text())
+    for name in ("test_outputs.py", "test_weights.json", "rubric.json", "state_dump.py"):
+        assert f"{SCORING_IN_CONTAINER}/tests/{name}" not in body, (
+            f"{name} is per-bundle; it must come from /tests")
+
+
+def test_a_bundle_that_still_grades_itself_is_not_graded_twice():
+    """Three bundles still write reward_channel_a.json from inside pytest, with
+    assert-style checks. grade.py reads return values, so regrading them here
+    would score every passing assert False (a passing assert returns None) and
+    publish a reward that is far too low with nothing raised anywhere."""
+    body = _code(SHARED_EVALUATE.read_text())
+    assert '[ -s "$LOGS/reward_channel_a.json" ]' in body, (
+        "grade.py would overwrite a reward the bundle's own pytest step produced")
 
 
 @pytest_bundles
@@ -402,7 +460,7 @@ def test_the_container_check_is_never_weighted(task_toml):
     harbor_to_output counts a failing unweighted test in test_outputs.py as
     'missed' -- which is why the check lives in a file of its own."""
     tests = task_toml.parent / "tests"
-    names = {n.name for n in ast.walk(ast.parse((tests / "test_judge_container.py").read_text()))
+    names = {n.name for n in ast.walk(ast.parse(SHARED_CONTAINER_CHECK.read_text()))
              if isinstance(n, ast.FunctionDef)}
     weights = json.loads((tests / "test_weights.json").read_text())
     weighted = set(((weights.get("components") or {}).get("traj_tests") or {}).get("tests") or {})
@@ -410,40 +468,36 @@ def test_the_container_check_is_never_weighted(task_toml):
     assert "judge_container" not in (tests / "test_outputs.py").read_text()
 
 
-@pytest_bundles
-@pytest.mark.parametrize("task_toml", BUNDLES, ids=_ids(BUNDLES))
-def test_reward_is_stamped_only_where_it_includes_the_rubric(task_toml):
+def test_reward_is_stamped_only_where_it_includes_the_rubric():
     """producer=judge_container tells the host its work is done. A bundle whose
     own reward leaves the rubric out (bull-street's binary traj_pytest) must not
-    claim it, or the published reward silently loses the rubric channel."""
-    tests = task_toml.parent / "tests"
-    stamped = "reward_producer.json" in (tests / "evaluate.sh").read_text()
-    reads_rubric = any("rubric_breakdown" in f.read_text()
-                       for f in (tests / "test_outputs.py", tests / "grade.py") if f.is_file())
-    assert stamped == reads_rubric, f"stamped={stamped} but reward reads rubric={reads_rubric}"
+    claim it, or the published reward silently loses the rubric channel.
+
+    One script grades them all, so the test is on the reward it just wrote, not
+    on which files the bundle ships."""
+    body = _code(SHARED_EVALUATE.read_text())
+    assert "reward_producer.json" in body, "the host would re-grade every run"
+    assert 'isinstance(d.get("rubric"), (int, float))' in body, (
+        "the stamp does not check that this reward carries the rubric")
 
 
-@pytest_bundles
-@pytest.mark.parametrize("task_toml", BUNDLES, ids=_ids(BUNDLES))
-def test_the_stamp_never_waits_on_a_marker_written_after_it(task_toml):
+def test_the_stamp_never_waits_on_a_marker_written_after_it():
     """judge_container.json is written by judge_client.py back in main, AFTER the
     evaluation returns. An evaluate.sh that checks it never writes the label at
     all: the host pass then re-grades every run, and reshape fails on the ones it
     cannot re-grade (measured on an oracle run with an empty trajectory)."""
-    code = _code((task_toml.parent / "tests" / "evaluate.sh").read_text())
+    code = _code(SHARED_EVALUATE.read_text())
     assert "judge_container.json" not in code, (
         "evaluate.sh waits on a marker that cannot exist yet")
 
 
-@pytest_bundles
-@pytest.mark.parametrize("task_toml", BUNDLES, ids=_ids(BUNDLES))
-def test_step_5_keeps_reward_json_numeric(task_toml):
+def test_step_5_keeps_reward_json_numeric():
     """harbor reads /logs/verifier/reward.json into VerifierResult.rewards,
     typed dict[str, float | int]. A string there fails the whole trial with a
     ValidationError and scores it 0 -- which is exactly what the first
     end-to-end run of the judge container did with a producer stamp. The label
     travels in reward_producer.json and run_task.sh adds it on the host."""
-    sh = _code((task_toml.parent / "tests" / "evaluate.sh").read_text())
+    sh = _code(SHARED_EVALUATE.read_text())
     assert 'doc["producer"]' not in sh and 'out["producer"]' not in sh
 
 

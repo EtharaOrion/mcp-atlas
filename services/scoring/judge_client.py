@@ -4,7 +4,7 @@
 tests/test.sh runs in `main` -- the container the agent worked in -- so nothing
 is graded there any more. It builds the trajectory with the bundle's own parser
 and calls this, which posts the trajectory to the judge (tools/judge). The judge
-runs the bundle's /tests/evaluate.sh: the state dump, Channel A, the rubric and
+runs /harness/scoring/tests/evaluate.sh: the state dump, Channel A, the rubric and
 the ledger, all with the codex login and the answer files that `main` never gets.
 
 Reports are NOT relayed back through here. The judge writes them straight into
@@ -13,7 +13,7 @@ where harbor collects them no matter what main does afterwards.
 
 This writes one file of its own:
   judge_container.json   whether the evaluation ran in the judge container, and
-                         if not, why. tests/test_judge_container.py reads it, and
+                         if not, why. The judge-container check reads it, and
                          so does scripts/run_task.sh.
 
 Exit 0 only when the judge reports a finished evaluation with a reward written.

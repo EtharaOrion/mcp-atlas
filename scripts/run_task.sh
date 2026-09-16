@@ -1365,7 +1365,7 @@ egress_guard_settings() {
 # (tools/judge/codexbridge.py, image codex-judge:latest): Channel A, the state
 # dump, the rubric and the ledger, none of them in `main`, the container the
 # agent had root in. The codex login is mounted there and nowhere else, and the
-# judge runs the bundle's own tests/evaluate.sh over the trajectory main sends
+# judge runs /harness/scoring/tests/evaluate.sh over the trajectory main sends
 # it. Detected per bundle, so one without a judge service grades as before.
 
 bundle_has_judge() {
