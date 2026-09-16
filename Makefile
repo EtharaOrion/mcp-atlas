@@ -129,6 +129,12 @@ build-egress-proxy: # build the egress allowlist proxy (network isolation for th
 build-codex-judge: # build the rubric judge container (codexbridge + codex CLI + the shared grader)
 	docker build --build-context scoring=services/scoring -t codex-judge:latest tools/judge/
 
+build-codex-judge-headroom: # build the judge image with Headroom (only needed for GRADER_HEADROOM_ENABLED=true)
+	docker build --build-context scoring=services/scoring --build-arg WITH_HEADROOM=1 -t codex-judge-headroom:latest tools/judge/
+
+build-headroom-compress: # build the agent's prompt compressor (only needed for AGENT_HEADROOM_ENABLED=true)
+	docker build --build-context scoring=services/scoring -t headroom-compress:latest tools/headroom/
+
 # ---------------------------------------------------------------------------
 # zbridge — GLM-5.3 via z.ai (Anthropic-to-GLM proxy + OpenAI adapter)
 # Requires ZB_ZAI_API_KEY and ZB_BRIDGE_SECRET in .env

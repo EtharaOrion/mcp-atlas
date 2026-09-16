@@ -321,16 +321,22 @@ def _no_saving_once(result):
     # type: (Any) -> None
     """Report a compressor that ran and declined to shrink anything.
 
-    Measured on 0.24.0, this is what a trajectory under the library's internal
-    size gate produces (3,868 tokens in, 3,868 out). It is a legitimate
-    outcome, not a fault -- but it is silent, and silence is also what a failed
-    install looks like from the logs. Naming it makes the two distinguishable.
+    A legitimate outcome, not a fault -- but a silent one, and silence is also
+    what a failed install looks like from the logs. Naming it separates them.
+
+    It is also the COMMON outcome here, not an edge case. Measured on 0.37.0
+    against real trajectories from this harness: 0% saved on a 670K-token
+    trajectory sent the way the rubric judge sends it (one rendered blob), and
+    3% with the same steps fed as separate tool messages. An earlier note in
+    this function blamed the library's internal size gate, from a 3,868-token
+    measurement on 0.24.0; that does not explain a 670K-token no-op, so the
+    message no longer claims a cause it cannot support.
     """
     before = int(getattr(result, "tokens_before", 0) or 0)
     _warn_once(
         "nosaving",
-        "ran but saved nothing at {} tokens (input under the library's size "
-        "gate); sending uncompressed".format(before),
+        "ran and returned nothing smaller at {} tokens; "
+        "sending uncompressed".format(before),
     )
 
 

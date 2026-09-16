@@ -46,6 +46,7 @@ REPO = Path(__file__).resolve().parents[2]
 JUDGE_DIR = REPO / "tools" / "judge"
 BRIDGE = JUDGE_DIR / "codexbridge.py"
 OVERLAY_JUDGE = PROXY_DIR / "overlay-judge.yaml"
+OVERLAY_JUDGE_HEADROOM = PROXY_DIR / "overlay-judge-headroom.yaml"
 OVERLAY_ZBRIDGE = PROXY_DIR / "overlay-zbridge.yaml"
 SQUID_JUDGE = PROXY_DIR / "squid-judge.conf"
 RUN_TASK = REPO / "scripts" / "run_task.sh"
@@ -646,6 +647,51 @@ def test_a_bundle_without_a_judge_is_unchanged(tmp_path):
     run = _run_harbor_stage(tmp_path)
     assert run.invoked, run.stderr[-2000:]
     assert str(OVERLAY_JUDGE) not in run.argv
+
+
+# --- grader-path Headroom ----------------------------------------------------
+# It used to be wired into `main` (enable_headroom.sh, now gone): a pip line in
+# the task image and a flag on the service that stopped grading anything when
+# the judge took over. So the flag was on in six bundles and the grader read it
+# nowhere. It belongs on the judge, which is where the rubric is graded.
+
+def test_grader_headroom_swaps_the_judge_image_and_sets_the_flag(tmp_path, login):
+    run = _run_harbor_stage(tmp_path, compose=JUDGE_BUNDLE_COMPOSE,
+                            CODEX_AUTH_FILE=str(login), GRADER_HEADROOM_ENABLED="true")
+    assert run.invoked, run.stderr[-2000:]
+    assert _overlays(run) == [str(OVERLAY), str(OVERLAY_JUDGE), str(OVERLAY_JUDGE_HEADROOM)]
+
+
+def test_grader_headroom_is_off_by_default(tmp_path, login):
+    run = _run_harbor_stage(tmp_path, compose=JUDGE_BUNDLE_COMPOSE, CODEX_AUTH_FILE=str(login))
+    assert run.invoked, run.stderr[-2000:]
+    assert str(OVERLAY_JUDGE_HEADROOM) not in run.argv
+
+
+def test_the_grader_headroom_overlay_touches_nothing_but_the_judge():
+    """Compression runs inside the judge process; the network is not involved."""
+    cfg = yaml.safe_load(OVERLAY_JUDGE_HEADROOM.read_text())
+    assert set(cfg) == {"services"}, "a grader-path overlay must not add networks"
+    assert set(cfg["services"]) == {"judge"}, sorted(cfg["services"])
+    judge = cfg["services"]["judge"]
+    assert judge["image"] == "codex-judge-headroom:latest"
+    assert judge["environment"]["GRADER_HEADROOM_ENABLED"] == "true"
+    # Without the baked vocab the library cannot count tokens here: the judge's
+    # squid allows chatgpt.com and auth.openai.com only.
+    assert judge["environment"]["TIKTOKEN_CACHE_DIR"] == "/opt/tiktoken"
+    assert "volumes" not in judge, "the judge's mounts are what it grades; leave them alone"
+
+
+def test_run_task_builds_the_headroom_judge_from_the_same_dockerfile():
+    body = RUN_TASK.read_text()
+    assert re.search(r'codex-judge-headroom\)\s*echo\s+"\$REPO/tools/judge"', body), (
+        "image_build_context has no codex-judge-headroom arm; ensure_image would pull it"
+    )
+    assert re.search(r"codex-judge-headroom\)\s*\n?\s*printf .*WITH_HEADROOM=1", body, re.S), (
+        "the headroom judge is built from the same Dockerfile; without the build "
+        "arg it is a second tag for the plain image and the flag does nothing"
+    )
+    assert "ARG WITH_HEADROOM" in (JUDGE_DIR / "Dockerfile").read_text()
 
 
 # =============================================================================

@@ -294,6 +294,13 @@ declared in the bundle's compose file:
 `tests/test_judge_container.py` is report-only and is not listed in `test_weights.json` — a judge
 outage must never move the agent's score or failure class.
 
+**A bundle needs nothing for Headroom.** `GRADER_HEADROOM_ENABLED=true` makes `run_task.sh` add
+`tools/network/egress-proxy/overlay-judge-headroom.yaml`, which swaps in a judge image carrying
+the library. `AGENT_HEADROOM_ENABLED=true` adds a proxy container in front of the agent the same
+way. Both used to be wired into `main` — a pip line in the task image and a flag on the service —
+which stopped grading anything the day the judge took over, and left six bundles carrying a
+switch the grader never read. Do not put either back in a bundle.
+
 ### 2.7 `tests/test_outputs.py` — the scored suite
 
 The heart of grading. Reads the trajectory from `$COMPLEXMCP_TRAJECTORY`.
