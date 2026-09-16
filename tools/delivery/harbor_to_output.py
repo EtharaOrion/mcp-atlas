@@ -1469,9 +1469,19 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
 
     # ---- episode record for summary.json ----------------------------------
     goal_rows = [r for r in traj_rows if (r.get("weight") or 0) > 0]
+    _comparable = _orig_rew.get("comparable")
+    _caveats = _orig_rew.get("caveats")
+    if _scored:
+        _quadrant = "PASSED" if passed else "FAILED"
+    else:
+        _quadrant = "UNSCORED"
     judge = {
         "reward": final_reward, "passed": passed,
-        "quadrant": "PASSED" if passed else "FAILED", "threshold": threshold,
+        "quadrant": _quadrant, "threshold": threshold,
+        **({"comparable": _comparable} if _comparable is not None else {}),
+        **({"caveats": _caveats} if _caveats else {}),
+        **({"unscored_reason": reward_pct_doc["unscored_reason"]}
+           if "unscored_reason" in reward_pct_doc else {}),
         "components": {
             "traj_tests": {"weight": traj_w, "value": reward_pct(traj_val),
                            "earned": norm_reward((traj_val or 0) * traj_w) if traj_val is not None else None},
