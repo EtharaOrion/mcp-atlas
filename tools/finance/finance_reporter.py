@@ -20,8 +20,12 @@ Data sources (all already on disk when this runs):
 Environment (read from the process env, falling back to the nearest .env
 at or above the repo root):
     ODOO_URL           https://<odoo-instance>   (unset => skip, exit 0)
-    ODOO_AUTH_TOKEN    sent as "Authorization: Bearer <token>"
-                       (header/scheme overridable via ODOO_AUTH_HEADER/_SCHEME)
+    ODOO_EXTRA_HEADERS JSON object merged into every request's headers, e.g.
+                       {"Authorization": "Bearer <token>"}. The current endpoint
+                       takes usage records by ODOO_URL alone and needs no
+                       credentials, so this is normally unset -- it is the only
+                       hook left if you repoint ODOO_URL at an instance that
+                       does require auth. Must survive .env quoting as JSON.
     FINANCE_PROJECT_ID       e.g. PRJ-512   (required to report)
     FINANCE_PROJECT_TYPE     default "Technical"
     FINANCE_TEAM_TYPE        default "Projects"
@@ -312,11 +316,6 @@ def build_payload(run_dir: Path, task_id: str, account: dict) -> dict:
 # ---------------------------------------------------------------------- http
 def headers() -> dict:
     hdrs = {"Content-Type": "application/json", "Accept": "application/json"}
-    token = env("ODOO_AUTH_TOKEN")
-    if token:
-        name = env("ODOO_AUTH_HEADER", "Authorization")
-        scheme = env("ODOO_AUTH_SCHEME", "Bearer")
-        hdrs[name] = f"{scheme} {token}".strip()
     extra = env("ODOO_EXTRA_HEADERS")
     if extra:
         try:
@@ -422,9 +421,6 @@ def main() -> int:
     if args.dry_run:
         print(json.dumps(payload, indent=2))
         return 0
-
-    if not env("ODOO_AUTH_TOKEN") and not env("ODOO_EXTRA_HEADERS"):
-        log("warning: ODOO_AUTH_TOKEN is empty — sending unauthenticated", err=True)
 
     status, text = post(url, payload)
     ok = 200 <= status < 300

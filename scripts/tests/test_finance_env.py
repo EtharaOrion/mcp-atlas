@@ -23,7 +23,6 @@ RUN_TASK = REPO / "scripts" / "run_task.sh"
 
 VALID = {
     "ODOO_URL": "https://odoo.example",
-    "ODOO_AUTH_TOKEN": "t",
     "FINANCE_PROJECT_ID": "PRJ-512",
     "FINANCE_PROJECT_TYPE": "Technical",
     "FINANCE_TEAM_TYPE": "Projects",

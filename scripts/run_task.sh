@@ -502,13 +502,6 @@ check_finance_env() {
   warn_finance_case FINANCE_PROJECT_TYPE "$FINANCE_DEFAULT_PROJECT_TYPE"
   warn_finance_case FINANCE_TEAM_TYPE    "$FINANCE_DEFAULT_TEAM_TYPE"
 
-  # Not fatal: the reporter posts unauthenticated and says so
-  # (finance_reporter.py:411-412). Some deployments accept that; refusing to run
-  # over it would break a working setup for a value this script cannot verify.
-  if [ -z "${ODOO_AUTH_TOKEN:-}" ] && [ -z "${ODOO_EXTRA_HEADERS:-}" ]; then
-    echo "[run_task] WARNING: ODOO_AUTH_TOKEN is empty — the usage POST will be unauthenticated" >&2
-  fi
-
   [ "$fail" = "0" ] || {
     echo "[run_task] finance env check FAILED — fix <repo>/.env and retry." >&2
     echo "[run_task]   Clear ODOO_URL to disable reporting, or set FINANCE_ENV_CHECK_OFF=1 to skip this gate." >&2
