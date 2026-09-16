@@ -241,10 +241,10 @@ blocks delivery regardless, because configuration regresses quietly.
 |---|---|---|---|---|
 | 1 | Parse the agent stream into a trajectory | `main` | `/logs/agent/claude-code.txt` | `/tmp/agent_trajectory.json` |
 | 2 | Hand it to the judge (`judge_client.py`) | `main` | trajectory | `judge_container.json` |
-| 3 | Report where it was graded (`tests/test_judge_container.py`) | `main` | `judge_container.json` | `judge-container-test.txt` |
+| 3 | Report where it was graded (`/harness/scoring/tests/test_judge_container.py`) | `main` | `judge_container.json` | `judge-container-test.txt` |
 
-Everything scored happens in the judge container, driven by **`tests/evaluate.sh`** — the
-bundle's own grading script, moved out of `main` unchanged:
+Everything scored happens in the judge container, driven by **`services/scoring/tests/evaluate.sh`** — the
+harness's grading script, one copy for every bundle, mounted at `/harness/scoring`:
 
 | # | Stage of `evaluate.sh` | Reads | Writes |
 |---|---|---|---|
@@ -281,8 +281,8 @@ declared in the bundle's compose file:
 
 | Piece | What it does |
 |---|---|
-| Step 2 of `test.sh` | Calls `/harness/scoring/judge_client.py --trajectory ...`, which POSTs this run's trajectory to `http://judge:8770/evaluate`; the judge then runs `bash /tests/evaluate.sh` |
-| `tests/evaluate.sh` | The bundle's own grading script, unchanged from what `main` used to run — which is why the published numbers do not move |
+| Step 2 of `test.sh` | Calls `/harness/scoring/judge_client.py --trajectory ...`, which POSTs this run's trajectory to `http://judge:8770/evaluate`; the judge then runs `bash /harness/scoring/tests/evaluate.sh` |
+| `services/scoring/tests/evaluate.sh` | The harness's grading script, one copy for every bundle. It reads what is per-bundle (`test_outputs.py`, `test_weights.json`, `rubric.json`, `state_dump.py`, the answer files) from `/tests` |
 | Judge mounts | `/tests` (suite + answer files), `/harness/scoring`, `/workspace` read-only, and harbor's per-trial `/logs/verifier`, so reports are written where harbor collects them without passing back through `main` |
 | Image | `python:3.12-slim` + `pytest` + `mcp` + the codex binary (no node runtime) |
 | `JUDGE_TOKEN` | Fresh per run (`run_task.sh`). Reaches the judge via compose and `test.sh` via `[verifier.env]`; harbor never gives verifier env to the agent |
@@ -292,7 +292,7 @@ declared in the bundle's compose file:
 | Reward | When the reward already includes the container's rubric, step 5 writes `reward_producer.json` (`{"producer": "judge_container"}`) and `run_task.sh` carries it into `reward.json` on the host. Never write a string into `reward.json` itself: harbor validates it as `dict[str, float \| int]` and fails the trial. If the judge could not grade, `run_task.sh` grades on the host as before |
 | Published shape | The judge's own markers (`judge_container.json`, `reward_producer.json`, `judge-container-test.txt`) are read during the run and then pruned by `harbor_to_output.py`, so a published run carries the same files it did before the judge container existed |
 
-`tests/test_judge_container.py` is report-only and is not listed in `test_weights.json` — a judge
+`services/scoring/tests/test_judge_container.py` is report-only and is not listed in `test_weights.json` — a judge
 outage must never move the agent's score or failure class.
 
 **A bundle needs nothing for Headroom.** `GRADER_HEADROOM_ENABLED=true` makes `run_task.sh` add
@@ -488,7 +488,7 @@ would leak into the prompt.
 | Must contain a stream-json trajectory parser | Nothing else produces `/tmp/agent_trajectory.json` |
 | No `from benchmark import` | See §2.15 |
 | `test.sh` calls `judge_client.py` and grades nothing itself | Grading in `main` means grading in the container the agent had root in (§2.6a) |
-| Ship `tests/evaluate.sh` — the scored steps, run by the judge | Without it the judge is unhealthy and the trial stops before the agent phase |
+| Mount `services/scoring` at `/harness/scoring` — it carries `evaluate.sh`, the scored steps run by the judge | Without the mount the judge is unhealthy and the trial stops before the agent phase |
 | Declare the `judge` service and `JUDGE_TOKEN` in `[verifier.env]` | Without the token step 3 cannot authenticate and the rubric falls back to the host |
 
 ### `task.toml`, not `dataset.toml`

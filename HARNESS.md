@@ -219,7 +219,7 @@ login and the answer files that `main` never gets.
 1. Agent runs, writing to live light-servers
 2. Verifier runs `test.sh` in `main`, which only parses the agent stream into a trajectory and
    hands it to the judge (`judge_client.py` -> `POST /evaluate`)
-3. The judge runs the bundle's `tests/evaluate.sh`, which:
+3. The judge runs the harness's `services/scoring/tests/evaluate.sh`, which:
    - Calls `state_dump.py` to capture `end_env.json` (over MCP against the live light-servers)
    - Runs the rubric judge against `rubric.json` - writes `rubric_breakdown.json`
    - Runs `test_outputs.py` (pytest) for trajectory assertions and state diff - writes `reward_channel_a.json` and `state_channel.json`

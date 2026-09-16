@@ -56,7 +56,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pyyaml
       - name: Unit tests
-        run: python -m pytest adapters services/scoring/tests services/mcp_eval/tests scripts/tests -q
+        # services/scoring/tests/test_judge_container.py asserts on /logs/verifier
+        # and only runs inside a trial container; the judge runs it there by path.
+        run: python -m pytest adapters services/scoring/tests services/mcp_eval/tests scripts/tests --ignore=services/scoring/tests/test_judge_container.py -q
 
   smoke:
     runs-on: ubuntu-latest

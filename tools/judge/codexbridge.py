@@ -3,10 +3,11 @@
 
 Every scored channel runs in here now -- rubric, Channel A, the state dump and
 the ledger -- and none of them runs in `main`, the container the agent had root
-in. The bundle's own grading script (/tests/evaluate.sh) is what runs, byte for
-byte, so the numbers cannot drift from what main used to produce; this image
-just supplies what those scripts need (python, pytest, the mcp client, codex)
-and the mounts they read.
+in. The harness's grading script (/harness/scoring/tests/evaluate.sh) is what
+runs, one copy shared by every bundle, so the numbers cannot drift from what
+main used to produce or between one bundle and the next; this image just
+supplies what it needs (python, pytest, the mcp client, codex) and the mounts
+it reads.
 
 The rubric was moved first, for a different reason: on the host,
 `codex exec --sandbox read-only` can still READ the whole disk -- other runs
@@ -21,7 +22,7 @@ forbids writes.
                   instead of after it.
   POST /evaluate  {"trajectory": {...}} + header x-judge-token. Writes the
                   trajectory where the bundle scripts expect it, runs
-                  /tests/evaluate.sh, and reports what it wrote. The reports
+                  the shared evaluate.sh, and reports what it wrote. The reports
                   land in /logs/verifier, which is harbor's own per-trial
                   directory on the host -- main never relays them.
 
@@ -55,11 +56,16 @@ HERE = Path(__file__).resolve().parent
 GRADED_IN = "judge-container"
 LOG_TAIL_CHARS = 4000
 
-# Where the bundle's own grading script lives, and the file its steps read the
-# trajectory from. Both are fixed: the caller says what to grade, never how.
-# main builds the trajectory with the bundle's own parser (test.sh step 1) and
-# posts it, so Channel A sees exactly the evidence it saw before the move.
-EVALUATE_SH = Path(os.environ.get("JUDGE_EVALUATE_SH", "/tests/evaluate.sh"))
+# Where the grading script lives, and the file its steps read the trajectory
+# from. Both are fixed: the caller says what to grade, never how. main builds
+# the trajectory with the bundle's own parser (test.sh step 1) and posts it, so
+# Channel A sees exactly the evidence it saw before the move.
+#
+# The script is the harness's, shared by every bundle and mounted here with the
+# rest of services/scoring. What is per-bundle -- test_outputs.py,
+# test_weights.json, rubric.json, state_dump.py, the answer files -- it reads
+# from /tests.
+EVALUATE_SH = Path(os.environ.get("JUDGE_EVALUATE_SH", "/harness/scoring/tests/evaluate.sh"))
 TRAJECTORY_PATH = Path(os.environ.get("JUDGE_TRAJECTORY_PATH", "/tmp/agent_trajectory.json"))
 VERIFIER_DIR = Path(os.environ.get("JUDGE_VERIFIER_DIR", "/logs/verifier"))
 
@@ -119,8 +125,9 @@ def not_ready() -> str | None:
     if importlib.util.find_spec("mcp") is None:
         return "the mcp client is not installed; the state dump cannot run here"
     if not EVALUATE_SH.is_file():
-        return (f"{EVALUATE_SH} is not mounted; the bundle's tests/ directory must be "
-                "mounted into this container (see the judge service in the bundle's compose file)")
+        return (f"{EVALUATE_SH} is not mounted; services/scoring must be mounted at "
+                "/harness/scoring in this container (see the judge service in the "
+                "bundle's compose file)")
     if not os.access(VERIFIER_DIR, os.W_OK):
         return f"{VERIFIER_DIR} is not writable; harbor's per-trial log dir must be mounted here"
     return None
