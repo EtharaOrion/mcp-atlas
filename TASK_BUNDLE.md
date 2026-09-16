@@ -290,6 +290,7 @@ declared in the bundle's compose file:
 | Network | Under isolation `tools/network/egress-proxy/overlay-judge.yaml` gives the judge its own squid (`squid-judge.conf`: `chatgpt.com`, `auth.openai.com`) on a network `main` never joins |
 | `[verifier] timeout_sec` | At least 1800: every channel is now graded inside the verifier window |
 | Reward | When the reward already includes the container's rubric, step 5 writes `reward_producer.json` (`{"producer": "judge_container"}`) and `run_task.sh` carries it into `reward.json` on the host. Never write a string into `reward.json` itself: harbor validates it as `dict[str, float \| int]` and fails the trial. If the judge could not grade, `run_task.sh` grades on the host as before |
+| Published shape | The judge's own markers (`judge_container.json`, `reward_producer.json`, `judge-container-test.txt`) are read during the run and then pruned by `harbor_to_output.py`, so a published run carries the same files it did before the judge container existed |
 
 `tests/test_judge_container.py` is report-only and is not listed in `test_weights.json` — a judge
 outage must never move the agent's score or failure class.

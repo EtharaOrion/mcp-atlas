@@ -1330,7 +1330,7 @@ PYEOF
 # the job dir instead also re-graded leftovers from earlier invocations,
 # spending judge quota on runs this one never made. No `trials` key at all (a
 # hand-driven --stage reshape over a job with no state) keeps the glob.
-host_rubric_trials() {
+this_invocations_trials() {
   local d="$OUTPUT_DIR/$JOB" t
   if state_has trials; then
     for t in $(state_get trials | tr ',' ' '); do
@@ -1364,7 +1364,7 @@ host_rubric_trials() {
 stage_host_rubric() {
   [ "$(state_get host_rubric_done)" = "1" ] && { echo "[run_task] host rubric already graded; skipping"; return 0; }
   # Trial dirs are named after the TASK slug, not the job: JOB=Input_1_oracle
-  # still produces Input_1__PMNhXaa. host_rubric_trials reads the names
+  # still produces Input_1__PMNhXaa. this_invocations_trials reads the names
   # stage_harbor recorded instead of globbing on "$JOB__*", which found nothing
   # whenever JOB was overridden. Harbor may produce >1 with --n-attempts N.
   local py; py="$REPO/.venv/bin/python"; [ -x "$py" ] || py=python3
@@ -1392,7 +1392,7 @@ stage_host_rubric() {
       # rerun retries this without repeating the agent phase.
       echo "[run_task] host rubric pass failed for $(basename "$trial"); rubric channel stays UNSCORED" >&2
     fi
-  done < <(host_rubric_trials)
+  done < <(this_invocations_trials)
   if [ "$seen" -eq 0 ]; then
     # Two different conditions, said differently on purpose: a state-tracking
     # bug that grades nothing must not read as an empty job dir.

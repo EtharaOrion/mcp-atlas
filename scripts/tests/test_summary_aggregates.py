@@ -622,3 +622,30 @@ def test_judge_container_reward_publishes_like_the_host_ledger(tmp_path):
             (written[0] / "trajectory" / "run_1" / "verifier" / "reward.json").read_text())
     assert published["judge_container"]["reward"] == published["host_rubric_pass"]["reward"] == 75.0
     assert published["judge_container"].get("producer") == "judge_container"
+
+
+def test_the_judge_markers_do_not_ship_in_the_published_run(tmp_path):
+    """The published tree keeps the shape it had before the judge container.
+
+    judge_container.json, reward_producer.json and judge-container-test.txt are
+    read while the run is still going -- the in-container check during the
+    verifier, then adopt_container_reward and host_rubric_pass in
+    stage_host_rubric, which runs before this converter. What has to outlive the
+    run is already folded in: reward.json keeps `producer`, the judge's usage
+    stays in judge_tokens.json.
+    """
+    job, out = _build_job(
+        tmp_path, [{"completion_rate": 0.9, "misbehave_rate": 0.0, "reward": 0.0}],
+        {"reward": 0.42, "completion_rate": 0.9, "misbehave_rate": 0.0,
+         "producer": "judge_container"},
+    )
+    ver = job / "trial_0" / "verifier"
+    for name in h2o.JUDGE_MARKERS:
+        (ver / name).write_text("{}")
+    written = h2o.convert_job(job, out, ks=[], run_offset=0)
+    assert written
+    published = written[0] / "trajectory" / "run_1" / "verifier"
+    for name in h2o.JUDGE_MARKERS:
+        assert not (published / name).exists(), f"{name} shipped in the published run"
+    reward = json.loads((published / "reward.json").read_text())
+    assert reward["producer"] == "judge_container", "the label itself must survive"

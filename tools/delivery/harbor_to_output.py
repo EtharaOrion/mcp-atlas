@@ -401,7 +401,18 @@ PRUNE_FROM_OUTPUT = ("trial.log", "lock.json")
 # source, see _junit_to_ctrf) and dropped afterwards. Tasks now emit
 # verifier/ctrf.json directly via services/scoring/ctrf_pytest_plugin.py, so no
 # new run produces this file at all — the prune only catches older job dirs.
-PRUNE_FROM_VERIFIER = ("junit.xml", "reward_channel_a.json")
+# The judge container's own markers. Every reader of these has already run by
+# the time a trial is published: the in-container check (tests/test.sh step 3)
+# reads them during the verifier, and run_task.sh's adopt_container_reward and
+# host_rubric_pass read them from the trial dir in stage_host_rubric, which runs
+# before this converter. What they carry that outlives the run is already
+# folded in -- reward.json keeps `producer`, and the judge's usage stays in
+# judge_tokens.json -- so dropping them keeps the published tree the shape it
+# had before the judge container existed.
+JUDGE_MARKERS = ("judge_container.json", "reward_producer.json",
+                 "judge-container-test.txt")
+
+PRUNE_FROM_VERIFIER = ("junit.xml", "reward_channel_a.json") + JUDGE_MARKERS
 
 
 def _prune(*paths: Path) -> None:
