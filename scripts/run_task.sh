@@ -284,6 +284,90 @@ open(tmp, "w").write(json.dumps(doc, indent=2) + "\n")
 os.replace(tmp, path)' "$STATE_FILE" "$1" "$2"
 }
 
+# ---------------------------------------------------------------- teardown ---
+# Harbor deletes its own compose project when `harbor run` RETURNS: --delete is
+# its default, and that teardown is `down --rmi local --volumes
+# --remove-orphans`, so a run that finishes takes its containers and its
+# workspace_data volume with it.
+#
+# Nothing does that when the process does not return. A Ctrl-C, a SIGTERM, or a
+# harbor that dies mid-trial leaves every container of that project up and the
+# volume attached to them -- and `make stop-harness` could not clear those
+# either, because a running container holds its volume open. Two interrupted
+# runs on this machine left 8 containers and 2 volumes behind for 50 minutes.
+#
+# So: record which compose projects exist before harbor starts, and on the way
+# out remove exactly the ones that appeared since. Scoped by the compose project
+# LABEL and by harbor's "__" trial marker, so a concurrent run of another task,
+# and anything on this machine that is not harbor's, is never touched.
+HARBOR_PROJECTS_BEFORE=""
+
+compose_projects_now() {
+  docker ps -a --filter "label=com.docker.compose.project" \
+      --format '{{.Label "com.docker.compose.project"}}' 2>/dev/null | sort -u
+}
+
+snapshot_compose_projects() {
+  docker info >/dev/null 2>&1 || return 0
+  HARBOR_PROJECTS_BEFORE="$(compose_projects_now)"
+}
+
+# Remove the compose projects this invocation created. Safe to call twice, and
+# safe to call when harbor already cleaned up: the delta is then empty.
+teardown_this_runs_projects() {
+  docker info >/dev/null 2>&1 || return 0
+  local new p
+  new="$(comm -13 <(printf '%s\n' "${HARBOR_PROJECTS_BEFORE:-}" | grep . | sort) \
+                  <(compose_projects_now | grep . | sort) 2>/dev/null \
+         | grep '__' || true)"
+  [ -n "$new" ] || return 0
+  local ids vols
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    echo "[run_task] teardown: removing compose project $p" >&2
+    ids="$(docker ps -aq --filter "label=com.docker.compose.project=$p" 2>/dev/null)"
+    # Read the mounts BEFORE the containers go. workspace_data carries the
+    # compose project label and can be found again by it, but egress-proxy's
+    # base image (ubuntu/squid) declares VOLUME /var/log/squid and
+    # /var/spool/squid, so each proxy also holds two ANONYMOUS volumes -- 64 hex
+    # characters, no labels, four per run counting the judge's proxy. Once their
+    # container is gone nothing can attribute them to this run again, and they
+    # sit on the disk forever.
+    vols=""
+    if [ -n "$ids" ]; then
+      vols="$(printf '%s\n' "$ids" | xargs -r docker inspect \
+          --format '{{range .Mounts}}{{if eq .Type "volume"}}{{println .Name}}{{end}}{{end}}' \
+          2>/dev/null | grep . | sort -u)"
+      printf '%s\n' "$ids" | xargs -r docker rm -f >/dev/null 2>&1 || true
+    fi
+    docker volume ls -q --filter "label=com.docker.compose.project=$p" 2>/dev/null \
+      | xargs -r docker volume rm -f >/dev/null 2>&1 || true
+    [ -n "$vols" ] && printf '%s\n' "$vols" \
+      | xargs -r docker volume rm -f >/dev/null 2>&1 || true
+    docker network ls -q --filter "label=com.docker.compose.project=$p" 2>/dev/null \
+      | xargs -r docker network rm >/dev/null 2>&1 || true
+  done <<< "$new"
+}
+
+# SIGINT/SIGTERM. Without these the script had no trap at all: Ctrl-C killed
+# harbor, the `|| { ... }` around it swallowed the 130, and the script walked on
+# into reshape, mask and finance and exited 0 with the whole compose project
+# still up.
+on_interrupt() {
+  trap - INT TERM
+  echo "" >&2
+  echo "[run_task] interrupted -- tearing down this run's containers and volumes" >&2
+  teardown_this_runs_projects
+  # 128 + signal, so run_batch.py can tell an interrupt from a task failure.
+  exit 130
+}
+on_terminate() {
+  trap - INT TERM
+  echo "[run_task] SIGTERM -- tearing down this run's containers and volumes" >&2
+  teardown_this_runs_projects
+  exit 143
+}
+
 list_trial_dirs() {
   local d="$OUTPUT_DIR/$JOB" p
   [ -d "$d" ] || return 0
@@ -882,9 +966,28 @@ stage_harbor() {
   # Snapshot what is already here; only the delta belongs to this invocation.
   local _pre; _pre="$(list_trial_dirs)"
   echo "[run_task] harbor ${args[*]}"
+  # Must be immediately before harbor: everything that appears after this point
+  # and carries harbor's "__" marker belongs to this invocation.
+  snapshot_compose_projects
   local _hrc=0
   HARBOR_OUTPUT_OFF=1 command harbor "${args[@]}" \
     || { _hrc=$?; echo "[run_task] harbor exited $_hrc; checking whether a trial actually ran" >&2; }
+
+  # An interrupted harbor is not a failed trial. Continuing into reshape, mask
+  # and finance would publish a half-run, and -- because harbor never reached
+  # its own teardown -- would leave the compose project up behind it. Clean up
+  # and stop, propagating the signal's exit code.
+  #
+  # The trap above catches the usual case, where the signal reaches this shell
+  # too. This catches the rest: a signal delivered only to harbor, and a harbor
+  # that died of one on its own.
+  case "$_hrc" in
+    130|143)
+      echo "[run_task] harbor was interrupted (exit $_hrc); tearing down and stopping" >&2
+      teardown_this_runs_projects
+      exit "$_hrc"
+      ;;
+  esac
 
   # A trial DIRECTORY is not a trial that RAN. Harbor creates it in
   # Trial.create(), before the environment is built and before
@@ -1680,6 +1783,9 @@ stage_finance() {
 # --- dispatch -----------------------------------------------------------------
 
 python3 "$REPO/scripts/patch_harbor.py"
+
+trap on_interrupt INT
+trap on_terminate TERM
 
 refuse_uncmountable_paths
 resolve_auth
