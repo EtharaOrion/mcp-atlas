@@ -6,6 +6,7 @@ import re
 import shutil
 import sys
 from pathlib import Path
+from typing import NamedTuple
 import sys as _sys
 from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parent))
@@ -40,53 +41,89 @@ _TEXT_SUFFIXES = {".json", ".jsonl", ".txt", ".md", ".xml", ".yaml", ".yml",
                   ".log", ".toml", ".py", ".csv", ".html", ".cfg", ".ini"}
 
 # ---------------------------------------------------------------------------
-# The build context shipped with the bundle.
+# Build contexts shipped with the bundle.
 #
-# A delivered bundle names light-servers:latest, which is on no registry.
-# Docker reads a bare name as Docker Hub, so a recipient who has never built it
-# gets "pull access denied" and the trial dies before the agent starts. That was
-# the first finding of the last quality review: "MCP server is missing ... no
-# source and cannot be pulled".
+# A delivered bundle names two images, light-servers:latest and
+# codex-judge:latest, and neither is on a registry. Docker reads a bare name as
+# Docker Hub, so a recipient who has never built them gets "pull access denied"
+# and the trial dies before the agent starts. That was the first finding of the
+# last quality review: "MCP server is missing ... no source and cannot be
+# pulled".
 #
-# So ship what builds it. The tree below is copied into the bundle's
-# data/environment/, beside the compose file that names it, and _rewrite_compose
-# points the service at that copy. `image:` stays, so a host that already holds
-# the tag (this one) reuses it and never rebuilds.
-#
-# The judge is deliberately NOT shipped. codex-judge:latest is built from
-# tools/judge in this repo, it needs services/scoring as a named build context,
-# and it runs on the operator's own Codex login, which cannot travel in any
-# form. A recipient grading a bundle needs this repo for that half.
-_VENDORED_CONTEXTS: dict[str, Path] = {
-    # the MCP fleet the task world is served from
-    "light-servers": REPO_ROOT / "services" / "light-servers",
-}
+# So ship what builds them, ship the graders they mount, and point the compose
+# file at those copies. `image:` stays on both services, so a host that already
+# holds a tag (this one) reuses it and never rebuilds.
 
+
+class _Vendored(NamedTuple):
+    """A repo tree copied into the bundle's environment/ directory.
+
+    `image` is the compose tag this tree builds, or None when the tree is not an
+    image at all. Scoring is the None case: it ships because two other things
+    need it, the judge's `COPY --from=scoring` at build time and the
+    /harness/scoring bind both containers read at grading time.
+    """
+
+    name: str
+    source: Path
+    image: str | None = None
+    extra_contexts: tuple[tuple[str, str], ...] = ()
+
+    @property
+    def anchor(self) -> str:
+        """The compose line a build block attaches to."""
+        return f"    image: {self.image}\n"
+
+    def build_block(self) -> str:
+        """That line with the build block this bundle needs under it."""
+        out = [self.anchor, "    build:\n", f"      context: ./{self.name}\n"]
+        if self.extra_contexts:
+            out.append("      additional_contexts:\n")
+            out += [f"        {k}: {v}\n" for k, v in self.extra_contexts]
+        return "".join(out)
+
+
+_VENDORED = (
+    # the MCP fleet the task world is served from
+    _Vendored("light-servers", REPO_ROOT / "services" / "light-servers",
+              image="light-servers:latest"),
+    # the rubric judge. tools/judge/Dockerfile does `COPY --from=scoring`, which
+    # compose supplies as a named context -- the same thing `make
+    # build-codex-judge` passes as --build-context scoring=services/scoring.
+    _Vendored("judge", REPO_ROOT / "tools" / "judge",
+              image="codex-judge:latest",
+              extra_contexts=(("scoring", "./scoring"),)),
+    # the shared graders, mounted at /harness/scoring by both containers
+    _Vendored("scoring", REPO_ROOT / "services" / "scoring"),
+)
+
+# judge_backend.json holds the local codex-bridge API key (gitignored). It is
+# named here rather than assumed absent: shipping it once puts a live
+# credential in someone else's hands.
 _VENDOR_IGNORE = shutil.ignore_patterns(
     "__pycache__", ".pytest_cache", "*.pyc", "*.pyo", ".DS_Store",
-    ".env", "*.log",
+    "judge_backend.json", ".env", "*.log",
 )
 
-# The compose edit, as a literal anchor. A miss is reported rather than guessed
-# at, because a silently un-rewritten compose ships looking correct and fails on
-# the recipient's machine, which is the exact failure this is here to end.
-_LIGHT_ANCHOR = "    image: light-servers:latest\n"
-_LIGHT_BUILD = (
-    "    image: light-servers:latest\n"
-    "    build:\n"
-    "      context: ./light-servers\n"
-)
+# The graders are bound by a path relative to the compose file, three levels up,
+# which in a delivered tree is not the repo. Docker creates a missing bind
+# source silently, so the symptom is /harness/scoring existing and being empty:
+# test.sh exits 2 and no reward file is ever written.
+_SCORING_SRC = "../../../services/scoring"
+_SCORING_DST = "./scoring"
 
 _COMPOSE_NOTE = """\
-# Delivered bundle. tools/delivery/make_delivery.py added one thing here:
-# light-servers gained `build: ./light-servers`, so the image is made from the
-# source shipped beside this file instead of pulled from a registry that does
-# not carry it. The `image:` tag is kept, so a host that already has it reuses
-# it and never builds.
+# Delivered bundle: tools/delivery/make_delivery.py rewrote three paths here so
+# this directory stands alone.
 #
-# Everything else is the bundle as authored, including the /harness/scoring
-# mount below. That path is relative to THIS file and reaches into the harness
-# checkout; grading needs that checkout, or SCORING_DIR pointed at a copy of it.
+#   light-servers    gained  build: ./light-servers
+#   judge            gained  build: ./judge, with ./scoring as a named context
+#   /harness/scoring binds   ./scoring, not <repo>/services/scoring
+#
+# Both services keep their `image:` tag. Compose builds only when the tag is
+# absent locally, so a host that already has the images reuses them untouched.
+# Any comment below that discusses ../../../services describes the in-repo
+# original, not this file.
 
 """
 
@@ -97,36 +134,26 @@ _COMPOSE_NOTE = """\
 _ENV_README = """\
 # Running this bundle
 
-## The world
-
-`light-servers` builds from `./light-servers`, shipped here. Nothing is pulled
-from a registry.
+Both images build from sources in this directory. Nothing is pulled from a
+registry.
 
     docker compose up --detach --wait
 
-Compose skips the build when the tag is already on the machine; `--build`
-forces a rebuild. The first build takes a few minutes, and the healthcheck
-allows a 900s start period, so `--wait` is doing its job while it looks stuck.
+`light-servers` builds from `./light-servers`, `judge` from `./judge` with
+`./scoring` as a named build context. Compose skips the build when the tag is
+already on the machine; `--build` forces a rebuild.
 
-That is enough to run the task and watch the agent work.
-
-## Grading needs the harness checkout
-
-Two pieces are not in this bundle:
-
-- `codex-judge:latest`, built from `tools/judge` with `services/scoring` as a
-  named build context (`make build-codex-judge`).
-- `/harness/scoring`, the shared graders. The compose file binds them by a path
-  relative to itself; point `SCORING_DIR` at your copy instead.
+The first `light-servers` build takes a few minutes. Its healthcheck allows a
+900s start period, so `--wait` is doing its job while it looks stuck.
 
 ## Variables the compose file requires
 
 | Variable | What to set it to |
 |---|---|
 | `JUDGE_TOKEN` | any random secret, e.g. `export JUDGE_TOKEN=$(openssl rand -hex 32)`. It only has to match between the two containers of one run. |
-| `CODEX_AUTH_FILE` | absolute path to your own Codex login, normally `~/.codex/auth.json` after `codex login`. It is mounted read-only and is the only credential the judge holds. |
+| `CODEX_AUTH_FILE` | absolute path to your own Codex login, normally `~/.codex/auth.json` after `codex login`. It is mounted read-only and is the only credential the judge holds. This one cannot be shipped in any form. |
 | `HOST_VERIFIER_LOGS_PATH` | absolute path to a host directory for this run's reports. Harbor sets it per trial; set it yourself for a manual run. |
-| `SCORING_DIR` | absolute path to `services/scoring` from the harness checkout. |
+| `SCORING_DIR` | optional. Defaults to `./scoring`, shipped here. Point it elsewhere to grade with a different checkout of the graders. |
 
 ## What runs where
 
@@ -242,27 +269,28 @@ def _build_judge_usage(tokens: dict) -> dict:
 
 
 def _vendor_build_contexts(env_dir: Path) -> list[str]:
-    """Copy every _VENDORED_CONTEXTS tree into the bundle's environment/ dir."""
+    """Copy every _VENDORED tree into the bundle's environment/ directory."""
     shipped: list[str] = []
-    for name, src_tree in _VENDORED_CONTEXTS.items():
-        if not src_tree.is_dir():
-            print(f"Warning: build context missing, not shipped: {src_tree}",
+    for tree in _VENDORED:
+        if not tree.source.is_dir():
+            print(f"Warning: build context missing, not shipped: {tree.source}",
                   file=sys.stderr)
             continue
         # Replace rather than merge. make_delivery clears the bundle before it
         # writes, so this only fires when the function is run again over a tree
         # already packed, and a merge there would leave a file deleted from the
         # repo sitting in the bundle for good.
-        if (env_dir / name).exists():
-            shutil.rmtree(env_dir / name)
-        shutil.copytree(src_tree, env_dir / name, ignore=_VENDOR_IGNORE)
-        shipped.append(name)
+        dest = env_dir / tree.name
+        if dest.exists():
+            shutil.rmtree(dest)
+        shutil.copytree(tree.source, dest, ignore=_VENDOR_IGNORE)
+        shipped.append(tree.name)
 
     # `main` builds from this directory and its Dockerfile COPYs nothing, so
-    # without this the three trees above are uploaded to the daemon on every
-    # main build for no reason. A .dockerignore is read from the root of the
-    # context using it, so the light-servers and judge builds, whose contexts
-    # are the subdirectories themselves, are unaffected.
+    # without this the trees above are uploaded to the daemon on every main
+    # build for no reason. A .dockerignore is read from the root of the context
+    # using it, so the light-servers and judge builds, whose contexts are those
+    # subdirectories, are unaffected.
     (env_dir / ".dockerignore").write_text(
         "\n".join([
             "# main builds from this directory and COPYs nothing from it.",
@@ -276,31 +304,52 @@ def _vendor_build_contexts(env_dir: Path) -> list[str]:
 
 
 def _rewrite_compose(compose: Path, shipped: list[str]) -> None:
-    """Point the delivered compose at the tree _vendor_build_contexts copied."""
+    """Point the delivered compose at the trees _vendor_build_contexts copied."""
     if not compose.is_file():
         print(f"Warning: no docker-compose.yaml in {compose.parent}",
               file=sys.stderr)
         return
 
     text = compose.read_text(encoding="utf-8")
-    if "light-servers" in shipped and "context: ./light-servers" not in text:
-        if _LIGHT_ANCHOR in text:
-            text = text.replace(_LIGHT_ANCHOR, _LIGHT_BUILD, 1)
-        else:
-            print(f"Warning: {compose} has no `{_LIGHT_ANCHOR.strip()}` line; "
-                  f"light-servers ships without a build context", file=sys.stderr)
+    for tree in _VENDORED:
+        if tree.image is None or tree.name not in shipped:
+            continue
+        if f"context: ./{tree.name}" in text:
+            continue  # already rewritten; a second pass must not stack blocks
+        if tree.anchor not in text:
+            # Reported, never guessed at: a silently un-rewritten compose ships
+            # looking correct and fails on the recipient's machine, which is the
+            # exact failure this is here to end.
+            print(f"Warning: {compose} has no `{tree.anchor.strip()}` line; "
+                  f"{tree.name} ships without a build context", file=sys.stderr)
+            continue
+        text = text.replace(tree.anchor, tree.build_block(), 1)
 
-    # Every path still reaching above the bundle, reported and not rewritten.
-    # The /harness/scoring mounts are here by design now that the graders do not
-    # ship, and so is larkmoor's ../../../output on light-servers, which in a
-    # delivered tree resolves to delivery_output/ and is silently created empty
-    # by Docker rather than erroring. Printing them at pack time is what keeps
-    # the list of what a recipient still needs honest.
+    if "scoring" in shipped:
+        # Comment lines are left alone. Several bundles carry a paragraph
+        # explaining why the depth is exactly three levels, and rewriting the
+        # path inside that explanation turns it into nonsense. _COMPOSE_NOTE
+        # says which of the two the reader is looking at.
+        text = "".join(
+            line if line.lstrip().startswith("#")
+            else line.replace(_SCORING_SRC, _SCORING_DST)
+            for line in text.splitlines(keepends=True)
+        )
+        left = [ln for ln in text.splitlines()
+                if _SCORING_SRC in ln and not ln.lstrip().startswith("#")]
+        if left:
+            sys.exit(f"Error: {compose} still binds {_SCORING_SRC}: {left}")
+
+    # Anything else still reaching above the bundle. Not rewritten, because only
+    # the author knows what the target held: larkmoor mounts ../../../output on
+    # light-servers, which in a delivered tree resolves to delivery_output/ and
+    # is silently created empty by Docker rather than erroring. Say so at pack
+    # time, where it is cheap to fix.
     stray = sorted({ln.strip() for ln in text.splitlines()
                     if "../../../" in ln and not ln.lstrip().startswith("#")})
     for ln in stray:
-        print(f"Note: {compose.parent.name}/docker-compose.yaml reaches outside "
-              f"the bundle: {ln}", file=sys.stderr)
+        print(f"Warning: {compose} still points outside the bundle: {ln}",
+              file=sys.stderr)
 
     # The note goes under the canary header, not above it: the canary is the
     # first thing a training-corpus scan looks for and it stays on line 2.
