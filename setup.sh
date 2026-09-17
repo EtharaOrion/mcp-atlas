@@ -25,6 +25,13 @@ brew install -q \
     pipx \
     codex 2>&1 | tail -3 || true
 
+# harbor runs the trials and scripts/patch_harbor.py refuses to start without
+# it; claude is the agent CLI the rubric can fall back to.
+pipx install harbor 2>&1 | tail -2 || true
+if ! command -v claude &> /dev/null; then
+    curl -fsSL https://claude.ai/install.sh | bash || true
+fi
+
 echo ""
 echo "=== [2/4] Setting up Python venv ==="
 
@@ -73,6 +80,9 @@ check "docker-credential-ecr-login" docker-credential-ecr-login
 check "aws"                        aws
 check "python3.12"                 python3.12
 check "brew"                       brew
+check "harbor"                     harbor
+check "codex"                      codex
+check "claude"                     claude
 
 echo ""
 echo "==============================================================="
@@ -94,5 +104,5 @@ echo "       set -a; source .env; set +a"
 echo "       docker pull ${ECR_HOST}/yuji:judge-1.0.0"
 echo ""
 echo "  4. Run a task:"
-echo "       PREFLIGHT_NETWORK_OFF=1 scripts/run_task.sh tasks/<bundle>"
+echo "       scripts/run_task.sh tasks/<bundle>"
 echo "==============================================================="

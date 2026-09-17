@@ -41,7 +41,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from conftest import mirror_harbor_package, requires_docker
+from conftest import mirror_harbor_package, requires_docker, requires_credentials
 
 REPO = Path(__file__).resolve().parents[2]
 PROXY_DIR = REPO / "tools" / "network" / "egress-proxy"
@@ -671,7 +671,10 @@ def test_the_scrub_does_not_take_the_credential_with_it(tmp_path):
 # Driven end-to-end through run_task.sh rather than by importing the module, so
 # a check that stops being CALLED fails here too.
 
-PREFLIGHT_TASK = REPO / "tasks" / "Input_1"
+# Whatever bundle is on disk, not a name. Pinning "Input_1" meant every test
+# below skipped in silence the moment the bundles were renamed, and the preflight
+# went unexercised for as long as that lasted.
+PREFLIGHT_TASK = BUNDLES[0].parent if BUNDLES else REPO / "tasks" / "__none__"
 
 
 def _copy_bundle(tmp_path: Path, bundle_src: Path) -> Path:
@@ -687,7 +690,11 @@ def _run_preflight(task: Path, **overrides):
     import subprocess
 
     env = dict(os.environ)
+    # Both of these turn off the thing under test, and both are commonly left
+    # set in a shell or a .env. Inheriting either would make every assertion
+    # below pass against a gate that never ran.
     env.pop("NETWORK_ISOLATION_OFF", None)
+    env.pop("PREFLIGHT_NETWORK_OFF", None)
     env.update({"OUTPUT_DIR": str(task.parent / "output"), "AGENT": "claude-code"})
     env.update({k: str(v) for k, v in overrides.items()})
     return subprocess.run(
@@ -696,12 +703,21 @@ def _run_preflight(task: Path, **overrides):
     )
 
 
+@requires_docker
+@requires_credentials
 @pytest.mark.skipif(not PREFLIGHT_TASK.is_dir(), reason="reference bundle absent")
 def test_preflight_passes_a_bundle_that_is_ready_for_isolation(tmp_path):
     proc = _run_preflight(_copy_bundle(tmp_path, PREFLIGHT_TASK))
     assert proc.returncode == 0, proc.stdout[-3000:]
     assert "pre-bakes the Claude Code CLI" in proc.stdout
     assert "reachable under network isolation" in proc.stdout
+    # The capability flags were READ, not warned around. harbor moved them onto
+    # an instance attribute __init__ computes; reading them off the bare class
+    # started raising, the raise was reported as a task defect, and every
+    # operator answered with PREFLIGHT_NETWORK_OFF=1 -- which turns the whole
+    # gate off. A run that cannot answer this question must never refuse.
+    assert "is enforceable by the docker provider" in proc.stdout
+    assert "capability flags could not be read" not in proc.stdout
 
 
 @pytest.mark.skipif(not PREFLIGHT_TASK.is_dir(), reason="reference bundle absent")
@@ -732,6 +748,8 @@ def test_preflight_refuses_an_mcp_host_the_proxy_would_deny(tmp_path):
     assert "egress proxy will deny" in proc.stdout
 
 
+@requires_docker
+@requires_credentials
 @pytest.mark.skipif(not PREFLIGHT_TASK.is_dir(), reason="reference bundle absent")
 def test_preflight_does_not_apply_isolation_rules_to_an_open_run(tmp_path):
     """An operator who asked for an open network must not be blocked by a rule

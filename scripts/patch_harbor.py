@@ -429,7 +429,13 @@ def main() -> None:
     # hides whatever else drifted.
     failures: list[str] = []
 
-    target = find_harbor_claude_code()
+    # Harbor absent is a setup fact, not a drifted anchor. Uncaught it surfaced
+    # as a bare traceback with the one useful line buried inside it.
+    try:
+        target = find_harbor_claude_code()
+    except RuntimeError as exc:
+        print(f"[patch_harbor] {exc}", file=sys.stderr)
+        sys.exit(0 if audit else 1)
     text = target.read_text(encoding="utf-8")
     changed = False
 

@@ -69,5 +69,26 @@ ENV CODEX_HOME=/home/judge/.codex \
     JUDGE_MODEL=gpt-5.6-sol \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
+
+# What headroom needs to run offline, carried by the image rather than by the
+# caller. These used to live only in overlay-judge-headroom.yaml, which
+# scripts/run_task.sh applies and which does NOT travel with a delivered
+# bundle. A recipient who set GRADER_HEADROOM_ENABLED=true on a headroom build
+# therefore got a library that reaches for HuggingFace and litellm's price list
+# on import, against a squid that allows chatgpt.com and auth.openai.com only.
+# Here, GRADER_HEADROOM_ENABLED is the single switch, which is what it reads
+# like from the outside.
+#
+# Inert on a WITH_HEADROOM=0 build: nothing that reads them is installed.
+# GRADER_HEADROOM_ENABLED is deliberately NOT set -- compression stays opt-in
+# (services/scoring/grader_compress.py: "Default OFF. Compression is opted
+# into, never inherited.").
+ENV TIKTOKEN_CACHE_DIR=/opt/tiktoken \
+    HEADROOM_OFFLINE=1 \
+    HEADROOM_TELEMETRY=off \
+    HEADROOM_UPDATE_CHECK=off \
+    HF_HUB_OFFLINE=1 \
+    TRANSFORMERS_OFFLINE=1 \
+    LITELLM_LOCAL_MODEL_COST_MAP=True
 EXPOSE 8770
 ENTRYPOINT ["python3", "/judge/codexbridge.py"]

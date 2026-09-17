@@ -112,6 +112,12 @@ RUN curl -fsSL https://downloads.claude.ai/claude-code-releases/bootstrap.sh | b
 `claude-agent-sdk` transitively provides `mcp` and `anyio`, which is what lets `state_dump.py`
 speak MCP from the verifier. There is no `httpx` and no `requests`.
 
+The `downloads.claude.ai` bootstrap and `procps` are **enforced**:
+`tools/network/preflight_network.py` refuses the run if either is missing from this file, before
+anything is built. That check was written long ago but pointed at a path that does not exist, so
+it silently passed everything until 2026-09-17. A bundle that installs the CLI some other way will
+now be blocked — put the bootstrap line back rather than working around the gate.
+
 **Bake every library the agent needs to READ the attachments, not just the ones
 the verifier imports.** `openpyxl`, `pillow`, `pypdf` and `pdfplumber` cover
 xlsx/png/jpg/pdf; add whatever else `data/` actually contains. `jbig2dec` is an
@@ -294,6 +300,24 @@ declared in the bundle's compose file:
 
 `services/scoring/tests/test_judge_container.py` is report-only and is not listed in `test_weights.json` — a judge
 outage must never move the agent's score or failure class.
+
+**A run with no agent activity is refused, not graded.** If the posted trajectory has zero tool
+calls *and* an empty `final_message`, the judge writes `/logs/verifier/no_agent_activity.txt`,
+returns `ok: false`, and grades nothing. That case is an auth failure, a rate limit or a container
+that died in agent setup — the whole rubric used to be bought against empty evidence and a reward
+of `0.0` published, which is indistinguishable from an agent that tried and failed.
+`scripts/host_rubric_pass.py` has always refused the same case; the judge now matches it.
+
+Because of that, `tests/test.sh` must **propagate `judge_client.py`'s exit code**:
+
+```sh
+python3 "$EVAL" --trajectory "$TRAJ" || JUDGE_RC=$?
+...
+exit "${JUDGE_RC:-0}"
+```
+
+A `test.sh` that swallows it leaves no `reward.json`, and harbor reports `RewardFileNotFoundError`
+instead of the reason, which is in `judge_container.json`.
 
 **A bundle needs nothing for Headroom.** `GRADER_HEADROOM_ENABLED=true` makes `run_task.sh` add
 `tools/network/egress-proxy/overlay-judge-headroom.yaml`, which swaps in a judge image carrying

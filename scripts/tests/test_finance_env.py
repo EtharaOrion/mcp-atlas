@@ -5,8 +5,9 @@ build_payload, prints one stderr line, and returns 0 -- the run reports success
 having posted nothing (finance_reporter.py:354, 400-402). These cover the gate
 that moves that failure to second zero, before the agent phase spends anything.
 
-Every failing case exits in dispatch, before stage_preflight touches Docker, so
-nothing here builds an image or reaches the network.
+A bad value is named in dispatch and skips the Odoo post; only --stage finance
+refuses outright, because that is the stage that would send the record. Nothing
+here builds an image or reaches the network.
 """
 import os
 import subprocess
@@ -40,16 +41,16 @@ def task_dir(tmp_path_factory):
     return str(d)
 
 
-def run(task_dir, **overrides):
+def run(task_dir, stage="preflight", **overrides):
     e = dict(os.environ)
     e.update(VALID)
     e.update(overrides)
     return subprocess.run(
-        [str(RUN_TASK), "--stage", "preflight", task_dir],
+        [str(RUN_TASK), "--stage", stage, task_dir],
         capture_output=True, text=True, env=e, cwd=str(REPO), timeout=120)
 
 
-@pytest.mark.parametrize("override,needle", [
+BAD_VALUES = [
     # Case is the whole point: the reporter compares against ("Testing",
     # "Sampling") literally, so "testing" is rejected.
     ({"FINANCE_RFP_SUB_TYPE": "testing"}, "FINANCE_RFP_SUB_TYPE must be exactly"),
@@ -64,13 +65,27 @@ def run(task_dir, **overrides):
      "FINANCE_PRODUCTION_MODE must be exactly"),
     ({"ODOO_URL": "projects-stage.ethara.ai"}, "ODOO_URL must start with"),
     ({"FINANCE_PHASE_NUMBER": "one"}, "FINANCE_PHASE_NUMBER must be a number"),
-])
-def test_bad_value_stops_the_run_before_it_starts(task_dir, override, needle):
+]
+
+
+@pytest.mark.parametrize("override,needle", BAD_VALUES)
+def test_bad_value_is_named_at_second_zero(task_dir, override, needle):
+    """Still reported in dispatch, before any stage. Bad attribution is a
+    reporting fault, so it no longer takes the agent phase down with it."""
     r = run(task_dir, **override)
+    assert needle in r.stderr, r.stdout + r.stderr
+    assert "usage reporting will be skipped" in r.stderr
+    assert "harbor run" not in r.stdout
+
+
+@pytest.mark.parametrize("override,needle", BAD_VALUES)
+def test_bad_value_stops_the_stage_that_would_post(task_dir, override, needle):
+    """The stage that actually talks to Odoo is the one that must refuse: posting
+    a record built from a value the reporter rejects is the failure being
+    prevented, and it cannot happen from any other stage."""
+    r = run(task_dir, stage="finance", **override)
     assert r.returncode == 4, r.stdout + r.stderr
     assert needle in r.stderr
-    # Nothing downstream ran: the gate is in dispatch, above every stage.
-    assert "harbor run" not in r.stdout
 
 
 @requires_docker
