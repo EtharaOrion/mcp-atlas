@@ -126,6 +126,24 @@ WRAPPERS = {
 # top level, so the payload is re-classified as a command in its own right.
 SHELLS = {"sh", "bash", "zsh", "dash", "ksh", "ash", "busybox"}
 
+# Verbs whose operands are text to MATCH, not code to run.
+#
+# Only INLINE_NETWORK_HINTS consults this, and only to stop a command being
+# refused for SPELLING a hint. `grep -Eo 'fetch\(|XMLHttpRequest' page.html` is
+# a page being checked for exactly the thing the closed world forbids -- one
+# bundle's brief asks for a page that "reaches out for nothing to draw itself",
+# so auditing the output for those two words is the model doing the task -- and
+# the guard's answer to it was "there is no route out of this container", which
+# is true, unrelated, and costs the check.
+#
+# A pattern cannot open a socket. Every other rule in this file still reads the
+# whole command, so a grep that also runs a fetcher is caught by the fetcher
+# rule exactly as before.
+#
+# sed and awk are deliberately absent: their operands are PROGRAMS, and an awk
+# program can call system() and shell out. Only the pure matchers are here.
+SEARCH_VERBS = {"grep", "egrep", "fgrep", "rg", "ag", "ack"}
+
 # Network access smuggled through an interpreter. Matched on the source text of
 # a `python3 -c` / `node -e` payload rather than on the command name, which is
 # why these are substrings and not verbs.
@@ -254,6 +272,20 @@ def is_internal(host: str) -> bool:
     return (host.startswith("127.")
             or host.endswith(".local")
             or host.endswith(".internal"))
+
+
+def _addressed_hosts(cmd: str) -> list[str]:
+    """Every host an absolute URL in `cmd` names, namespace URIs excluded.
+
+    The same sweep classify() runs, factored out so the inline-network rule can
+    ask what the command is actually pointed at instead of matching a word.
+    """
+    out = []
+    for m in URL_RE.finditer(cmd):
+        if _NAMESPACE_RE.match(cmd, m.start()):
+            continue
+        out.append(m.group(1).split("@")[-1].split(":")[0].lower())
+    return out
 
 
 # --------------------------------------------------------------------------
@@ -447,6 +479,59 @@ def _segments(tokens: list[str]) -> list[list[str]]:
     return [s for s in segments if s]
 
 
+def _search_operands(cmd: str) -> list[str]:
+    r"""Operands handed to a text-search verb: patterns and the files to read.
+
+    Only INLINE_NETWORK_HINTS reads this. Every other rule still sees the whole
+    command, so the worst a mistake here can do is fail to raise ONE finding on
+    a command that named no host anyway.
+
+    LEXED WITH punctuation_chars, which the rest of the module does not use.
+    Two properties are needed at once and only this mode has both: a quoted
+    regex stays a single token, parentheses and all, so `'fetch\(|XMLHttpRequest'`
+    is not torn into pieces; and a separator glued to the word before it comes
+    out on its own, so `a.html; python3 -c ...` ends the grep rather than
+    feeding the python payload in as one of its operands. Plain
+    shlex.split gives the first and not the second, and collecting a command as
+    if it were a search pattern is the one way this helper could go quiet on
+    real egress.
+
+    A line that will not lex yields nothing, which leaves the hint rule fully
+    closed for that line.
+    """
+    _SEPARATORS = {"&&", "||", ";", ";;", "|", "&", "(", ")", "<", ">", ">>", "<<"}
+    lex_src, _ = split_heredocs(cmd)
+    out: list[str] = []
+    # LINE BY LINE, for the reason _scan_body gives: shlex reads a newline as
+    # plain whitespace, so a multi-line command lexes into one run-on segment
+    # and only its first verb is ever seen. The grep on line three of a
+    # four-line self-check is invisible to a whole-string walk.
+    for line in lex_src.split("\n"):
+        try:
+            lexer = shlex.shlex(line, posix=True, punctuation_chars=True)
+            lexer.whitespace_split = True
+            tokens = list(lexer)
+        except ValueError:
+            continue
+        seg: list[str] = []
+        for tok in [*tokens, ";"]:
+            if tok in _SEPARATORS:
+                _collect_search_operands(seg, out)
+                seg = []
+            else:
+                seg.append(tok)
+    return out
+
+
+def _collect_search_operands(seg: list[str], out: list[str]) -> None:
+    """Append `seg`'s operands to `out` when `seg` runs a text-search verb."""
+    if not seg:
+        return
+    verb, args = real_verb(seg)
+    if verb and Path(verb).name.lower() in SEARCH_VERBS:
+        out.extend(a for a in args if not a.startswith("-"))
+
+
 def classify(cmd: str, *, _depth: int = 0) -> list[Finding]:
     """Every reason this shell command is not local work. Empty == local.
 
@@ -461,16 +546,48 @@ def classify(cmd: str, *, _depth: int = 0) -> list[Finding]:
 
     # Any absolute URL in the command is the strongest signal available, and it
     # survives quoting that would defeat the token walk below.
-    for m in URL_RE.finditer(cmd):
-        if _NAMESPACE_RE.match(cmd, m.start()):
-            continue
-        host = m.group(1).split("@")[-1].split(":")[0].lower()
+    hosts = _addressed_hosts(cmd)
+    for host in hosts:
         if not is_internal(host):
             out.append(Finding("external-url", f"command references {host}"))
 
-    for hint in INLINE_NETWORK_HINTS:
-        if hint in cmd:
-            out.append(Finding("inline-network", f"interpreter payload uses {hint}"))
+    # An interpreter payload that speaks HTTP, judged by what it is POINTED AT
+    # rather than by the fact that it speaks HTTP.
+    #
+    # The hint list is a substring match, and on its own it cannot tell
+    # `urlopen("https://pypi.org/...")` from `urlopen("http://light-servers:9015/mcp")`.
+    # The second is the closed world working exactly as designed -- the sidecars
+    # ARE the task's data, and an agent that finds the MCP client easier to
+    # drive over raw HTTP than through the tool list is doing nothing wrong.
+    # Blocking it cost a delivered run seven "internet attempts", every one of
+    # them a call to a compose service on the bridge.
+    #
+    # So: when the command names hosts and every one of them is internal, the
+    # payload has nowhere external to go and the hint is not evidence. When it
+    # names an external host, the `external-url` rule above has already fired
+    # and this adds the detail. When it names NO host at all -- a URL built at
+    # runtime, a variable, a base64 blob -- nothing here can see the target, and
+    # the hint stands.
+    #
+    # That last branch is the fail-closed one and it stays fail-closed on
+    # purpose. The direction of the trade is the same one NAMESPACE_URI_PREFIXES
+    # makes just above: this sweep is a string match over a whole command and
+    # can afford to go quiet where the target is visible and harmless, because
+    # the routing table -- not this file -- is what actually removes the route.
+    #
+    # Searched-for text is lifted out first, for the reason SEARCH_VERBS gives.
+    # The removal touches this rule and nothing else: `hosts` above and every
+    # verb walk below still read the command whole.
+    hinted = cmd
+    for operand in _search_operands(cmd):
+        if any(h in operand for h in INLINE_NETWORK_HINTS):
+            hinted = hinted.replace(operand, " ")
+
+    if not (hosts and all(is_internal(h) for h in hosts)):
+        for hint in INLINE_NETWORK_HINTS:
+            if hint in hinted:
+                out.append(Finding("inline-network",
+                                   f"interpreter payload uses {hint}"))
 
     # Walk the command as tokens so we can read verbs and their flags. A command
     # we cannot lex is reported rather than skipped: silently passing an

@@ -184,6 +184,34 @@ HAD_TRAJECTORY = True
 # reward. Neither is an internet finding, so neither blocks; both need saying.
 TOOL_CALLS = 0
 
+# Whether squid's access.log was there to read, SEPARATELY from whether it had
+# anything in it. The two used to be one question, answered by counting lines,
+# and the answer was wrong the moment agent-path Headroom was switched on.
+#
+# What the line count was really measuring: Claude Code's own model calls
+# (CONNECT api.anthropic.com) happen to pass through the agent's squid, so the
+# log was never empty on a healthy run and "has lines" stood in for "a proxy
+# existed". overlay-headroom.yaml puts `headroom` in NO_PROXY and gives it a
+# squid of its own -- deliberately, so headroom's startup fetches stay out of
+# the agent's log -- and the model calls stop passing through here. The log is
+# then correctly empty, and the old test read that as "no egress proxy was in
+# the path, so the run was not isolated": a FAIL verdict on a run whose
+# isolation was fully intact. That happened, on a delivered run.
+#
+# The file's existence is the better witness anyway, and it is cheap: only
+# tools/network/egress-proxy/entrypoint.sh creates it, with `tee -a` at
+# container start, and tools/delivery/harbor_to_output.py:429 copies nothing
+# that does not exist. So a file here -- even a zero-byte one -- means the
+# egress-proxy container came up with its mount attached, which means
+# overlay.yaml was applied, which is what puts `internal: true` on the agent's
+# network and takes the gateway away. That is the enforcement boundary; squid
+# is the part of it that keeps a record.
+#
+# Read it for what it proves and no more: the block was live. It does NOT say
+# the model's traffic was inspected, which is why an empty log gets its own
+# wording in _summary() rather than borrowing the denial sentence.
+PROXY_LOG_SEEN = False
+
 
 def _c(code: str, s: str) -> str:
     return f"\033[{code}m{s}\033[0m" if sys.stdout.isatty() else s
@@ -470,7 +498,7 @@ def scan(traj: dict) -> None:
 
 
 def main(argv=None) -> int:
-    global HAD_TRAJECTORY, TOOL_CALLS
+    global HAD_TRAJECTORY, TOOL_CALLS, PROXY_LOG_SEEN
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("trajectory", type=Path)
     ap.add_argument("--json", type=Path, help="write findings here for grading")
@@ -499,6 +527,7 @@ def main(argv=None) -> int:
         print(f"  {_c('33', 'warn')}  no trajectory at {a.trajectory}")
         if not (a.access_log and a.access_log.is_file()):
             return 0
+        PROXY_LOG_SEEN = True
         attempts = scan_access_log(a.access_log)
         return _exit_code(_report(a, total=0, attempts=attempts), a)
 
@@ -519,6 +548,9 @@ def main(argv=None) -> int:
     attempts = []
     if a.access_log:
         if a.access_log.is_file():
+            # Set before the scan, not after: an empty file is the witness, and
+            # it counts whether or not a single line comes back.
+            PROXY_LOG_SEEN = True
             attempts = scan_access_log(a.access_log)
         else:
             print(f"  {_c('33', 'warn')}  no proxy log at {a.access_log}; "
@@ -583,6 +615,25 @@ def _stopped_by() -> str | None:
     return marks.pop() if len(marks) == 1 else "mixed"
 
 
+def _proxy_was_in_the_path(attempts: list[dict]) -> bool:
+    """Was there an egress proxy between the agent and the internet?
+
+    Two independent witnesses, either of which settles it:
+
+      attempts        lines in squid's log. Traffic arrived and squid ruled on
+                      it, so it was plainly in the path.
+      PROXY_LOG_SEEN  the log file itself. Only the proxy container creates it,
+                      so it is standing proof the container ran even when it
+                      recorded nothing -- which is the normal state of the
+                      agent's squid once agent-path Headroom takes the model
+                      calls elsewhere. See PROXY_LOG_SEEN for the run this cost.
+
+    Counting only the first is what made a fully isolated run audit as "not
+    isolated", so both are asked here and nowhere else.
+    """
+    return bool(attempts) or PROXY_LOG_SEEN
+
+
 def _verdict(attempts: list[dict]) -> str:
     if not HAD_TRAJECTORY:
         return SETUP if FINDINGS else NO_ATTEMPT
@@ -594,24 +645,27 @@ def _verdict(attempts: list[dict]) -> str:
     if any(f["kind"] in ("allowlist-breach", "package-installed") for f in FINDINGS):
         return REACHED
 
+    proxied = _proxy_was_in_the_path(attempts)
+
     # An install whose output was piped away proves nothing by itself. What
     # decides it is whether anything was in a position to stop it:
     #   hook refused it      the command never ran; there is nothing to verify
-    #   a proxy log exists   squid saw everything and let nothing out, or the
-    #                        rule above would already have returned REACHED
+    #   a proxy was there    the run had no gateway, so the install had nowhere
+    #                        to reach -- and had it reached anyway, the rule
+    #                        above would already have returned REACHED
     #   neither              nothing could have stopped it and the agent removed
     #                        the only other witness
     unproven = [f for f in FINDINGS if f.get("evidence_suppressed")
                 and f.get("stopped_by") != "hook"]
-    if unproven and not attempts:
+    if unproven and not proxied:
         return REACHED
 
     # Can every attempt be SHOWN to have been stopped? Either the hook refused
-    # it before it ran, or a proxy log exists and (per the rule above) carries
-    # no breach. Otherwise nothing witnessed the outcome and saying "blocked"
-    # would be inventing the evidence.
+    # it before it ran, or a proxy was in the path and (per the rule above)
+    # carries no breach. Otherwise nothing witnessed the outcome and saying
+    # "blocked" would be inventing the evidence.
     steps = [f for f in FINDINGS if f["step"] is not None]
-    if attempts or (steps and all(f.get("stopped_by") for f in steps)):
+    if proxied or (steps and all(f.get("stopped_by") for f in steps)):
         return ATTEMPTED
     return UNVERIFIED
 
@@ -630,10 +684,17 @@ def _summary(verdict: str, attempts: list[dict]) -> str:
     if verdict == ATTEMPTED:
         how = {"hook": "refused by the egress guard before it ran",
                "proxy": "denied by the egress proxy",
-               "mixed": "refused by the egress guard and the proxy"}.get(
-                   by, "refused")
+               "mixed": "refused by the egress guard and the proxy"}.get(by)
+        if how is None and not attempts:
+            # The proxy was up (PROXY_LOG_SEEN) and logged nothing, so the run
+            # was isolated and nothing got out -- but no component refused
+            # anything in so many words, and borrowing the denial sentence here
+            # would credit a refusal that never happened.
+            return (f"the model reached for the internet {n} time(s); the egress "
+                    f"proxy was up for this run and recorded no traffic at all, "
+                    f"so nothing left the sandbox")
         return (f"the model reached for the internet {n} time(s); every attempt "
-                f"was {how}, and nothing left the sandbox")
+                f"was {how or 'refused'}, and nothing left the sandbox")
     if verdict == UNVERIFIED:
         return (f"the model reached for the internet {n} time(s) and nothing "
                 f"witnessed the outcome -- no egress proxy was in the path, so "
@@ -655,6 +716,10 @@ def _proxy_summary(attempts: list[dict]) -> dict:
     """
     hosts = sorted({r["host"] for r in attempts})
     return {
+        # Whether squid's log was there to read. "requests: 0" alone cannot say
+        # whether the proxy saw nothing or was never there, and those two grade
+        # differently -- see PROXY_LOG_SEEN.
+        "log_present": PROXY_LOG_SEEN,
         "requests": len(attempts),
         "allowed": sum(1 for r in attempts if not r["denied"]),
         "denied": sum(1 for r in attempts if r["denied"]),
@@ -720,6 +785,13 @@ def _report(a, *, total: int, attempts: list[dict]) -> str:
         shown = ", ".join(p["hosts"][:3]) + (", ..." if len(p["hosts"]) > 3 else "")
         print(f"        {'proxy':>9}  {p['requests']} request(s) to {shown}"
               f" -- {p['denied']} denied")
+    elif PROXY_LOG_SEEN:
+        # Up, and silent. Normal once agent-path Headroom carries the model
+        # calls: nothing else in the run has a reason to talk to this squid.
+        # Said out loud so the empty log reads as evidence rather than as a
+        # gap someone has to go and check.
+        print(f"        {'proxy':>9}  log present and empty -- the proxy was up "
+              f"and no traffic reached it")
     elif HAD_TRAJECTORY and verdict != NO_ACTIVITY:
         # Absence of a proxy log is itself a finding about the RUN's setup: it
         # means no egress proxy was in the path, so nothing could have been

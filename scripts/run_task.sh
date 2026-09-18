@@ -1075,6 +1075,7 @@ stage_harbor() {
     # This one refuses the call and explains what to use instead, in the same
     # turn. Same gate as above: an open run stays open.
     if [ -n "$_iso" ]; then
+      require_harbor_agent_config
       local _guard; _guard="$(egress_guard_settings)"
       [ -n "$_guard" ] && args+=(--ak "config=$_guard")
     fi
@@ -1487,6 +1488,56 @@ write_zbridge_squid_conf() {
   echo "[run_task] GLM run: squid also allows zbridge at host.docker.internal:$port" >&2
 }
 
+# Abort the run if the installed harbor will not carry the guard into the
+# container. Called from the caller's shell, NOT from inside the $(...) that
+# collects egress_guard_settings -- an `exit` there would kill only the subshell
+# and the run would walk on unguarded, which is the exact failure being closed.
+#
+# WHY THIS IS FATAL AND THE OTHER TWO BRANCHES ARE NOT
+#
+# harbor's agent kwargs have a permissive floor: `--ak config=<path>` on a
+# harbor whose ClaudeCode has no `config` parameter falls through to
+# BaseAgent.__init__'s **kwargs and is dropped without a word. The claude
+# command line then carries no --settings, no hook loads, and this script still
+# prints "egress guard ON". A delivered EC2 run of
+# 83d7e97e-2aed-4b23-a906-45f5a6a6a4da did exactly that on harbor 0.20: seven
+# Bash commands that exit 2 against these rules on the host ran to completion in
+# the container, and the session recorded zero PreToolUse events.
+#
+# So "harbor positively lacks the mechanism" stops the run: it is cheap to
+# detect, it is always an install problem (setup.sh pins the version), and the
+# alternative is a graded run whose guard was decoration. "Cannot tell" does
+# NOT stop it -- the routing table is still the enforcement boundary and a
+# probe that cannot read a future harbor must not be able to ground the fleet.
+# It says what it could not read and the run continues, unguarded but honest.
+#
+# EGRESS_GUARD_IGNORE_HARBOR=1 overrides, on the HEADROOM_IGNORE_MEMORY pattern.
+require_harbor_agent_config() {
+  if [ -n "${EGRESS_GUARD_IGNORE_HARBOR:-}" ]; then
+    echo "[run_task] EGRESS_GUARD_IGNORE_HARBOR set; not checking harbor's config support" >&2
+    return 0
+  fi
+  local rc=0
+  python3 "$REPO/tools/network/make_guard_settings.py" --check-harbor || rc=$?
+  if [ "$rc" -eq 0 ]; then
+    HARBOR_DELIVERS_GUARD=yes
+    return 0
+  fi
+  if [ "$rc" -eq 1 ]; then
+    echo "[run_task] REFUSING: this harbor drops --ak config=, so the egress guard" >&2
+    echo "[run_task]   would not reach the container and the agent would run with no" >&2
+    echo "[run_task]   PreToolUse hook while this script reported it ON." >&2
+    echo "[run_task]   Install the pinned version: pipx install --force harbor==0.23.0" >&2
+    echo "[run_task]   (setup.sh holds the pin), or set EGRESS_GUARD_IGNORE_HARBOR=1 to" >&2
+    echo "[run_task]   run knowingly without the guard." >&2
+    exit 2
+  fi
+  # rc 3, or anything unexpected: the probe already named what it could not
+  # read. Not a fault, so not fatal -- but the guard is not claimed either.
+  echo "[run_task]   the run continues; the routing table still has no gateway out." >&2
+  return 0
+}
+
 # Echo the path of a generated Claude Code --settings file whose PreToolUse hook
 # refuses egress commands before they run, or nothing if it cannot be built.
 #
@@ -1528,7 +1579,14 @@ egress_guard_settings() {
     echo "[run_task] could not build the egress guard -- agent runs without it" >&2
     return 0
   fi
-  echo "[run_task] egress guard ON -- Bash egress is refused with an explanation" >&2
+  # Two wordings, because "ON" is a claim about what will happen in the
+  # container and only one of these paths has evidence for it. Saying ON either
+  # way is how the EC2 run came to report a guard it did not have.
+  if [ "${HARBOR_DELIVERS_GUARD:-unknown}" = "yes" ]; then
+    echo "[run_task] egress guard ON -- Bash egress is refused with an explanation" >&2
+  else
+    echo "[run_task] egress guard PASSED TO HARBOR, delivery unconfirmed -- see above" >&2
+  fi
   echo "$out"
 }
 
