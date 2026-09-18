@@ -1603,6 +1603,90 @@ def _mean_or_none(vals):
     return norm_reward(sum(vals) / len(vals)) if vals else None
 
 
+def _trial_record(out_task: Path, ep: dict) -> dict:
+    """The per-trial result.json behind one episode, or {} when it is not on disk.
+
+    Survives a resumed job: run_task.sh stashes trajectory/run_* across the
+    Harbor invocation that would otherwise clear the job dir, so run N's record
+    is still readable on run N+13.
+    """
+    idx = ep.get("index")
+    if not idx:
+        return {}
+    return _load(out_task / "trajectory" / f"run_{idx}" / "result.json", {}) or {}
+
+
+def _trial_rates(rec: dict) -> dict:
+    """completion_rate / misbehave_rate out of one trial record.
+
+    These two never reach summary.json from the episode: they come from the
+    container's verifier/reward.json and land in the per-trial result.json under
+    verifier_result.rewards, which is the only place they survive. The job-level
+    result.json carries a slot for them per trial, but Harbor fills only the slot
+    for the trial IT just ran, so on a resumed job index 0 held the LAST run's
+    rates beside index 0's reward -- one row describing two different trials.
+    """
+    rewards = (rec.get("verifier_result") or {}).get("rewards") or {}
+    return {k: norm_reward(v) for k, v in rewards.items()
+            if k in ("completion_rate", "misbehave_rate") and v is not None}
+
+
+def _rollup_job_stats(res: dict, eps: list[dict], out_task: Path) -> None:
+    """Rebuild result.json's job-level counters and usage totals over ALL runs.
+
+    Harbor writes this file once per invocation and each of our runs is a
+    separate one-attempt invocation, so every SCALAR in it -- the trial counts,
+    the token totals, cost_usd -- describes only the last run, while the metrics
+    list beside them was already being rebuilt over every run. The two halves of
+    one file disagreed about how many runs it covered: a 14-run job published
+    n_total_trials=1, n_errored_trials=0 and cost_usd=9.12 next to fourteen
+    rewards, six of them from attempts that had crashed, against a real spend of
+    $80.22. A reader who trusted the scalars under-reported the bill by 9x.
+
+    The totals sum Harbor's own per-trial agent_result, NOT the episode usage
+    parsed from the trajectory stream. The two agree to the token on thirteen of
+    fourteen trials here and disagree by 18.6M input tokens on the fourteenth --
+    the one that died AgentTimeoutError, where the stream kept accruing past the
+    point Harbor stopped accounting. Summing the stream would publish a total no
+    per-trial record in the tree adds up to, which is the failure this file
+    already had. Episode usage is the fallback for a trial whose record is gone,
+    mapped into Harbor's shapes: n_input_tokens counts cache reads and cache
+    creation as well as fresh input, n_cache_tokens is the cache-read half alone.
+
+    n_retries is left alone: it counts Harbor-internal retries we never observe.
+    """
+    stats = res.get("stats")
+    if not isinstance(stats, dict) or not eps:
+        return
+    errored = sum(1 for e in eps if e.get("exception"))
+    # n_total_trials sits at the document root, the rest under stats.
+    res["n_total_trials"] = len(eps)
+    stats["n_completed_trials"] = len(eps) - errored
+    stats["n_errored_trials"] = errored
+    # Every episode in hand is terminal by definition -- it has a record.
+    for _f in ("n_running_trials", "n_pending_trials", "n_cancelled_trials"):
+        if _f in stats:
+            stats[_f] = 0
+    _fields = ("n_input_tokens", "n_cache_tokens", "n_output_tokens", "cost_usd")
+    _totals = dict.fromkeys(_fields, 0)
+    for _ep in eps:
+        _ar = _trial_record(out_task, _ep).get("agent_result") or {}
+        if not _ar:
+            _u = _ep.get("usage") or {}
+            _ar = {"n_input_tokens": (_u.get("input_tokens") or 0)
+                                     + (_u.get("cache_read_tokens") or 0)
+                                     + (_u.get("cache_creation_tokens") or 0),
+                   "n_cache_tokens": _u.get("cache_read_tokens") or 0,
+                   "n_output_tokens": _u.get("output_tokens") or 0,
+                   "cost_usd": _u.get("cost_usd") or 0}
+        for _f in _fields:
+            _totals[_f] += _ar.get(_f) or 0
+    stats.update(_totals)
+    for _eval_data in (stats.get("evals") or {}).values():
+        _eval_data["n_trials"] = len(eps)
+        _eval_data["n_errors"] = errored
+
+
 def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: int = 0,
                 only_trials: set[str] | None = None) -> list[Path]:
     job_cfg = _load(job_dir / "config.json", {}) or {}
@@ -1750,6 +1834,7 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
                 _eval_data["metrics"] = _metrics
                 for _i, _ep in enumerate(all_eps):
                     _metrics[_i]["reward"] = norm_reward(_ep["judge"]["reward"])
+                    _metrics[_i].update(_trial_rates(_trial_record(out_task, _ep)))
                 _new_rstats: dict = {"reward": {}}
                 for _i, _ep in enumerate(all_eps):
                     _tname = _ep.get("trial_name") or f"trial_{_i}"
@@ -1936,6 +2021,7 @@ def convert_job(job_dir: Path, output_root: Path, *, ks: list[int], run_offset: 
             _passk_native = {k: norm_reward(pass_at_k(n, c, k)) for k in ks_eff}
             for _eval_data in _evals.values():
                 _eval_data["pass_at_k"] = _passk_native
+            _rollup_job_stats(_top_res, all_eps, out_task)
             _dump(out_task / "result.json", norm_result_metrics(_top_res))
 
         # .raw summary / pairs / failure_analysis

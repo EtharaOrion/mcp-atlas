@@ -649,3 +649,112 @@ def test_the_judge_markers_do_not_ship_in_the_published_run(tmp_path):
         assert not (published / name).exists(), f"{name} shipped in the published run"
     reward = json.loads((published / "reward.json").read_text())
     assert reward["producer"] == "judge_container", "the label itself must survive"
+
+def _episode(idx: int, *, exception=None, usage=None) -> dict:
+    return {"index": idx, "exception": exception, "usage": usage or {}}
+
+
+def _write_trial_record(out_task: Path, idx: int, *, agent_result=None, rewards=None) -> None:
+    """The per-trial result.json reshape_trial leaves at trajectory/run_<idx>/."""
+    run_dir = out_task / "trajectory" / f"run_{idx}"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "result.json").write_text(json.dumps({
+        "agent_result": agent_result,
+        "verifier_result": {"rewards": rewards} if rewards is not None else None,
+    }))
+
+
+def _last_run_result(metrics: list[dict] | None = None) -> dict:
+    """result.json as Harbor leaves it: every scalar describes one trial."""
+    return {"n_total_trials": 1, "stats": {
+        "n_completed_trials": 1, "n_errored_trials": 0, "n_running_trials": 0,
+        "n_pending_trials": 0, "n_cancelled_trials": 0, "n_retries": 3,
+        "n_input_tokens": 100, "n_cache_tokens": 40, "n_output_tokens": 10, "cost_usd": 1.25,
+        "evals": {"e1": {"n_trials": 1, "n_errors": 0, "metrics": metrics or []}}}}
+
+
+def test_job_stats_cover_every_run_not_just_the_last(tmp_path):
+    """Counts and totals span all episodes, and errored attempts still count."""
+    out = tmp_path / "task"
+    eps = []
+    for i in (1, 2, 3, 4):
+        crashed = i == 3
+        eps.append(_episode(i, exception={"exception_type": "RuntimeError"} if crashed else None))
+        _write_trial_record(out, i, agent_result=None if crashed else {
+            "n_input_tokens": 100, "n_cache_tokens": 40, "n_output_tokens": 10, "cost_usd": 1.25})
+
+    res = _last_run_result()
+    h2o._rollup_job_stats(res, eps, out)
+    stats = res["stats"]
+
+    assert res["n_total_trials"] == 4
+    assert stats["n_completed_trials"] == 3
+    assert stats["n_errored_trials"] == 1
+    # The crashed attempt has no Harbor accounting, so it adds nothing but is
+    # still one of the four.
+    assert stats["n_input_tokens"] == 300
+    assert stats["n_cache_tokens"] == 120
+    assert stats["n_output_tokens"] == 30
+    assert stats["cost_usd"] == pytest.approx(3.75)
+    assert stats["evals"]["e1"]["n_trials"] == 4
+    assert stats["evals"]["e1"]["n_errors"] == 1
+    # Harbor-internal, never observed here: left exactly as Harbor wrote it.
+    assert stats["n_retries"] == 3
+
+
+def test_job_stats_prefer_harbor_accounting_over_stream_usage(tmp_path):
+    """agent_result wins over episode usage when the two disagree.
+
+    They agreed to the token on thirteen of fourteen real trials and diverged by
+    18.6M input tokens on the one that died AgentTimeoutError, where the stream
+    kept accruing past the point Harbor stopped accounting. Summing the stream
+    would publish a job total that no per-trial record in the tree adds up to.
+    """
+    out = tmp_path / "task"
+    _write_trial_record(out, 1, agent_result={
+        "n_input_tokens": 500, "n_cache_tokens": 400, "n_output_tokens": 20, "cost_usd": 2.0})
+    ep = _episode(1, usage={"input_tokens": 10, "cache_read_tokens": 9_000_000,
+                            "cache_creation_tokens": 0, "output_tokens": 20, "cost_usd": 0.0})
+
+    res = _last_run_result()
+    h2o._rollup_job_stats(res, [ep], out)
+
+    assert res["stats"]["n_input_tokens"] == 500
+    assert res["stats"]["cost_usd"] == pytest.approx(2.0)
+
+
+def test_job_stats_fall_back_to_episode_usage_without_a_trial_record(tmp_path):
+    """No record on disk: use the episode, mapped into Harbor's field shapes."""
+    out = tmp_path / "task"
+    ep = _episode(1, usage={"input_tokens": 10, "cache_read_tokens": 30,
+                            "cache_creation_tokens": 5, "output_tokens": 7, "cost_usd": 0.5})
+
+    res = _last_run_result()
+    h2o._rollup_job_stats(res, [ep], out)
+
+    # n_input_tokens counts cache reads and cache creation alongside fresh input.
+    assert res["stats"]["n_input_tokens"] == 45
+    assert res["stats"]["n_cache_tokens"] == 30
+    assert res["stats"]["n_output_tokens"] == 7
+    assert res["stats"]["cost_usd"] == pytest.approx(0.5)
+
+
+def test_per_trial_rates_come_from_their_own_trial(tmp_path):
+    """Each metrics row reads its rates off the trial it describes.
+
+    Harbor fills only the slot for the trial it just ran, so index 0 used to hold
+    the last run's completion_rate beside index 0's reward -- and
+    avg_completion_rate, which averages exactly these rows, averaged that one
+    stale value and reported it as the mean of fourteen.
+    """
+    out = tmp_path / "task"
+    _write_trial_record(out, 1, rewards={"completion_rate": 0.9, "misbehave_rate": 0.1})
+    _write_trial_record(out, 2, rewards={"completion_rate": 0.2, "misbehave_rate": 0.8})
+
+    assert h2o._trial_rates(h2o._trial_record(out, _episode(1))) == {
+        "completion_rate": 0.9, "misbehave_rate": 0.1}
+    assert h2o._trial_rates(h2o._trial_record(out, _episode(2))) == {
+        "completion_rate": 0.2, "misbehave_rate": 0.8}
+    # An attempt that never reached the verifier reports nothing, so
+    # _mean_or_none skips it rather than averaging a neighbour's number.
+    assert h2o._trial_rates(h2o._trial_record(out, _episode(3))) == {}
