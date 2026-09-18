@@ -47,13 +47,21 @@ Pass --strict to exit non-zero instead (useful in CI).
 
 Token mapping
 -------------
-Harbor reports prompt tokens as a total that already contains the cached
-tokens, while the Finance API wants the buckets side by side. To keep the sum
-intact and avoid double counting:
+Tokens come from the `modelUsage` block of Claude Code's result event, which is
+the same basis Harbor takes `total_cost_usd` from. Harbor's own per-step totals
+sum the message chain only, so billed calls that never become a message --
+compaction above all -- are missing from them: measured at 98% of input and 30%
+of output on an 8-run job. `modelUsage` already separates the buckets, so no
+subtraction is needed.
+
+    trajectory_input_tokens        = modelUsage.inputTokens
+    trajectory_input_cache_tokens  = modelUsage.cacheReadInputTokens
+    trajectory_output_cache_tokens = modelUsage.cacheCreationInputTokens
+
+Agents other than Claude Code leave no stream on disk; those fall back to
+Harbor's totals, where the buckets must still be split out of the prompt total:
 
     trajectory_input_tokens        = total_prompt - cache_read - cache_creation
-    trajectory_input_cache_tokens  = cache_read      (served from cache)
-    trajectory_output_cache_tokens = cache_creation  (written to cache)
 """
 
 from __future__ import annotations
@@ -147,6 +155,49 @@ def num(value, default=0):
     except (TypeError, ValueError):
         return default
     return int(n) if n.is_integer() else n
+
+
+def _claude_model_usage(run_dir: Path) -> dict | None:
+    """Billed token totals from Claude Code's result event.
+
+    Harbor sums per-message `usage` for tokens but reads `total_cost_usd` from
+    the result event, and the two disagree: a compaction call is billed and
+    lands in `modelUsage`, but never becomes a message in the chain. Reading
+    `modelUsage` puts the tokens back on the same basis as the cost.
+
+    Returns None when the run is not Claude Code (no stream on disk), so the
+    caller keeps Harbor's totals as the fallback.
+    """
+    path = run_dir / "agent" / "claude-code.jsonl"
+    if not path.exists():
+        return None
+    rec = None
+    try:
+        with path.open(encoding="utf-8", errors="replace") as fh:
+            for line in fh:          # ~20MB of stream; stop at the one result
+                if '"type":"result"' not in line and '"type": "result"' not in line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except ValueError:
+                    continue
+                if obj.get("type") == "result":
+                    rec = obj
+                    break
+    except OSError:
+        return None
+    models = (rec or {}).get("modelUsage")
+    if not isinstance(models, dict) or not models:
+        return None
+    totals = {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0}
+    for entry in models.values():     # keyed by model -- sum, never take one
+        if not isinstance(entry, dict):
+            continue
+        totals["input"] += num(entry.get("inputTokens", 0))
+        totals["output"] += num(entry.get("outputTokens", 0))
+        totals["cache_read"] += num(entry.get("cacheReadInputTokens", 0))
+        totals["cache_write"] += num(entry.get("cacheCreationInputTokens", 0))
+    return totals
 
 
 def iso8601(raw, fallback_mtime: float | None = None) -> str:
@@ -243,6 +294,16 @@ def usage_for_run(run_dir: Path) -> dict:
     if fresh < 0:                      # cache counted outside the total
         fresh = prompt
 
+    # Prefer what was billed. Harbor's totals miss every call that is not a
+    # message in the chain, so they under-report against the cost they ship
+    # beside. `modelUsage` splits the buckets itself -- no subtraction here.
+    billed = _claude_model_usage(run_dir)
+    if billed:
+        fresh = billed["input"]
+        completion = billed["output"]
+        cache_read = billed["cache_read"]
+        cache_write = billed["cache_write"]
+
     # job-level summary.json is two levels up: Run_N -> trajectory -> <job>
     summary = read_json(run_dir.parent.parent / "summary.json") or {}
     model = (((result.get("agent_info") or {}).get("model_info") or {}).get("name")
@@ -259,7 +320,11 @@ def usage_for_run(run_dir: Path) -> dict:
         "trajectory_input_tokens": fresh,
         "trajectory_output_tokens": completion,
         "trajectory_input_cache_tokens": cache_read,
+        # Cache WRITES, input-side. Odoo drops the correctly-named field for
+        # now, so the value rides on the legacy key -- same arrangement as
+        # judge_cache_write_tokens above.
         "trajectory_output_cache_tokens": cache_write,
+        "trajectory_cache_write_tokens": cache_write,
         "trajectory_cost_usd": cost,
     }
 
@@ -302,7 +367,7 @@ def build_payload(run_dir: Path, task_id: str, account: dict) -> dict:
     payload["model_name"] = usage["model_name"]
     for key in ("trajectory_input_tokens", "trajectory_output_tokens",
                 "trajectory_input_cache_tokens", "trajectory_output_cache_tokens",
-                "trajectory_cost_usd"):
+                "trajectory_cache_write_tokens", "trajectory_cost_usd"):
         payload[key] = usage[key]
     payload["subscription_id"] = (env("FINANCE_SUBSCRIPTION_ID")
                                   or account.get("subscription_id") or "")

@@ -18,6 +18,7 @@ This is that helper, shared, so the next file to stub `harbor` gets it for free.
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from functools import lru_cache
@@ -98,6 +99,38 @@ requires_docker = pytest.mark.skipif(
            "behaviour under test. Marked per-test rather than per-module "
            "because most tests in these files stop at an earlier gate and pass "
            "without a daemon -- skipping those too would cost real coverage.",
+)
+
+
+def credentials_are_usable() -> bool:
+    """Would run_task.sh's check_credentials let a preflight through?
+
+    It refuses on a missing or logged-out codex and on a missing Claude token,
+    which lands before anything a preflight test is asking about.
+    """
+    if shutil.which("codex") is None:
+        return False
+    try:
+        out = subprocess.run(["codex", "login", "status"], capture_output=True,
+                             text=True, timeout=30)
+        if "not logged in" in f"{out.stdout} {out.stderr}".lower():
+            return False
+    except (OSError, subprocess.SubprocessError):
+        return False
+    if os.environ.get("CLAUDE_CODE_OAUTH_TOKEN") or os.environ.get("ANTHROPIC_API_KEY"):
+        return True
+    if (Path.home() / ".claude" / ".credentials.json").is_file():
+        return True
+    return subprocess.run(
+        ["security", "find-generic-password", "-s", "Claude Code-credentials", "-w"],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    ).returncode == 0 if shutil.which("security") else False
+
+
+requires_credentials = pytest.mark.skipif(
+    not credentials_are_usable(),
+    reason="needs a logged-in codex and a Claude credential: check_credentials "
+           "exits 4 before the preflight stage runs.",
 )
 
 

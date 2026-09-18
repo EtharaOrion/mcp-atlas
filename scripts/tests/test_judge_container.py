@@ -846,13 +846,21 @@ def _start_judge(tmp_path: Path, token: str = "t0ken") -> str:
     auth.write_text('{"fake": "login"}')
     tests = tmp_path / "tests"
     tests.mkdir(exist_ok=True)
-    if not (tests / "evaluate.sh").exists():
-        (tests / "evaluate.sh").write_text(RUNTIME_EVALUATE_SH)
+    # evaluate.sh moved from the bundle's tests/ to the shared graders, so the
+    # readiness check now looks for it under the /harness/scoring mount and
+    # codexbridge runs it from there (codexbridge.py EVALUATE_SH). Put it where
+    # the container looks: a copy under /tests is never read, and the judge sits
+    # at 503 "is not mounted" until its 20s of retries run out.
+    scoring_tests = tmp_path / "scoring" / "tests"
+    scoring_tests.mkdir(parents=True, exist_ok=True)
+    if not (scoring_tests / "evaluate.sh").exists():
+        (scoring_tests / "evaluate.sh").write_text(RUNTIME_EVALUATE_SH)
     logs = tmp_path / "verifier"
     logs.mkdir(exist_ok=True)
     name = f"judge-test-{uuid.uuid4().hex[:8]}"
     subprocess.run(["docker", "run", "-d", "--name", name, "-e", f"JUDGE_TOKEN={token}",
                     "-v", f"{auth}:{AUTH_TARGET}:ro", "-v", f"{tests}:/tests:ro",
+                    "-v", f"{tmp_path / 'scoring'}:{SCORING_IN_CONTAINER}:ro",
                     "-v", f"{logs}:/logs/verifier", JUDGE_IMAGE],
                    check=True, capture_output=True)
     for _ in range(40):
@@ -891,7 +899,8 @@ def test_the_running_judge_mounts_only_what_it_grades(running_judge):
     mounts = json.loads(subprocess.run(["docker", "inspect", name, "--format", "{{json .Mounts}}"],
                                        capture_output=True, text=True, check=True).stdout)
     by_target = {m["Destination"]: m["RW"] for m in mounts}
-    assert by_target == {AUTH_TARGET: False, "/tests": False, "/logs/verifier": True}, mounts
+    assert by_target == {AUTH_TARGET: False, "/tests": False,
+                         SCORING_IN_CONTAINER: False, "/logs/verifier": True}, mounts
 
 
 @needs_image
@@ -969,3 +978,53 @@ def test_live_rubric_grade_through_the_container(tmp_path):
         assert breakdown["per_criterion"][0]["justification"].strip()
     finally:
         subprocess.run(["docker", "rm", "-f", name], capture_output=True)
+
+
+# ---------------------------------------------------------------------------
+# A run the agent never made must not be graded.
+#
+# Nothing counted the steps before grading: the whole rubric was bought from
+# codex against empty evidence and reward 0.0 published, which reads exactly
+# like an agent that tried and failed. scripts/host_rubric_pass.py has always
+# refused this case; these pin the judge container to the same rule.
+# ---------------------------------------------------------------------------
+
+def _judge_module(tmp_path, monkeypatch):
+    import importlib.util
+    monkeypatch.setenv("JUDGE_VERIFIER_DIR", str(tmp_path / "verifier"))
+    monkeypatch.setenv("JUDGE_TRAJECTORY_PATH", str(tmp_path / "traj.json"))
+    monkeypatch.setenv("JUDGE_EVALUATE_SH", str(tmp_path / "never-run.sh"))
+    src = Path(__file__).resolve().parents[2] / "tools" / "judge" / "codexbridge.py"
+    spec = importlib.util.spec_from_file_location("codexbridge_under_test", src)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+@pytest.mark.parametrize("trajectory", [
+    {},
+    {"steps": [], "final_message": ""},
+    {"steps": [], "final_message": "   "},
+])
+def test_a_run_with_no_agent_activity_is_refused_not_scored(tmp_path, monkeypatch, trajectory):
+    mod = _judge_module(tmp_path, monkeypatch)
+    doc = mod.evaluate(trajectory)
+    assert doc["ok"] is False
+    assert "no agent activity" in doc["reason"]
+    assert doc["reward"] is None
+    assert (tmp_path / "verifier" / "no_agent_activity.txt").is_file()
+    # evaluate.sh must not have been reached: no rubric was bought.
+    assert doc["rubric_criteria"] == 0
+
+
+@pytest.mark.parametrize("trajectory", [
+    {"steps": [{"tool": "list_alarms", "arguments": {}}], "final_message": ""},
+    {"steps": [], "final_message": "the cause was a failing contact"},
+])
+def test_a_run_that_did_something_is_still_graded(tmp_path, monkeypatch, trajectory):
+    """The guard must be narrow. A run that answered in prose without tools, or
+    called a tool and said nothing, is a real attempt and has to reach the
+    grader -- refusing either would turn a scored run into a missing one."""
+    mod = _judge_module(tmp_path, monkeypatch)
+    doc = mod.evaluate(trajectory)
+    assert "no agent activity" not in (doc["reason"] or "")

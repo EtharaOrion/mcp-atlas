@@ -85,6 +85,10 @@ def declared_policy() -> tuple[str, str]:
         return "public", "fallback (adapter.py not importable)"
 
 
+class _Skip(Exception):
+    """caps unreadable: the check below cannot run and must not report a fault."""
+
+
 class UnknownProvider(Exception):
     """--env-type named something harbor has no provider for."""
 
@@ -99,12 +103,19 @@ class CapabilitiesUnreadable(Exception):
     """
 
 
-def provider_capabilities(env_type: str):
+def provider_capabilities(env_type: str, startup=None, phases=()):
     """The REAL capability flags of the provider `harbor run` will instantiate.
 
     Resolved through Harbor's own registry, not a local table, so a provider
     that gains allowlist or dynamic-switch support is picked up here the moment
     Harbor ships it.
+
+    `capabilities` used to be a fixed table. On the docker provider it is now
+    derived from `self._enable_egress_control`, which __init__ computes from the
+    run's own network policies -- so it cannot be read off the bare class at
+    all, and reading it off a blank instance raises. The startup/phase policies
+    are therefore passed in and that one attribute is rebuilt here the same way
+    __init__ does, which is what makes this answer the runner's answer.
     """
     from harbor.environments.factory import _ENVIRONMENT_REGISTRY
     from harbor.models.environment_type import EnvironmentType
@@ -127,10 +138,24 @@ def provider_capabilities(env_type: str):
 
     try:
         return caps.fget(None)
-    except AttributeError:
+    except Exception:
         pass
+
+    probe = cls.__new__(cls)
+    probe._is_windows_container = False
+    if startup is not None:
+        try:
+            probe._enable_egress_control = bool(
+                cls._requires_egress_control(
+                    startup_network_policy=startup,
+                    phase_network_policies=tuple(phases),
+                )
+                and cls._egress_control_kernel_support()
+            )
+        except Exception:
+            pass          # leave it unset; the read below reports honestly
     try:
-        return caps.fget(cls.__new__(cls))
+        return caps.fget(probe)
     except Exception:
         raise CapabilitiesUnreadable(cls.__name__) from None
 
@@ -241,24 +266,6 @@ def check(task_dir: Path, env_type: str) -> None:
             "harbor raises this in Trial.__init__, AFTER the image is built")
         return
 
-    try:
-        caps = provider_capabilities(env_type)
-    except UnknownProvider as exc:
-        bad(f"{exc}", "pass a real provider to --env-type; nothing below was checked")
-        return
-    except CapabilitiesUnreadable as exc:
-        bad(f"{env_type}: capabilities could not be read ({exc}) -- policy "
-            f"enforceability was NOT checked",
-            "re-check provider_capabilities() against this harbor's source; to "
-            "run anyway, knowingly unverified, set PREFLIGHT_NETWORK_OFF=1")
-        return
-    except Exception as exc:
-        bad(f"{env_type}: reading capabilities raised "
-            f"{type(exc).__name__}: {exc} -- policy enforceability was NOT checked",
-            "this is a bug in provider_capabilities(), not a task defect; to "
-            "run anyway, knowingly unverified, set PREFLIGHT_NETWORK_OFF=1")
-        return
-
     # Mirror Trial._validate_network_policy_modes EXACTLY: a task with [[steps]]
     # gets one plan per step, each with its own verifier mode, and Harbor
     # validates every one. Checking only the stepless plan would be a check that
@@ -279,6 +286,26 @@ def check(task_dir: Path, env_type: str) -> None:
                  cfg, AgentConfig(name="claude-code"), EnvironmentConfig(), None,
                  verifier_mode=resolve_task_verifier_mode(cfg)))
         ]
+
+    # The policies harbor itself would hand the provider's constructor.
+    _startup = plans[0][1].agent_env_baseline if plans else None
+    _phases = [pol for _, pl in plans
+               for pol in (pl.agent_phase, pl.verifier_phase) if pol is not None]
+
+    caps = None
+    try:
+        caps = provider_capabilities(env_type, _startup, _phases)
+    except UnknownProvider as exc:
+        bad(f"{exc}", "pass a real provider to --env-type; nothing below was checked")
+        return
+    except Exception as exc:
+        # Not knowing is not the same as finding a fault. This used to refuse the
+        # run, which sent every operator to PREFLIGHT_NETWORK_OFF=1 and so turned
+        # the whole gate off. Name what went unchecked and let the rest run.
+        warn(f"{env_type}: capability flags could not be read "
+             f"({type(exc).__name__}: {exc}) -- enforceability was NOT checked",
+             "harbor's provider changed shape; re-check provider_capabilities(). "
+             "The isolation checks below still apply.")
 
     # ------------------------------------- what the kernel here can enforce
     class _Probe:
@@ -310,7 +337,7 @@ def check(task_dir: Path, env_type: str) -> None:
         for label, policy in (("[environment] baseline", plan.agent_env_baseline),
                               ("[agent] phase", plan.agent_phase),
                               ("[verifier] phase", plan.verifier_phase)):
-            if policy is None:
+            if policy is None or caps is None:
                 continue
             try:
                 probe.validate_network_policy_support(policy)
@@ -327,8 +354,12 @@ def check(task_dir: Path, env_type: str) -> None:
         # Harbor's OWN validator, bound to the real capability flags. This is
         # the check that fires in Trial.__init__, after the build is paid for.
         try:
+            if caps is None:
+                raise _Skip
             shim._validate_network_plan(plan, label=plan_label)
             ok(f"{pfx}harbor's own Trial network validation passes")
+        except _Skip:
+            pass
         except Exception as exc:
             bad(f"harbor would abort the trial: {exc}",
                 f'[environment].network_mode = '
@@ -373,8 +404,8 @@ def _isolation_files(repo: Path) -> tuple[set[str], set[str]] | None:
     Read out of the shipped config rather than restated, so widening the
     allowlist or adding a NO_PROXY entry updates this check for free.
     """
-    overlay = repo / "services" / "egress-proxy" / "overlay.yaml"
-    squid = repo / "services" / "egress-proxy" / "squid.conf"
+    overlay = repo / "tools" / "network" / "egress-proxy" / "overlay.yaml"
+    squid = repo / "tools" / "network" / "egress-proxy" / "squid.conf"
     if not overlay.is_file() or not squid.is_file():
         return None
     allowed: set[str] = set()
@@ -398,8 +429,8 @@ def _captures_access_log(repo: Path) -> bool:
     denials, which reads exactly like a clean run. The trial would be graded and
     delivered on evidence that was never collected.
     """
-    overlay = repo / "services" / "egress-proxy" / "overlay.yaml"
-    entrypoint = repo / "services" / "egress-proxy" / "entrypoint.sh"
+    overlay = repo / "tools" / "network" / "egress-proxy" / "overlay.yaml"
+    entrypoint = repo / "tools" / "network" / "egress-proxy" / "entrypoint.sh"
     if not overlay.is_file() or not entrypoint.is_file():
         return False
     return "/egress-out" in overlay.read_text() and "/egress-out" in entrypoint.read_text()
@@ -412,7 +443,7 @@ def check_isolation(task_dir: Path, raw: dict) -> None:
              "refuse the run if the model browsed")
         return
 
-    repo = Path(__file__).resolve().parents[1]
+    repo = REPO
     files = _isolation_files(repo)
     if files is None:
         # run_task.sh refuses outright on a missing overlay; nothing to add.

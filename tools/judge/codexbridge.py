@@ -69,7 +69,8 @@ EVALUATE_SH = Path(os.environ.get("JUDGE_EVALUATE_SH", "/harness/scoring/tests/e
 TRAJECTORY_PATH = Path(os.environ.get("JUDGE_TRAJECTORY_PATH", "/tmp/agent_trajectory.json"))
 VERIFIER_DIR = Path(os.environ.get("JUDGE_VERIFIER_DIR", "/logs/verifier"))
 
-_state: dict[str, str | None] = {"credential_error": "codex login not installed yet"}
+_state: dict[str, str | None] = {"credential_error": "codex login not installed yet",
+                                 "login_checked": None, "login_error": None}
 _grade_lock = threading.Lock()
 _codex_version: str | None = None
 
@@ -110,6 +111,29 @@ def install_credential() -> str | None:
     return None
 
 
+def codex_login_error() -> str | None:
+    """Ask the CLI whether the mounted login actually works.
+
+    install_credential() only proves a file arrived. An expired or revoked login
+    passes that and then fails every rubric criterion at grading time. Only an
+    explicit "not logged in" is treated as a fault; anything else we could not
+    run or parse is left alone, so a slow or odd CLI never blocks a good run.
+    """
+    if _state["login_checked"]:
+        return _state["login_error"]
+    _state["login_checked"] = "1"
+    try:
+        proc = subprocess.run(["codex", "login", "status"], capture_output=True,
+                              text=True, timeout=30)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if "not logged in" in f"{proc.stdout} {proc.stderr}".lower():
+        _state["login_error"] = ("the mounted codex login is not usable "
+                                 "(`codex login status` says: not logged in); "
+                                 "run `codex login` on the host and retry")
+    return _state["login_error"]
+
+
 def not_ready() -> str | None:
     """Why a grade cannot run right now, or None."""
     if not os.environ.get("JUDGE_TOKEN"):
@@ -118,6 +142,9 @@ def not_ready() -> str | None:
         return _state["credential_error"]
     if not shutil.which("codex"):
         return "codex CLI not found on PATH"
+    login = codex_login_error()
+    if login:
+        return login
     if not _judge_cli().is_file():
         return f"rubric grader missing at {_judge_cli()}"
     if importlib.util.find_spec("pytest") is None:
@@ -165,6 +192,31 @@ def evaluate(trajectory: dict) -> dict:
     """
     TRAJECTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
     TRAJECTORY_PATH.write_text(json.dumps(trajectory))
+
+    # A run with no tool calls and nothing said is a run that never started --
+    # an auth failure, a rate limit, a container that died in agent setup. It
+    # used to be graded anyway: the whole rubric was bought from codex against
+    # empty evidence and a reward of 0 published, which is indistinguishable
+    # from an agent that tried and failed. Refuse instead, and say which it was.
+    steps = trajectory.get("steps") or []
+    final = (trajectory.get("final_message") or "").strip()
+    if not steps and not final:
+        VERIFIER_DIR.mkdir(parents=True, exist_ok=True)
+        (VERIFIER_DIR / "no_agent_activity.txt").write_text(
+            "the agent produced no tool calls and no final message; nothing was graded\n")
+        return {
+            "ok": False,
+            "reason": "no agent activity: 0 tool calls, no final message — "
+                      "the agent phase did not run, so nothing was graded",
+            "returncode": None,
+            "reward": None,
+            "rubric_criteria": 0,
+            "written": ["no_agent_activity.txt"],
+            "log_tail": "",
+            "graded_in": GRADED_IN,
+            "model": _model(),
+            "codex_version": None,
+        }
 
     env = dict(os.environ)
     env.setdefault("JUDGE_MODEL", _model())

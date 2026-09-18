@@ -50,6 +50,9 @@ set -euo pipefail
 # CLAUDE_CODE_OAUTH_TOKEN is deliberately NOT cleared: it is what the run
 # authenticates with, and the verifier needs it too.
 unset AWS_BEARER_TOKEN_BEDROCK 2>/dev/null || true
+# Saved before the unset: resolve_auth hands it back when nothing else
+# authenticates the run, rather than reporting it missing.
+CALLER_ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
 unset ANTHROPIC_BASE_URL ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN 2>/dev/null || true
 unset CLAUDECODE CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_SSE_PORT 2>/dev/null || true
 unset CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN 2>/dev/null || true
@@ -400,13 +403,19 @@ resolve_run_offset() {
 # resolves this, not just preflight: stages run as separate processes now, so an
 # export in one is gone by the time the next starts, and harbor aborts up front
 # on a missing [verifier.env] variable.
+# How much validity a token must still have for the run to be worth starting.
+AUTH_MIN_REMAINING_SEC="${AUTH_MIN_REMAINING_SEC:-900}"
+# expiresAt (ms) from whichever store the token came out of; "" = not known,
+# which check_credentials treats as no opinion rather than as a problem.
+CLAUDE_TOKEN_EXPIRES_MS=""
+
 resolve_auth() {
   [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && return 0
   [ -n "${ANTHROPIC_API_KEY:-}" ] && return 0
   SRC=""
-  TOKEN="$(security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null \
-           | python3 -c 'import sys,json; print(json.load(sys.stdin)["claudeAiOauth"]["accessToken"])' 2>/dev/null || true)"
-  [ -n "$TOKEN" ] && SRC="keychain"
+  local _raw=""
+  _raw="$(security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null || true)"
+  [ -n "$_raw" ] && SRC="keychain"
 
   # Linux has no keychain: the claude CLI writes the same JSON structure to
   # ~/.claude/.credentials.json instead. Read it here rather than expecting the
@@ -416,17 +425,86 @@ resolve_auth() {
   # authenticate deep inside a paid trial, which reads like a bad agent rather
   # than an expired credential. Resolving per invocation always picks up
   # whatever the CLI last refreshed.
-  if [ -z "$TOKEN" ] && [ -s "$HOME/.claude/.credentials.json" ]; then
-    TOKEN="$(python3 -c 'import json,os; print(json.load(open(os.path.expanduser("~/.claude/.credentials.json")))["claudeAiOauth"]["accessToken"])' 2>/dev/null || true)"
-    [ -n "$TOKEN" ] && SRC="~/.claude/.credentials.json"
+  if [ -z "$_raw" ] && [ -s "$HOME/.claude/.credentials.json" ]; then
+    _raw="$(cat "$HOME/.claude/.credentials.json" 2>/dev/null || true)"
+    [ -n "$_raw" ] && SRC="~/.claude/.credentials.json"
+  fi
+
+  # One read, both fields. expiresAt travels with the token the CLI wrote, so
+  # reading it here costs nothing and needs no network.
+  TOKEN=""
+  if [ -n "$_raw" ]; then
+    local _parsed=""
+    _parsed="$(printf '%s' "$_raw" | python3 -c 'import sys,json
+try:
+    d = json.load(sys.stdin)["claudeAiOauth"]
+except Exception:
+    raise SystemExit(0)
+print(d.get("accessToken") or "")
+print(d.get("expiresAt") or "")' 2>/dev/null || true)"
+    TOKEN="$(printf '%s\n' "$_parsed" | sed -n '1p')"
+    CLAUDE_TOKEN_EXPIRES_MS="$(printf '%s\n' "$_parsed" | sed -n '2p')"
   fi
 
   if [ -n "$TOKEN" ]; then
     export CLAUDE_CODE_OAUTH_TOKEN="$TOKEN"
     echo "[run_task] using Claude Code OAuth token from $SRC"
-  else
-    echo "[run_task] WARNING: no CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_API_KEY — agent + judge will fail auth" >&2
+    return 0
   fi
+  if [ -n "${CALLER_ANTHROPIC_API_KEY:-}" ]; then
+    export ANTHROPIC_API_KEY="$CALLER_ANTHROPIC_API_KEY"
+    echo "[run_task] using ANTHROPIC_API_KEY from the caller's environment"
+    return 0
+  fi
+  echo "[run_task] WARNING: no CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_API_KEY — agent + judge will fail auth" >&2
+}
+
+# Is the Claude token we resolved still valid? Only a value in the PAST is a
+# failure; a missing or unreadable expiresAt says nothing and blocks nothing.
+check_claude_token_expiry() {   # -> 0 ok, 1 expired
+  [ -n "${CLAUDE_TOKEN_EXPIRES_MS:-}" ] || return 0
+  local verdict
+  verdict="$(python3 -c 'import sys,time
+try:
+    exp = int(sys.argv[1])
+except Exception:
+    raise SystemExit(0)
+left = exp / 1000.0 - time.time()
+if left <= 0:
+    print("expired")
+elif left < float(sys.argv[2]):
+    print("soon %d" % int(left / 60))
+else:
+    print("ok")' "$CLAUDE_TOKEN_EXPIRES_MS" "$AUTH_MIN_REMAINING_SEC" 2>/dev/null || true)"
+  case "$verdict" in
+    expired)
+      echo "[run_task] ERROR: the Claude Code token has EXPIRED" >&2
+      echo "[run_task]   Harbor forwards it into the container, which cannot refresh it," >&2
+      echo "[run_task]   so every agent turn would fail auth. Run: claude login" >&2
+      return 1 ;;
+    soon*)
+      echo "[run_task] WARNING: the Claude Code token expires in ${verdict#soon } min;" >&2
+      echo "[run_task]   a long run may lose auth part-way. Consider: claude login" >&2 ;;
+  esac
+  return 0
+}
+
+# Ask the CLI, not its credential file. Only an explicit "not logged in" is
+# treated as a failure -- any other trouble running it warns and lets the run go.
+check_codex_login() {   # -> 0 ok/unknown, 1 definitely logged out
+  local out rc
+  out="$(codex login status 2>&1)" && rc=0 || rc=$?
+  case "$(printf '%s' "$out" | tr 'A-Z' 'a-z')" in
+    *"not logged in"*)
+      echo "[run_task] ERROR: the codex CLI is not logged in — the rubric judge cannot grade" >&2
+      echo "[run_task]   Run: codex login" >&2
+      return 1 ;;
+  esac
+  if [ "$rc" != "0" ]; then
+    echo "[run_task] WARNING: 'codex login status' exited $rc; could not confirm the judge login" >&2
+    echo "[run_task]   $(printf '%s' "$out" | head -1)" >&2
+  fi
+  return 0
 }
 
 check_credentials() {
@@ -451,11 +529,16 @@ check_credentials() {
       echo "[run_task] ERROR: no Claude Code credentials found" >&2
       echo "[run_task]   Log in with: claude login   or set CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_API_KEY" >&2
       fail=1
-    elif ! command -v claude >/dev/null 2>&1; then
-      echo "[run_task] ERROR: Claude Code token is set but 'claude' binary not found in PATH" >&2
-      fail=1
     else
-      echo "[run_task] claude: credentials OK"
+      # The agent's CLI is pre-baked into the task image, so a host binary is
+      # only needed if the rubric falls back to a Claude judge. Not a blocker.
+      command -v claude >/dev/null 2>&1 \
+        || echo "[run_task] WARNING: 'claude' not found in PATH (only matters for a Claude-model rubric fallback)" >&2
+      if check_claude_token_expiry; then
+        echo "[run_task] claude: credentials OK"
+      else
+        fail=1
+      fi
     fi
   fi
 
@@ -464,13 +547,15 @@ check_credentials() {
     echo "[run_task]   Install: npm install -g @openai/codex" >&2
     fail=1
   else
-    local codex_auth="${HOME}/.codex/auth.json"
+    local codex_auth="${CODEX_AUTH_FILE:-${CODEX_HOME:-$HOME/.codex}/auth.json}"
     if [ ! -s "$codex_auth" ]; then
       echo "[run_task] ERROR: codex auth file missing or empty: $codex_auth" >&2
-      echo "[run_task]   Log in to the ChatGPT desktop app or run: codex auth login" >&2
+      echo "[run_task]   Log in to the ChatGPT desktop app or run: codex login" >&2
+      fail=1
+    elif ! check_codex_login; then
       fail=1
     else
-      echo "[run_task] codex: credentials OK"
+      echo "[run_task] codex: signed in"
     fi
   fi
 
@@ -496,6 +581,7 @@ check_credentials() {
 # attribution they do not use.
 #
 # Bypass with FINANCE_ENV_CHECK_OFF=1.
+FINANCE_ENV_BAD=0
 FINANCE_DEFAULT_PROJECT_TYPE="Technical"   # finance_reporter.py:276
 FINANCE_DEFAULT_TEAM_TYPE="Projects"       # finance_reporter.py:279
 
@@ -586,11 +672,18 @@ check_finance_env() {
   warn_finance_case FINANCE_PROJECT_TYPE "$FINANCE_DEFAULT_PROJECT_TYPE"
   warn_finance_case FINANCE_TEAM_TYPE    "$FINANCE_DEFAULT_TEAM_TYPE"
 
-  [ "$fail" = "0" ] || {
-    echo "[run_task] finance env check FAILED — fix <repo>/.env and retry." >&2
+  # Bad attribution stops the Odoo POST, not the agent phase. Said at second
+  # zero either way; only the stage that actually reports refuses to start.
+  if [ "$fail" != "0" ]; then
+    echo "[run_task] finance env check FAILED — fix <repo>/.env." >&2
     echo "[run_task]   Clear ODOO_URL to disable reporting, or set FINANCE_ENV_CHECK_OFF=1 to skip this gate." >&2
-    exit 4
-  }
+    if [ "$STAGE" = "finance" ]; then
+      exit 4
+    fi
+    echo "[run_task]   Continuing: the run proceeds, usage reporting will be skipped." >&2
+    FINANCE_ENV_BAD=1
+    return 0
+  fi
   echo "[run_task] finance: OK (project=$FINANCE_PROJECT_ID budget=$budget${detail:+ $detail} -> $ODOO_URL)"
 }
 
@@ -779,6 +872,10 @@ stage_preflight() {
       exit 2
     }
   fi
+
+  # GLM runs: prove the key works before the image builds, not after. Idempotent
+  # -- stage_harbor calls it again and finds the bridge already up.
+  [ "${CC_MODE:-}" = "zbridge" ] && ensure_zbridge
 
   if ! docker info >/dev/null 2>&1; then
     echo "[run_task] docker not running — starting OrbStack/Docker"
@@ -1201,19 +1298,65 @@ ensure_zbridge() {
       ZB_UPSTREAM_URL="${ZB_UPSTREAM_URL:-https://api.z.ai/api/coding/paas/v4/chat/completions}" \
       nohup uv run python -m zbridge --port "$port" --host 127.0.0.1 \
         >"$log_dir/zbridge.log" 2>&1 &)
-    local i=0
-    while [ $i -lt 15 ]; do
+    # Generous, because the first `uv run` on a machine resolves and builds the
+    # bridge's venv before anything listens -- minutes, not seconds. The old 15s
+    # was under that, so a cold start looked like a broken bridge.
+    local i=0 wait_s="${ZB_START_TIMEOUT_SEC:-180}"
+    while [ $i -lt "$wait_s" ]; do
       sleep 1; i=$((i+1))
       curl -sf -m 1 "http://127.0.0.1:$port/healthz" >/dev/null 2>&1 && {
         echo "[run_task] zbridge ready on :$port"; break
       }
     done
+    # Pointing the agent at a port nothing listens on spends the whole trial on
+    # connection errors, so this refuses instead of warning.
     curl -sf -m 1 "http://127.0.0.1:$port/healthz" >/dev/null 2>&1 || {
-      echo "[run_task] WARNING: zbridge did not come up in 15s; check $log_dir/zbridge.log" >&2
+      echo "[run_task] ERROR: zbridge did not come up in ${wait_s}s on :$port" >&2
+      echo "[run_task]   The agent would fail every turn. See $log_dir/zbridge.log" >&2
+      echo "[run_task]   Raise ZB_START_TIMEOUT_SEC if this machine is just slow." >&2
+      exit 3
     }
   fi
+  zbridge_live_check || exit 4
   export ANTHROPIC_BASE_URL="http://host.docker.internal:$port"
   echo "[run_task] agent routed through zbridge ($ANTHROPIC_BASE_URL)"
+}
+
+# /healthz answers ok whatever key the bridge holds, so it cannot tell a working
+# GLM login from a dead one. One minimal request does. Only an upstream 401/403
+# refuses the run; anything else warns, because it may not be the credential.
+zbridge_live_check() {
+  local port="${ZB_PORT:-8766}" verdict
+  verdict="$(python3 - "$port" <<'PYEOF' 2>/dev/null || true
+import json, sys, urllib.error, urllib.request
+body = json.dumps({"model": "claude-opus-5", "max_tokens": 1,
+                   "messages": [{"role": "user", "content": "ping"}]}).encode()
+req = urllib.request.Request(f"http://127.0.0.1:{sys.argv[1]}/v1/messages",
+                             data=body, headers={"content-type": "application/json"})
+try:
+    with urllib.request.urlopen(req, timeout=60) as r:
+        print("ok" if r.status == 200 else f"http {r.status}")
+except urllib.error.HTTPError as exc:
+    try:
+        detail = (exc.read() or b"")[:160].decode("utf-8", "replace").replace("\n", " ")
+    except Exception:
+        detail = ""
+    print(f"{'auth' if exc.code in (401, 403) else 'http'} {exc.code} {detail}")
+except Exception as exc:
+    print(f"unverified {exc}")
+PYEOF
+)"
+  case "$verdict" in
+    ok)
+      echo "[run_task] zbridge: GLM credential verified against z.ai" ;;
+    auth*)
+      echo "[run_task] ERROR: z.ai rejected the GLM credential — $verdict" >&2
+      echo "[run_task]   Every agent turn would fail auth. Fix ZB_ZAI_API_KEY in .env." >&2
+      return 1 ;;
+    *)
+      echo "[run_task] WARNING: could not verify the GLM credential (${verdict:-no answer}); continuing" >&2 ;;
+  esac
+  return 0
 }
 
 # Point the agent at the Headroom container, and tell the pieces around it what
@@ -1242,8 +1385,10 @@ route_agent_through_headroom() {
   # `--stage harbor` on a machine without the image otherwise dies inside
   # compose with "pull access denied", forty lines from the cause.
   if docker info >/dev/null 2>&1 && ! docker image inspect "$HEADROOM_IMAGE" >/dev/null 2>&1; then
-    echo "[run_task] WARNING: $HEADROOM_IMAGE is not built; compose up will fail." >&2
+    echo "[run_task] ERROR: $HEADROOM_IMAGE is not built; compose up would fail deep inside harbor." >&2
     echo "[run_task]   Build it with: make build-headroom-compress" >&2
+    echo "[run_task]   Or run without AGENT_HEADROOM_ENABLED." >&2
+    exit 3
   fi
 
   # What harbor forwards into main (claude_code.py reads it from this
@@ -1763,6 +1908,11 @@ stage_finance() {
     echo "[finance] WARNING: ODOO_URL unset (no .env at or above $REPO) — usage NOT reported" >&2
     return 0
   fi
+  if [ "${FINANCE_ENV_BAD:-0}" = "1" ]; then
+    echo "[finance] ERROR: attribution env is invalid (reported at startup) — usage NOT reported" >&2
+    stage_mask
+    return 0
+  fi
 
   local offset; offset="$(state_get run_offset)"
   [ -n "$offset" ] || offset="$(resolve_run_offset)"
@@ -1782,7 +1932,11 @@ stage_finance() {
 
 # --- dispatch -----------------------------------------------------------------
 
-python3 "$REPO/scripts/patch_harbor.py"
+# Only the stages that actually drive harbor. reshape/finance/mask move files
+# and must not die because harbor drifted or is not installed.
+case "$STAGE" in
+  preflight|harbor|all) python3 "$REPO/scripts/patch_harbor.py" ;;
+esac
 
 trap on_interrupt INT
 trap on_terminate TERM
