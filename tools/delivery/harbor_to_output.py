@@ -680,7 +680,15 @@ def parse_stream(path: Path) -> dict:
                     "output_tokens": u.get("output_tokens"),
                     "cache_read_tokens": u.get("cache_read_input_tokens"),
                     "cache_creation_tokens": u.get("cache_creation_input_tokens"),
-                    "reasoning_tokens": None,
+                    # Claude Code reports this as output_tokens_details.thinking_tokens;
+                    # "reasoning_tokens" is OpenAI's name for the same thing, which is
+                    # why this read as absent and sat hardcoded None. Measured present
+                    # on every run of a thinking model, 20-52% of output_tokens.
+                    #
+                    # SUBSET, NOT AN ADDITION. Anthropic bills thinking as output, so
+                    # this number is already inside output_tokens. Summing the two
+                    # double-counts the spend.
+                    "reasoning_tokens": (u.get("output_tokens_details") or {}).get("thinking_tokens"),
                     "cost_usd": ev.get("total_cost_usd"),
                 }
     # classify calls
@@ -1016,6 +1024,9 @@ def reshape_trial(trial_dir: Path, run_no: int, *, out_task: Path, raw_trials: P
     usage = stream["usage"] or {
         "input_tokens": ar.get("n_input_tokens"), "output_tokens": ar.get("n_output_tokens"),
         "cache_read_tokens": ar.get("n_cache_tokens"), "cache_creation_tokens": None,
+        # Stays None on purpose: this fallback reads harbor's agent_result, which
+        # carries only n_input_tokens/n_cache_tokens/n_output_tokens/cost_usd and no
+        # thinking breakdown. The stream path above has the real number.
         "reasoning_tokens": None, "cost_usd": ar.get("cost_usd"),
     }
     if usage.get("input_tokens") is None:
