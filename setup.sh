@@ -6,37 +6,51 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "=== [1/4] Installing prerequisites ==="
 
-if ! command -v brew &> /dev/null; then
-    echo "Homebrew not found. Installing..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    # Add Homebrew to PATH for this shell (Apple Silicon default location)
-    eval "$(/opt/homebrew/bin/brew shellenv)" 2>/dev/null || true
+# Homebrew is macOS-only here. Unguarded, this block INSTALLED Homebrew on an
+# Amazon Linux box and then reinstalled docker over a working docker, on a
+# machine whose only actual problem was a stale harbor. A Linux host is expected
+# to arrive with these already present, so say what is missing and carry on
+# rather than trying to provision it.
+if [ "$(uname -s)" = "Darwin" ]; then
+    if ! command -v brew &> /dev/null; then
+        echo "Homebrew not found. Installing..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        # Add Homebrew to PATH for this shell (Apple Silicon default location)
+        eval "$(/opt/homebrew/bin/brew shellenv)" 2>/dev/null || true
+    fi
+
+    # Core tools
+    brew install -q \
+        git \
+        python@3.12 \
+        awscli \
+        docker \
+        docker-compose \
+        docker-credential-helper-ecr \
+        jq \
+        pipx \
+        codex 2>&1 | tail -3 || true
+else
+    echo "Non-macOS host ($(uname -s)): skipping the Homebrew block."
+    missing=""
+    for c in git python3 aws docker jq codex; do
+        command -v "$c" >/dev/null 2>&1 || missing="$missing $c"
+    done
+    command -v uv >/dev/null 2>&1 || command -v pipx >/dev/null 2>&1 || missing="$missing uv-or-pipx"
+    if [ -n "$missing" ]; then
+        echo "  MISSING, install with the system package manager:$missing"
+    else
+        echo "  all expected host tools are present"
+    fi
 fi
 
-# Core tools
-brew install -q \
-    git \
-    python@3.12 \
-    awscli \
-    docker \
-    docker-compose \
-    docker-credential-helper-ecr \
-    jq \
-    pipx \
-    codex 2>&1 | tail -3 || true
-
 # harbor runs the trials and scripts/patch_harbor.py refuses to start without
-# it; claude is the agent CLI the rubric can fall back to.
-#
-# PINNED on purpose. patch_harbor.py edits harbor's own source by matching exact
-# anchor strings, so a harbor that moves those lines silently drops patches: the
-# 0.23.0 flag rewrite (CliFlag lists -> pydantic fields) killed two of them at
-# once. Unpinned, a fresh machine installs whatever is newest that day and
-# inherits that breakage with no warning. Raise this deliberately: bump the
-# number, run `python3 scripts/patch_harbor.py --audit`, re-anchor what it
-# reports, then run one task end to end.
-HARBOR_VERSION="0.23.0"
-pipx install "harbor==${HARBOR_VERSION}" 2>&1 | tail -2 || true
+# it; claude is the agent CLI the rubric can fall back to. The pin and the
+# uv/pipx choice both live in scripts/lib/harbor.sh so run_task.sh can quote the
+# same command back when it finds the wrong version.
+# shellcheck source=scripts/lib/harbor.sh
+. "$REPO_ROOT/scripts/lib/harbor.sh"
+harbor_install || true
 if ! command -v claude &> /dev/null; then
     curl -fsSL https://claude.ai/install.sh | bash || true
 fi

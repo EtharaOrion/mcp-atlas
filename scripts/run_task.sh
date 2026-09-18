@@ -58,6 +58,11 @@ unset CLAUDECODE CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_SSE_PORT 2>/dev/null || true
 unset CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN 2>/dev/null || true
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
+# The harbor pin and the install command for THIS machine (uv vs pipx). Sourced
+# so a version refusal can print the command that actually fixes the box it is
+# running on.
+# shellcheck source=lib/harbor.sh
+. "$REPO/scripts/lib/harbor.sh"
 cd "$REPO"
 
 # .env supplies DEFAULTS for everything below, so it has to be read BEFORE the
@@ -1527,9 +1532,10 @@ require_harbor_agent_config() {
     echo "[run_task] REFUSING: this harbor drops --ak config=, so the egress guard" >&2
     echo "[run_task]   would not reach the container and the agent would run with no" >&2
     echo "[run_task]   PreToolUse hook while this script reported it ON." >&2
-    echo "[run_task]   Install the pinned version: pipx install --force harbor==0.23.0" >&2
-    echo "[run_task]   (setup.sh holds the pin), or set EGRESS_GUARD_IGNORE_HARBOR=1 to" >&2
-    echo "[run_task]   run knowingly without the guard." >&2
+    echo "[run_task]   This machine has harbor $(harbor --version 2>/dev/null || echo '?'); the harness pins ${HARBOR_VERSION}." >&2
+    echo "[run_task]   Fix it with:  $(harbor_install_cmd)" >&2
+    echo "[run_task]   (the pin lives in scripts/lib/harbor.sh), or set" >&2
+    echo "[run_task]   EGRESS_GUARD_IGNORE_HARBOR=1 to run knowingly without the guard." >&2
     exit 2
   fi
   # rc 3, or anything unexpected: the probe already named what it could not
