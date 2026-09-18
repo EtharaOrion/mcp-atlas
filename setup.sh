@@ -33,7 +33,7 @@ if [ "$(uname -s)" = "Darwin" ]; then
 else
     echo "Non-macOS host ($(uname -s)): skipping the Homebrew block."
     missing=""
-    for c in git python3 aws docker jq codex; do
+    for c in git python3 aws docker jq codex docker-credential-ecr-login; do
         command -v "$c" >/dev/null 2>&1 || missing="$missing $c"
     done
     command -v uv >/dev/null 2>&1 || command -v pipx >/dev/null 2>&1 || missing="$missing uv-or-pipx"
@@ -59,18 +59,45 @@ echo ""
 echo "=== [2/4] Setting up Python venv ==="
 
 if [ ! -d "$REPO_ROOT/.venv" ]; then
-    python3.12 -m venv "$REPO_ROOT/.venv"
+    # python3.12 is the brew name; a Linux host may only have python3.
+    if command -v python3.12 >/dev/null 2>&1; then
+        python3.12 -m venv "$REPO_ROOT/.venv"
+    else
+        python3 -m venv "$REPO_ROOT/.venv"
+    fi
 fi
 
-# shellcheck disable=SC1091
-source "$REPO_ROOT/.venv/bin/activate"
-pip install --quiet --upgrade pip
-pip install --quiet -r "$REPO_ROOT/requirements.txt"
+# A venv created by `uv venv` ships WITHOUT pip. Activating it and calling pip
+# then dies with "pip: command not found", and set -e takes the rest of setup
+# down with it -- ECR wiring and the verification block never run. uv needs no
+# pip and is the documented prerequisite, so prefer it; otherwise drive the
+# venv's own interpreter, which does not depend on `pip` being on PATH.
+if command -v uv >/dev/null 2>&1; then
+    VIRTUAL_ENV="$REPO_ROOT/.venv" uv pip install -q -r "$REPO_ROOT/requirements.txt"
+else
+    "$REPO_ROOT/.venv/bin/python" -m ensurepip --upgrade >/dev/null 2>&1 || true
+    "$REPO_ROOT/.venv/bin/python" -m pip install --quiet --upgrade pip
+    "$REPO_ROOT/.venv/bin/python" -m pip install --quiet -r "$REPO_ROOT/requirements.txt"
+fi
 
 echo "Python venv ready at $REPO_ROOT/.venv"
 
 echo ""
 echo "=== [3/4] Wiring ECR credential helper ==="
+
+# credHelpers names a BINARY (docker-credential-ecr-login). The macOS branch
+# installs it via brew; a Linux host has to supply it, and without it every ECR
+# pull fails with "docker-credential-ecr-login: executable file not found" long
+# after setup reported success.
+if ! command -v docker-credential-ecr-login >/dev/null 2>&1; then
+    echo "  WARNING: docker-credential-ecr-login is NOT installed."
+    echo "           ECR pulls will fail until it is. Install it with:"
+    if   command -v dnf     >/dev/null 2>&1; then echo "             sudo dnf install -y amazon-ecr-credential-helper"
+    elif command -v yum     >/dev/null 2>&1; then echo "             sudo yum install -y amazon-ecr-credential-helper"
+    elif command -v apt-get >/dev/null 2>&1; then echo "             sudo apt-get install -y amazon-ecr-credential-helper"
+    else echo "             (see github.com/awslabs/amazon-ecr-credential-helper)"
+    fi
+fi
 
 python3 <<PY
 import json, pathlib
