@@ -206,3 +206,56 @@ def test_no_credentials_at_all_warns_rather_than_crashing(tmp_path):
                        env=env, timeout=60)
     assert "RC=0" in r.stdout, r.stdout + r.stderr
     assert "no CLAUDE_CODE_OAUTH_TOKEN" in r.stderr
+
+
+# ------------------------------------------------- what `codex login status` misses
+#
+# Measured on codex-cli in the judge image and on the host:
+#
+#   no auth.json          rc=1  "Not logged in"
+#   {"tokens": null}      rc=0  "Logged in using ChatGPT"     <- wrong
+#   {}                    rc=0  "Logged in using ChatGPT"     <- wrong
+#   malformed id_token    rc=1  "Error checking login status: invalid ID token"
+#
+# So the CLI only really detects a MISSING file. codex_auth_is_empty reads the
+# one fact it misses, from the file, with no network call.
+
+def _empty_probe(text: str, tmp_path) -> bool:
+    f = tmp_path / "auth.json"
+    f.write_text(text)
+    r = _bash(_fn("codex_auth_is_empty")
+              + f'\nif codex_auth_is_empty "{f}"; then echo EMPTY; else echo HAS; fi')
+    return "EMPTY" in r.stdout
+
+
+@pytest.mark.parametrize("text", ['{}', '{"tokens": null}',
+                                  '{"auth_mode": "chatgpt", "OPENAI_API_KEY": null, "tokens": null}'])
+def test_a_credential_file_with_no_credential_is_caught(text, tmp_path):
+    assert _empty_probe(text, tmp_path)
+
+
+@pytest.mark.parametrize("text", [
+    '{"tokens": {"access_token": "x"}}',
+    '{"OPENAI_API_KEY": "sk-x", "tokens": null}',
+])
+def test_a_real_credential_is_not_called_empty(text, tmp_path):
+    assert not _empty_probe(text, tmp_path)
+
+
+@pytest.mark.parametrize("text", ['not json at all', '[]', '{"tokens": "a string"}'])
+def test_a_shape_it_does_not_recognise_says_nothing(text, tmp_path):
+    """Silence, not refusal. Guessing at an unfamiliar credential format would
+    block runs whose login is perfectly good."""
+    assert not _empty_probe(text, tmp_path)
+
+
+def test_the_real_host_credential_passes():
+    """The check has to agree with the machine it runs on, or it is useless."""
+    import json
+    auth = Path(os.environ.get("CODEX_AUTH_FILE",
+                               Path.home() / ".codex" / "auth.json"))
+    if not auth.is_file():
+        pytest.skip("no codex login on this machine")
+    r = _bash(_fn("codex_auth_is_empty")
+              + f'\nif codex_auth_is_empty "{auth}"; then echo EMPTY; else echo HAS; fi')
+    assert "HAS" in r.stdout, r.stdout + r.stderr

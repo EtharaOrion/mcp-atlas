@@ -27,7 +27,16 @@ brew install -q \
 
 # harbor runs the trials and scripts/patch_harbor.py refuses to start without
 # it; claude is the agent CLI the rubric can fall back to.
-pipx install harbor 2>&1 | tail -2 || true
+#
+# PINNED on purpose. patch_harbor.py edits harbor's own source by matching exact
+# anchor strings, so a harbor that moves those lines silently drops patches: the
+# 0.23.0 flag rewrite (CliFlag lists -> pydantic fields) killed two of them at
+# once. Unpinned, a fresh machine installs whatever is newest that day and
+# inherits that breakage with no warning. Raise this deliberately: bump the
+# number, run `python3 scripts/patch_harbor.py --audit`, re-anchor what it
+# reports, then run one task end to end.
+HARBOR_VERSION="0.23.0"
+pipx install "harbor==${HARBOR_VERSION}" 2>&1 | tail -2 || true
 if ! command -v claude &> /dev/null; then
     curl -fsSL https://claude.ai/install.sh | bash || true
 fi

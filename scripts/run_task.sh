@@ -489,9 +489,36 @@ else:
   return 0
 }
 
+# Is there a credential in this auth.json at all? Measured: `codex login status`
+# answers "Logged in using ChatGPT" for {"tokens": null} and even for {}, so it
+# only really detects a MISSING file. This reads the one fact it misses. Silent
+# on anything it cannot parse or does not recognise.
+codex_auth_is_empty() {   # -> 0 when the file definitely carries no credential
+  [ "$(python3 -c 'import json,sys
+try:
+    d = json.load(open(sys.argv[1]))
+    assert isinstance(d, dict)
+except Exception:
+    raise SystemExit(0)
+tok = d.get("tokens") or {}
+if not isinstance(tok, dict):
+    raise SystemExit(0)
+if not (tok.get("access_token") or d.get("OPENAI_API_KEY")):
+    print("empty")' "$1" 2>/dev/null)" = "empty" ]
+}
+
 # Ask the CLI, not its credential file. Only an explicit "not logged in" is
 # treated as a failure -- any other trouble running it warns and lets the run go.
+#
+# NOTE what this does and does not prove. It catches a missing or emptied
+# credential. It does NOT detect an EXPIRED ChatGPT session: the answer comes
+# back instantly, so it is a local read, not a call to openai.
 check_codex_login() {   # -> 0 ok/unknown, 1 definitely logged out
+  if codex_auth_is_empty "${1:-}"; then
+    echo "[run_task] ERROR: $1 carries no codex credential (no tokens, no API key)" >&2
+    echo "[run_task]   The rubric judge cannot grade. Run: codex login" >&2
+    return 1
+  fi
   local out rc
   out="$(codex login status 2>&1)" && rc=0 || rc=$?
   case "$(printf '%s' "$out" | tr 'A-Z' 'a-z')" in
@@ -552,7 +579,7 @@ check_credentials() {
       echo "[run_task] ERROR: codex auth file missing or empty: $codex_auth" >&2
       echo "[run_task]   Log in to the ChatGPT desktop app or run: codex login" >&2
       fail=1
-    elif ! check_codex_login; then
+    elif ! check_codex_login "$codex_auth"; then
       fail=1
     else
       echo "[run_task] codex: signed in"

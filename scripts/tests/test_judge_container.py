@@ -653,7 +653,9 @@ def _overlays(run) -> list[str]:
 def login(tmp_path):
     auth = tmp_path / "codex" / "auth.json"
     auth.parent.mkdir()
-    auth.write_text("{}")
+    # Credential-SHAPED, not just present. run_task.sh refuses an auth.json that
+    # carries no tokens, because `codex login status` calls {} logged in.
+    auth.write_text('{"auth_mode": "chatgpt", "tokens": {"access_token": "stub"}}')
     return auth
 
 
@@ -843,7 +845,7 @@ def _exec(name: str, *cmd: str, **kw) -> subprocess.CompletedProcess:
 
 def _start_judge(tmp_path: Path, token: str = "t0ken") -> str:
     auth = tmp_path / "auth.json"
-    auth.write_text('{"fake": "login"}')
+    auth.write_text('{"auth_mode": "chatgpt", "tokens": {"access_token": "stub"}}')
     tests = tmp_path / "tests"
     tests.mkdir(exist_ok=True)
     # evaluate.sh moved from the bundle's tests/ to the shared graders, so the

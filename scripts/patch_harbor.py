@@ -20,34 +20,73 @@ PATCH = """
         ),"""
 ALREADY_PATCHED_MARKER = '"thinking_display"'
 
+# harbor 0.23.0 moved agent flags off CLI_FLAGS lists onto pydantic fields of
+# ClaudeCodeOptions, so ANCHOR above can never match there. It also set
+# extra="forbid" (agents/options.py), which turns an unknown --ak key from
+# "ignored" into a hard validation error, so run_task.sh:1027's
+# `--ak thinking=adaptive` fails the run up front unless this field exists.
+# thinking_display became NATIVE in 0.23.0 and is deliberately not re-added.
+ANCHOR_THINKING_PYD = '''    thinking_display: Annotated[
+        Literal["summarized", "omitted"] | None,
+        Cli("--thinking-display"),
+    ] = Field(default=None, description="How thinking is displayed.")'''
 
-ANCHOR_ARGMAX_1 = "        run_env = {**env, instruction_env_var: instruction}"
-REPLACEMENT_ARGMAX_1 = """        import base64 as _base64
-        _instr_id = uuid.uuid4().hex
-        _instr_file = f"/tmp/harbor_instruction_{_instr_id}"
-        _instr_b64 = _base64.b64encode(instruction.encode("utf-8")).decode("ascii")
-        _chunks = [_instr_b64[i:i+4000] for i in range(0, len(_instr_b64), 4000)]
-        _wparts = (
-            [f"> {_instr_file}.b64"]
-            + [f'printf "%s" {shlex.quote(c)} >> {_instr_file}.b64' for c in _chunks]
-            + [f"base64 -d {_instr_file}.b64 > {_instr_file} && rm -f {_instr_file}.b64"]
-        )
-        await self.exec_as_agent(
-            environment,
-            command=" && ".join(_wparts),
-            env=env,
-        )
+REPLACEMENT_THINKING_PYD = ANCHOR_THINKING_PYD + '''
+    # harbor-patch: thinking flag
+    thinking: Annotated[str | None, Cli("--thinking")] = Field(
+        default=None, description="Thinking mode."
+    )'''
 
-        run_env = {**env}"""
+ALREADY_PATCHED_MARKER_THINKING_PYD = "# harbor-patch: thinking flag"
+
+
+# Indentation is load-bearing. All three anchors sit inside a `try:` inside an
+# `async def`, at 12 and 20 spaces; they used to be written 4 short. Anchor 1 is
+# one line, so it still matched as a SUBSTRING (the missing spaces sit to its
+# left) and the patch reported "applied", but the replacement's remaining lines
+# landed a level out, and anchors 2 and 3 never matched at all. On a freshly
+# installed harbor that compiled to
+#   SyntaxError: expected 'except' or 'finally' block
+# i.e. an unimportable claude_code.py. Verified against pristine 0.22.0 AND
+# 0.23.0, so this also repairs the downgrade path. Re-measure after an upgrade.
+ANCHOR_ARGMAX_1 = "            run_env = {**env, instruction_env_var: instruction}"
+REPLACEMENT_ARGMAX_1 = """            import base64 as _base64
+            _instr_id = uuid.uuid4().hex
+            _instr_file = f"/tmp/harbor_instruction_{_instr_id}"
+            _instr_b64 = _base64.b64encode(instruction.encode("utf-8")).decode("ascii")
+            _chunks = [_instr_b64[i:i+4000] for i in range(0, len(_instr_b64), 4000)]
+            _wparts = (
+                [f"> {_instr_file}.b64"]
+                + [f'printf "%s" {shlex.quote(c)} >> {_instr_file}.b64' for c in _chunks]
+                + [f"base64 -d {_instr_file}.b64 > {_instr_file} && rm -f {_instr_file}.b64"]
+            )
+            await self.exec_as_agent(
+                environment,
+                command=" && ".join(_wparts),
+                env=env,
+            )
+
+            run_env = {**env}"""
 
 ANCHOR_ARGMAX_2 = """\
-                f'{instruction_shell_var}="${instruction_env_var}"; '
-                f"unset {instruction_env_var}; "
-                f'printf "%s" "${instruction_shell_var}" | '"""
-REPLACEMENT_ARGMAX_2 = "                f'cat {_instr_file} | '"
+                    f'{instruction_shell_var}="${instruction_env_var}"; '
+                    f"unset {instruction_env_var}; "
+                    f'printf "%s" "${instruction_shell_var}" | '"""
+REPLACEMENT_ARGMAX_2 = "                    f'cat {_instr_file} | '"
 
-ANCHOR_ARGMAX_3 = '                f"/logs/agent/claude-code.txt"\n            ),\n            env=run_env,'
-REPLACEMENT_ARGMAX_3 = '                f"/logs/agent/claude-code.txt; rm -f {_instr_file}"\n            ),\n            env=run_env,'
+# Harbor builds the log path from environment_logs_dir; the old anchor expected
+# a literal /logs/agent/claude-code.txt that no longer appears here.
+ANCHOR_ARGMAX_3 = (
+    "                    f\"{(self.environment_logs_dir / 'claude-code.txt').as_posix()}\"\n"
+    "                ),\n"
+    "                env=run_env,"
+)
+REPLACEMENT_ARGMAX_3 = (
+    "                    f\"{(self.environment_logs_dir / 'claude-code.txt').as_posix()}\"\n"
+    '                    f"; rm -f {_instr_file}"\n'
+    "                ),\n"
+    "                env=run_env,"
+)
 
 ALREADY_PATCHED_MARKER_ARGMAX = "_instr_file"
 
@@ -343,12 +382,34 @@ REPLACEMENT_SUPPRESS_SCORES = (
 ALREADY_PATCHED_MARKER_SUPPRESS_SCORES = "harbor-patch: suppress pre-rubric scores"
 
 
+# --- Fallback model removal ---------------------------------------------------
+# A fallback model silently swaps the model mid-run, which is exactly what a
+# pinned-model trial must not do: the reward would be attributed to the model in
+# --model while some of the turns came from another one. Removing the option is
+# what makes that unrepresentable rather than merely unset.
+#
+# 0.23.0 moved the declaration from a quoted CliFlag entry to a pydantic field,
+# so the old `'"fallback_model"' not in text` probe stopped matching and passed
+# VACUOUSLY: the patch reported "already done" on a harbor that still carried the
+# option. Both shapes are handled below, and the presence probe is now the
+# unquoted name so it cannot go quietly true again.
+#
+# Deleting the field is safe here: the declaration is the only reference to it in
+# the whole 0.23.0 package (verified), so nothing reads the attribute. It is also
+# strictly stronger than on 0.22.0 -- with extra="forbid" the option is now a
+# hard validation error rather than a silently ignored kwarg.
 ANCHOR_FALLBACK = """\
         CliFlag(
             "fallback_model",
             cli="--fallback-model",
             type="str",
         ),"""
+
+ANCHOR_FALLBACK_PYD = """\
+    fallback_model: Annotated[str | None, Cli("--fallback-model")] = Field(
+        default=None, description="Fallback model name."
+    )
+"""
 
 
 def find_harbor_claude_code() -> Path:
@@ -439,18 +500,22 @@ def main() -> None:
     text = target.read_text(encoding="utf-8")
     changed = False
 
-    if ALREADY_PATCHED_MARKER in text:
+    if ALREADY_PATCHED_MARKER_THINKING_PYD in text or ALREADY_PATCHED_MARKER in text:
         print(f"[patch_harbor] Thinking flags: already patched")
-    elif ANCHOR not in text:
+    elif ANCHOR_THINKING_PYD in text:
+        text = text.replace(ANCHOR_THINKING_PYD, REPLACEMENT_THINKING_PYD, 1)
+        changed = True
+        print(f"[patch_harbor] Thinking flags: patched (pydantic options, harbor >= 0.23.0)")
+    elif ANCHOR in text:
+        text = text.replace(ANCHOR, ANCHOR + PATCH, 1)
+        changed = True
+        print(f"[patch_harbor] Thinking flags: patched (CliFlag list, harbor < 0.23.0)")
+    else:
         print(
             f"[patch_harbor] Thinking flags: NOT applied -- anchor not found in {target}",
             file=sys.stderr,
         )
         failures.append(f"thinking flags  ({target.name})")
-    else:
-        text = text.replace(ANCHOR, ANCHOR + PATCH, 1)
-        changed = True
-        print(f"[patch_harbor] Thinking flags: patched")
 
     if ALREADY_PATCHED_MARKER_ARGMAX in text:
         print(f"[patch_harbor] ARG_MAX fix: already applied")
@@ -486,18 +551,22 @@ def main() -> None:
         changed = True
         print(f"[patch_harbor] ARG_MAX fix: applied")
 
-    if '"fallback_model"' not in text:
+    if "fallback_model" not in text:
         print(f"[patch_harbor] Fallback model removal: already done")
-    elif ANCHOR_FALLBACK not in text:
+    elif ANCHOR_FALLBACK_PYD in text:
+        text = text.replace(ANCHOR_FALLBACK_PYD, "", 1)
+        changed = True
+        print(f"[patch_harbor] Fallback model removal: applied (pydantic field, harbor >= 0.23.0)")
+    elif ANCHOR_FALLBACK in text:
+        text = text.replace(ANCHOR_FALLBACK, "", 1)
+        changed = True
+        print(f"[patch_harbor] Fallback model removal: applied (CliFlag list, harbor < 0.23.0)")
+    else:
         print(
             f"[patch_harbor] Fallback model removal: NOT applied -- anchor not found in {target}",
             file=sys.stderr,
         )
         failures.append(f"fallback_model removal  ({target.name})")
-    else:
-        text = text.replace(ANCHOR_FALLBACK, "", 1)
-        changed = True
-        print(f"[patch_harbor] Fallback model removal: applied")
 
     if ALREADY_PATCHED_MARKER_PREBAKE in text:
         print(f"[patch_harbor] Pre-baked CLI guard: already applied")

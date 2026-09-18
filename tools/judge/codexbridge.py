@@ -100,6 +100,19 @@ def install_credential() -> str | None:
     src = Path(os.environ.get("CODEX_AUTH_SRC", "/run/codex-auth/auth.json"))
     if not src.is_file() or src.stat().st_size == 0:
         return f"codex login not mounted at {src} (scripts/run_task.sh sets CODEX_AUTH_FILE)"
+    # Non-empty is not the same as carrying a credential. Measured: `codex login
+    # status` answers "Logged in using ChatGPT" for {"tokens": null} and for {},
+    # so the CLI will not report this one. Silent on anything unparseable.
+    try:
+        doc = json.loads(src.read_text())
+        tok = doc.get("tokens") or {}
+        empty = isinstance(doc, dict) and isinstance(tok, dict) \
+            and not (tok.get("access_token") or doc.get("OPENAI_API_KEY"))
+    except (OSError, ValueError, AttributeError):
+        empty = False
+    if empty:
+        return (f"the codex login mounted at {src} carries no credential "
+                "(no tokens, no API key); run `codex login` on the host")
     home = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
     try:
         home.mkdir(parents=True, exist_ok=True)
